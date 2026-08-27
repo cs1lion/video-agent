@@ -162,6 +162,7 @@ export function StudioPage() {
 	const artifactsReady = Boolean(artifacts?.script ?? artifacts?.bible ?? artifacts?.prompts);
 	const hasAssets = (artifacts?.assets.length ?? 0) > 0;
 	const hasKeyframes = (artifacts?.keyframes?.frames ?? []).some((f) => f.status === "done" && f.url);
+	const staleKeyframes = (artifacts?.keyframes?.frames ?? []).filter((f) => (f.staleRefs ?? []).length > 0).length;
 	const pill = STATUS_PILL[run.status] ?? STATUS_PILL.cancelled;
 	const redo = run.redoActive;
 	const redoPill = redo ? REDO_PILL[redo.kind] : undefined;
@@ -244,7 +245,7 @@ export function StudioPage() {
 								{run.gate === "design"
 									? "美术设计已就绪：请确认人物形象与场景设定，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"
 									: run.gate === "keyframes"
-										? "关键帧已就绪：请确认首帧画面，或单镜重绘；确认后才开始视频生成（将消耗生成额度）。"
+										? `关键帧已就绪：请确认首帧画面，或单镜重绘；确认后才开始视频生成（将消耗生成额度）。${staleKeyframes > 0 ? `其中 ${staleKeyframes} 镜因美术设计更新已标过期。` : ""}`
 										: "产物已按你的意见重塑，确认无误后继续推进下游阶段。"}
 							</span>
 							{run.gate === "design" && (

@@ -1007,6 +1007,8 @@ async function redesignEntityInner(
 			},
 			t0,
 		);
+		// 失效级联：以旧定稿为参考图的关键帧随本次更新标过期（关键帧闸门内立即可见）
+		await propagateEntityUpdate(run, entity);
 		pushEvent(
 			run,
 			"art",
@@ -1124,13 +1126,51 @@ function pickReferenceEntity(doc: DesignBibleDoc | null, haystack: string): Desi
 	return best(doc?.characters ?? []) ?? best(doc?.scenes ?? []);
 }
 
-/** 该镜关键帧的参考图 dataURL：无则 null（不挂），有则由 generateImage 挂到 params.image */
-async function keyframeReferenceOf(run: RunRecord, shotPrompt: string, shotVisual?: string): Promise<string | null> {
+/** 该镜参考图解析：返回设计实体 id + dataURL（无匹配定稿 → null，走纯文本锚点） */
+async function keyframeReferenceOf(
+	run: RunRecord,
+	shotPrompt: string,
+	shotVisual?: string,
+): Promise<{ entityId: string; dataUrl: string } | null> {
 	const doc = await readDesignBible(run);
 	const picked = pickReferenceEntity(doc, `${shotVisual ?? ""}\n${shotPrompt}`);
 	if (!picked?.file) return null;
 	pushEvent(run, "tech", "producer", "status", `镜头画面将锚定设计定稿「${picked.name}」（设计图 → 参考图传导）。`);
-	return await fileDataUrl(run.dir, picked.file);
+	const dataUrl = await fileDataUrl(run.dir, picked.file);
+	return dataUrl ? { entityId: picked.id, dataUrl } : null;
+}
+
+/**
+ * 失效级联：某设计定稿更新后，把曾以它为参考图的关键帧标记为相对新设定过期。
+ * 纯文本锚点出图的帧没有视觉漂移来源，只提示可选的整体对齐路径，不打扰确认节奏。
+ */
+async function propagateEntityUpdate(run: RunRecord, entity: DesignEntity): Promise<void> {
+	const frames = await readKeyframes(run);
+	const affected = frames.frames.filter((f) => (f.refs ?? []).includes(entity.id));
+	if (affected.length === 0) {
+		pushEvent(
+			run,
+			"art",
+			"producer",
+			"status",
+			`设计定稿「${entity.name}」已更新。现有关键帧未直接引用它（文本锚点出图），无需强制重绘；如需严格全量对齐，可微调分镜提示词后整体重跑。`,
+		);
+		return;
+	}
+	for (const f of affected) {
+		f.staleRefs = [...new Set([...(f.staleRefs ?? []), entity.id])];
+	}
+	await writeJson(run, "keyframes.json", frames);
+	pushEvent(
+		run,
+		"art",
+		"producer",
+		"redo",
+		`设计定稿「${entity.name}」已更新 ⚠️ ${affected.length} 镜关键帧基于旧形象（已标过期）：${affected
+			.map((f) => f.shotId)
+			.join("、")}。请逐镜重绘后重新确认。`,
+		{ stage: "keyframes", label: "去处理" },
+	);
 }
 
 /** 确保该镜有关键帧；缺失则按分镜提示词生成一张（版本化备份由调用方重绘路径负责） */
@@ -1152,7 +1192,11 @@ async function ensureKeyframe(
 	entry.attempts += 1;
 	entry.status = "pending";
 	const t0 = Date.now();
-	const referenceImage = await keyframeReferenceOf(run, shotPrompt, shot?.visual);
+	const reference = await keyframeReferenceOf(run, shotPrompt, shot?.visual);
+	const referenceImage = reference?.dataUrl ?? null;
+	// 记录本帧依赖的设计定稿：该实体重绘时可精确级联标过期；新出图即视为同步了最新设定
+	entry.refs = reference ? [reference.entityId] : [];
+	delete entry.staleRefs;
 	pushEvent(
 		run,
 		"tech",
@@ -1245,6 +1289,9 @@ export async function redesignKeyframe(
 	return result;
 }
 
+/** 显式运行时导出别名：实验性 module mocks 下函数声明绑定偶发不可见。 */
+export const redrawKeyframe = redesignKeyframe;
+
 async function redesignKeyframeInner(
 	ctx: ServerContext,
 	run: RunRecord,
@@ -1284,6 +1331,9 @@ async function redesignKeyframeInner(
 	}
 	const oldFile = entry.file;
 	const t0 = Date.now();
+	// 自参考迭代：以旧帧为底图按反馈微调，而非凭空再画（保持已确认的构图/色调）
+	const prevSelfRef =
+		oldFile && fs.existsSync(path.join(run.dir, oldFile)) ? await fileDataUrl(run.dir, oldFile) : null;
 	entry.attempts += 1;
 	pushEvent(
 		run,
@@ -1308,6 +1358,7 @@ async function redesignKeyframeInner(
 				(instruction ? `, adjustment: ${instruction}` : ""),
 			`key-${shotId}`,
 			imageSizeFor(optionsOf(run).aspectRatio),
+			{ referenceImage: prevSelfRef },
 		);
 		if (!file) {
 			// 生成失败：回滚刚备份的旧图，恢复主名
@@ -1324,6 +1375,10 @@ async function redesignKeyframeInner(
 		entry.file = file;
 		entry.status = "done";
 		entry.error = undefined;
+		// 元数据对齐：重绘即视为同步最新设定；参考实体刷新为当前最相关定稿
+		const freshRef = await keyframeReferenceOf(run, shotPrompt, script.shots.find((s) => s.id === shotId)?.visual);
+		if (freshRef) entry.refs = [freshRef.entityId];
+		delete entry.staleRefs;
 		await writeJson(run, "keyframes.json", doc);
 		appendSpan(
 			run,

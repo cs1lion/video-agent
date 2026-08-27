@@ -202,6 +202,10 @@ export interface KeyframeEntry {
 	url?: string;
 	status: "pending" | "done" | "failed";
 	error?: string;
+	/** 生成时用作参考图的设计实体 id（缺省 = 纯文本锚点出图） */
+	refs?: string[];
+	/** 这些实体的设计定稿在出图后又更新过：当前画面相对新设定已过期 */
+	staleRefs?: string[];
 	attempts: number;
 	versions: string[];
 }

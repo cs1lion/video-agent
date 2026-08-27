@@ -34,6 +34,8 @@ interface CapturedJob {
 	prompt: string;
 	params: Record<string, unknown>;
 	outputName: string;
+	/** run 目录：第二个用例会创建新 run，用于区分同名产物（如各自的 key-SH01） */
+	dir: string;
 }
 
 const submittedJobs: CapturedJob[] = [];
@@ -64,6 +66,7 @@ class FakeQueue {
 			prompt: input.prompt,
 			params: input.params ?? {},
 			outputName: input.outputName,
+			dir: projectDir,
 		});
 		return job;
 	}
@@ -231,6 +234,23 @@ describe("确认闸门状态机（全桩）", () => {
 		}
 	}
 
+	/** 新 run 可能在全局 runId 变化后继续异步推进，这里显式按记录等待 */
+	async function waitRecord(
+		record: import("../src/pipeline.ts").RunRecord,
+		predicate: (status: string, gate?: string) => boolean,
+		what: string,
+	): Promise<void> {
+		const deadline = Date.now() + 10_000;
+		for (;;) {
+			if (predicate(record.status, record.gate)) return;
+			if (Date.now() > deadline)
+				throw new Error(
+					`等待超时：${what}（当前 ${record.status} / ${record.gate ?? ""} / ${record.error ?? ""}）`,
+				);
+			await new Promise((r) => setTimeout(r, 20));
+		}
+	}
+
 	it("P1 启动 → 停在美术设计闸门，未偷跑下游", async () => {
 		store = new pipeline.RunStore();
 		const record = pipeline.startRun(ctx, store, {
@@ -335,6 +355,58 @@ describe("确认闸门状态机（全桩）", () => {
 			`refine 后新发起的 LLM 调用应携带客户指令，实际 ${llmSeenUsers.slice(seenBefore).length} 次`,
 		);
 		assert.equal(submittedJobs.filter((j) => j.kind === "video").length, videosBefore); // 纯文本微调不碰视频额度
+	});
+
+	it("设计图重绘级联：引用它的关键帧标过期，重绘后精确恢复", async () => {
+		// 独立第二个 run：证明级联元数据不跨项目串扰（各 run 都可能有 key-SH01）
+		const record2 = pipeline.startRun(ctx, store, {
+			logline: "另一条深夜办公室气泡水广告，重点看人物一致性",
+			keyMessage: "ICE",
+		});
+		assert.equal(record2.gate, "design");
+		await waitRecord(record2, (status) => status === "awaiting", "run 2 design gate");
+
+		const design = JSON.parse(await readFile(path.join(record2.dir, "design-bible.json"), "utf-8")) as {
+			characters: { id: string; status: string }[];
+		};
+		const char = design.characters[0]!;
+		assert.equal(char.status, "done");
+		assert.equal(pipeline.resumeRun(ctx, record2).ok, true);
+		await waitRecord(
+			record2,
+			(status, gate) => status === "awaiting" && gate === "keyframes",
+			"run 2 keyframes gate",
+		);
+
+		let frames = JSON.parse(await readFile(path.join(record2.dir, "keyframes.json"), "utf-8")) as {
+			frames: { shotId: string; refs?: string[]; staleRefs?: string[] }[];
+		};
+		assert.equal(frames.frames[0]?.shotId, "SH01");
+		assert.deepEqual(frames.frames[0]?.refs, [char.id]);
+		assert.equal(frames.frames[0]?.staleRefs, undefined);
+
+		// 设计定稿更新后，旧关键帧立即进入“设计已更新”过期态；期间仍不碰视频额度
+		const videosBefore = submittedJobs.filter((j) => j.kind === "video").length;
+		const redesigned = await pipeline.redesignEntity(ctx, record2, char.id, "");
+		assert.equal(redesigned.ok, true, redesigned.error ?? "");
+		frames = JSON.parse(await readFile(path.join(record2.dir, "keyframes.json"), "utf-8")) as typeof frames;
+		assert.deepEqual(frames.frames[0]?.staleRefs, [char.id]);
+		assert.ok(record2.events.some((e) => e.text.includes("已标过期")));
+		assert.equal(submittedJobs.filter((j) => j.kind === "video").length, videosBefore);
+
+		// 用户按意见重绘关键帧：元数据同步新设定，且自参考底图就是刚标过期的旧帧
+		const synced = await pipeline.redrawKeyframe(ctx, record2, "SH01", "整体更冷一点");
+		assert.equal(synced.ok, true, synced.error ?? "");
+		frames = JSON.parse(await readFile(path.join(record2.dir, "keyframes.json"), "utf-8")) as typeof frames;
+		assert.equal(frames.frames[0]?.staleRefs, undefined);
+		assert.deepEqual(frames.frames[0]?.refs, [char.id]);
+		const run2KeyJobs = submittedJobs.filter(
+			(j) => j.kind === "image" && j.dir === record2.dir && j.outputName === "key-SH01",
+		);
+		const keyRedrawJob = run2KeyJobs.at(-1)!;
+		assert.match(keyRedrawJob.prompt, /adjustment: 整体更冷一点/);
+		assert.match(keyRedrawJob.params.image as string, /^data:image\/png;base64,/);
+		assert.deepEqual(Buffer.from((keyRedrawJob.params.image as string).split(",")[1]!, "base64"), PNG_1PX);
 	});
 
 	it("已完成 run 的 resume 是纯拒绝，不误清残留闸门", () => {

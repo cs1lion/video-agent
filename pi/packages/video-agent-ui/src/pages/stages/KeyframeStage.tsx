@@ -17,6 +17,7 @@ function KeyframeCard({
 	url,
 	status,
 	error,
+	stale,
 	busy,
 	onAdjust,
 	index,
@@ -27,6 +28,7 @@ function KeyframeCard({
 	url?: string;
 	status: "pending" | "done" | "failed" | "missing";
 	error?: string;
+	stale?: boolean;
 	busy: boolean;
 	onAdjust: (shotId: string, instruction: string) => void;
 	index: number;
@@ -72,6 +74,11 @@ function KeyframeCard({
 					<div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
 						<LoaderCircle className="size-6 animate-spin text-amber-300" />
 					</div>
+				)}
+				{stale && (
+					<span className="absolute left-2 top-2 rounded-md border border-amber-300/50 bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-200 backdrop-blur-sm">
+						设计已更新 · 建议重绘
+					</span>
 				)}
 			</div>
 			<div className="space-y-2 px-3 py-2.5">
@@ -131,6 +138,7 @@ export function KeyframeStage({
 	const shotIds = script?.shots.map((s) => s.id) ?? prompts?.prompts.map((p) => p.shotId) ?? [];
 	const frameOf = (id: string) => keyframes?.frames.find((f) => f.shotId === id);
 	const readyCount = shotIds.filter((id) => frameOf(id)?.status === "done").length;
+	const staleCount = (keyframes?.frames ?? []).filter((f) => (f.staleRefs ?? []).length > 0).length;
 
 	return (
 		<StageShell kicker="STAGE 03.5 · KEYFRAMES" title="分镜关键帧">
@@ -141,6 +149,11 @@ export function KeyframeStage({
 					<p className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-4 py-2.5 text-xs leading-relaxed text-cyan-100/90">
 						视频按「关键帧锚定 + 分镜提示词」生成：每镜先出一张首帧锚定图锁定构图与色调，再由视频模型延展成动态镜头。
 						对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。
+						{staleCount > 0 && (
+							<span className="font-medium text-amber-200">
+								其中 {staleCount} 镜因美术设计更新已标过期，确认前建议先重绘。
+							</span>
+						)}
 					</p>
 					<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 						{shotIds.map((id, idx) => {
@@ -155,6 +168,7 @@ export function KeyframeStage({
 									url={frame?.url}
 									status={frame?.status ?? "missing"}
 									error={frame?.error}
+									stale={(frame?.staleRefs ?? []).length > 0}
 									busy={busy && Boolean(frame?.attempts)}
 									onAdjust={onAdjust}
 								/>
