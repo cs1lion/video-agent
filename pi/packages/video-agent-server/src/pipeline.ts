@@ -37,6 +37,9 @@ import {
 } from "../../video-agent/src/index.ts";
 import type { ServerContext } from "./config.ts";
 import {
+	estimateRunCost as pricingEstimateRun,
+} from "./pricing.ts";
+import {
 	assembleTimeline,
 	buildAssSubtitles,
 	concatWithSubtitles,
@@ -173,6 +176,8 @@ export interface RunMetrics {
 	mediaCalls: number;
 	retries: number;
 	perAdapter: Record<string, number>;
+	/** 累计成本（P2：价格跟踪；运行结束时落盘） */
+	cost: { spent: number; currency: "CNY" | "USD" };
 }
 
 /** 用户上传的参考素材（图片） */
@@ -255,6 +260,15 @@ export interface RunView {
 	exportAspectRatio?: AspectRatio;
 	/** 最近一次导出的成片文件名（assets 下） */
 	finalFile?: string;
+	/** P2：预估成本（pre-flight，run 启动时算一次） */
+	costEstimate?: CostEstimateView;
+}
+
+/** 预估成本视图（不携带单价细节，只保留总额 + 阶段明给 UI 显示） */
+export interface CostEstimateView {
+	total: number;
+	currency: "CNY" | "USD";
+	lines: { label: string; amount: number; note?: string }[];
 }
 
 /** 项目列表用轻量视图：不携带 events/images/options，首页历史卡只关心“能不能继续/看片” */
@@ -344,6 +358,8 @@ export interface RunRecord {
 	exportAspectRatio?: AspectRatio;
 	/** 最近一次导出的成片文件名（assets 下，如 final.mp4 / final-9x16.mp4） */
 	finalFile?: string;
+	/** P2：预估成本（pre-flight，run 启动时计算；类型同 RunView 的 CostEstimateView） */
+	costEstimate?: CostEstimateView;
 	readonly abort: AbortController;
 }
 
@@ -373,6 +389,7 @@ export function runView(run: RunRecord): RunView {
 		...(run.gate ? { gate: run.gate } : {}),
 		...(run.exportAspectRatio ? { exportAspectRatio: run.exportAspectRatio } : {}),
 		...(run.finalFile ? { finalFile: run.finalFile } : {}),
+		...(run.costEstimate ? { costEstimate: run.costEstimate } : {}),
 	});
 }
 
@@ -404,7 +421,7 @@ export class RunStore {
 			brief,
 			status: "running",
 			stages: STAGE_IDS.map((stageId) => ({ id: stageId, status: "pending", progress: 0 })),
-			metrics: { llmCalls: 0, mediaCalls: 0, retries: 0, perAdapter: {} },
+			metrics: { llmCalls: 0, mediaCalls: 0, retries: 0, perAdapter: {}, cost: { spent: 0, currency: "CNY" } },
 			images: images.map((img) => ({
 				id: img.id,
 				name: img.name,
@@ -684,6 +701,14 @@ export function startRun(
 	if (input.enriched) enriched.generationOptions = options;
 	if (input.coSpace) enriched.coSpace = input.coSpace;
 	const run = store.create(enriched, ctx.studioRoot, input.images ?? []);
+	// P2：pre-flight 预估成本（启动时算一次）
+	const pre = pricingEstimateRun({
+		catalog: ctx.priceCatalog,
+		shotCount: options.shotCount,
+		clipDurationSec: options.clipDurationSec,
+	});
+	run.costEstimate = { total: pre.total, currency: pre.currency, lines: pre.lines };
+	persistRun(run);
 	// 参考图复制进 run 目录（uploads 目录可能被清理，run 内自持副本）
 	const copyJobs: Promise<unknown>[] = [];
 	for (const img of run.images) {

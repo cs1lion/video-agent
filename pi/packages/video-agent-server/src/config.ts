@@ -10,6 +10,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { loadMediaConfig, type MediaModelsFile } from "../../coding-agent/examples/extensions/studio/media/adapter.ts";
+import { loadPriceCatalog, type PriceCatalog } from "./pricing.ts";
 
 export interface LlmConfig {
 	/** chat/completions 完整端点 */
@@ -49,6 +50,8 @@ export interface ServerContext {
 	mediaConfig: MediaModelsFile;
 	llm: LlmConfig;
 	port: number;
+	/** 价格目录（P2：运行时成本跟踪 + pre-flight 预估） */
+	priceCatalog: PriceCatalog;
 }
 
 export function loadServerContext(): ServerContext {
@@ -60,10 +63,13 @@ export function loadServerContext(): ServerContext {
 				"请参照 studio 的 models.json 配置 video/tts 适配器。",
 		);
 	}
+	// P2：价格目录（如未配置则回退默认估算，不阻塞业务）
+	const priceCatalog = loadPriceCatalog(studioRoot);
 	return {
 		studioRoot,
 		mediaConfig,
 		llm: loadLlmConfig(mediaConfig),
 		port: Number(process.env.PORT ?? 8787),
+		priceCatalog,
 	};
 }

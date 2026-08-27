@@ -302,6 +302,27 @@ export function StudioPage() {
 								.join(" ")}
 						</div>
 					</div>
+					{/* P2：成本 pill（预估 + 累计，悬停查看阶段明细） */}
+					{run.costEstimate && (
+						<div
+							className="hidden flex-col items-end text-right sm:flex"
+							title={`预估 ¥${run.costEstimate.total.toFixed(2)}（pre-flight）\n${run.costEstimate.lines.map((l) => `${l.label}: ¥${l.amount.toFixed(2)}`).join("\n")}`}
+						>
+							<span className="font-mono text-[10px] text-zinc-500">
+								预估 / 已花
+							</span>
+							<span className="font-mono text-xs">
+								<span className="text-amber-200">
+									{run.costEstimate.currency === "CNY" ? "¥" : "$"}
+									{run.costEstimate.total.toFixed(2)}
+								</span>
+								<span className="text-zinc-500"> / </span>
+								<span className="text-cyan-200">
+									¥{(run.metrics?.cost?.spent ?? 0).toFixed(2)}
+								</span>
+							</span>
+						</div>
+					)}
 					<ProgressRing value={progress} size={40} stroke={3.5} label={<span className="text-[9px]">{Math.round(progress)}%</span>} />
 					{run.status === "running" && (
 						<GlowButton variant="danger" onClick={() => void cancel()}>

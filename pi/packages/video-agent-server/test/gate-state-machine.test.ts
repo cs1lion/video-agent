@@ -233,6 +233,8 @@ describe("确认闸门状态机（全桩）", () => {
 			mediaConfig: { media: [] } as unknown as ServerContext["mediaConfig"],
 			llm: { url: "http://stub", model: "stub", timeoutMs: 1000 },
 			port: 0,
+			// P2：价格目录走默认 fallback（测试不依赖特定 catalog）
+			priceCatalog: { media: {}, llm: {}, fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 0.8, perKChar: 0.05 }, source: "<test>" },
 		};
 	});
 

@@ -76,6 +76,15 @@ export interface RunMetrics {
 	mediaCalls: number;
 	retries: number;
 	perAdapter: Record<string, number>;
+	/** P2：累计成本（目前为 0；下一步接入每调用计费时填实） */
+	cost?: { spent: number; currency: "CNY" | "USD" };
+}
+
+/** P2：pre-flight 预估成本（run 启动时一次性计算） */
+export interface CostEstimateView {
+	total: number;
+	currency: "CNY" | "USD";
+	lines: { label: string; amount: number; note?: string }[];
 }
 
 /** 事件关联产物的跳转（团队频道快捷链接；stage 为 UI 阶段 id，focus 为卡片定位键） */
@@ -141,6 +150,8 @@ export interface RunView {
 	exportAspectRatio?: string;
 	/** 最近一次导出的成片文件名（assets 下，多画幅分发版存在） */
 	finalFile?: string;
+	/** P2：pre-flight 预估成本（run 启动时算一次） */
+	costEstimate?: CostEstimateView;
 }
 
 /** 首页项目列表用轻量视图（与 server runSummary 对齐） */
