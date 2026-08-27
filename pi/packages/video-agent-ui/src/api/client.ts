@@ -414,6 +414,9 @@ export interface DeliberationProposal {
 	speed?: number;
 	/** retts 专用：目标音色 id */
 	voice?: string;
+	/** P2+闸门 2：导演 agent 自我评估的置信度。
+	 *  high = 证据直接+修复明确；medium = 证据间接或成本较高；low = 证据弱或路径不确定 */
+	confidence: "high" | "medium" | "low";
 }
 
 export interface DeliberationDoc {

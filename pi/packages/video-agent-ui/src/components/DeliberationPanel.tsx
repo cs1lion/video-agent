@@ -59,6 +59,35 @@ function variantUrl(runId: string, file: string): string {
 	return `/api/runs/${encodeURIComponent(runId)}/files/${file.split(/[\\/]/).join("/")}`;
 }
 
+/** P2+闸门 2 颜色点。high 不染色（默认认为可信），medium 琥珀提示，low 玫红警告。
+ *  另起一个 dot 而非文字，是为了让多档提案并列时不占行高。 */
+function ConfidenceDot({ level }: { level: "high" | "medium" | "low" }) {
+	const tone =
+		level === "low"
+			? "border-rose-400/45 bg-rose-400/15 text-rose-200"
+			: level === "medium"
+				? "border-amber-300/40 bg-amber-400/10 text-amber-200"
+				: "border-emerald-400/30 bg-emerald-400/10 text-emerald-200";
+	const label = level === "low" ? "导演把握度低 ⚠️" : level === "medium" ? "导演把握度一般" : "导演把握度高";
+	return (
+		<span
+			className={cn(
+				"inline-flex items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium",
+				tone,
+			)}
+			title={label}
+		>
+			<span
+				className={cn(
+					"inline-block size-1.5 rounded-full",
+					level === "low" ? "bg-rose-300" : level === "medium" ? "bg-amber-300" : "bg-emerald-300",
+				)}
+			/>
+			{level === "low" ? "low" : level === "medium" ? "med" : "high"}
+		</span>
+	);
+}
+
 /** 点状步骤指示（antd Steps progressDot 思路）：对比候选 → 反馈裁决 → 导演归因 */
 function StepDots({ step }: { step: number }) {
 	const steps = ["对比候选", "反馈裁决", "导演归因"];
@@ -238,6 +267,8 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 								{DELIBERATION_ACTION_LABEL[p.action]}
 							</span>
 							<span className="font-mono text-[11px] text-cyan-300">{p.target}</span>
+							{/* P2+闸门 2：置信度色点。high 不着色、medium 琥珀、low 玫红 */}
+							<ConfidenceDot level={p.confidence} />
 							<span className="min-w-0 flex-1 basis-56 text-[11px] leading-snug text-zinc-400">{p.reason}</span>
 							{/* P2：结构化成本（金额优先）。零成本（如 reedit）不渲染金额 */}
 							{p.cost ? (

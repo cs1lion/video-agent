@@ -100,6 +100,11 @@ export interface DeliberationProposal {
 	cost?: { amount: number; currency: "CNY" | "USD"; note: string };
 	/** reedit 专用：整片播放速度倍率（0.9-1.3，1 = 不变速） */
 	speed?: number;
+	/** P2+阅门 2：导演 agent 自我评估的置信度。供 UI 透明化决策可信度。
+	 *  high: 证据直接 + 修复方案明确（如 reedit 调速 + 仅剪辑师）
+	 *  medium: 证据间接 或修复成本较高
+	 *  low: 证据弱、修复路径不确定、或本身为推断 */
+	confidence: "high" | "medium" | "low";
 }
 
 export interface DeliberationDoc {
@@ -574,7 +579,8 @@ function buildTools(
 			description:
 				"提交最终审议结论并结束审议。findings 每条必须带 evidence 引用工具返回的具体事实（数值或帧内容）。" +
 				"proposals 最多 2 个，action 取值: reedit（改剪辑，成本最低，可带 speed 0.9-1.3）| reshot（重做某镜，需 shotId）| " +
-				"retts（重录某镜旁白，需 shotId）| rescript（脚本级重跑，需用户二次确认）。",
+				"retts（重录某镜旁白，需 shotId）| rescript（脚本级重跑，需用户二次确认）。" +
+				"为每个提案评估 confidence（high/medium/low）：high=证据直接+修复明确（如 reedit 调速），medium=证据间接 或 成本高，low=证据弱 或 路径不确定。",
 			parameters: Type.Object({
 				rootCause: Type.String({ description: "一句话主因判断" }),
 				findings: Type.Array(
@@ -592,6 +598,7 @@ function buildTools(
 						reason: Type.String(),
 						estimatedCost: Type.String(),
 						speed: Type.Optional(Type.Number({ description: "reedit 专用: 0.9-1.3 播放速度倍率" })),
+						confidence: Type.Enum({ high: "high", medium: "medium", low: "low" }),
 					}),
 					{ maxItems: 2 },
 				),
@@ -646,6 +653,11 @@ function buildTools(
 						estimatedCost: p.estimatedCost.slice(0, 120),
 						cost: { amount: costEst.amount, currency: priceCatalog.fallback.currency, note: costEst.note },
 						...(typeof p.speed === "number" && p.speed >= 0.85 && p.speed <= 1.35 ? { speed: p.speed } : {}),
+						// P2+阅门 2：宽容解析 confidence（缺失/非法值 → "medium"默认）
+						confidence:
+							p.confidence === "high" || p.confidence === "medium" || p.confidence === "low"
+								? p.confidence
+								: "medium",
 					};
 				}),
 			};
@@ -666,6 +678,7 @@ const DIRECTOR_SYSTEM_PROMPT = [
 	"4. 用户反馈的预设标签是重要信号，但不取代你自己的判断。",
 	"5. 历史审议中被否决的方案不要原样重提；连续多轮不收敛时优先考虑结构性/素材层原因。",
 	"6. 完成思考后必须调用 propose 工具结束审议。",
+	"7. 为每个提案评估 confidence（high/medium/low）：high=证据直接+修复明确（如 reedit 调速），medium=证据间接或成本较高，low=证据弱或修复路径不确定。系统会根据 confidence 决定采纳路径。",
 ].join("\n");
 
 /**
