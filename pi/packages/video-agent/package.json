@@ -1,0 +1,39 @@
+{
+	"name": "@earendil-works/pi-video-agent",
+	"version": "0.0.1",
+	"description": "Video ad pipeline: pre-production interview (Clarifier) and enriched brief",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"files": ["dist"],
+	"scripts": {
+		"clean": "shx rm -rf dist",
+		"build": "tsgo -p tsconfig.build.json",
+		"test": "vitest --run",
+		"typecheck": "tsgo -p tsconfig.test.json",
+		"prepublishOnly": "npm run clean && npm run build"
+	},
+	"keywords": ["pi", "video", "ads", "interview", "clarifier"],
+	"author": "Earendil Works",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/earendil-works/pi.git",
+		"directory": "packages/video-agent"
+	},
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"devDependencies": {
+		"shx": "0.4.0",
+		"vitest": "4.1.9"
+	}
+}

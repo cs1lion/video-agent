@@ -1,0 +1,22 @@
+{
+	"name": "@earendil-works/pi-video-agent-server",
+	"version": "0.0.1",
+	"private": true,
+	"description": "Colocated Express server for the video ad agent UI: interview sessions + real generation pipeline",
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/server.ts",
+		"start": "tsx src/server.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@earendil-works/pi-agent-core": "^0.84.2",
+		"@earendil-works/pi-ai": "^0.84.2",
+		"express": "5.2.1"
+	},
+	"devDependencies": {
+		"@types/express": "5.0.6",
+		"tsx": "4.22.1",
+		"typescript": "5.9.3"
+	}
+}

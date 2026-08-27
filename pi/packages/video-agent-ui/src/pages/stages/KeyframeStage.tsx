@@ -1,0 +1,168 @@
+/**
+ * 关键帧阶段：分镜关键帧组图预览 —— 每镜一张首帧锚定图，
+ * 视频按「关键帧 + 分镜提示词」生成；支持单镜输入指令重绘。
+ */
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ImagePlus, LoaderCircle, RefreshCw } from "lucide-react";
+import type { KeyframesDoc, ScriptDoc, ShotPromptDoc } from "@/api/client";
+import { cn } from "@/lib/utils";
+import { EmptyState, StageShell } from "./shared";
+
+function KeyframeCard({
+	shotId,
+	narration,
+	prompt,
+	url,
+	status,
+	error,
+	busy,
+	onAdjust,
+	index,
+}: {
+	shotId: string;
+	narration?: string;
+	prompt?: string;
+	url?: string;
+	status: "pending" | "done" | "failed" | "missing";
+	error?: string;
+	busy: boolean;
+	onAdjust: (shotId: string, instruction: string) => void;
+	index: number;
+}) {
+	const [instruction, setInstruction] = useState("");
+	return (
+		<motion.div
+			id={`art-${shotId}`}
+			initial={{ opacity: 0, y: 12 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ delay: index * 0.05 }}
+			className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]"
+		>
+			<div className="relative">
+				{url ? (
+					<img src={url} alt={`关键帧 ${shotId}`} className="aspect-video w-full object-cover" loading="lazy" />
+				) : (
+					<div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-black/40">
+						{status === "failed" ? (
+							<>
+								<ImagePlus className="size-5 text-rose-300/70" />
+								<span className="px-4 text-center text-[11px] text-rose-200/80">{error ?? "生成失败"}</span>
+								{!busy && (
+									<button
+										type="button"
+										onClick={() => onAdjust(shotId, "")}
+										className="cursor-pointer rounded-lg border border-amber-400/45 px-2.5 py-1 text-[11px] text-amber-200 transition-colors hover:bg-amber-400/10"
+									>
+										<RefreshCw className="mr-1 inline size-3" />
+										重试生成
+									</button>
+								)}
+							</>
+						) : (
+							<>
+								<LoaderCircle className="size-5 animate-spin text-cyan-300/80" />
+								<span className="text-[11px] text-zinc-500">片段生成阶段会自动逐镜产出…</span>
+							</>
+						)}
+					</div>
+				)}
+				{busy && (
+					<div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
+						<LoaderCircle className="size-6 animate-spin text-amber-300" />
+					</div>
+				)}
+			</div>
+			<div className="space-y-2 px-3 py-2.5">
+				<div className="flex items-center gap-2">
+					<span className="font-mono text-xs text-cyan-300">{shotId}</span>
+					{narration && <span className="truncate text-[11px] text-zinc-500">{narration}</span>}
+				</div>
+				{prompt && <p className="line-clamp-2 font-mono text-[10px] leading-relaxed text-zinc-600">{prompt}</p>}
+				<div className="flex items-center gap-1.5">
+					<input
+						value={instruction}
+						onChange={(e) => setInstruction(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" && instruction.trim() && !busy) {
+								onAdjust(shotId, instruction.trim());
+								setInstruction("");
+							}
+						}}
+						placeholder="调整这张关键帧，例：更暖的光、主角再靠近产品"
+						maxLength={120}
+						className="field-input !px-2.5 !py-1.5 !text-xs"
+					/>
+					<button
+						type="button"
+						disabled={!instruction.trim() || busy}
+						onClick={() => {
+							onAdjust(shotId, instruction.trim());
+							setInstruction("");
+						}}
+						className={cn(
+							"inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors",
+							"border-violet-400/40 text-violet-200 hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-40",
+						)}
+					>
+						<RefreshCw className="size-3.5" />
+						重绘
+					</button>
+				</div>
+			</div>
+		</motion.div>
+	);
+}
+
+export function KeyframeStage({
+	keyframes,
+	script,
+	prompts,
+	busy,
+	onAdjust,
+}: {
+	keyframes: KeyframesDoc | null;
+	script: ScriptDoc | null;
+	prompts: ShotPromptDoc | null;
+	busy: boolean;
+	onAdjust: (shotId: string, instruction: string) => void;
+}) {
+	const shotIds = script?.shots.map((s) => s.id) ?? prompts?.prompts.map((p) => p.shotId) ?? [];
+	const frameOf = (id: string) => keyframes?.frames.find((f) => f.shotId === id);
+	const readyCount = shotIds.filter((id) => frameOf(id)?.status === "done").length;
+
+	return (
+		<StageShell kicker="STAGE 03.5 · KEYFRAMES" title="分镜关键帧">
+			{shotIds.length === 0 ? (
+				<EmptyState text="分镜提示词就绪后，这里会出现每一镜的关键帧。" />
+			) : (
+				<div className="space-y-4">
+					<p className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-4 py-2.5 text-xs leading-relaxed text-cyan-100/90">
+						视频按「关键帧锚定 + 分镜提示词」生成：每镜先出一张首帧锚定图锁定构图与色调，再由视频模型延展成动态镜头。
+						对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。
+					</p>
+					<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+						{shotIds.map((id, idx) => {
+							const frame = frameOf(id);
+							return (
+								<KeyframeCard
+									key={id}
+									index={idx}
+									shotId={id}
+									narration={script?.shots.find((s) => s.id === id)?.narrationZh}
+									prompt={prompts?.prompts.find((p) => p.shotId === id)?.prompt}
+									url={frame?.url}
+									status={frame?.status ?? "missing"}
+									error={frame?.error}
+									busy={busy && Boolean(frame?.attempts)}
+									onAdjust={onAdjust}
+								/>
+							);
+						})}
+					</div>
+				</div>
+			)}
+		</StageShell>
+	);
+}

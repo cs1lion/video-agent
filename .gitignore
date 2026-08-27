@@ -1,0 +1,20 @@
+# dependencies / build artifacts
+node_modules/
+dist/
+*.tsbuildinfo
+
+# 本地运行数据：run 产物、上传素材、成片与日志（含隐私，不入库）
+.pi-studio/
+
+# pi 上游仓库的原始 git 历史（整库迁移备份，不入工作树版本）
+.vendored-git-history/
+
+# 媒体工具二进制
+tools/ffmpeg/
+
+# 日志与临时文件
+*.log
+*.tmp/
+*.tmp
+Thumbs.db
+.DS_Store

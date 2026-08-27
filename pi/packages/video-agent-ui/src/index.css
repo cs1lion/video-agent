@@ -1,0 +1,371 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "HarmonyOS Sans SC", "MiSans", "PingFang SC",
+    "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
+  /* 暗底 + 亮暖色调：琥珀 / 橙 / 暖玫 */
+  --color-void: #070605;
+  --color-panel: #171008;
+  --color-edge: rgba(255, 244, 230, 0.09);
+  --color-neon: #fbbf24;
+  --color-iris: #fb923c;
+  --color-flare: #fb7185;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* min-height 而非 height：首页等长内容页由文档流滚动；
+   工作台页自身 h-dvh + overflow-hidden，不受影响 */
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-void);
+  color: #e7e2da;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* ---------- surfaces ---------- */
+.glass {
+  background:
+    linear-gradient(180deg, rgba(255, 240, 220, 0.055), rgba(255, 240, 220, 0.022));
+  border: 1px solid rgba(255, 236, 210, 0.11);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 210, 0.07),
+    0 18px 50px -20px rgba(251, 146, 60, 0.16);
+}
+
+.glass-strong {
+  background:
+    linear-gradient(180deg, rgba(42, 30, 18, 0.94), rgba(20, 14, 9, 0.96));
+  border: 1px solid rgba(255, 236, 210, 0.13);
+  backdrop-filter: blur(22px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 210, 0.09),
+    0 28px 80px -24px rgba(0, 0, 0, 0.7),
+    0 0 60px -30px rgba(251, 146, 60, 0.35);
+}
+
+.hairline {
+  border-color: rgba(255, 236, 210, 0.09);
+}
+
+.text-gradient {
+  background: linear-gradient(100deg, #fcd34d 0%, #fb923c 48%, #fb7185 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ring-glow {
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.35),
+    0 0 24px rgba(251, 146, 60, 0.18),
+    0 0 64px rgba(251, 113, 133, 0.12);
+}
+
+.btn-primary {
+  position: relative;
+  background: linear-gradient(100deg, #f59e0b, #f43f5e);
+  color: white;
+  transition: filter 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.35);
+}
+.btn-primary:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 10px 44px rgba(244, 63, 94, 0.45);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* 琥珀主按钮（重做/语音类操作） */
+.btn-amber {
+  position: relative;
+  background: linear-gradient(100deg, #f59e0b, #f97316);
+  color: white;
+  transition: filter 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.35);
+}
+.btn-amber:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 10px 44px rgba(251, 191, 36, 0.5);
+}
+.btn-amber:active {
+  transform: scale(0.98);
+}
+
+/* ---------- form controls ---------- */
+.field-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 236, 210, 0.11);
+  background: rgba(255, 240, 220, 0.04);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: #f5f0e8;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.field-input::placeholder {
+  color: #6b6257;
+}
+.field-input:focus {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.13);
+}
+
+/* ---------- backdrop fx ---------- */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.055) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 30%, transparent 78%);
+}
+
+.noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes aurora-a {
+  0%, 100% { transform: translate(-8%, -6%) scale(1); }
+  50% { transform: translate(6%, 8%) scale(1.18); }
+}
+@keyframes aurora-b {
+  0%, 100% { transform: translate(10%, 4%) scale(1.1); }
+  50% { transform: translate(-6%, -8%) scale(0.95); }
+}
+.aurora-a {
+  animation: aurora-a 16s ease-in-out infinite;
+}
+.aurora-b {
+  animation: aurora-b 21s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+.shimmer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 36%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* ---------- status pills（整体状态动效：进行中 / 已完成 / 等待 / 重做中） ---------- */
+@keyframes pill-breathe {
+  0%, 100% { box-shadow: 0 0 12px rgba(34, 211, 238, 0.18); }
+  50% { box-shadow: 0 0 26px rgba(34, 211, 238, 0.45); }
+}
+.pill-running {
+  animation: pill-breathe 2.2s ease-in-out infinite;
+}
+
+@keyframes pill-settle {
+  0% { box-shadow: 0 0 18px rgba(52, 211, 153, 0.5); }
+  60% { box-shadow: 0 0 18px rgba(52, 211, 153, 0.4); }
+  100% { box-shadow: 0 0 10px rgba(52, 211, 153, 0.22); }
+}
+.pill-done {
+  animation: pill-settle 2.6s ease-out 1 forwards;
+}
+
+@keyframes pill-await {
+  0%, 100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.18); }
+  50% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.45); }
+}
+.pill-awaiting {
+  animation: pill-await 2s ease-in-out infinite;
+}
+
+@keyframes pill-redo-breathe {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.28);
+    border-color: rgba(251, 191, 36, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.55);
+    border-color: rgba(251, 191, 36, 0.85);
+  }
+}
+.pill-redo {
+  animation: pill-redo-breathe 1.6s ease-in-out infinite;
+}
+
+/* ---------- redo（重做中）动效：扫光条 / 呼吸光环 ---------- */
+@keyframes redo-scan-x {
+  0% { transform: translateX(-100%); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+.redo-bar {
+  animation: redo-scan-x 1.8s ease-in-out infinite;
+}
+
+@keyframes redo-scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.redo-scan {
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.9), transparent);
+  animation: redo-scan-line 2.4s linear infinite;
+}
+
+@keyframes rail-redo-glow {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(251, 191, 36, 0.12),
+      0 0 14px rgba(251, 191, 36, 0.08);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(251, 191, 36, 0.3),
+      0 0 26px rgba(251, 191, 36, 0.22);
+  }
+}
+.rail-redo {
+  animation: rail-redo-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-y {
+  animation: float-y 5s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.spin-slow {
+  animation: spin-slow 9s linear infinite;
+}
+
+/* dashed connector flow */
+@keyframes dash-flow {
+  to { stroke-dashoffset: -28; }
+}
+.dash-flow {
+  stroke-dasharray: 6 8;
+  animation: dash-flow 1.2s linear infinite;
+}
+
+/* ---------- reactbits-inspired fx（与大标题/流光背景同一套霓虹语言） ---------- */
+
+/* Shiny Text：kicker 文字流光扫过（暖金→暖玫，呼应 WarpText 的折射高光） */
+.shiny-text {
+  background: linear-gradient(
+    110deg,
+    #fcd34d 25%,
+    #fda4af 42%,
+    #fff7ed 50%,
+    #fb923c 58%,
+    #fcd34d 75%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shiny-sweep 4.2s linear infinite;
+}
+@keyframes shiny-sweep {
+  0% { background-position: 130% 0; }
+  100% { background-position: -130% 0; }
+}
+
+/* Beam Border：面板渐变流光描边（低饱和暖色，只做细边不做色块） */
+.beam-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(255, 240, 220, 0.055), rgba(255, 240, 220, 0.022)) padding-box,
+    linear-gradient(
+      120deg,
+      rgba(251, 191, 36, 0.26),
+      rgba(251, 146, 60, 0.2),
+      rgba(251, 113, 133, 0.16),
+      rgba(251, 191, 36, 0.26)
+    )
+      border-box;
+  background-size: auto, 280% 280%;
+  animation: beam-pan 9s ease-in-out infinite;
+}
+@keyframes beam-pan {
+  0%, 100% { background-position: 0 0, 0% 50%; }
+  50% { background-position: 0 0, 100% 50%; }
+}
+
+/* Glare Hover：按钮/选项卡 hover 扫光 */
+.glare-hover {
+  position: relative;
+  overflow: hidden;
+}
+.glare-hover::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: -60%;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: rotate(18deg) translateX(-140%);
+}
+.glare-hover:hover::after {
+  animation: glare-sweep 0.85s ease forwards;
+}
+@keyframes glare-sweep {
+  to { transform: rotate(18deg) translateX(460%); }
+}
