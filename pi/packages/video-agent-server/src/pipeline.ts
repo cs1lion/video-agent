@@ -335,7 +335,11 @@ export class RunStore {
 		return this.runs.get(id);
 	}
 
-	/** 启动时从磁盘恢复历史 run（run-state.json）；重启时仍在 running/awaiting 的标记为失败 */
+	/**
+	 * 启动时从磁盘恢复历史 run（run-state.json）。
+	 * 重启中断语义：running → failed（管线无法原地续跑）；awaiting → 原样保留
+	 * （确认闸门/refine 停机是稳定状态，用户确认后 resume 照常推进，不应被重启清掉）。
+	 */
 	loadAll(runsRoot: string): number {
 		let loaded = 0;
 		if (!fs.existsSync(runsRoot)) return loaded;
@@ -346,7 +350,7 @@ export class RunStore {
 			try {
 				const raw = JSON.parse(fs.readFileSync(statePath, "utf-8")) as Omit<RunRecord, "abort">;
 				if (typeof raw?.id !== "string" || !Array.isArray(raw?.stages) || typeof raw?.dir !== "string") continue;
-				const interrupted = raw.status === "running" || raw.status === "awaiting";
+				const crashed = raw.status === "running";
 				const record: RunRecord = {
 					...raw,
 					images: Array.isArray(raw.images) ? raw.images : [],
@@ -356,8 +360,8 @@ export class RunStore {
 					ttsAttempts: raw.ttsAttempts && typeof raw.ttsAttempts === "object" ? raw.ttsAttempts : {},
 					ttsVersions: raw.ttsVersions && typeof raw.ttsVersions === "object" ? raw.ttsVersions : {},
 					redoActive: null,
-					status: interrupted ? "failed" : raw.status,
-					error: interrupted ? (raw.error ?? "服务重启，运行中断") : raw.error,
+					status: crashed ? "failed" : raw.status,
+					error: crashed ? (raw.error ?? "服务重启，运行中断") : raw.error,
 					abort: new AbortController(),
 				};
 				this.runs.set(record.id, record);
