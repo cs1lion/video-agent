@@ -457,7 +457,11 @@ export interface KeyframeEntry {
 	confirmed?: boolean;
 	/** 最近一次出图审核结论（帧 vs 其锚定的设计定稿；未审核/旧 run 缺省） */
 	review?: DesignReview;
+	/** 重绘总次数（手动+auto），上限 MAX_IMAGE_REDRAW */
 	attempts: number;
+	/** auto 路径独立计数（autoReviewKeyframes/autoReviewDesign 专用），上限 MAX_IMAGE_AUTO_REDRAW。
+	 *  与 attempts 分离：不占用户手动配额。 */
+	autoAttempts?: number;
 	versions: string[];
 }
 

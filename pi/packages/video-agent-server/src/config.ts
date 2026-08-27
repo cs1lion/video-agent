@@ -65,6 +65,9 @@ export function loadServerContext(): ServerContext {
 	}
 	// P2：价格目录（如未配置则回退默认估算，不阻塞业务）
 	const priceCatalog = loadPriceCatalog(studioRoot);
+	// 安全提醒：检测 models.json 中是否明文写入了 apiKey（不警告不会阻断运行，但会推个 console.warn）。
+	// 推荐配置：在 adapter 上用 apiKeyEnv 代替 apiKey（已在 media/adapter.ts 支持）。
+	warnPlaintextApiKeys(mediaConfig);
 	return {
 		studioRoot,
 		mediaConfig,
@@ -72,4 +75,19 @@ export function loadServerContext(): ServerContext {
 		port: Number(process.env.PORT ?? 8787),
 		priceCatalog,
 	};
+}
+
+/** 扫描 media + vision 适配器，发现明文 apiKey 则提示改用 apiKeyEnv。 */
+function warnPlaintextApiKeys(media: MediaModelsFile): void {
+	const offenders: string[] = [];
+	for (const m of media.media ?? []) {
+		if (m.apiKey) offenders.push(`media.${m.id || m.kind}`);
+	}
+	if (media.vision?.apiKey) offenders.push("vision");
+	if (offenders.length === 0) return;
+	console.warn(
+		`[video-agent-server] ⚠️  检测到 models.json 中明文 apiKey: ${offenders.join(", ")}。` +
+			`\n  推荐改用 "apiKeyEnv": "ENV_VAR_NAME"（media/adapter.ts 已支持），apiKey 从 process.env 读取，` +
+			`\n  避免把密钥提交进仓库或共享。LLM 端点已支持 VIDEO_AGENT_LLM_API_KEY 环境变量覆盖。`,
+	);
 }

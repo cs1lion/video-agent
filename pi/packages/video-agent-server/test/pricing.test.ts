@@ -18,7 +18,7 @@ import {
 	round2,
 } from "../src/pricing.ts";
 import type { ServerContext } from "../src/config.ts";
-import { RunStore, pushLastAction, startRun } from "../src/pipeline.ts";
+import { RunStore, pushLastAction, redesignKeyframe, startRun } from "../src/pipeline.ts";
 
 const CATALOG = {
 	media: {
@@ -141,6 +141,63 @@ describe("formatCost", () => {
 		assert.equal(formatCost(12.5, "CNY"), "¥12.50");
 		assert.equal(formatCost(0.005, "CNY"), "¥<0.01");
 		assert.equal(formatCost(3.14, "USD"), "$3.14");
+	});
+});
+
+describe("MAX_IMAGE_AUTO_REDRAW 独立上限（auto vs 手动不互吃）", () => {
+	let root: string;
+	let store: RunStore;
+	let ctx: ServerContext;
+	before(async () => {
+		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-autocap-"));
+		store = new RunStore();
+		ctx = {
+			studioRoot: root,
+			mediaConfig: { media: [] } as unknown as ServerContext["mediaConfig"],
+			llm: { url: "http://stub", model: "stub", timeoutMs: 1000 },
+			port: 0,
+			priceCatalog: {
+				media: {},
+				llm: {},
+				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 1.0, perKChar: 0.05 },
+				source: "<test>",
+			},
+		};
+	});
+	after(async () => {
+		if (root) await fs.rm(root, { recursive: true, force: true });
+	});
+
+	it("auto 重绘超 MAX_IMAGE_AUTO_REDRAW 被拒，手动 quota 仍可用", async () => {
+		const run = startRun(ctx, store, { logline: "auto-cap" });
+		// startRun 把 status 设为 running；redesignKeyframe 会拒绝这种状态。模拟“已 await”的状态。
+		run.status = "awaiting";
+		// startRun 是同步的，只计算 run.dir 路径但不动磁盘。手动创建以便写文件。
+		await fs.mkdir(run.dir, { recursive: true });
+		const script = {
+			title: "t",
+			logline: "t",
+			shots: [{ id: "SH01", narrationZh: "x", narrationEn: "x", visual: "x", durationSec: 5 }],
+		};
+		await fs.writeFile(path.join(run.dir, "script.json"), JSON.stringify(script), "utf-8");
+		const MAX = 5; // MAX_IMAGE_AUTO_REDRAW 期望值
+		const kf = {
+			frames: [
+				{
+					shotId: "SH01",
+					status: "done",
+					attempts: 0,
+					autoAttempts: MAX,
+					versions: [],
+					refs: [],
+				},
+			],
+		};
+		await fs.writeFile(path.join(run.dir, "keyframes.json"), JSON.stringify(kf), "utf-8");
+
+		const result = await redesignKeyframe(ctx, run, "SH01", "请修一下", { auto: true });
+		assert.equal(result.ok, false, "达到 auto 上限后应被拒");
+		assert.match(result.error ?? "", /自动重绘.*仍未通过/);
 	});
 });
 

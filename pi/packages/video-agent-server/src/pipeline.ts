@@ -174,6 +174,11 @@ export const MAX_RETTS_PER_SHOT = 3;
 
 /** 设计图 / 关键帧单卡重绘上限（图片便宜快速，但也要收敛） */
 export const MAX_IMAGE_REDRAW = 3;
+/** P2+质量门：自动重绘独立上限（autoReviewKeyframes/autoReviewDesign 专用）。
+ *  与手动 MAX_IMAGE_REDRAW 分离计数——手动重绘吃重机会，auto 不动用户配额。
+ *  上限 5：给审核多轮收敦的机会（框架告警 + 重绘 + 复审 → 仍 fail）。
+ */
+export const MAX_IMAGE_AUTO_REDRAW = 5;
 
 export interface RunMetrics {
 	llmCalls: number;
@@ -1780,6 +1785,7 @@ export async function redesignKeyframe(
 	run: RunRecord,
 	shotId: string,
 	instruction: string,
+	opts?: { auto?: boolean },
 ): Promise<{ ok: boolean; error?: string }> {
 	// 同步占位：检查与置位之间无 await，杜绝双提交竞态窗口；结束恢复原状态
 	if (run.status === "running") return { ok: false, error: "管线运行中，请稍候" };
@@ -1787,7 +1793,7 @@ export async function redesignKeyframe(
 	run.status = "running";
 	let result: { ok: boolean; error?: string; keyframeWasFailed?: boolean };
 	try {
-		result = await redesignKeyframeInner(ctx, run, shotId, instruction);
+		result = await redesignKeyframeInner(ctx, run, shotId, instruction, opts);
 	} finally {
 		run.status = prevStatus;
 		persistRun(run);
@@ -1832,12 +1838,21 @@ async function redesignKeyframeInner(
 	const doc = await readKeyframes(run);
 	let entry = doc.frames.find((f) => f.shotId === shotId);
 	const keyframeWasFailed = entry?.status === "failed";
-	// 手动路径有人工配额护栏；auto（审核自动重绘）天然每轮只跑一次，不占用户手动次数
-	if (!opts?.auto && entry && entry.attempts >= MAX_IMAGE_REDRAW) {
-		return {
-			ok: false,
-			error: `镜头 ${shotId} 关键帧已重绘 ${MAX_IMAGE_REDRAW} 次达上限。建议在分镜提示词阶段微调后整体重跑。`,
-		};
+	// 手动路径有人工配额护栏；auto 路径独立计数（不占手动配额）
+	if (entry) {
+		if (opts?.auto) {
+			if ((entry.autoAttempts ?? 0) >= MAX_IMAGE_AUTO_REDRAW) {
+				return {
+					ok: false,
+					error: `镜头 ${shotId} 审核自动重绘 ${MAX_IMAGE_AUTO_REDRAW} 轮仍未通过，已停止。问题需在分镜提示词阶段微调后整体重跑。`,
+				};
+			}
+		} else if (entry.attempts >= MAX_IMAGE_REDRAW) {
+			return {
+				ok: false,
+				error: `镜头 ${shotId} 关键帧已重绘 ${MAX_IMAGE_REDRAW} 次达上限。建议在分镜提示词阶段微调后整体重跑。`,
+			};
+		}
 	}
 
 	const bible = await readArtifact<VisualBible>(run, "visual-bible.json").catch(
@@ -1872,7 +1887,11 @@ async function redesignKeyframeInner(
 			? await buildReferenceSheet(run, shotId, redrawSources)
 			: latestReferences.file;
 	const redrawReferenceImage = redrawReference ? await fileDataUrl(run.dir, redrawReference) : prevSelfRef;
-	if (!opts?.auto) entry.attempts += 1;
+	if (opts?.auto) {
+		entry.autoAttempts = (entry.autoAttempts ?? 0) + 1;
+	} else {
+		entry.attempts += 1;
+	}
 	delete entry.confirmed;
 	pushEvent(
 		run,
@@ -2009,8 +2028,13 @@ async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
 		throwIfAborted(signal);
 		const issues = frame.review?.issues.join("；") ?? "";
 		const result = await redesignKeyframeInner(ctx, run, frame.shotId, issues, { auto: true });
-		if (result.ok) redrawnShotIds.push(frame.shotId);
-		else pushEvent(run, "reviewer", "storyboard", "status", `镜头 ${frame.shotId} 按审核意见重绘未成功 ⚠️：${result.error ?? "未知原因"}`);
+		if (result.ok) {
+			redrawnShotIds.push(frame.shotId);
+		} else {
+			pushEvent(run, "reviewer", "storyboard", "status", `镜头 ${frame.shotId} 按审核意见重绘未成功 ⚠️：${result.error ?? "未知原因"}`);
+			// auto 路径达独立上限：跳出本轮重绘循环（不要死循环 burn 预算）。
+			if (result.error?.includes("自动重绘") && result.error?.includes("仍未通过")) break;
+		}
 	}
 	if (redrawnShotIds.length === 0) return;
 
