@@ -365,4 +365,66 @@ describe("computeQaDeltas 派发后回灌文案生成（闸门 4）", () => {
 		const text = computeQaDeltas("SH01", before, after);
 		assert.equal(text, null);
 	});
+
+	it("轴分与裁决同时变 → 事件文案含三部分（中文不出现“（无变化）”脏字符）", async () => {
+		const { computeQaDeltas, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "回灌测试 5" });
+		run.verdict = {
+			overall: "warn",
+			score: 70,
+			axes: [
+				{ id: "briefFit", score: 60 },
+				{ id: "visualConsistency", score: 80 },
+			],
+			shots: [{ id: "SH03", verdict: "warn", reason: "装束跳变" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		run.verdict = {
+			overall: "pass",
+			score: 85,
+			axes: [
+				{ id: "briefFit", score: 88 },
+				{ id: "visualConsistency", score: 70 },
+			],
+			shots: [{ id: "SH03", verdict: "ok", reason: "修正" }],
+		};
+		const after = snapshotShotVerdict(run, "SH03");
+		const text = computeQaDeltas("SH03", before, after);
+		assert.ok(text);
+		assert.match(text!, /镜头裁决 warn→ok/);
+		assert.match(text!, /briefFit 60→88 ✅/);
+		assert.match(text!, /visualConsistency 80→70 ⚠️/);
+		assert.doesNotMatch(text!, /（无变化）/, "有变化时不应出现“（无变化）”字符");
+	});
+
+	it("多轴同时变 + 裁决同时变 → 「；」分隔（复防脏字符）", async () => {
+		const { computeQaDeltas, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "回灌测试 6" });
+		run.verdict = {
+			overall: "warn",
+			score: 70,
+			axes: [
+				{ id: "briefFit", score: 60 },
+				{ id: "pacing", score: 70 },
+			],
+			shots: [{ id: "SH03", verdict: "warn", reason: "" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		run.verdict = {
+			overall: "pass",
+			score: 90,
+			axes: [
+				{ id: "briefFit", score: 85 },
+				{ id: "pacing", score: 90 },
+			],
+			shots: [{ id: "SH03", verdict: "ok", reason: "" }],
+		};
+		const after = snapshotShotVerdict(run, "SH03");
+		const text = computeQaDeltas("SH03", before, after);
+		assert.ok(text);
+		assert.match(text!, /；/, "三项都变时必须用“；”分隔");
+		assert.match(text!, /镜头裁决/);
+		assert.match(text!, /briefFit 60→85 ✅/);
+		assert.match(text!, /pacing 70→90 ✅/);
+	});
 });

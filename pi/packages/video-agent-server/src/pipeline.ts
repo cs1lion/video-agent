@@ -735,7 +735,7 @@ export function computeQaDeltas(
 	if (verdictChange) parts.push(`镜头裁决 ${verdictChange}`);
 	if (improved.length) parts.push(improved.join(" / "));
 	if (regressed.length) parts.push(regressed.join(" / "));
-	return `重做 ${shotId} 后 QA 评分：${parts.join("；")}${parts.every((p) => !p.includes("→")) ? "（无变化）" : ""}`;
+	return `重做 ${shotId} 后 QA 评分：${parts.join("；")}`;
 }
 
 function setStage(run: RunRecord, id: StageId, status: RunStage["status"], progress: number): void {

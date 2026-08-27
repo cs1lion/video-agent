@@ -109,12 +109,12 @@ lastActions: Array<{
 - `propose` 返回后，director agent 主动调 `dispatch_action` 工具
 - 默认 false，保持当前 UX（手动采纳）
 
-### 5.3 对话复用审议工具
+### 5.3 对话复用审议工具 —— **不做**（已决定）
 
-`directorChat` 从 1-shot 升级为**轻量 ReAct**（maxTurns = 3）：
-- 复用 `get_recent_proposals`（审议最后未采纳的提案）
-- 复用 `get_run_state`（当前阶段 / 闸门）
-- 分类命中"已存在的未执行提案"时**直接派发**，不再读 LLM 重新分类
+> 经过实施评估后放弃（2025）：该改动会动 HTTP 响应延迟模型
+> 与现有 UI 状态机，回报/风险不对等。详见 commit `01d2fa5` 后的对话。
+> 重复执行已由 `lastActions`（`ff68cb5`）+ 跨镜一致性（`e0fd7a3`）+ 4 道闸门
+> （`ff68cb5` / `b4b76ce` / `7a6a9b8`）的组合防住。`directorChat` 保持 1-shot。
 
 ## 6. UI 叙事的诚实声明
 
