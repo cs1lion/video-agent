@@ -7,7 +7,10 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import {
+	MAX_SHOTS,
+	MIN_SHOTS,
 	NEGATIVE_PROMPT_PRESETS,
+	SHOT_COUNT_PRESETS,
 	type AspectRatio,
 	type ClipDurationSec,
 	type Fps,
@@ -90,11 +93,46 @@ export function OptionsForm({
 							/>
 						</Field>
 						<Field label="镜头数">
-							<Segmented<ShotCount>
-								value={options.shotCount}
-								onChange={(v) => onChange({ shotCount: v })}
-								options={[3, 4, 5, 6].map((n) => ({ value: n as ShotCount, label: `${n} 镜` }))}
-							/>
+							<div className="flex flex-wrap items-center gap-2">
+								<Segmented<ShotCount>
+									value={options.shotCount}
+									onChange={(v) => onChange({ shotCount: v })}
+									options={SHOT_COUNT_PRESETS.map((n) => ({ value: n, label: `${n} 镜` }))}
+								/>
+								{/* 自定义入口：高级选项里允许自由填 3..30，让长片 / 转场多的片子可起拍。 */}
+								<div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+									<span>自定义</span>
+									<input
+										type="number"
+										min={MIN_SHOTS}
+										max={MAX_SHOTS}
+										step={1}
+										inputMode="numeric"
+										className="field-input !w-20 !py-1 !text-xs"
+										value={
+											SHOT_COUNT_PRESETS.includes(options.shotCount)
+												? ""
+												: options.shotCount
+										}
+										placeholder={`${MIN_SHOTS}-${MAX_SHOTS}`}
+										title={`分镜数范围 ${MIN_SHOTS}..${MAX_SHOTS}`}
+										onChange={(e) => {
+											const raw = e.target.value.trim();
+											if (raw === "") return; // 输入框为空不覆盖当前选中预设
+											const n = Number.parseInt(raw, 10);
+											if (Number.isInteger(n) && n >= MIN_SHOTS && n <= MAX_SHOTS) {
+												onChange({ shotCount: n });
+											}
+										}}
+									/>
+								</div>
+							</div>
+							{/* 当前选中超出预设时给一行提示，避免用户误以为没生效 */}
+							{!SHOT_COUNT_PRESETS.includes(options.shotCount) && (
+								<p className="text-[10px] text-amber-200/80">
+									当前 {options.shotCount} 镜（自定义），可用范围 {MIN_SHOTS}–{MAX_SHOTS}
+								</p>
+							)}
 						</Field>
 						<Field label="单镜时长">
 							<Segmented<ClipDurationSec>

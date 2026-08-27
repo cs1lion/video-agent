@@ -13,7 +13,13 @@ export type AspectRatio = "16:9" | "9:16" | "1:1" | "4:3";
 export type ClipDurationSec = 3 | 5 | 8 | 10;
 export type Fps = 24 | 30 | 60;
 export type MotionIntensity = "low" | "medium" | "high";
-export type ShotCount = 3 | 4 | 5 | 6;
+/** 镜头数：3..30。共创实验室与高级选项均可自由填，不再限定字面量联合。
+ *  下限 3 保留叙事完整度，上限 30 防意外输入超大数烧光管线预算。 */
+export type ShotCount = number;
+export const MIN_SHOTS = 3;
+export const MAX_SHOTS = 30;
+/** 分镜数预设（Quick select）。长片场景在共创实验室已开放至 30。 */
+export const SHOT_COUNT_PRESETS: readonly ShotCount[] = [3, 4, 5, 6, 8, 10, 12, 15];
 
 export interface GenerationOptions {
 	/** 输出分辨率 */
@@ -83,10 +89,20 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
 
 const RESOLUTIONS: readonly Resolution[] = ["480p", "720p", "1080p"];
 const ASPECT_RATIOS: readonly AspectRatio[] = ["16:9", "9:16", "1:1", "4:3"];
-const SHOT_COUNTS: readonly ShotCount[] = [3, 4, 5, 6];
 const CLIP_DURATIONS: readonly ClipDurationSec[] = [3, 5, 8, 10];
 const FPS_VALUES: readonly Fps[] = [24, 30, 60];
 const MOTION_INTENSITIES: readonly MotionIntensity[] = ["low", "medium", "high"];
+
+/** 镜头数范围校验（替代原白名单）
+ *  越界或小数 →默认，与其他字段一致（程序性异常而非用户选择）。
+ *  UI 输入框限定 MIN..MAX，用户路径不会触发越界。 */
+function clampShotCount(value: unknown): ShotCount {
+	const n = typeof value === "number" ? Math.floor(value) : Number.NaN;
+	if (!Number.isFinite(n) || n < MIN_SHOTS || n > MAX_SHOTS) {
+		return DEFAULT_GENERATION_OPTIONS.shotCount;
+	}
+	return n;
+}
 
 /**
  * 合并用户输入与默认值：逐字段白名单校验，非法值回退默认。
@@ -101,9 +117,7 @@ export function resolveGenerationOptions(partial?: Partial<GenerationOptions>): 
 		aspectRatio: ASPECT_RATIOS.includes(partial.aspectRatio as AspectRatio)
 			? (partial.aspectRatio as AspectRatio)
 			: DEFAULT_GENERATION_OPTIONS.aspectRatio,
-		shotCount: SHOT_COUNTS.includes(partial.shotCount as ShotCount)
-			? (partial.shotCount as ShotCount)
-			: DEFAULT_GENERATION_OPTIONS.shotCount,
+		shotCount: clampShotCount(partial.shotCount),
 		clipDurationSec: CLIP_DURATIONS.includes(partial.clipDurationSec as ClipDurationSec)
 			? (partial.clipDurationSec as ClipDurationSec)
 			: DEFAULT_GENERATION_OPTIONS.clipDurationSec,

@@ -57,7 +57,8 @@ describe("生成质量选项", () => {
 		const resolved = resolveGenerationOptions({
 			resolution: "8k" as never,
 			aspectRatio: "21:9" as never,
-			shotCount: 9 as never,
+			// 50 超出 MAX_SHOTS=30，按范围校验回退默认；中间值（如 9、20）现在合法不再回退
+			shotCount: 50 as never,
 			clipDurationSec: 7 as never,
 			fps: 48 as never,
 			motionIntensity: "extreme" as never,
@@ -74,6 +75,18 @@ describe("生成质量选项", () => {
 		expect(resolved.detailBoost).toBe(true);
 		expect(resolved.promptLanguage).toBe("zh");
 		expect(resolved.seed).toBeUndefined();
+	});
+
+	test("范围内任意分镜数（包上下限）合法通过", () => {
+		// 边界：MIN_SHOTS 和 MAX_SHOTS，以及中段长片场景
+		expect(resolveGenerationOptions({ shotCount: 3 as never }).shotCount).toBe(3);
+		expect(resolveGenerationOptions({ shotCount: 12 as never }).shotCount).toBe(12);
+		expect(resolveGenerationOptions({ shotCount: 30 as never }).shotCount).toBe(30);
+		// 上下限外回退默认
+		expect(resolveGenerationOptions({ shotCount: 2 as never }).shotCount).toBe(5);
+		expect(resolveGenerationOptions({ shotCount: 31 as never }).shotCount).toBe(5);
+		// 非整数舍入（保持整数）
+		expect(resolveGenerationOptions({ shotCount: 7.9 as never }).shotCount).toBe(7);
 	});
 
 	test("非整数 seed 被丢弃", () => {
