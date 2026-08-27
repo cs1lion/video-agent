@@ -18,6 +18,8 @@ function KeyframeCard({
 	status,
 	error,
 	stale,
+	selected,
+	onToggle,
 	busy,
 	onAdjust,
 	index,
@@ -29,6 +31,8 @@ function KeyframeCard({
 	status: "pending" | "done" | "failed" | "missing";
 	error?: string;
 	stale?: boolean;
+	selected: boolean;
+	onToggle: (shotId: string, selected: boolean) => void;
 	busy: boolean;
 	onAdjust: (shotId: string, instruction: string) => void;
 	index: number;
@@ -80,6 +84,22 @@ function KeyframeCard({
 						设计已更新 · 建议重绘
 					</span>
 				)}
+				<label
+					className={cn(
+						"absolute right-2 top-2 flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium backdrop-blur-sm transition",
+						selected
+							? "border-emerald-300/60 bg-emerald-500/25 text-emerald-100"
+							: "border-white/20 bg-black/55 text-zinc-300 hover:border-emerald-300/50 hover:text-emerald-200",
+					)}
+				>
+					<input
+						type="checkbox"
+						checked={selected}
+						onChange={(event) => onToggle(shotId, event.target.checked)}
+						className="size-3 accent-emerald-400"
+					/>
+					进入成片
+				</label>
 			</div>
 			<div className="space-y-2 px-3 py-2.5">
 				<div className="flex items-center gap-2">
@@ -126,12 +146,16 @@ export function KeyframeStage({
 	keyframes,
 	script,
 	prompts,
+	selectedShotIds,
+	onToggle,
 	busy,
 	onAdjust,
 }: {
 	keyframes: KeyframesDoc | null;
 	script: ScriptDoc | null;
 	prompts: ShotPromptDoc | null;
+	selectedShotIds: string[];
+	onToggle: (shotId: string, selected: boolean) => void;
 	busy: boolean;
 	onAdjust: (shotId: string, instruction: string) => void;
 }) {
@@ -139,6 +163,9 @@ export function KeyframeStage({
 	const frameOf = (id: string) => keyframes?.frames.find((f) => f.shotId === id);
 	const readyCount = shotIds.filter((id) => frameOf(id)?.status === "done").length;
 	const staleCount = (keyframes?.frames ?? []).filter((f) => (f.staleRefs ?? []).length > 0).length;
+	const confirmableCount = shotIds.filter(
+		(id) => selectedShotIds.includes(id) && frameOf(id)?.status === "done",
+	).length;
 
 	return (
 		<StageShell kicker="STAGE 03.5 · KEYFRAMES" title="分镜关键帧">
@@ -149,6 +176,7 @@ export function KeyframeStage({
 					<p className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-4 py-2.5 text-xs leading-relaxed text-cyan-100/90">
 						视频按「关键帧锚定 + 分镜提示词」生成：每镜先出一张首帧锚定图锁定构图与色调，再由视频模型延展成动态镜头。
 						对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。
+						勾选「进入成片」可选择 N/M 镜部分确认；未勾选镜头不会提交视频生成，也不会消耗额度。
 						{staleCount > 0 && (
 							<span className="font-medium text-amber-200">
 								其中 {staleCount} 镜因美术设计更新已标过期，确认前建议先重绘。
@@ -169,6 +197,8 @@ export function KeyframeStage({
 									status={frame?.status ?? "missing"}
 									error={frame?.error}
 									stale={(frame?.staleRefs ?? []).length > 0}
+									selected={selectedShotIds.includes(id)}
+									onToggle={onToggle}
 									busy={busy && Boolean(frame?.attempts)}
 									onAdjust={onAdjust}
 								/>

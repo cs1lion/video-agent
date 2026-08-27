@@ -91,6 +91,13 @@ const SCRIPT_FIXTURE: JsonFixture = {
 			visual: "小林在深夜办公室敲键盘，仰头喝一口气泡水，罐身冰珠反光",
 			durationSec: 4,
 		},
+		{
+			id: "SH02",
+			narrationZh: "窗外的城市仍在降温。",
+			narrationEn: "Outside, the city keeps cooling.",
+			visual: "小林在冷色落地窗前转身，年轻插画师穿同一件 olive-green knit sweater",
+			durationSec: 2,
+		},
 	],
 };
 
@@ -115,6 +122,11 @@ const PROMPTS_FIXTURE: JsonFixture = {
 			prompt:
 				"Cinematic medium shot of a tired young illustrator in an olive-green knit sweater typing at night, sipping a sparkling water can, cool monitor glow, slow push-in. Strictly avoid: on-screen text, watermark",
 		},
+		{
+			shotId: "SH02",
+			prompt:
+				"Cinematic medium shot of the same tired young illustrator in an olive-green knit sweater turning beside a cold window, teal city bokeh. Strictly avoid: on-screen text, watermark",
+		},
 	],
 };
 
@@ -135,8 +147,8 @@ const QA_FIXTURE: JsonFixture = {
 function llmStub(user: unknown): JsonFixture {
 	// 注意：JSON.stringify 会转义引号，必须先去掉反斜杠再匹配提示词原文标记
 	const text = (typeof user === "string" ? user : JSON.stringify(user)).replace(/\\/g, "");
-	if (text.includes("narrationZh")) return SCRIPT_FIXTURE;
 	if (text.includes('"prompts": [{"shotId"')) return PROMPTS_FIXTURE;
+	if (text.includes("narrationZh")) return SCRIPT_FIXTURE;
 	// 实体推导提示词内嵌整份美术设计 JSON，必须先于 styleKeywords 判定
 	if (text.includes('"characters"') && text.includes('"scenes"')) return DESIGN_FIXTURE;
 	if (text.includes('"styleKeywords"')) return BIBLE_FIXTURE;
@@ -304,8 +316,14 @@ describe("确认闸门状态机（全桩）", () => {
 		const frames = JSON.parse(await readFile(path.join(record.dir, "keyframes.json"), "utf-8")) as {
 			frames: { shotId: string; status: string }[];
 		};
-		assert.equal(frames.frames.length, 1);
-		assert.equal(frames.frames[0]!.status, "done");
+		assert.deepEqual(
+			frames.frames.map((f) => f.shotId),
+			["SH01", "SH02"],
+		);
+		assert.equal(
+			frames.frames.every((f) => f.status === "done"),
+			true,
+		);
 		const imageJobs = submittedJobs.filter((j) => j.kind === "image");
 		assert.ok(imageJobs.length > imageJobsBefore); // 关键帧确实新出了图
 		const keyJob = imageJobs.at(-1)!;
@@ -345,6 +363,49 @@ describe("确认闸门状态机（全桩）", () => {
 		assert.ok(typeof clipJob.params.image === "string" && clipJob.params.image.startsWith("data:image/png;base64,"));
 		assert.match(clipJob.prompt, /olive-green knit sweater/); // LLM 锚点未被丢
 		assert.ok(recordNow.videoUrl);
+	});
+
+	it("关键帧部分确认 → 未勾选镜头不提交视频，下游只制作放行集", async () => {
+		const record = pipeline.startRun(ctx, store, {
+			logline: "部分确认样片：两镜剧本只放行首镜",
+			keyMessage: "ONE",
+		});
+		await waitRecord(record, (status) => status === "awaiting", "partial design gate");
+		assert.equal(pipeline.resumeRun(ctx, record).ok, true);
+		await waitRecord(
+			record,
+			(status, gate) => status === "awaiting" && gate === "keyframes",
+			"partial keyframes gate",
+		);
+
+		const videosBefore = submittedJobs.filter((j) => j.kind === "video").length;
+		const result = pipeline.resumeRun(ctx, record, ["SH02"]);
+		assert.equal(result.ok, true, result.error ?? "");
+		await waitRecord(record, (status) => status === "done" || status === "failed", "partial finish");
+		assert.equal(record.status, "done", record.error ?? "");
+
+		// 只有 SH02 获得视频/配音额度；SH01 连 ensureKeyframe 之外的下游调用都不应发生
+		const runVideos = submittedJobs.filter((j) => j.kind === "video" && j.dir === record.dir);
+		assert.deepEqual(
+			runVideos.map((j) => j.outputName),
+			["clip-SH02"],
+		);
+		const runTts = submittedJobs.filter((j) => j.kind === "tts" && j.dir === record.dir);
+		assert.deepEqual(
+			runTts.map((j) => j.outputName),
+			["tts-SH02"],
+		);
+		assert.equal(submittedJobs.filter((j) => j.kind === "video").length > videosBefore, true);
+
+		const persisted = JSON.parse(await readFile(path.join(record.dir, "keyframes.json"), "utf-8")) as {
+			frames: { shotId: string; confirmed?: boolean }[];
+			confirmedShotIds?: string[];
+		};
+		assert.deepEqual(persisted.confirmedShotIds, ["SH02"]);
+		assert.equal(persisted.frames.find((f) => f.shotId === "SH01")?.confirmed, false);
+		assert.equal(persisted.frames.find((f) => f.shotId === "SH02")?.confirmed, true);
+		assert.ok(record.events.some((e) => e.text.includes("1/2 镜进入视频生成")));
+		assert.match(record.finalFile ?? "", /^final\.mp4$/);
 	});
 
 	it("refine(visual)：指令注入下游提示词并重挂美术设计闸门", async () => {

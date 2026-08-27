@@ -13,7 +13,7 @@
  *   GET  /api/runs/:id/files/*                 run 内任意产物文件（安全路径校验）
  *   POST /api/runs/:id/chat                    与导演对话（真实 LLM）
  *   POST /api/runs/:id/refine                  微调文本阶段（剧本/美术设计/分镜提示词）
- *   POST /api/runs/:id/resume                  微调确认后从最早未完成阶段推进
+ *   POST /api/runs/:id/resume                  确认推进；可选 confirmedShotIds 表示关键帧部分确认
  *   POST /api/runs/:id/reshot                  镜头级重做（版本化备份 + 质检反馈回灌）
  *   POST /api/runs/:id/retts                   旁白重录（改写文案或纯表演指导，语音级重做）
  *   POST /api/runs/:id/design/adjust           设计图单卡调整重绘（美术设计）
@@ -942,7 +942,11 @@ function createApp(ctx: ServerContext) {
 			notFoundRun(res, req.params.id);
 			return;
 		}
-		const result = resumeRun(ctx, run);
+		const rawIds = req.body?.confirmedShotIds;
+		const confirmedShotIds = Array.isArray(rawIds)
+			? rawIds.filter((id): id is string => typeof id === "string")
+			: undefined;
+		const result = resumeRun(ctx, run, confirmedShotIds);
 		if (!result.ok) {
 			res.status(400).json(result);
 			return;

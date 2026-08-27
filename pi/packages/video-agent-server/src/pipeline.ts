@@ -1118,6 +1118,9 @@ async function stagePrompts(sc: StageCtx, script?: ScriptDoc, bible?: VisualBibl
 	// 关键帧先行：分镜提示词就绪后立刻逐镜绘制首帧锚定图（美术设计素材 → 画面原料）
 	setStage(run, "prompts", "running", 30);
 	const keyframes = await readKeyframes(run);
+	// 重跑分镜会重塑画面原料：上一轮确认清单随之作废，必须重新经过关键帧闸门。
+	keyframes.confirmedShotIds = [];
+	for (const frame of keyframes.frames) delete frame.confirmed;
 	for (const [i, shot] of scriptDoc.shots.entries()) {
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
@@ -1147,6 +1150,21 @@ async function readKeyframes(run: RunRecord): Promise<KeyframesDoc> {
 		// 首次生成
 	}
 	return { frames: [] };
+}
+
+/** 同步写确认清单：resume 在启动下游前必须保证制作集已落盘 */
+function persistKeyframeConfirmations(run: RunRecord, doc: KeyframesDoc, confirmedShotIds: string[]): void {
+	const next: KeyframesDoc = {
+		...doc,
+		frames: doc.frames.map((frame) => ({
+			...frame,
+			...(confirmedShotIds.includes(frame.shotId) ? { confirmed: true } : { confirmed: false }),
+		})),
+		confirmedShotIds,
+	};
+	const tmp = path.join(run.dir, `keyframes-confirm.${Date.now()}.tmp`);
+	fs.writeFileSync(tmp, JSON.stringify(next, null, "\t"), "utf-8");
+	fs.renameSync(tmp, path.join(run.dir, "keyframes.json"));
 }
 
 async function fileDataUrl(dir: string, relPath: string): Promise<string | null> {
@@ -1224,7 +1242,11 @@ async function propagateEntityUpdate(run: RunRecord, entity: DesignEntity): Prom
 	}
 	for (const f of affected) {
 		f.staleRefs = [...new Set([...(f.staleRefs ?? []), entity.id])];
+		delete f.confirmed;
 	}
+	// 设计源更新会取消对应帧的放行资格；已记录的制作集同步移除该镜
+	if (Array.isArray(frames.confirmedShotIds))
+		frames.confirmedShotIds = frames.confirmedShotIds.filter((id) => id !== entity.id);
 	await writeJson(run, "keyframes.json", frames);
 	pushEvent(
 		run,
@@ -1400,6 +1422,7 @@ async function redesignKeyframeInner(
 	const prevSelfRef =
 		oldFile && fs.existsSync(path.join(run.dir, oldFile)) ? await fileDataUrl(run.dir, oldFile) : null;
 	entry.attempts += 1;
+	delete entry.confirmed;
 	pushEvent(
 		run,
 		"storyboard",
@@ -1444,6 +1467,8 @@ async function redesignKeyframeInner(
 		const freshRef = await keyframeReferenceOf(run, shotPrompt, script.shots.find((s) => s.id === shotId)?.visual);
 		if (freshRef) entry.refs = [freshRef.entityId];
 		delete entry.staleRefs;
+		if (Array.isArray(doc.confirmedShotIds))
+			doc.confirmedShotIds = doc.confirmedShotIds.filter((id) => id !== shotId);
 		await writeJson(run, "keyframes.json", doc);
 		appendSpan(
 			run,
@@ -1489,9 +1514,16 @@ async function stageClips(
 	);
 	const keyframes = await readKeyframes(run);
 	setStage(run, "clips", "running", 0);
+	// 部分确认：只把用户明确放行的关键帧交给视频队列；未勾选镜头不消耗额度。
+	// 返回过滤后的 script，使 audio/export 与“实际制作集”保持同一顺序与同一长度。
+	// 关键区分：undefined 是旧 run / 未确认；空数组是显式清空（禁止），有值则严格按清单。
+	const hasRecordedSelection = Array.isArray(keyframes.confirmedShotIds);
+	const productionShots = hasRecordedSelection
+		? scriptDoc.shots.filter((shot) => keyframes.confirmedShotIds?.includes(shot.id))
+		: scriptDoc.shots;
 	const { width, height } = pixelDimensions(opts.resolution, opts.aspectRatio);
 	const clipFiles: (string | null)[] = [];
-	for (const [i, shot] of scriptDoc.shots.entries()) {
+	for (const [i, shot] of productionShots.entries()) {
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
 		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）
@@ -1545,7 +1577,7 @@ async function stageClips(
 				"tech",
 				"editor",
 				"status",
-				`镜头 ${shot.id} 生成完成 ✅（${i + 1}/${scriptDoc.shots.length}）`,
+				`镜头 ${shot.id} 生成完成 ✅（${i + 1}/${productionShots.length}）`,
 				{ stage: "generate", focus: shot.id, label: "查看片段" },
 			);
 		} else {
@@ -1555,7 +1587,7 @@ async function stageClips(
 				label: "查看该镜",
 			});
 		}
-		setStage(run, "clips", "running", Math.round(((i + 1) / scriptDoc.shots.length) * 100));
+		setStage(run, "clips", "running", Math.round(((i + 1) / productionShots.length) * 100));
 	}
 	const okCount = clipFiles.filter((f) => f !== null).length;
 	if (okCount === 0) {
@@ -1567,9 +1599,9 @@ async function stageClips(
 		"tech",
 		"editor",
 		"handoff",
-		`镜头批次交付：${okCount}/${scriptDoc.shots.length} 镜成功，移交剪辑师归一化与合成。`,
+		`镜头批次交付：${okCount}/${productionShots.length} 镜成功，移交剪辑师归一化与合成。`,
 	);
-	return { script: scriptDoc, clipFiles };
+	return { script: { ...scriptDoc, shots: productionShots }, clipFiles };
 }
 
 /** 逐镜表演指导表（voice-directions.json） */
@@ -2230,16 +2262,63 @@ async function refineStageWithContext(
 }
 
 /** 从最早未完成阶段继续推进到导出 */
-export function resumeRun(ctx: ServerContext, run: RunRecord): { ok: boolean; error?: string } {
+export function resumeRun(
+	ctx: ServerContext,
+	run: RunRecord,
+	confirmedShotIds?: string[],
+): { ok: boolean; error?: string } {
 	if (run.status === "running") return { ok: false, error: "管线运行中，请稍候" };
 	const next = run.stages.find((s) => s.status !== "done");
 	if (!next) return { ok: false, error: "所有阶段已完成，无需推进" };
+
+	// 关键帧闸门允许部分确认：请求中显式给出的 ID 清单就是本次视频制作集。
+	// 这里同步校验并落盘，保证下游 clips/audio/export 看到同一份不可变清单。
+	if (run.gate === "keyframes") {
+		try {
+			const scriptDoc = JSON.parse(fs.readFileSync(path.join(run.dir, "script.json"), "utf-8")) as ScriptDoc;
+			const keyframesDoc = JSON.parse(
+				fs.readFileSync(path.join(run.dir, "keyframes.json"), "utf-8"),
+			) as KeyframesDoc;
+			const readyIds = scriptDoc.shots
+				.filter((shot) => keyframesDoc.frames.some((f) => f.shotId === shot.id && f.status === "done"))
+				.map((shot) => shot.id);
+			// 兼容旧客户端/内部续跑：未传清单 = 显式全量确认；空数组 = 拒绝（至少放行一镜）。
+			const requested = confirmedShotIds ?? readyIds;
+			if (requested.length === 0) return { ok: false, error: "至少勾选 1 张关键帧才能进入视频生成" };
+			const seen = new Set<string>();
+			for (const id of requested) {
+				if (seen.has(id)) return { ok: false, error: `关键帧确认清单重复：${id}` };
+				seen.add(id);
+			}
+			const unknown = requested.find((id) => !readyIds.includes(id));
+			if (unknown) return { ok: false, error: `关键帧 ${unknown} 不存在或尚未生成完成` };
+			const selection = scriptDoc.shots.map((s) => s.id).filter((id) => seen.has(id));
+			persistKeyframeConfirmations(run, keyframesDoc, selection);
+			if (selection.length < scriptDoc.shots.length) {
+				pushEvent(
+					run,
+					"producer",
+					"all",
+					"status",
+					`关键帧部分确认 ✅ ${selection.length}/${scriptDoc.shots.length} 镜进入视频生成；未勾选镜头不会提交额度。`,
+					{ stage: "keyframes", label: "查看确认结果" },
+				);
+			}
+		} catch (error) {
+			return {
+				ok: false,
+				error: `无法读取关键帧确认产物：${error instanceof Error ? error.message : String(error)}`,
+			};
+		}
+	}
+
 	// 确认闸门通过：清闸门并记录
 	if (run.gate === "design") {
 		pushEvent(run, "producer", "all", "status", "美术设计已确认 ✅ 开始绘制分镜关键帧。");
 		run.gate = undefined;
 	} else if (run.gate === "keyframes") {
-		pushEvent(run, "producer", "all", "status", "关键帧已确认 ✅ 开始视频生成（片段按队列提交）。");
+		if (confirmedShotIds === undefined)
+			pushEvent(run, "producer", "all", "status", "关键帧已确认 ✅ 开始视频生成（片段按队列提交）。");
 		run.gate = undefined;
 	}
 	pushEvent(run, "producer", "all", "status", `确认推进 ▶ 从「${stageLabel(next.id)}」继续，直至成片。`);

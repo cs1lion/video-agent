@@ -228,12 +228,16 @@ export interface KeyframeEntry {
 	refs?: string[];
 	/** 这些实体的设计定稿在出图后又更新过：当前画面相对新设定已过期 */
 	staleRefs?: string[];
+	/** 本轮用户确认时放行该镜；未勾选镜头不会进入视频生成 */
+	confirmed?: boolean;
 	attempts: number;
 	versions: string[];
 }
 
 export interface KeyframesDoc {
 	frames: KeyframeEntry[];
+	/** 部分确认后的视频制作集；undefined = 未记录（旧 run 兜底全量） */
+	confirmedShotIds?: string[];
 	generatedAt?: string;
 }
 
@@ -603,8 +607,10 @@ export const api = {
 	async refine(runId: string, stageId: StageId, instruction: string, autoResume = false): Promise<void> {
 		await postJson(`/api/runs/${encodeURIComponent(runId)}/refine`, { stageId, instruction, autoResume });
 	},
-	async resume(runId: string): Promise<void> {
-		await postJson(`/api/runs/${encodeURIComponent(runId)}/resume`, {});
+	async resume(runId: string, confirmedShotIds?: string[]): Promise<void> {
+		await postJson(`/api/runs/${encodeURIComponent(runId)}/resume`, {
+			...(confirmedShotIds ? { confirmedShotIds } : {}),
+		});
 	},
 	async reshot(runId: string, shotId: string, instruction: string): Promise<void> {
 		await postJson(`/api/runs/${encodeURIComponent(runId)}/reshot`, { shotId, instruction });

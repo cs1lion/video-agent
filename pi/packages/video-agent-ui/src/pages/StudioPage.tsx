@@ -109,6 +109,7 @@ export function StudioPage() {
 	const [focusArt, setFocusArt] = useState<string | null>(deepLink.focus);
 	const [refineTarget, setRefineTarget] = useState<StageId | null>(null);
 	const [reshotTarget, setReshotTarget] = useState<{ shotId: string; instruction?: string } | null>(null);
+	const [selectedKeyframes, setSelectedKeyframes] = useState<string[]>([]);
 
 	useEffect(() => {
 		if (runId) bind(runId);
@@ -149,6 +150,44 @@ export function StudioPage() {
 		if (focus) setFocusArt(focus);
 	};
 
+	const scriptShotIds = artifacts?.script?.shots.map((shot) => shot.id) ?? [];
+	const frameOfKeyframe = (id: string) => artifacts?.keyframes?.frames.find((frame) => frame.shotId === id);
+	const confirmableShotIds = scriptShotIds.filter((id) => frameOfKeyframe(id)?.status === "done");
+	const keyframeRevision = scriptShotIds.map((id) => {
+		const frame = frameOfKeyframe(id);
+		return [frame?.status, frame?.attempts ?? -1, (frame?.staleRefs ?? []).length].join("-");
+	});
+	const keyframeSelectionKey = [
+		runId,
+		run?.gate,
+		scriptShotIds.join("|"),
+		confirmableShotIds.join("|"),
+		keyframeRevision.join("|"),
+		artifacts?.keyframes?.confirmedShotIds?.join("|") ?? "none",
+	].join(":");
+
+	useEffect(() => {
+		if (!run || run.gate !== "keyframes") {
+			setSelectedKeyframes([]);
+			return;
+		}
+		const recorded = artifacts?.keyframes?.confirmedShotIds;
+		if (Array.isArray(recorded) && recorded.length === 0) {
+			// 分镜/画面重塑后旧确认作废；新帧渲染出来时默认重新全选，用户可再取消
+			setSelectedKeyframes(confirmableShotIds);
+			return;
+		}
+		setSelectedKeyframes((previous) => {
+			const preserved = previous.filter((id) => confirmableShotIds.includes(id));
+			if (preserved.length > 0) return preserved;
+			return Array.isArray(recorded)
+				? confirmableShotIds.filter((id) => recorded.includes(id))
+				: confirmableShotIds;
+		});
+		// 签名包含 run/run 数据身份：产物经 SSE/轮询更新时可安全重建选择集
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [keyframeSelectionKey]);
+
 	if (!run) {
 		return (
 			<div className="relative flex min-h-dvh items-center justify-center text-zinc-300">
@@ -182,6 +221,9 @@ export function StudioPage() {
 	const hasAssets = (artifacts?.assets.length ?? 0) > 0;
 	const hasKeyframes = (artifacts?.keyframes?.frames ?? []).some((f) => f.status === "done" && f.url);
 	const staleKeyframes = (artifacts?.keyframes?.frames ?? []).filter((f) => (f.staleRefs ?? []).length > 0).length;
+	const confirmedForResume = scriptShotIds.filter((id) => selectedKeyframes.includes(id));
+	const isPartialKeyframeConfirm =
+		run.gate === "keyframes" && confirmedForResume.length < scriptShotIds.length;
 	const pill = STATUS_PILL[run.status] ?? STATUS_PILL.cancelled;
 	const redo = run.redoActive;
 	const redoPill = redo ? REDO_PILL[redo.kind] : undefined;
@@ -276,7 +318,7 @@ export function StudioPage() {
 								{run.gate === "design"
 									? "美术设计已就绪：请确认人物形象与场景设定，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"
 									: run.gate === "keyframes"
-										? `关键帧已就绪：请确认首帧画面，或单镜重绘；确认后才开始视频生成（将消耗生成额度）。${staleKeyframes > 0 ? `其中 ${staleKeyframes} 镜因美术设计更新已标过期。` : ""}`
+										? `关键帧已就绪：请勾选要进入成片的 ${confirmedForResume.length}/${scriptShotIds.length} 镜，或对未放行画面单镜重绘；确认后才开始视频生成。${isPartialKeyframeConfirm ? "未勾选镜头不会提交、不会消耗额度。" : ""}${staleKeyframes > 0 ? `其中 ${staleKeyframes} 镜因美术设计更新已标过期。` : ""}`
 										: "产物已按你的意见重塑，确认无误后继续推进下游阶段。"}
 							</span>
 							{run.gate === "design" && (
@@ -289,8 +331,17 @@ export function StudioPage() {
 									查看关键帧
 								</GlowButton>
 							)}
-							<GlowButton onClick={() => void resume()}>
-								{run.gate ? "确认并继续" : "继续推进"}
+							<GlowButton
+								disabled={run.gate === "keyframes" && confirmedForResume.length === 0}
+								onClick={() =>
+									void resume(run.gate === "keyframes" ? scriptShotIds.filter((id) => selectedKeyframes.includes(id)) : undefined)
+								}
+							>
+								{run.gate === "keyframes"
+									? `${confirmedForResume.length}/${scriptShotIds.length} 确认并继续`
+									: run.gate
+										? "确认并继续"
+										: "继续推进"}
 							</GlowButton>
 						</div>
 					</motion.div>
@@ -419,6 +470,16 @@ export function StudioPage() {
 										keyframes={artifacts?.keyframes ?? null}
 										script={artifacts?.script ?? null}
 										prompts={artifacts?.prompts ?? null}
+										selectedShotIds={selectedKeyframes}
+										onToggle={(shotId, selected) =>
+											setSelectedKeyframes((prev) =>
+												selected
+													? prev.includes(shotId)
+														? prev
+														: [...prev, shotId]
+													: prev.filter((id) => id !== shotId),
+											)
+										}
 										busy={refining}
 										onAdjust={(shotId, instruction) => void keyframeAdjust(shotId, instruction)}
 									/>

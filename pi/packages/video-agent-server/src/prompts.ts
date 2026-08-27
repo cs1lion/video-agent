@@ -437,12 +437,16 @@ export interface KeyframeEntry {
 	refs?: string[];
 	/** 这些实体的设计定稿在出图后又更新过：当前画面相对新设定已过期 */
 	staleRefs?: string[];
+	/** 用户在本轮关键帧确认时放行该镜；未勾选镜头不会进入视频生成 */
+	confirmed?: boolean;
 	attempts: number;
 	versions: string[];
 }
 
 export interface KeyframesDoc {
 	frames: KeyframeEntry[];
+	/** 部分确认通过后的制作清单；缺省/空 = 尚未记录（全量旧 run 兜底为全部） */
+	confirmedShotIds?: string[];
 	generatedAt?: string;
 }
 

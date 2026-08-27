@@ -32,7 +32,7 @@ interface StudioState {
 	designAdjust(entityId: string, instruction: string): Promise<boolean>;
 	keyframeAdjust(shotId: string, instruction: string): Promise<boolean>;
 	compose(selections: Record<string, { video?: string; audio?: string }>): Promise<boolean>;
-	resume(): Promise<void>;
+	resume(confirmedShotIds?: string[]): Promise<void>;
 	cancel(): Promise<void>;
 	startDeliberation(input: {
 		baseId: string;
@@ -236,11 +236,11 @@ export const useStudio = create<StudioState>((set, get) => ({
 		}
 	},
 
-	async resume() {
+	async resume(confirmedShotIds) {
 		const runId = get().runId;
 		if (!runId) return;
 		try {
-			await api.resume(runId);
+			await api.resume(runId, confirmedShotIds);
 			set({ error: null });
 		} catch (error) {
 			set({ error: messageOf(error) });
