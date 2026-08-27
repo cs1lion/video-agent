@@ -152,7 +152,10 @@ export function StudioPage() {
 
 	const scriptShotIds = artifacts?.script?.shots.map((shot) => shot.id) ?? [];
 	const frameOfKeyframe = (id: string) => artifacts?.keyframes?.frames.find((frame) => frame.shotId === id);
-	const confirmableShotIds = scriptShotIds.filter((id) => frameOfKeyframe(id)?.status === "done");
+	// 美术设计是关键帧的决定性原料：落后于设计更新的画面不允许直接进入视频，必须先重绘同步。
+	const confirmableShotIds = scriptShotIds.filter(
+		(id) => frameOfKeyframe(id)?.status === "done" && (frameOfKeyframe(id)?.staleRefs ?? []).length === 0,
+	);
 	const keyframeRevision = scriptShotIds.map((id) => {
 		const frame = frameOfKeyframe(id);
 		return [frame?.status, frame?.attempts ?? -1, (frame?.staleRefs ?? []).length].join("-");
@@ -222,6 +225,10 @@ export function StudioPage() {
 	const hasKeyframes = (artifacts?.keyframes?.frames ?? []).some((f) => f.status === "done" && f.url);
 	const staleKeyframes = (artifacts?.keyframes?.frames ?? []).filter((f) => (f.staleRefs ?? []).length > 0).length;
 	const confirmedForResume = scriptShotIds.filter((id) => selectedKeyframes.includes(id));
+	const productionShots = (artifacts?.script?.shots ?? []).filter(
+		(shot) => run.gate === "keyframes" && confirmedForResume.includes(shot.id),
+	);
+	const estimatedVideoSeconds = productionShots.reduce((total, shot) => total + shot.durationSec, 0);
 	const isPartialKeyframeConfirm =
 		run.gate === "keyframes" && confirmedForResume.length < scriptShotIds.length;
 	const pill = STATUS_PILL[run.status] ?? STATUS_PILL.cancelled;
@@ -318,7 +325,7 @@ export function StudioPage() {
 								{run.gate === "design"
 									? "美术设计已就绪：请确认人物形象与场景设定，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"
 									: run.gate === "keyframes"
-										? `关键帧已就绪：请勾选要进入成片的 ${confirmedForResume.length}/${scriptShotIds.length} 镜，或对未放行画面单镜重绘；确认后才开始视频生成。${isPartialKeyframeConfirm ? "未勾选镜头不会提交、不会消耗额度。" : ""}${staleKeyframes > 0 ? `其中 ${staleKeyframes} 镜因美术设计更新已标过期。` : ""}`
+										? `关键帧已就绪：请勾选要进入成片的 ${confirmedForResume.length}/${scriptShotIds.length} 镜。预计消耗 ${confirmedForResume.length} 段视频（约 ${estimatedVideoSeconds}s）和 ${confirmedForResume.length} 条配音${isPartialKeyframeConfirm ? `；未勾选的 ${scriptShotIds.length - confirmedForResume.length} 镜不会提交、不会消耗额度` : ""}。${staleKeyframes > 0 ? `其中 ${staleKeyframes} 镜已落后美术设计，须重绘后才能进入成片。` : ""}`
 										: "产物已按你的意见重塑，确认无误后继续推进下游阶段。"}
 							</span>
 							{run.gate === "design" && (

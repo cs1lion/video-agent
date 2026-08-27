@@ -2282,6 +2282,10 @@ export function resumeRun(
 			const readyIds = scriptDoc.shots
 				.filter((shot) => keyframesDoc.frames.some((f) => f.shotId === shot.id && f.status === "done"))
 				.map((shot) => shot.id);
+			const staleIds = scriptDoc.shots.flatMap((shot) => {
+				const frame = keyframesDoc.frames.find((f) => f.shotId === shot.id);
+				return frame?.status === "done" && (frame.staleRefs ?? []).length > 0 ? [shot.id] : [];
+			});
 			// 兼容旧客户端/内部续跑：未传清单 = 显式全量确认；空数组 = 拒绝（至少放行一镜）。
 			const requested = confirmedShotIds ?? readyIds;
 			if (requested.length === 0) return { ok: false, error: "至少勾选 1 张关键帧才能进入视频生成" };
@@ -2292,6 +2296,13 @@ export function resumeRun(
 			}
 			const unknown = requested.find((id) => !readyIds.includes(id));
 			if (unknown) return { ok: false, error: `关键帧 ${unknown} 不存在或尚未生成完成` };
+			const staleRequested = requested.find((id) => staleIds.includes(id));
+			if (staleRequested) {
+				return {
+					ok: false,
+					error: `关键帧 ${staleRequested} 已落后于最新美术设计，请先重绘同步后再进入视频生成`,
+				};
+			}
 			const selection = scriptDoc.shots.map((s) => s.id).filter((id) => seen.has(id));
 			persistKeyframeConfirmations(run, keyframesDoc, selection);
 			if (selection.length < scriptDoc.shots.length) {

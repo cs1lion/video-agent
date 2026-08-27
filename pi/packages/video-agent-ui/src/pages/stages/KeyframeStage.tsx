@@ -81,20 +81,24 @@ function KeyframeCard({
 				)}
 				{stale && (
 					<span className="absolute left-2 top-2 rounded-md border border-amber-300/50 bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-200 backdrop-blur-sm">
-						设计已更新 · 建议重绘
+						设计已更新 · 须重绘
 					</span>
 				)}
 				<label
+					title={stale ? "画面已落后最新美术设计，重绘同步后才能进入成片" : undefined}
 					className={cn(
 						"absolute right-2 top-2 flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium backdrop-blur-sm transition",
-						selected
-							? "border-emerald-300/60 bg-emerald-500/25 text-emerald-100"
-							: "border-white/20 bg-black/55 text-zinc-300 hover:border-emerald-300/50 hover:text-emerald-200",
+						stale
+							? "cursor-not-allowed border-white/15 bg-black/65 text-zinc-500 opacity-60"
+							: selected
+								? "border-emerald-300/60 bg-emerald-500/25 text-emerald-100"
+								: "border-white/20 bg-black/55 text-zinc-300 hover:border-emerald-300/50 hover:text-emerald-200",
 					)}
 				>
 					<input
 						type="checkbox"
 						checked={selected}
+						disabled={stale}
 						onChange={(event) => onToggle(shotId, event.target.checked)}
 						className="size-3 accent-emerald-400"
 					/>
@@ -163,9 +167,9 @@ export function KeyframeStage({
 	const frameOf = (id: string) => keyframes?.frames.find((f) => f.shotId === id);
 	const readyCount = shotIds.filter((id) => frameOf(id)?.status === "done").length;
 	const staleCount = (keyframes?.frames ?? []).filter((f) => (f.staleRefs ?? []).length > 0).length;
-	const confirmableCount = shotIds.filter(
-		(id) => selectedShotIds.includes(id) && frameOf(id)?.status === "done",
-	).length;
+	const selectedShots = (script?.shots ?? []).filter((shot) => selectedShotIds.includes(shot.id));
+	const selectedDurationSec = selectedShots.reduce((total, shot) => total + shot.durationSec, 0);
+	const skippedCount = shotIds.length - selectedShotIds.length;
 
 	return (
 		<StageShell kicker="STAGE 03.5 · KEYFRAMES" title="分镜关键帧">
@@ -176,10 +180,11 @@ export function KeyframeStage({
 					<p className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-4 py-2.5 text-xs leading-relaxed text-cyan-100/90">
 						视频按「关键帧锚定 + 分镜提示词」生成：每镜先出一张首帧锚定图锁定构图与色调，再由视频模型延展成动态镜头。
 						对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。
-						勾选「进入成片」可选择 N/M 镜部分确认；未勾选镜头不会提交视频生成，也不会消耗额度。
+						勾选「进入成片」可选择 N/M 镜部分确认。本次预计消耗 {selectedShotIds.length} 段视频（约 {selectedDurationSec}s）和{" "}
+						{selectedShotIds.length} 条配音；未勾选的 {skippedCount} 镜不会提交视频生成，也不会消耗额度。
 						{staleCount > 0 && (
 							<span className="font-medium text-amber-200">
-								其中 {staleCount} 镜因美术设计更新已标过期，确认前建议先重绘。
+								其中 {staleCount} 镜因美术设计更新已过期，须先重绘同步后才能进入成片。
 							</span>
 						)}
 					</p>

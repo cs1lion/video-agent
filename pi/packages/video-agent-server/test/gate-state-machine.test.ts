@@ -468,6 +468,14 @@ describe("确认闸门状态机（全桩）", () => {
 		assert.ok(record2.events.some((e) => e.text.includes("已标过期")));
 		assert.equal(submittedJobs.filter((j) => j.kind === "video").length, videosBefore);
 
+		// 过期关键帧是防超额护栏：显式放进成片清单也必须拒绝，避免旧形象烧视频额度
+		const blocked = pipeline.resumeRun(ctx, record2, ["SH01"]);
+		assert.equal(blocked.ok, false);
+		assert.match(blocked.error ?? "", /SH01.*美术设计|美术设计.*SH01/);
+		assert.equal(record2.status, "awaiting");
+		assert.equal(record2.gate, "keyframes");
+		assert.equal(submittedJobs.filter((j) => j.kind === "video").length, videosBefore);
+
 		// 用户按意见重绘关键帧：元数据同步新设定，且自参考底图就是刚标过期的旧帧
 		const synced = await pipeline.redrawKeyframe(ctx, record2, "SH01", "整体更冷一点");
 		assert.equal(synced.ok, true, synced.error ?? "");
