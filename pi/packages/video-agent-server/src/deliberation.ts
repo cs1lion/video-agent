@@ -31,7 +31,7 @@ import type { LlmConfig } from "./config.ts";
 import { getConsistency } from "./consistency.ts";
 import { probeDuration, runFfmpeg } from "./ffmpeg.ts";
 import { estimateProposalCost } from "./pricing.ts";
-import { type QaVerdict, type RunRecord, readArtifact, writeJson } from "./pipeline.ts";
+import { type QaVerdict, type RunRecord, LAST_ACTION_DEDUP_MS, readArtifact, writeJson } from "./pipeline.ts";
 import type { ShotPromptDoc } from "./prompts.ts";
 
 // ---- 常量 ----
@@ -609,6 +609,29 @@ function buildTools(
 				})),
 				proposals: params.proposals.slice(0, 2).map((p) => {
 					const action = actions.has(p.action as ProposalAction) ? (p.action as ProposalAction) : "reedit";
+					// 闸门 1质量底线：对QA 评分为 ok 的镜头禁止提议 reshot/retts（防 LLM 幻觉乱重做好镜头）
+					if ((action === "reshot" || action === "retts") && p.shotId) {
+						const target = run.verdict?.shots?.find((s) => s.id === p.shotId);
+						if (target?.verdict === "ok") {
+							throw new Error(
+								`镜头 ${p.shotId} 质检评分 ok（${target.reason || "通过"}），无需重做。请寻找真正有问题（warn/fail）的镜头。`,
+							);
+						}
+					}
+					// 闸门 3：lastActions 去重保护。3 分钟内同 (kind, shotId, label) 刚做过 → 直接拒
+					if ((action === "reshot" || action === "retts") && p.shotId) {
+						const duplicate = run.lastActions.find(
+							(a) =>
+								(a.kind === action || a.kind === action.replace("retts", "retts") || a.kind === action) &&
+								a.shotId === p.shotId &&
+								Date.now() - new Date(a.at).getTime() < LAST_ACTION_DEDUP_MS,
+						);
+						if (duplicate) {
+							throw new Error(
+								`镜头 ${p.shotId} 最近 3 分钟内已 ${duplicate.label}（去重护栏）。如需再次重做，请提供不同意见。`,
+							);
+						}
+					}
 					// P2：按 action + run options 算出金额（不依赖 LLM 文案）
 					const costEst = estimateProposalCost({
 						catalog: priceCatalog,
@@ -702,8 +725,19 @@ export async function runDeliberation(
 
 	// 导演归因循环（ReAct：observe → think → propose；循环内无写工具，执行全部在用户批准后）
 	const { tools, getProposal } = buildTools(run, base, rival, ctx.priceCatalog);
+	const recentActionsHint = run.lastActions.length > 0
+		? `\n\n【最近 3 分钟已执行的动作 — 避免重复提议】\n${
+				run.lastActions
+					.slice(0, 8)
+					.map(
+						(a) =>
+							`- ${a.kind}${a.shotId ? ` ${a.shotId}` : ""}: ${a.label}（${new Date(a.at).toLocaleTimeString("zh-CN")}）`,
+					)
+					.join("\n")
+			}\n如果某个镜头刚刚做过重做，不要再提同类动作。`
+		: "";
 	const context: AgentContext = {
-		systemPrompt: DIRECTOR_SYSTEM_PROMPT,
+		systemPrompt: DIRECTOR_SYSTEM_PROMPT + recentActionsHint,
 		messages: [],
 		tools,
 	};

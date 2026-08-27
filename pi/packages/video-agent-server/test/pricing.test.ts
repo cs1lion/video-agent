@@ -18,7 +18,7 @@ import {
 	round2,
 } from "../src/pricing.ts";
 import type { ServerContext } from "../src/config.ts";
-import { RunStore, startRun } from "../src/pipeline.ts";
+import { RunStore, pushLastAction, startRun } from "../src/pipeline.ts";
 
 const CATALOG = {
 	media: {
@@ -198,5 +198,63 @@ describe("live cost accumulation (pipeline integration)", () => {
 		const retts = estimateProposalCost({ catalog: ctx.priceCatalog, action: "retts" });
 		assert.equal(retts.amount, 0.05);
 		assert.match(retts.note, /TTS/);
+	});
+});
+
+describe("pushLastAction 去重保护（P2+审查）", () => {
+	let root: string;
+	let store: RunStore;
+	let ctx: ServerContext;
+	before(async () => {
+		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-lastactions-"));
+		store = new RunStore();
+		ctx = {
+			studioRoot: root,
+			mediaConfig: { media: [] } as unknown as ServerContext["mediaConfig"],
+			llm: { url: "http://stub", model: "stub", timeoutMs: 1000 },
+			port: 0,
+			priceCatalog: {
+				media: {},
+				llm: {},
+				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 1.0, perKChar: 0.05 },
+				source: "<test>",
+			},
+		};
+	});
+	after(async () => {
+		if (root) await fs.rm(root, { recursive: true, force: true });
+	});
+
+	it("首次 push 入栈；同 (kind, shotId, label) 3 分钟内重复 push 被吞掉", () => {
+		const run = startRun(ctx, store, { logline: "测试" });
+		const t0 = new Date().toISOString();
+		pushLastAction(run, { kind: "reshot", shotId: "SH03", label: "补拍镜头 SH03", at: t0 });
+		pushLastAction(run, { kind: "reshot", shotId: "SH03", label: "补拍镜头 SH03", at: t0 });
+		assert.equal(run.lastActions.length, 1, "3 分钟内同 key 应被去重");
+		assert.equal(run.lastActions[0]!.label, "补拍镜头 SH03");
+	});
+
+	it("不同 label 可叠加（同动作不同细节）", () => {
+		const run = startRun(ctx, store, { logline: "测试 2" });
+		pushLastAction(run, { kind: "reshot", shotId: "SH03", label: "补拍镜头 SH03", at: new Date().toISOString() });
+		pushLastAction(run, { kind: "reshot", shotId: "SH03", label: "补拍镜头 SH03（调整）", at: new Date().toISOString() });
+		assert.equal(run.lastActions.length, 2);
+	});
+
+	it("上限 20 条；超过丢最旧", () => {
+		const run = startRun(ctx, store, { logline: "测试 3" });
+		for (let i = 0; i < 25; i++) {
+			pushLastAction(run, { kind: "reshot", shotId: `SH${i}`, label: `补拍镜头 SH${i}`, at: new Date().toISOString() });
+		}
+		assert.equal(run.lastActions.length, 20);
+		assert.equal(run.lastActions[0]!.shotId, "SH24"); // 最新
+		assert.equal(run.lastActions[19]!.shotId, "SH5"); // 最旧保留
+	});
+
+	it("reexport 不同画幅被视为不同动作（label 不同 → 不去重）", () => {
+		const run = startRun(ctx, store, { logline: "测试 4" });
+		pushLastAction(run, { kind: "reexport", label: "重出 9:16 分发版", at: new Date().toISOString() });
+		pushLastAction(run, { kind: "reexport", label: "重出 1:1 分发版", at: new Date().toISOString() });
+		assert.equal(run.lastActions.length, 2, "不同 label 应保留");
 	});
 });

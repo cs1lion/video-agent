@@ -222,6 +222,19 @@ export interface RedoActive {
 	label: string;
 }
 
+/** 导演 agent 最近派发的执行类动作（reshot / retts / reexport / compose），按时间倒序。
+ *  用途：审议 system prompt 注入，让 agent 避免重复提议；3 分钟去重防双击。
+ *  与 RedoActive 区别：RedoActive 是"正在跑"，lastActions 是"最近跑完的历史账本"。 */
+export interface ActionRecord {
+	kind: "reshot" | "retts" | "reexport" | "compose";
+	shotId?: string;
+	label: string;
+	at: string;
+}
+
+/** P2+审查保护：动作去重窗口。同一 (kind, shotId, label) 在该窗口内只记一次。 */
+export const LAST_ACTION_DEDUP_MS = 3 * 60 * 1000;
+
 /** 视频制作团队角色（与 studio 十角色对齐的精简版） */
 export type RoleId =
 	| "producer"
@@ -260,6 +273,9 @@ export interface RunView {
 	ttsVersions: Record<string, string[]>;
 	/** 进行中的重做（进度栏「重做中」态；无重做时缺省） */
 	redoActive?: RedoActive;
+	/** P2+审查保护：最近完成的动作账本（reshot/retts/reexport/compose）。
+	 *  审议 agent 拿这个避免重复提议；UI 拿这个显示"刚才做了什么"。 */
+	lastActions?: ActionRecord[];
 	/** 最近一次导出的目标画幅（未设置 = 生成时主画幅） */
 	exportAspectRatio?: AspectRatio;
 	/** 最近一次导出的成片文件名（assets 下） */
@@ -346,6 +362,10 @@ export interface RunRecord {
 	error?: string;
 	images: RunImage[];
 	events: TeamEvent[];
+	/** P2+审查保护：最近完成的动作账本。3 分钟内同 (kind, shotId, label) 只记一次，
+	 *  用于审议 agent 避免重复提议被采纳， 以及 UI 查看"刚才做了什么"。
+	 *  旧 run 迁移时默认 []。 */
+	lastActions: ActionRecord[];
 	/** 每镜重做次数（镜头级重做的收敛护栏） */
 	shotAttempts: Record<string, number>;
 	/** 每镜历史版本文件名（当前版本恒占主名 clip-SHxx.mp4） */
@@ -390,6 +410,7 @@ export function runView(run: RunRecord): RunView {
 		ttsAttempts: run.ttsAttempts,
 		ttsVersions: run.ttsVersions,
 		...(run.redoActive ? { redoActive: run.redoActive } : {}),
+		...(run.lastActions.length > 0 ? { lastActions: run.lastActions } : {}),
 		...(run.gate ? { gate: run.gate } : {}),
 		...(run.exportAspectRatio ? { exportAspectRatio: run.exportAspectRatio } : {}),
 		...(run.finalFile ? { finalFile: run.finalFile } : {}),
@@ -433,6 +454,7 @@ export class RunStore {
 				url: `/api/runs/${id}/files/assets/ref/${img.id}.${img.ext}`,
 			})),
 			events: [],
+			lastActions: [],
 			shotAttempts: {},
 			shotVersions: {},
 			ttsAttempts: {},
@@ -477,6 +499,7 @@ export class RunStore {
 					stages: migrateLegacyRunStages(raw.dir, raw.stages as RunStage[]),
 					events: Array.isArray(raw.events) ? raw.events : [],
 					shotAttempts: raw.shotAttempts && typeof raw.shotAttempts === "object" ? raw.shotAttempts : {},
+					lastActions: Array.isArray(raw.lastActions) ? raw.lastActions : [],
 					shotVersions: raw.shotVersions && typeof raw.shotVersions === "object" ? raw.shotVersions : {},
 					ttsAttempts: raw.ttsAttempts && typeof raw.ttsAttempts === "object" ? raw.ttsAttempts : {},
 					ttsVersions: raw.ttsVersions && typeof raw.ttsVersions === "object" ? raw.ttsVersions : {},
@@ -654,6 +677,23 @@ function ttsAdapterOf(ctx: ServerContext): { id: string; kind: "tts"; model?: st
 	const a = ctx.mediaConfig.media.find((m) => m.kind === "tts");
 	if (!a) return null;
 	return { id: a.id, kind: "tts", model: a.model };
+}
+
+/** P2+审查保护：推送一条最近动作。3 分钟内同 (kind, shotId, label) 去重，
+ *  超 L20 丢弃最旧。该函数只 push + persistRun，不动其他状态。 */
+export function pushLastAction(run: RunRecord, action: ActionRecord): void {
+	const cutoff = Date.now() - LAST_ACTION_DEDUP_MS;
+	const dup = run.lastActions.some(
+		(a) =>
+			a.kind === action.kind &&
+			(a.shotId ?? "") === (action.shotId ?? "") &&
+			a.label === action.label &&
+			new Date(a.at).getTime() >= cutoff,
+	);
+	if (dup) return;
+	run.lastActions.unshift(action);
+	if (run.lastActions.length > 20) run.lastActions.length = 20;
+	persistRun(run);
 }
 
 function setStage(run: RunRecord, id: StageId, status: RunStage["status"], progress: number): void {
@@ -2580,6 +2620,16 @@ export function resumeRun(
 	return { ok: true };
 }
 
+/** 重新导出点：reexportRun  同步入口、异步执行。看准入口点 push 即可（失败也记成本
+ *  已发生，去重保护后续误点）。 */
+function pushReexportAction(run: RunRecord, aspectLabel: string): void {
+	pushLastAction(run, {
+		kind: "reexport",
+		label: aspectLabel,
+		at: new Date().toISOString(),
+	});
+}
+
 /** 重新导出支持的画幅白名单 */
 const REEXPORT_ASPECTS: readonly AspectRatio[] = ["16:9", "9:16", "1:1", "4:3"];
 
@@ -2621,6 +2671,7 @@ export function reexportRun(ctx: ServerContext, run: RunRecord, aspectRatio?: st
 		kind: "reexport",
 		label: aspectNote ? `重出 ${targetAspect} 分发版` : "重新导出成片",
 	};
+	pushReexportAction(run, run.redoActive.label);
 	persistRun(run);
 	void executeStages(ctx, run, ["export"], { fromResume: true })
 		.catch(() => {})
@@ -2866,6 +2917,12 @@ export async function reshotRun(
 			);
 			await executeStages(ctx, run, ["export"], { fromResume: true });
 			run.redoActive = null;
+			pushLastAction(run, {
+				kind: "reshot",
+				shotId,
+				label: `补拍镜头 ${shotId}`,
+				at: new Date().toISOString(),
+			});
 			persistRun(run);
 		} catch (error) {
 			if (sc.signal.aborted) {
@@ -3111,6 +3168,12 @@ export async function rettsRun(
 			);
 			await executeStages(ctx, run, ["export"], { fromResume: true });
 			run.redoActive = null;
+			pushLastAction(run, {
+				kind: "retts",
+				shotId,
+				label: `重录 ${shotId} 旁白`,
+				at: new Date().toISOString(),
+			});
 			persistRun(run);
 		} catch (error) {
 			if (sc.signal.aborted) {
@@ -3448,6 +3511,11 @@ async function composeCutInner(
 		`交付版 #${seq} 装配完成 ✅（${keptShots.length} 镜 · ${cursor.toFixed(1)}s）。按你勾选的版本组合合成，主成片不受影响。`,
 		{ stage: "export", focus: `cut-${seq}`, label: "播放交付版" },
 	);
+	pushLastAction(run, {
+		kind: "compose",
+		label: `组合出片 #${seq}`,
+		at: new Date().toISOString(),
+	});
 	persistRun(run);
 	return { ok: true, remaining: MAX_COMPOSE_PER_RUN - seq };
 }

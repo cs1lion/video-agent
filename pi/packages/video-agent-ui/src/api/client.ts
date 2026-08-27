@@ -146,6 +146,13 @@ export interface RunView {
 	ttsVersions: Record<string, string[]>;
 	/** 进行中的重做（进度栏「重做中」态；无重做时缺省） */
 	redoActive?: RedoActive;
+	/** P2+审查保护：最近完成的动作账本（reshot/retts/reexport/compose）。 */
+	lastActions?: Array<{
+		kind: "reshot" | "retts" | "reexport" | "compose";
+		shotId?: string;
+		label: string;
+		at: string;
+	}>;
 	/** 最近一次导出的目标画幅（未设置 = 生成时主画幅） */
 	exportAspectRatio?: string;
 	/** 最近一次导出的成片文件名（assets 下，多画幅分发版存在） */
