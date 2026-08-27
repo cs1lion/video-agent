@@ -303,6 +303,26 @@ body {
   animation: dash-flow 1.2s linear infinite;
 }
 
+/* DAG 横向连线：已完成 → 琥珀流动虚线；未到达 → 静态暗虚线 */
+@keyframes flow-dash {
+  to { background-position-x: 14px; }
+}
+.flow-line {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(251, 191, 36, 0.85) 0 6px,
+    transparent 6px 14px
+  );
+  animation: flow-dash 0.7s linear infinite;
+}
+.flow-line-dim {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16) 0 6px,
+    transparent 6px 14px
+  );
+}
+
 /* ---------- reactbits-inspired fx（与大标题/流光背景同一套霓虹语言） ---------- */
 
 /* Shiny Text：kicker 文字流光扫过（暖金→暖玫，呼应 WarpText 的折射高光） */
