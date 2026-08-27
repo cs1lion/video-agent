@@ -142,6 +142,20 @@ export interface RunView {
 	finalFile?: string;
 }
 
+/** 首页项目列表用轻量视图（与 server runSummary 对齐） */
+export interface RunSummary {
+	id: string;
+	status: RunStatus;
+	gate?: "design" | "keyframes";
+	logline: string;
+	keyMessage?: string;
+	error?: string;
+	videoUrl?: string;
+	doneStages: number;
+	totalStages: number;
+	updatedAt?: string;
+}
+
 export interface BriefInput {
 	logline: string;
 	keyMessage?: string;
@@ -549,6 +563,10 @@ export const api = {
 	},
 	async pollRun(runId: string): Promise<RunView> {
 		return getJson(`/api/runs/${encodeURIComponent(runId)}`);
+	},
+	async listRuns(limit = 50): Promise<RunSummary[]> {
+		const data = await getJson<{ runs: RunSummary[] }>(`/api/runs?limit=${limit}`);
+		return data.runs;
 	},
 	async fetchArtifacts(runId: string): Promise<ArtifactsView> {
 		return getJson(`/api/runs/${encodeURIComponent(runId)}/artifacts`);

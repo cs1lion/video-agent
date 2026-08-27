@@ -10,6 +10,7 @@ import {
 	ArrowRight,
 	Clapperboard,
 	Film,
+	History,
 	LoaderCircle,
 	MessageCircleQuestion,
 	SkipForward,
@@ -17,7 +18,7 @@ import {
 	Users,
 } from "lucide-react";
 import { DEFAULT_GENERATION_OPTIONS, type GenerationOptions } from "@earendil-works/pi-video-agent";
-import { api, type QuestionView, type UploadedImage } from "@/api/client";
+import { api, type QuestionView, type RunSummary, type UploadedImage } from "@/api/client";
 import { ImageUploader } from "@/components/ImageUploader";
 import { OptionsForm } from "@/components/OptionsForm";
 import { FoldText } from "@/components/fx/FoldText";
@@ -43,10 +44,24 @@ export function HomePage() {
 	const [progress, setProgress] = useState({ answeredCount: 0, askedCount: 0, total: 0 });
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [recentRuns, setRecentRuns] = useState<RunSummary[]>([]);
 
 	function briefOf(): { logline: string; keyMessage?: string } {
 		return { logline: logline.trim(), ...(keyMessage.trim() ? { keyMessage: keyMessage.trim() } : {}) };
 	}
+
+	// 首页轻量发现：恢复后的历史项目可一键回到工作台；加载失败不阻塞新建入口
+	useEffect(() => {
+		let alive = true;
+		api.listRuns(12)
+			.then((runs) => {
+				if (alive) setRecentRuns(runs);
+			})
+			.catch(() => {});
+		return () => {
+			alive = false;
+		};
+	}, []);
 
 	async function run(fn: () => Promise<void>): Promise<void> {
 		if (busy) return;
@@ -197,6 +212,54 @@ export function HomePage() {
 						))}
 					</div>
 				</motion.div>
+
+				{recentRuns.length > 0 && (
+					<div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md">
+						<div className="mb-3 flex items-center gap-2 text-xs font-medium text-zinc-400">
+							<History className="size-3.5" />
+							最近项目
+						</div>
+						<div className="grid gap-2">
+							{recentRuns.slice(0, 3).map((run) => {
+								const label =
+									run.status === "running"
+										? "制作中"
+										: run.status === "awaiting"
+											? run.gate === "design"
+												? "待确认美术设计"
+												: "待确认关键帧"
+											: run.status === "done"
+												? "已完成"
+												: run.status === "failed"
+													? "已中断"
+													: "已取消";
+								const tone =
+									run.status === "awaiting"
+										? "text-amber-200"
+										: run.status === "done"
+											? "text-emerald-200"
+											: run.status === "running"
+												? "text-cyan-200"
+												: "text-zinc-400";
+								return (
+									<button
+										key={run.id}
+										type="button"
+										onClick={() => navigate(`/studio/${encodeURIComponent(run.id)}`)}
+										className="group flex items-center justify-between rounded-xl border border-white/8 bg-black/15 px-3 py-2 text-left transition hover:border-amber-300/40 hover:bg-white/[0.06]"
+									>
+										<span className="min-w-0 flex-1 truncate pr-3 text-sm text-zinc-200">{run.logline}</span>
+										<span className="mr-3 hidden font-mono text-[10px] text-zinc-500 sm:inline">
+											{run.doneStages}/{run.totalStages}
+										</span>
+										<span className={`shrink-0 text-[11px] ${tone}`}>{label}</span>
+										<Film className="ml-2 size-3.5 shrink-0 text-zinc-600 transition group-hover:text-amber-300" />
+									</button>
+								);
+							})}
+						</div>
+					</div>
+				)}
 
 				<GlassPanel className="mt-9 p-6 sm:p-8">
 					{error && (

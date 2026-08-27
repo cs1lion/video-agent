@@ -222,6 +222,36 @@ export interface RunView {
 	finalFile?: string;
 }
 
+/** 项目列表用轻量视图：不携带 events/images/options，首页历史卡只关心“能不能继续/看片” */
+export interface RunSummary {
+	id: string;
+	status: RunStatus;
+	gate?: "design" | "keyframes";
+	logline: string;
+	keyMessage?: string;
+	error?: string;
+	videoUrl?: string;
+	/** 当前已完成阶段数（0-6） */
+	doneStages: number;
+	totalStages: number;
+	updatedAt?: string;
+}
+
+export function runSummary(run: RunRecord, updatedAt?: string): RunSummary {
+	return structuredClone({
+		id: run.id,
+		status: run.status,
+		...(run.gate ? { gate: run.gate } : {}),
+		logline: run.brief.creative.logline,
+		...(run.brief.creative.keyMessage ? { keyMessage: run.brief.creative.keyMessage } : {}),
+		...(run.error ? { error: run.error } : {}),
+		...(run.videoUrl ? { videoUrl: run.videoUrl } : {}),
+		doneStages: run.stages.filter((stage) => stage.status === "done").length,
+		totalStages: STAGE_IDS.length,
+		...(updatedAt ? { updatedAt } : {}),
+	});
+}
+
 export interface RunRecord {
 	readonly id: string;
 	readonly dir: string;
@@ -333,6 +363,11 @@ export class RunStore {
 
 	get(id: string): RunRecord | undefined {
 		return this.runs.get(id);
+	}
+
+	/** 内存快照；排序与裁剪由 HTTP 层按磁盘更新时间决定 */
+	list(): RunRecord[] {
+		return [...this.runs.values()];
 	}
 
 	/**

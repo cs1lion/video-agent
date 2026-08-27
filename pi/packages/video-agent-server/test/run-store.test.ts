@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, describe, it } from "node:test";
 import type { EnrichedBrief } from "../../video-agent/src/index.ts";
-import { type RunStatus, RunStore, runView, type StageId } from "../src/pipeline.ts";
+import { type RunStatus, RunStore, runSummary, runView, type StageId } from "../src/pipeline.ts";
 
 const STAGES = ["script", "visual", "prompts", "clips", "audio", "export"] as const;
 
@@ -80,6 +80,19 @@ describe("RunStore.loadAll 重启恢复语义", () => {
 		const done = store.get("run-c-done-3")!;
 		assert.equal(done.status, "done");
 		assert.equal(store.get("run-d-corrupt-4"), undefined);
+
+		// 项目列表 API 的数据底座：轻量 summary 不把 events/images 拖进首页历史卡
+		assert.deepEqual(
+			store.list().map((r) => r.id),
+			["run-a-running-1", "run-b-awaiting-2", "run-c-done-3"],
+		);
+		const summary = runSummary(awaiting, "2026-08-27T00:00:00.000Z");
+		assert.equal(summary.gate, "design");
+		assert.equal(summary.logline, "30 秒气泡水广告");
+		assert.equal(summary.doneStages, 1);
+		assert.equal(summary.totalStages, 6);
+		assert.equal(summary.updatedAt, "2026-08-27T00:00:00.000Z");
+		assert.equal(summary.videoUrl, undefined);
 	});
 
 	it("counter 与已恢复的最大序号对齐，新 run 不撞 id 且预挂美术设计闸门", () => {

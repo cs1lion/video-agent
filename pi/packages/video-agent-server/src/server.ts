@@ -6,6 +6,7 @@
  *   POST /api/uploads                          上传参考图（dataUrl，≤10MB）
  *   GET  /api/uploads/:id                      预览上传图
  *   POST /api/generate                         启动管线（可携带 imageIds）→ runId
+ *   GET  /api/runs                             项目列表（轻量 summary，按状态文件更新时间倒序）
  *   GET  /api/runs/:id                         轮询状态（stages/events/verdict）
  *   GET  /api/runs/:id/artifacts               文本产物 + 资产清单
  *   GET  /api/runs/:id/files/*                 run 内任意产物文件（安全路径校验）
@@ -70,6 +71,7 @@ import {
 	reshotRun,
 	resumeRun,
 	rettsRun,
+	runSummary,
 	runView,
 	type StageId,
 	startRun,
@@ -500,6 +502,23 @@ function createApp(ctx: ServerContext) {
 	});
 
 	// ---- 运行状态 ----
+
+	app.get("/api/runs", (req, res) => {
+		const limitRaw = Number(req.query.limit ?? 50);
+		const limit = Number.isFinite(limitRaw) ? Math.min(100, Math.max(1, Math.floor(limitRaw))) : 50;
+		const runs = runStore
+			.list()
+			.map((run) => {
+				try {
+					return runSummary(run, fs.statSync(path.join(run.dir, "run-state.json")).mtime.toISOString());
+				} catch {
+					return runSummary(run);
+				}
+			})
+			.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))
+			.slice(0, limit);
+		res.json({ runs });
+	});
 
 	app.get("/api/runs/:id", (req, res) => {
 		const run = runStore.get(req.params.id);
