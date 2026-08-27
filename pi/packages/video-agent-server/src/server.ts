@@ -56,6 +56,7 @@ import {
 	runDeliberation,
 } from "./deliberation.ts";
 import { chat, chatJson } from "./llm.ts";
+import { estimateRunCost as pricingEstimateRun } from "./pricing.ts";
 import {
 	availableVoices,
 	type CutsDoc,
@@ -501,6 +502,26 @@ function createApp(ctx: ServerContext) {
 			...(images.length > 0 ? { images } : {}),
 		});
 		res.json({ runId: run.id });
+	});
+
+	// ---- P2：预估成本（启动前）
+	//  给 Home / CoCreate 页面在「启动制作」」前拿到预计花费，用户可以拍/不拍。
+	app.post("/api/pricing/estimate", (req, res) => {
+		const options = resolveGenerationOptions(req.body?.options ?? undefined);
+		const coSpace = coSpaceFromBody(req.body?.coSpace);
+		const estimate = pricingEstimateRun({
+			catalog: ctx.priceCatalog,
+			shotCount: options.shotCount,
+			clipDurationSec: options.clipDurationSec,
+			// 共创空间会拉高设计实体推导的准确度，相应多加几轮迭代；重做缓冲：
+			withDesignSheets: true,
+			redoBuffer: coSpace ? Math.ceil(options.shotCount / 4) : 0,
+		});
+		res.json({
+			total: estimate.total,
+			currency: estimate.currency,
+			lines: estimate.lines,
+		});
 	});
 
 	// ---- 运行状态 ----

@@ -4,7 +4,7 @@
  * 创意情节与音乐简报（可手编、可从对话一键提炼），随后带设定进入正常管线。
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -20,7 +20,7 @@ import {
 	WandSparkles,
 } from "lucide-react";
 import { DEFAULT_GENERATION_OPTIONS, type GenerationOptions } from "@earendil-works/pi-video-agent";
-import { api, type CoSpaceDraft, type UploadedImage } from "@/api/client";
+import { api, type CoSpaceDraft, type CostEstimateView, type UploadedImage } from "@/api/client";
 import { ImageUploader } from "@/components/ImageUploader";
 import { OptionsForm } from "@/components/OptionsForm";
 import { Backdrop } from "@/components/fx/Backdrop";
@@ -117,7 +117,28 @@ export function CoCreatePage() {
 	const [extracting, setExtracting] = useState(false);
 	const [launching, setLaunching] = useState(false);
 	const [options, setOptions] = useState<GenerationOptions>(incoming?.options ?? { ...DEFAULT_GENERATION_OPTIONS });
+	/** P2：启动前预估成本。依赖 space + options，共创调整后实时变。 */
+	const [estimate, setEstimate] = useState<CostEstimateView | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
+
+	// P2：参数/共创空间变化时拉预估（debounce 200ms）
+	useEffect(() => {
+		let alive = true;
+		const timer = setTimeout(() => {
+			api
+				.estimateCost(options, space)
+				.then((e) => {
+					if (alive) setEstimate(e);
+				})
+				.catch(() => {
+					if (alive) setEstimate(null);
+				});
+		}, 200);
+		return () => {
+			alive = false;
+			clearTimeout(timer);
+		};
+	}, [options, space]);
 
 	/** 创作基底 → 合伙人对话的上下文（服务端并入 system prompt，建议主动贴合） */
 	const briefContext = (() => {
@@ -414,6 +435,30 @@ export function CoCreatePage() {
 								/>
 							</div>
 							<OptionsForm options={options} onChange={(patch) => setOptions((o) => ({ ...o, ...patch }))} />
+							{/* P2：启动前预估成本（共创空间里有实体则加点 redo 缓冲） */}
+							{estimate && (
+								<div
+									className="rounded-xl border border-amber-300/20 bg-amber-400/[0.05] px-4 py-3"
+									title={estimate.lines.map((l) => `${l.label}: ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`).join("\n")}
+								>
+									<div className="flex items-center justify-between gap-2">
+										<span className="text-xs font-medium text-amber-200">本次预估</span>
+										<span className="font-mono text-base text-amber-100">
+											{estimate.currency === "CNY" ? "¥" : "$"}
+											{estimate.total.toFixed(2)}
+										</span>
+									</div>
+									<div className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+										{estimate.lines
+											.slice(0, 4)
+											.map((l) => `${l.label} ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`)
+											.join(" · ")}
+									</div>
+									<p className="mt-1 text-[10px] text-zinc-600">
+										{`含共创 ${space.characters.length + space.scenes.length} 项资产迭代`}
+									</p>
+								</div>
+							)}
 							<GlowButton className="w-full" onClick={() => void launch()} disabled={!canLaunch}>
 								{launching ? <LoaderCircle className="size-4 animate-spin" /> : <Clapperboard className="size-4" />}
 								带着共创设定启动制作

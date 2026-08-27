@@ -19,7 +19,7 @@ import {
 	Users,
 } from "lucide-react";
 import { DEFAULT_GENERATION_OPTIONS, type GenerationOptions } from "@earendil-works/pi-video-agent";
-import { api, type QuestionView, type UploadedImage } from "@/api/client";
+import { api, type CostEstimateView, type QuestionView, type UploadedImage } from "@/api/client";
 import { DemoReel } from "@/components/DemoReel";
 import { ImageUploader } from "@/components/ImageUploader";
 import { OptionsForm } from "@/components/OptionsForm";
@@ -50,6 +50,8 @@ export function HomePage() {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [advancedOpen, setAdvancedOpen] = useState(false);
+	/** P2：启动前预估成本（shotCount 等参数变化时重拉） */
+	const [estimate, setEstimate] = useState<CostEstimateView | null>(null);
 
 	function briefOf(): { logline: string; keyMessage?: string } {
 		return { logline: logline.trim(), ...(keyMessage.trim() ? { keyMessage: keyMessage.trim() } : {}) };
@@ -105,6 +107,26 @@ export function HomePage() {
 		run(async () => {
 			applyAdvance(await api.skipQuestion());
 		});
+
+	// P2：估算成本随选项变化（shotCount 等参数变 → 重拉）
+	useEffect(() => {
+		let alive = true;
+		// debounce 200ms 避免连续调节冲响应
+		const timer = setTimeout(() => {
+			api
+				.estimateCost(options)
+				.then((e) => {
+					if (alive) setEstimate(e);
+				})
+				.catch(() => {
+					if (alive) setEstimate(null);
+				});
+		}, 200);
+		return () => {
+			alive = false;
+			clearTimeout(timer);
+		};
+	}, [options]);
 
 	// 定制题就绪轮询：pending 期间每 1.6s 拉一次，拿到题即停
 	useEffect(() => {
@@ -401,6 +423,30 @@ export function HomePage() {
 													点击「启动制作」后团队立即开工：编剧 → 美术设计 → 分镜提示词 → 片段生成 → 配音 → 成片导出。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。
 													过程中可随时在工作台与导演对话或对中间产物提出修改。
 												</p>
+												{/* P2：启动前预估成本 */}
+												{estimate && (
+													<div
+														className="rounded-xl border border-amber-300/20 bg-amber-400/[0.05] px-4 py-3"
+														title={estimate.lines.map((l) => `${l.label}: ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`).join("\n")}
+													>
+														<div className="flex items-center justify-between gap-2">
+															<span className="text-xs font-medium text-amber-200">本次预估成本</span>
+															<span className="font-mono text-base text-amber-100">
+																{estimate.currency === "CNY" ? "¥" : "$"}
+																{estimate.total.toFixed(2)}
+															</span>
+														</div>
+														<div className="mt-1 text-[10px] leading-relaxed text-zinc-500">
+															{estimate.lines
+																.slice(0, 4)
+																.map((l) => `${l.label} ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`)
+																.join(" · ")}
+														</div>
+														<p className="mt-1 text-[10px] text-zinc-600">
+															只是参考估算。实时计费以生成后实际调用为准（下次迭代接入）。
+														</p>
+													</div>
+												)}
 												<div className="flex flex-wrap items-center gap-3 pt-1">
 													<GlowButton onClick={generate} disabled={busy}>
 														{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Clapperboard className="size-4" />}

@@ -586,6 +586,16 @@ export const api = {
 	): Promise<{ runId: string }> {
 		return postJson("/api/generate", { brief, options, imageIds, ...(coSpace ? { coSpace } : {}) });
 	},
+	/** P2：调用前的成本预估（不创建 run）。*/
+	async estimateCost(
+		options: GenerationOptions,
+		coSpace?: CoSpaceDraft,
+	): Promise<CostEstimateView> {
+		return postJson("/api/pricing/estimate", {
+			options,
+			...(coSpace ? { coSpace } : {}),
+		});
+	},
 	async pollRun(runId: string): Promise<RunView> {
 		return getJson(`/api/runs/${encodeURIComponent(runId)}`);
 	},
