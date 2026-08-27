@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+	AlertTriangle,
 	BadgeCheck,
 	Check,
 	Clapperboard,
@@ -192,6 +193,8 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 	const { reshot, retts } = useStudio();
 	const [adopted, setAdopted] = useState<string | null>(null);
 	const [adoptError, setAdoptError] = useState<string | null>(null);
+	/** P2+闸门 2 启用：low 置信度提案需二次确认。key = `p${index}`。 */
+	const [pendingConfirm, setPendingConfirm] = useState<string | null>(null);
 
 	const adopt = async (proposal: DeliberationProposal, index: number) => {
 		setAdoptError(null);
@@ -289,12 +292,39 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 								<span className="inline-flex items-center gap-1 text-[11px] text-emerald-300">
 									<BadgeCheck className="size-3.5" /> 已执行
 								</span>
+							) : pendingConfirm === key ? (
+								// P2+闸门 2启用：low 置信度提案需二次确认（安全护栏）
+								<span className="flex flex-wrap items-center gap-2 rounded-md border border-rose-300/40 bg-rose-400/10 px-2 py-1.5">
+									<AlertTriangle className="size-3.5 shrink-0 text-rose-300" />
+									<span className="text-[10px] leading-tight text-rose-100">导演把握度低，确认仍要采纳？</span>
+									<GlowButton
+										variant="danger"
+										className="px-2.5 py-1 text-[10px]"
+										onClick={() => void adopt(p, i)}
+									>
+										仍采纳
+									</GlowButton>
+									<button
+										type="button"
+										className="cursor-pointer rounded-md border border-white/10 px-2 py-1 text-[10px] text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200"
+										onClick={() => setPendingConfirm(null)}
+									>
+										取消
+									</button>
+								</span>
 							) : (
 								<GlowButton
 									variant="outline"
 									disabled={!executable}
 									className="px-3 py-1.5 text-xs"
-									onClick={() => void adopt(p, i)}
+									onClick={() => {
+										// P2+闸门 2：low 置信度提案不直接执行，需二次确认
+										if (p.confidence === "low") {
+											setPendingConfirm(key);
+											return;
+										}
+										void adopt(p, i);
+									}}
 								>
 									<Check className="size-3.5" />
 									采纳并执行
