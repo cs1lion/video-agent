@@ -95,7 +95,9 @@ function ConsistencyCheck({
 				</div>
 			)}
 			{doc === null && !busy && !error && (
-				<p className="text-[11px] text-zinc-600">尚未检查。建议成片完成后跑一次，再决定哪些镜头需要重做。</p>
+				<p className="text-[11px] text-zinc-600">
+					尚未预检。出片中或预检被跳过；可点上方按钮手动重跑。
+				</p>
 			)}
 		</div>
 	);

@@ -170,6 +170,9 @@ function installMocks(): void {
 				llmSeenUsers.push(raw);
 				return llmStub(user);
 			},
+			// 闸门状态机不真走一致性预检，但 pipeline.ts 间接 import checkConsistency
+			// 会传递依赖 tryParseJson（一致性 LLM 返回解析用），这里给个无害默认。
+			tryParseJson: <T>(raw: string) => JSON.parse(raw) as T,
 		},
 	});
 	mock.module(new URL("../../coding-agent/examples/extensions/studio/media/queue.ts", import.meta.url).href, {

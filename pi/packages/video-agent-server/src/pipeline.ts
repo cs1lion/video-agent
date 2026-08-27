@@ -61,6 +61,7 @@ import {
 	type TransitionType,
 } from "./ffmpeg.ts";
 import { chat, chatJson, chatVisionJson } from "./llm.ts";
+import { checkConsistency } from "./consistency.ts";
 import {
 	type DesignBibleDoc,
 	type DesignEntity,
@@ -2247,6 +2248,48 @@ async function stageExport(
 	const midpoints = keptShots.map((_, k) => shotStart[k]! + shotDur[k]! / 2);
 	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, midpoints);
 	doneSteps += 1;
+	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
+
+	// ---- 跨镜一致性预检（自动跑，先于用户）：发色/服装/画风突变等跨镜问题，不靠用户主动点按钮 ----
+	let consistencyIssues = 0;
+	try {
+		const consistencyDoc = await checkConsistency(sc.ctx, run, signal);
+		const flagged = consistencyDoc.shots.filter((s) => s.issues.length > 0);
+		consistencyIssues = flagged.length;
+		if (flagged.length > 0) {
+			pushEvent(
+				run,
+				"reviewer",
+				"client",
+				"qa",
+				`跨镜一致性预检 ⚠️ ${flagged.length} 处异常：${flagged
+					.map((s) => `${s.shotId}${s.appearance ? `（${s.appearance.slice(0, 30)}）` : ""}`)
+					.join("、")}。可在质量审读页查看详情并补拍。`,
+				{ stage: "review", label: "查看一致性" },
+			);
+		}
+	} catch (error) {
+		// 一致性失败不阻断出片（仅记日志+事件）
+		appendSpan(
+			run,
+			{
+				stage: "export",
+				name: "跨镜一致性预检",
+				kind: "qa",
+				status: "error",
+				output: error instanceof Error ? error.message : String(error),
+			},
+			Date.now(),
+		);
+		pushEvent(
+			run,
+			"reviewer",
+			"producer",
+			"status",
+			`跨镜一致性预检跳过 ⚠️（${error instanceof Error ? error.message : String(error)}）。可在质量审读页手动重跑。`,
+		);
+	}
+
 	setStage(run, "export", "done", 100);
 	const v = run.verdict;
 	if (v.axes.length > 0) {
@@ -2256,12 +2299,14 @@ async function stageExport(
 			fails.length > 0
 				? `不合格镜头：${fails.map((s) => `${s.id}（${s.reason}）`).join("；")}。可在质检面板逐镜重做。`
 				: "";
+		const consistencyNote =
+			consistencyIssues > 0 ? `。另有 ${consistencyIssues} 处跨镜一致性异常请关注` : "";
 		pushEvent(
 			run,
 			"reviewer",
 			"producer",
 			"qa",
-			`质检结论：${v.overall === "pass" ? "通过 ✅" : v.overall === "warn" ? "有保留通过 ⚠️" : "不通过 ❌"}（综合 ${v.score}）。最短板 ${worst.id} ${worst.score} 分。${failNote}`,
+			`质检结论：${v.overall === "pass" ? "通过 ✅" : v.overall === "warn" ? "有保留通过 ⚠️" : "不通过 ❌"}（综合 ${v.score}）。最短板 ${worst.id} ${worst.score} 分${consistencyNote}。${failNote}`,
 		);
 	}
 }
