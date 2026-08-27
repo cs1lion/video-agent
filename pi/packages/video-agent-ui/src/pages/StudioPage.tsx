@@ -12,6 +12,7 @@ import {
 	AudioLines,
 	Camera,
 	Clapperboard,
+	History,
 	LoaderCircle,
 	PlayCircle,
 	WandSparkles,
@@ -21,9 +22,14 @@ import { useStudio } from "@/store/store";
 import { Backdrop } from "@/components/fx/Backdrop";
 import { StageRail, UI_STAGES, type UiStageId } from "@/components/StageRail";
 import { DirectorChat } from "@/components/DirectorChat";
+import { PipelineFlow } from "@/components/PipelineFlow";
+import { TeamPresence } from "@/components/TeamPresence";
+import { TimelineBar } from "@/components/TimelineBar";
+import { CommandPalette } from "@/components/CommandPalette";
 import { RefineModal } from "@/components/RefineModal";
 import { ReshotModal } from "@/components/ReshotModal";
 import { GlowButton, ProgressRing } from "@/components/ui/primitives";
+import { cn } from "@/lib/utils";
 import type { StageId } from "@/api/client";
 import { BriefStage } from "./stages/BriefStage";
 import { ScriptStage } from "./stages/ScriptStage";
@@ -38,7 +44,7 @@ import { ExportStage } from "./stages/ExportStage";
 const STATUS_PILL: Record<string, { label: string; cls: string }> = {
 	running: {
 		label: "制作中",
-		cls: "pill-running border-cyan-300/50 bg-cyan-400/10 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.25)]",
+		cls: "pill-running border-white/25 bg-white/[0.07] text-zinc-100 shadow-[0_0_18px_rgba(244,244,245,0.15)]",
 	},
 	awaiting: {
 		label: "等待确认",
@@ -294,15 +300,43 @@ export function StudioPage() {
 					<span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${pill.cls}`}>{pill.label}</span>
 				)}
 
-				<div className="ml-auto flex items-center gap-4">
-					<div className="hidden text-right sm:block">
-						<div className="font-mono text-[10px] text-zinc-500">
-							{run.stages
-								.map((s) => `${s.status === "done" ? "✓" : s.status === "running" ? "◐" : s.status === "failed" ? "✗" : "·"}`)
-								.join(" ")}
+			<div className="ml-auto flex items-center gap-4">
+				{/* P2+审查保护：lastActions pill。让用户在工作台头部能看到「刚才做了什么」，
+				 避免在同一路任（chat / 审议）误点重发。点击展开全部最近 5 条。 */}
+				{run.lastActions && run.lastActions.length > 0 && (
+					<details className="relative hidden sm:block">
+						<summary
+							className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-2.5 py-0.5 text-[11px] text-cyan-100"
+							title={run.lastActions
+								.slice(0, 5)
+								.map((a) => `${a.label}（${new Date(a.at).toLocaleTimeString("zh-CN")}）`)
+								.join("\n")}
+						>
+							<History className="size-3" />
+							<span>最近 {run.lastActions.length} 动</span>
+							<span className="font-mono text-[10px] text-cyan-200/80">
+								{run.lastActions[0]!.label.replace(/镜头\s*/, "")}
+							</span>
+						</summary>
+						<div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-lg border border-white/10 bg-zinc-900/95 p-2 shadow-2xl backdrop-blur">
+							<div className="mb-1 text-[10px] tracking-wide text-zinc-500">最近 5 条动作（按时间倒序）</div>
+							<ul className="space-y-1">
+								{run.lastActions.slice(0, 5).map((a, i) => (
+									<li
+										key={i}
+										className="flex items-center justify-between gap-2 rounded border border-white/5 bg-white/[0.03] px-2 py-1 text-[10px]"
+									>
+										<span className="min-w-0 flex-1 truncate text-zinc-200">{a.label}</span>
+										<span className="shrink-0 font-mono text-[9px] text-zinc-500">
+											{new Date(a.at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+										</span>
+									</li>
+								))}
+							</ul>
 						</div>
-					</div>
-					{/* P2：成本 pill（预估 + 累计，悬停查看阶段明细） */}
+					</details>
+				)}
+				{/* P2：成本 pill（预估 + 累计，悬停查看阶段明细） */}
 					{run.costEstimate && (
 						<div
 							className="hidden flex-col items-end text-right sm:flex"
@@ -330,9 +364,16 @@ export function StudioPage() {
 						</GlowButton>
 					)}
 				</div>
-			</header>
+		</header>
 
-			{/* awaiting 确认条：闸门 / refine 重塑共用 */}
+		{/* 流水线实况 + 团队在场：DAG 节点即阶段状态，右侧角色灯随阶段/chat 联动 */}
+		<div className="relative z-10 flex shrink-0 items-center gap-4 border-b border-white/[0.07] px-5 py-2">
+			<PipelineFlow stages={run.stages} className="min-w-0 flex-1 pb-0" />
+			<div className="h-8 w-px shrink-0 bg-white/10" />
+			<TeamPresence run={run} chatBusy={chatBusy} />
+		</div>
+
+		{/* awaiting 确认条：闸门 / refine 重塑共用 */}
 			<AnimatePresence>
 				{run.awaitingResume && (
 					<motion.div
@@ -466,7 +507,7 @@ export function StudioPage() {
 					/>
 				</div>
 
-				<main className="min-w-0 flex-1 overflow-y-auto p-6">
+				<main className={cn("min-w-0 flex-1 overflow-y-auto p-6", run.awaitingResume && "awaiting-edge")}>
 					<div className="mx-auto max-w-4xl">
 						<AnimatePresence mode="wait">
 							<motion.div
@@ -550,10 +591,50 @@ export function StudioPage() {
 					</div>
 				</main>
 
-				<DirectorChat events={run.events} busy={chatBusy} onSend={(text) => void sendChat(text)} onJump={jumpToArtifact} />
-			</div>
+			<DirectorChat events={run.events} busy={chatBusy} onSend={(text) => void sendChat(text)} onJump={jumpToArtifact} />
+		</div>
 
-			{/* 微调弹窗 */}
+		{/* 底部时间线：镜头按时长比例排列，点击定位 */}
+		{(artifacts?.script?.shots.length ?? 0) > 0 && (
+			<TimelineBar
+				shots={artifacts!.script!.shots}
+				frames={artifacts?.keyframes?.frames}
+				assets={artifacts?.assets ?? []}
+				onJump={(targetStage, focus) => jumpToArtifact(targetStage, focus)}
+			/>
+		)}
+
+			{/* Cmd/Ctrl+K 指令条 */}
+		<CommandPalette
+			stages={UI_STAGES.map((s) => ({
+				id: s.id,
+				label: s.label,
+				open: s.unlocked(run, artifactsReady, hasAssets, hasKeyframes),
+			}))}
+			onSelectStage={setStage}
+			onSendDirector={(text) => void sendChat(text)}
+			actions={[
+				...(run.awaitingResume
+					? [
+							{
+								id: "resume",
+								label: run.gate === "keyframes" ? "确认关键帧并继续" : run.gate ? "确认并继续" : "继续推进",
+								hint: "闸门",
+								run: () =>
+									void resume(run.gate === "keyframes" ? scriptShotIds.filter((id) => selectedKeyframes.includes(id)) : undefined),
+							},
+						]
+					: []),
+				...(run.status === "failed"
+					? [{ id: "resume-failed", label: "从失败处继续", hint: "恢复", run: () => void resume() }]
+					: []),
+				...(run.status === "running"
+					? [{ id: "cancel", label: "取消制作", hint: "危险", run: () => void cancel() }]
+					: []),
+			]}
+		/>
+
+		{/* 微调弹窗 */}
 			<RefineModal
 				stageId={refineTarget}
 				busy={refining}
