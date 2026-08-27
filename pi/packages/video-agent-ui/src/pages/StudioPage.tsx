@@ -62,6 +62,7 @@ const STAGE_LABEL: Record<StageId, string> = {
 	script: "剧本",
 	visual: "美术设计",
 	prompts: "分镜提示词",
+	keyframes: "分镜关键帧",
 	clips: "片段生成",
 	audio: "声音设计",
 	export: "成片导出",

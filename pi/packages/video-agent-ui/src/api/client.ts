@@ -12,7 +12,7 @@ import type { GenerationOptions } from "@earendil-works/pi-video-agent";
 
 // ---- 运行状态 ----
 
-export type StageId = "script" | "visual" | "prompts" | "clips" | "audio" | "export";
+export type StageId = "script" | "visual" | "prompts" | "keyframes" | "clips" | "audio" | "export";
 
 /** 视频制作团队角色（与后端 pipeline ROLE_LABEL 对齐） */
 export type RoleId =

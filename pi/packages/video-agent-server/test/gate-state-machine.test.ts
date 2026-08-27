@@ -290,7 +290,7 @@ describe("确认闸门状态机（全桩）", () => {
 		const run = store.get(runId)!;
 		assert.equal(run.stages.find((s) => s.id === "script")!.status, "done");
 		assert.equal(run.stages.find((s) => s.id === "visual")!.status, "done");
-		for (const sid of ["prompts", "clips"] as const) {
+		for (const sid of ["prompts", "keyframes", "clips"] as const) {
 			assert.equal(run.stages.find((s) => s.id === sid)!.status, "pending");
 		}
 		// 分镜提示词绝不能在美术设计确认前生成
@@ -314,6 +314,8 @@ describe("确认闸门状态机（全桩）", () => {
 		const record = store.get(runId)!;
 		assert.equal(record.gate, "keyframes");
 		assert.equal(record.stages.find((s) => s.id === "prompts")!.status, "done");
+		// P1：关键帧独立阶段已绘制完成（闸门正挂在该阶段入口前等用户确认）
+		assert.equal(record.stages.find((s) => s.id === "keyframes")!.status, "done");
 		const frames = JSON.parse(await readFile(path.join(record.dir, "keyframes.json"), "utf-8")) as {
 			frames: { shotId: string; status: string }[];
 		};

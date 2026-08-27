@@ -14,7 +14,7 @@ import { after, describe, it } from "node:test";
 import type { EnrichedBrief } from "../../video-agent/src/index.ts";
 import { type RunStatus, RunStore, runSummary, runView, type StageId } from "../src/pipeline.ts";
 
-const STAGES = ["script", "visual", "prompts", "clips", "audio", "export"] as const;
+const STAGES = ["script", "visual", "prompts", "keyframes", "clips", "audio", "export"] as const;
 
 interface FixtureOverrides {
 	status?: RunStatus;
@@ -76,6 +76,8 @@ describe("RunStore.loadAll 重启恢复语义", () => {
 		const view = runView(awaiting);
 		assert.equal(view.awaitingResume, true);
 		assert.equal(view.gate, "design");
+		// 旧 6 阶段状态恢复时自动迁移出独立关键帧阶段（无 keyframes.json = pending）
+		assert.equal(awaiting.stages.find((s) => s.id === "keyframes")?.status, "pending");
 
 		const done = store.get("run-c-done-3")!;
 		assert.equal(done.status, "done");
@@ -90,7 +92,7 @@ describe("RunStore.loadAll 重启恢复语义", () => {
 		assert.equal(summary.gate, "design");
 		assert.equal(summary.logline, "30 秒气泡水广告");
 		assert.equal(summary.doneStages, 1);
-		assert.equal(summary.totalStages, 6);
+		assert.equal(summary.totalStages, 7);
 		assert.equal(summary.updatedAt, "2026-08-27T00:00:00.000Z");
 		assert.equal(summary.videoUrl, undefined);
 	});

@@ -84,8 +84,16 @@ import {
 // Run 状态（与 UI 契约 RunView 一一对应）
 // ============================================================================
 
-export type StageId = "script" | "visual" | "prompts" | "clips" | "audio" | "export";
-const STAGE_IDS: readonly StageId[] = ["script", "visual", "prompts", "clips", "audio", "export"];
+export type StageId = "script" | "visual" | "prompts" | "keyframes" | "clips" | "audio" | "export";
+const STAGE_IDS: readonly StageId[] = [
+	"script",
+	"visual",
+	"prompts",
+	"keyframes",
+	"clips",
+	"audio",
+	"export",
+];
 /** 文本阶段（可单独 refine 重塑） */
 const TEXT_STAGES: readonly StageId[] = ["script", "visual", "prompts"];
 
@@ -95,6 +103,30 @@ export interface RunStage {
 	id: StageId;
 	status: "pending" | "running" | "done" | "failed";
 	progress: number;
+}
+
+/** P1 兼容迁移：旧 6 阶段 run 的 keyframes.json 仍可用，恢复时补挂独立阶段 */
+function migrateLegacyRunStages(runDir: string, stages: RunStage[]): RunStage[] {
+	if (stages.some((stage) => stage.id === "keyframes")) return stages;
+	const promptIdx = stages.findIndex((stage) => stage.id === "prompts");
+	if (promptIdx < 0) return STAGE_IDS.map((id) => stages.find((s) => s.id === id) ?? { id, status: "pending", progress: 0 });
+
+	let keyframeStatus: RunStage["status"] = "pending";
+	let keyframeProgress = 0;
+	try {
+		const raw = JSON.parse(fs.readFileSync(path.join(runDir, "keyframes.json"), "utf-8")) as KeyframesDoc;
+		if (Array.isArray(raw.frames) && raw.frames.length > 0 && raw.frames.every((f) => f.status === "done")) {
+			keyframeStatus = "done";
+			keyframeProgress = 100;
+		} else if (raw.frames.some((f) => f.status === "failed")) {
+			keyframeStatus = "failed";
+		}
+	} catch {
+		// 没有 keyframes.json 就是尚未开始绘制
+	}
+	const next = [...stages];
+	next.splice(promptIdx + 1, 0, { id: "keyframes", status: keyframeStatus, progress: keyframeProgress });
+	return next;
 }
 
 /** 审片员对单个镜头的标注（P1：逐镜三态裁决，镜头级重做的依据） */
@@ -421,6 +453,7 @@ export class RunStore {
 				const record: RunRecord = {
 					...raw,
 					images: Array.isArray(raw.images) ? raw.images : [],
+					stages: migrateLegacyRunStages(raw.dir, raw.stages as RunStage[]),
 					events: Array.isArray(raw.events) ? raw.events : [],
 					shotAttempts: raw.shotAttempts && typeof raw.shotAttempts === "object" ? raw.shotAttempts : {},
 					shotVersions: raw.shotVersions && typeof raw.shotVersions === "object" ? raw.shotVersions : {},
@@ -1118,8 +1151,17 @@ async function stagePrompts(sc: StageCtx, script?: ScriptDoc, bible?: VisualBibl
 	);
 	shotPrompts.promptVersion = PROMPT_VERSION;
 	await writeJson(run, "prompts.json", shotPrompts);
-	// 关键帧先行：分镜提示词就绪后立刻逐镜绘制首帧锚定图（美术设计素材 → 画面原料）
-	setStage(run, "prompts", "running", 30);
+	setStage(run, "prompts", "done", 100);
+	return shotPrompts;
+}
+
+/** 独立关键帧阶段：分镜文本定稿后逐镜绘制首帧锚定图，完成后挂关键帧确认闸门 */
+async function stageKeyframes(sc: StageCtx, script?: ScriptDoc, bible?: VisualBible): Promise<void> {
+	const { run, signal } = sc;
+	setStage(run, "keyframes", "running", 5);
+	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
+	const bibleDoc = bible ?? (await readArtifact<VisualBible>(run, "visual-bible.json"));
+	const shotPrompts = await readArtifact<ShotPromptDoc>(run, "prompts.json");
 	const keyframes = await readKeyframes(run);
 	// 重跑分镜会重塑画面原料：上一轮确认清单随之作废，必须重新经过关键帧闸门。
 	keyframes.confirmedShotIds = [];
@@ -1128,9 +1170,9 @@ async function stagePrompts(sc: StageCtx, script?: ScriptDoc, bible?: VisualBibl
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
 		await ensureKeyframe(sc, shot.id, prompt, bibleDoc, keyframes, shot);
-		setStage(run, "prompts", "running", 30 + Math.round(((i + 1) / scriptDoc.shots.length) * 60));
+		setStage(run, "keyframes", "running", Math.round(5 + ((i + 1) / scriptDoc.shots.length) * 90));
 	}
-	setStage(run, "prompts", "done", 100);
+	setStage(run, "keyframes", "done", 100);
 	pushEvent(
 		run,
 		"storyboard",
@@ -1138,7 +1180,6 @@ async function stagePrompts(sc: StageCtx, script?: ScriptDoc, bible?: VisualBibl
 		"handoff",
 		`分镜锁定 ✅ ${scriptDoc.shots.length} 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。`,
 	);
-	return shotPrompts;
 }
 
 // ---------------------------------------------------------------------------
@@ -1364,7 +1405,7 @@ async function ensureKeyframe(
 	appendSpan(
 		run,
 		{
-			stage: "prompts",
+			stage: "keyframes",
 			name: `关键帧 ${shotId}`,
 			kind: "media",
 			status: entry.status === "done" ? "ok" : "error",
@@ -2171,8 +2212,10 @@ async function executeStages(
 				bible = await stageVisual(stageCtx, script);
 			} else if (id === "prompts") {
 				await stagePrompts(stageCtx, script, bible);
-				// 本轮会继续进入视频生成 → 装上关键帧闸门（纯文本 refine 不装，避免双重确认）
-				if (ids.includes("clips")) run.gate = "keyframes";
+			} else if (id === "keyframes") {
+				await stageKeyframes(stageCtx, script, bible);
+				// 本轮绘制了新的画面原料 → 必须重新过确认闸门
+				run.gate = "keyframes";
 			} else if (id === "clips") {
 				clips = await stageClips(stageCtx, script ?? clips?.script);
 			} else if (id === "audio") {
@@ -2290,7 +2333,10 @@ export function refineRun(
 	run.status = "running";
 	persistRun(run);
 
-	const ids = STAGE_IDS.slice(idx).filter((id) => autoResume || TEXT_STAGES.includes(id));
+	// 纯提示词重塑也要立刻重绘关键帧：否则旧画面会顶着新分镜进入下一个确认闸门。
+	const ids = STAGE_IDS.slice(idx).filter(
+		(id) => autoResume || TEXT_STAGES.includes(id) || (stageId === "prompts" && id === "keyframes"),
+	);
 	void (async () => {
 		await refineStageWithContext(ctx, run, stageId, instruction, ids);
 	})();
@@ -3458,6 +3504,7 @@ function stageLabel(id: StageId): string {
 		script: "剧本",
 		visual: "美术设计",
 		prompts: "分镜提示词",
+		keyframes: "分镜关键帧",
 		clips: "镜头生成",
 		audio: "音频",
 		export: "剪辑导出",
@@ -3469,6 +3516,7 @@ function roleOfStage(id: StageId): string {
 		script: "编剧",
 		visual: "美术指导",
 		prompts: "分镜师",
+		keyframes: "技术导演",
 		clips: "技术导演",
 		audio: "声音设计",
 		export: "剪辑师",

@@ -74,9 +74,10 @@ export const UI_STAGES: readonly UiStage[] = [
 		id: "keyframes",
 		label: "分镜关键帧",
 		icon: Images,
-		backend: null,
+		// P1：关键帧独立为后端 stage；前端按独立阶段解锁与进度，不借 prompts 状态推断
+		backend: "keyframes",
 		unlocked: (run, _ar, _ha, hasKeyframes) =>
-			hasKeyframes || stageOf(run, "prompts") === "done" || stageOf(run, "clips") !== "pending",
+			hasKeyframes || stageOf(run, "keyframes") !== "pending" || stageOf(run, "clips") !== "pending",
 	},
 	{
 		id: "generate",
