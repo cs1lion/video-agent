@@ -4,6 +4,7 @@
  * 与 video-agent-server 的 Express 端点一一对应：
  *   访谈 clarify/start|next|answer|skip · 上传 uploads · 生成 generate
  *   轮询 runs/:id · 产物 runs/:id/artifacts · 文件 runs/:id/files/*
+ *   实时 runs/:id/events（SSE） · 断线由 store 自动退回轮询兜底
  *   导演对话 chat · 微调 refine · 续跑 resume · 取消 cancel · 成片 video/download
  */
 
@@ -154,6 +155,13 @@ export interface RunSummary {
 	doneStages: number;
 	totalStages: number;
 	updatedAt?: string;
+}
+
+/** SSE 快照处理器；浏览器 EventSource 会自动重连，错误只表示当前暂时退回轮询 */
+export interface RunStreamHandlers {
+	onRun: (run: RunView) => void;
+	onOpen?: () => void;
+	onError?: () => void;
 }
 
 export interface BriefInput {
@@ -563,6 +571,23 @@ export const api = {
 	},
 	async pollRun(runId: string): Promise<RunView> {
 		return getJson(`/api/runs/${encodeURIComponent(runId)}`);
+	},
+	streamRun(runId: string, handlers: RunStreamHandlers): () => void {
+		if (typeof EventSource === "undefined") {
+			handlers.onError?.();
+			return () => {};
+		}
+		const source = new EventSource(`/api/runs/${encodeURIComponent(runId)}/events`);
+		source.addEventListener("open", () => handlers.onOpen?.());
+		source.addEventListener("error", () => handlers.onError?.());
+		source.addEventListener("run", (event) => {
+			try {
+				handlers.onRun(JSON.parse((event as MessageEvent<string>).data) as RunView);
+			} catch {
+				handlers.onError?.();
+			}
+		});
+		return () => source.close();
 	},
 	async listRuns(limit = 50): Promise<RunSummary[]> {
 		const data = await getJson<{ runs: RunSummary[] }>(`/api/runs?limit=${limit}`);

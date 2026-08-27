@@ -259,7 +259,20 @@ describe("确认闸门状态机（全桩）", () => {
 		});
 		assert.equal(record.gate, "design");
 		runId = record.id;
+		// SSE 数据底座：persistRun 每次变化都会发出结构化 run 快照
+		const streamSnapshots: { status: string; gate?: string }[] = [];
+		const unsubscribeStream = pipeline.subscribeRun(record.id, (view) => {
+			streamSnapshots.push({ status: view.status, gate: view.gate });
+		});
 		await waitFor((s) => s === "awaiting", "P1 design gate");
+
+		assert.ok(streamSnapshots.length > 0);
+		assert.equal(streamSnapshots.at(-1)?.status, "awaiting");
+		assert.equal(streamSnapshots.at(-1)?.gate, "design");
+		unsubscribeStream();
+		const snapshotsAfterUnsubscribe = streamSnapshots.length;
+		await new Promise((r) => setTimeout(r, 25));
+		assert.equal(streamSnapshots.length, snapshotsAfterUnsubscribe);
 
 		const run = store.get(runId)!;
 		assert.equal(run.stages.find((s) => s.id === "script")!.status, "done");

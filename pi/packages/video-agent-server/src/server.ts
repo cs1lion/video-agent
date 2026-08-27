@@ -8,6 +8,7 @@
  *   POST /api/generate                         启动管线（可携带 imageIds）→ runId
  *   GET  /api/runs                             项目列表（轻量 summary，按状态文件更新时间倒序）
  *   GET  /api/runs/:id                         轮询状态（stages/events/verdict）
+ *   GET  /api/runs/:id/events                  SSE 实时快照；断线时前端自动退回轮询
  *   GET  /api/runs/:id/artifacts               文本产物 + 资产清单
  *   GET  /api/runs/:id/files/*                 run 内任意产物文件（安全路径校验）
  *   POST /api/runs/:id/chat                    与导演对话（真实 LLM）
@@ -75,6 +76,7 @@ import {
 	runView,
 	type StageId,
 	startRun,
+	subscribeRun,
 } from "./pipeline.ts";
 import {
 	type DesignBibleDoc,
@@ -527,6 +529,40 @@ function createApp(ctx: ServerContext) {
 			return;
 		}
 		res.json(runView(run));
+	});
+
+	// SSE：一次长连接接收 run 快照变更。每条消息都是完整 RunView，
+	// 前端据此立即刷新产物；轮询继续保留为断线兜底。
+	app.get("/api/runs/:id/events", (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		res.writeHead(200, {
+			"content-type": "text/event-stream; charset=utf-8",
+			"cache-control": "no-cache, no-transform",
+			connection: "keep-alive",
+			"x-accel-buffering": "no",
+		});
+
+		const send = (): void => {
+			if (res.writableEnded || !runStore.get(run.id)) return;
+			res.write(`event: run\ndata: ${JSON.stringify(runView(run))}\n\n`);
+		};
+		const unsubscribe = subscribeRun(run.id, send);
+		send();
+
+		const heartbeat = setInterval(() => {
+			if (!res.writableEnded) res.write(": ping\n\n");
+		}, 15_000);
+		const close = (): void => {
+			clearInterval(heartbeat);
+			unsubscribe();
+			res.end();
+		};
+		req.on("close", close);
+		res.on("error", close);
 	});
 
 	app.post("/api/runs/:id/cancel", (req, res) => {

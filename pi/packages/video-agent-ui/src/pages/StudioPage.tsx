@@ -77,7 +77,26 @@ function overallProgress(done: number, total: number, runningIdx: number, runnin
 export function StudioPage() {
 	const navigate = useNavigate();
 	const runId = useParams<{ id: string }>().id ?? "";
-	const { run, artifacts, error, chatBusy, refining, lastRefine, bind, unbind, refresh, sendChat, submitRefine, reshot, retts, designAdjust, keyframeAdjust, resume, cancel } =
+	const {
+		run,
+		artifacts,
+		error,
+		chatBusy,
+		refining,
+		lastRefine,
+		transport,
+		bind,
+		unbind,
+		refresh,
+		sendChat,
+		submitRefine,
+		reshot,
+		retts,
+		designAdjust,
+		keyframeAdjust,
+		resume,
+		cancel,
+	} =
 		useStudio();
 	// 深链：#/studio/:id?stage=keyframes&focus=SH01 → 初始阶段 + 卡片滚动定位
 	const deepLink = (() => {
@@ -200,6 +219,18 @@ export function StudioPage() {
 				</button>
 				<div className="h-5 w-px bg-white/10" />
 				<span className="font-mono text-xs text-zinc-500">{run.id}</span>
+				<span
+					className={`hidden rounded-full border px-2 py-0.5 font-mono text-[10px] sm:inline ${
+						transport === "live"
+							? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
+							: transport === "polling"
+								? "border-amber-300/40 bg-amber-400/10 text-amber-200"
+								: "border-white/15 bg-white/5 text-zinc-400"
+					}`}
+					title={transport === "live" ? "SSE 实时更新已连接" : transport === "polling" ? "实时流暂不可用，正在轮询兜底" : "正在接入实时更新"}
+				>
+					{transport === "live" ? "LIVE" : transport === "polling" ? "POLL" : "SYNC"}
+				</span>
 				{redoPill && redo ? (
 					<span
 						className="pill-redo inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-400/15 px-2.5 py-0.5 text-[11px] text-amber-100 shadow-[0_0_22px_rgba(251,191,36,0.35)]"

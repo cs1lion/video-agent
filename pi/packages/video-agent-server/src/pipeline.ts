@@ -237,6 +237,24 @@ export interface RunSummary {
 	updatedAt?: string;
 }
 
+/** 订阅某个 run 的内存视图变化；SSE 层把它转成 run 快照事件 */
+export type RunUpdateListener = (run: RunView) => void;
+
+const runListeners = new Map<string, Set<RunUpdateListener>>();
+
+function emitRunUpdate(run: RunRecord): void {
+	const listeners = runListeners.get(run.id);
+	if (!listeners?.size) return;
+	const view = runView(run);
+	for (const listener of listeners) {
+		try {
+			listener(view);
+		} catch {
+			// 单个订阅者异常不能打断管线；断线由 HTTP 连接关闭清理兜底
+		}
+	}
+}
+
 export function runSummary(run: RunRecord, updatedAt?: string): RunSummary {
 	return structuredClone({
 		id: run.id,
@@ -251,6 +269,17 @@ export function runSummary(run: RunRecord, updatedAt?: string): RunSummary {
 		...(updatedAt ? { updatedAt } : {}),
 	});
 }
+
+/** 管线状态变化 → SSE。返回取消订阅函数。 */
+export const subscribeRun = (runId: string, listener: RunUpdateListener): (() => void) => {
+	const listeners = runListeners.get(runId) ?? new Set<RunUpdateListener>();
+	listeners.add(listener);
+	runListeners.set(runId, listeners);
+	return () => {
+		listeners.delete(listener);
+		if (listeners.size === 0) runListeners.delete(runId);
+	};
+};
 
 export interface RunRecord {
 	readonly id: string;
@@ -417,6 +446,7 @@ let persistChain: Promise<void> = Promise.resolve();
 
 /** 把 run 状态落盘（run-state.json，临时文件 + rename 原子替换），服务重启后可恢复查询/播放 */
 function persistRun(run: RunRecord): void {
+	emitRunUpdate(run);
 	const state = {
 		id: run.id,
 		dir: run.dir,
