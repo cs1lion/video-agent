@@ -23,7 +23,7 @@
  * 产物：script.json / visual-bible.json / prompts.json / assets/* / final.mp4。
  */
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { GenerationQueue } from "../../coding-agent/examples/extensions/studio/media/queue.ts";
@@ -37,10 +37,9 @@ import {
 } from "../../video-agent/src/index.ts";
 import type { ServerContext } from "./config.ts";
 import {
-	costOfLlmIn,
-	costOfMediaIn,
 	estimateRunCost as pricingEstimateRun,
-	round2,
+	trackLlmCost,
+	trackMediaCost,
 } from "./pricing.ts";
 import {
 	assembleTimeline,
@@ -62,6 +61,7 @@ import {
 } from "./ffmpeg.ts";
 import { chat, chatJson, chatVisionJson } from "./llm.ts";
 import { checkConsistency } from "./consistency.ts";
+import { reviewDesignBible, reviewKeyframes } from "./design-review.ts";
 import {
 	type DesignBibleDoc,
 	type DesignEntity,
@@ -538,7 +538,7 @@ function persistRun(run: RunRecord): void {
 		videoUrl: run.videoUrl,
 		error: run.error,
 		images: run.images,
-		events: run.events.slice(-400),
+		events: run.events.slice(-EVENT_CAP),
 		shotAttempts: run.shotAttempts,
 		shotVersions: run.shotVersions,
 		ttsAttempts: run.ttsAttempts,
@@ -576,6 +576,10 @@ export const ROLE_LABEL: Record<RoleId, string> = {
 	director: "导演",
 };
 
+/** 团队频道事件上限：内存与落盘保持同一上限（此前内存 500 / 落盘 400，
+ *  重启恢复后事件凭空变少）。 */
+const EVENT_CAP = 400;
+
 function pushEvent(
 	run: RunRecord,
 	from: RoleId,
@@ -593,7 +597,7 @@ function pushEvent(
 		text,
 		...(link ? { link } : {}),
 	});
-	if (run.events.length > 500) run.events.splice(0, run.events.length - 500);
+	if (run.events.length > EVENT_CAP) run.events.splice(0, run.events.length - EVENT_CAP);
 	persistRun(run);
 }
 
@@ -647,24 +651,9 @@ function stage(run: RunRecord, id: StageId): RunStage {
 	return run.stages.find((s) => s.id === id)!;
 }
 
-/** P2：累计本次 LLM 调用的成本（按 prompt/completion 字符数粗估）。 */
-function trackLlmCost(run: RunRecord, ctx: ServerContext, promptText: string, completionText: string): void {
-	const entry = costOfLlmIn(ctx.priceCatalog, ctx.llm.model, promptText.length, completionText.length);
-	run.metrics.cost.spent = round2(run.metrics.cost.spent + entry.amount);
-}
-
-/** P2：累计本次媒体生成的成本。outputSeconds 仅视频/音频有意义；图像/TTS 走 perCall。 */
-function trackMediaCost(
-	run: RunRecord,
-	ctx: ServerContext,
-	adapter: { id: string; kind: "video" | "image" | "tts"; model?: string },
-	params: Record<string, unknown>,
-	outputSeconds = 0,
-): void {
-	const fake = { id: adapter.id, kind: adapter.kind, model: adapter.model ?? adapter.id } as never;
-	const entry = costOfMediaIn(ctx.priceCatalog, fake, params, outputSeconds);
-	run.metrics.cost.spent = round2(run.metrics.cost.spent + entry.amount);
-}
+/** P2：累计本次 LLM 调用的成本（含多模态输入图粗估）。
+ *  实现在 pricing.ts（trackLlmCost / trackMediaCost），此处仅保留类型说明：
+ *  trackLlmCost(run, ctx, promptText, completionText, images?) / trackMediaCost(run, ctx, adapter, params, outputSeconds?) */
 
 /** P2：查找视频适配器（可能不存在：某些项目只配了图像） */
 function videoAdapterOf(ctx: ServerContext): { id: string; kind: "video"; model?: string } | null {
@@ -696,7 +685,7 @@ export function pushLastAction(run: RunRecord, action: ActionRecord): void {
 	persistRun(run);
 }
 
-/** P2+派发后回灌：快照当前 QA verdict中 指定镜头的裁决 + 五轴分数。
+/** P2+派发后回灌：快照当前 QA verdict 中指定镜头的裁决 + 五轴分数。
  *  传给 reshotRun / rettsRun 在动作前快照，动作完成后与新 verdict 对比。 */
 export function snapshotShotVerdict(
 	run: RunRecord,
@@ -945,6 +934,16 @@ async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
 			"script",
 		);
 		script = normalizeScript(fixed, opts);
+		// 两次都未命中数量：不硬跑失败（下游对镜头数本身宽容），但必须让用户知情
+		if (script.shots.length !== opts.shotCount) {
+			pushEvent(
+				run,
+				"writer",
+				"producer",
+				"status",
+				`⚠️ 编剧两轮均未给出设定的 ${opts.shotCount} 镜（实际 ${script.shots.length} 镜），已按实际镜头数继续。可在「剧本」阶段微调后重跑。`,
+			);
+		}
 	}
 	await writeJson(run, "script.json", script);
 	setStage(run, "script", "done", 100);
@@ -1128,7 +1127,8 @@ async function deriveDesignBible(sc: StageCtx, script: ScriptDoc, bible: VisualB
 				sc,
 				designSheetPrompt(entity, bible),
 				`design-${entity.category}-${entity.id}`,
-				"1024x1024",
+				// 概念图直接按成片画幅出图：参考板/构图传导到关键帧时不发生裁切漂移
+				imageSizeFor(optionsOf(run).aspectRatio),
 			);
 			if (file) {
 				entity.file = file;
@@ -1177,6 +1177,141 @@ async function deriveDesignBible(sc: StageCtx, script: ScriptDoc, bible: VisualB
 		"status",
 		`美术设计完成 ✅ ${okCount}/${total} 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。`,
 	);
+
+	// 出图自审：视觉模型对照设计要点逐卡审查（fail 卡自动重绘一轮再复审）。
+	// 美术设计是全片视觉源头——设计卡画错（如银发画成棕发）会在关键帧与视频里放大，
+	// 源头拦截比事后逐镜补拍便宜一个数量级；审核失败不阻断管线。
+	if (okCount > 0) await autoReviewDesign(sc, doc, bible);
+}
+
+/** 设计出图自审：审核 → fail 卡带审核意见重绘（1 轮）→ 复审；结果写回实体 review 字段 */
+async function autoReviewDesign(sc: StageCtx, doc: DesignBibleDoc, bible: VisualBible): Promise<void> {
+	const { run, signal } = sc;
+	const t0 = Date.now();
+	let flagged: DesignEntity[];
+	try {
+		pushEvent(run, "reviewer", "art", "status", "审校员核对设计图：逐张比对画面与设计要点…");
+		const { reviewed } = await reviewDesignBible(sc.ctx, run, signal);
+		flagged = reviewed.filter((e) => e.review?.verdict === "fail");
+		const warnCount = reviewed.filter((e) => e.review?.verdict === "warn").length;
+		appendSpan(
+			run,
+			{
+				stage: "visual",
+				name: "美术设计·出图自审",
+				kind: "qa",
+				status: flagged.length > 0 ? "semantic-fail" : "ok",
+				input: `${reviewed.length} 张设计图送审`,
+				output: `${reviewed.length - flagged.length - warnCount} ok / ${warnCount} warn / ${flagged.length} fail`,
+			},
+			t0,
+		);
+		pushEvent(
+			run,
+			"reviewer",
+			"art",
+			flagged.length > 0 ? "redo" : "status",
+			flagged.length > 0
+				? `设计图自审发现问题 ⚠️：${flagged.map((e) => `「${e.name}」${e.review!.issues.join("、")}`).join("；")}。安排美术指导带意见重绘。`
+				: `设计图自审通过 ✅ ${reviewed.length} 张与设计要点相符${warnCount > 0 ? `（另有 ${warnCount} 张小偏差，可人工复核）` : ""}。`,
+		);
+	} catch (error) {
+		if (signal.aborted) throw error;
+		appendSpan(
+			run,
+			{
+				stage: "visual",
+				name: "美术设计·出图自审",
+				kind: "qa",
+				status: "error",
+				output: error instanceof Error ? error.message : String(error),
+			},
+			t0,
+		);
+		pushEvent(run, "reviewer", "producer", "status", "设计图自审未成功 ⚠️（不影响管线），可在美术设计面板手动发起审核。");
+		return;
+	}
+	if (flagged.length === 0) return;
+
+	// fail 卡自动重绘一轮：以旧图为参考做增量修正（防人物改脸漂移），审核意见即调整指令。
+	// 自动轮不占 entity.attempts（那是用户手动重绘的配额），天然每管线只跑一轮，有界。
+	const redrawn: DesignEntity[] = [];
+	for (const entity of flagged) {
+		throwIfAborted(signal);
+		const issues = entity.review?.issues.join("; ") ?? "";
+		// 先备份旧图、再生成（与 redesignEntity 同规：先生成后备份会把新图误挪进版本库）
+		if (entity.file && fs.existsSync(path.join(run.dir, entity.file))) {
+			const vName = `design-${entity.category}-${entity.id}_v${entity.versions.length + 1}${path.extname(entity.file)}`;
+			await fs.promises.rename(path.join(run.dir, entity.file), path.join(run.dir, "assets", vName)).catch(() => {});
+			entity.versions.push(path.join("assets", vName));
+		}
+		const prevRef = entity.versions.length
+			? await fileDataUrl(run.dir, entity.versions[entity.versions.length - 1]!).catch(() => null)
+			: null;
+		const file = await generateImage(
+			sc,
+			designSheetPrompt(entity, bible, `fix these problems: ${issues}`),
+			`design-${entity.category}-${entity.id}`,
+			imageSizeFor(optionsOf(run).aspectRatio),
+			{ referenceImage: prevRef },
+		);
+		if (file) {
+			entity.file = file;
+			entity.status = "done";
+			entity.error = undefined;
+			redrawn.push(entity);
+		} else {
+			// 重绘失败：回滚版本库里的旧图到主名
+			if (entity.versions.length && entity.file) {
+				const vName = entity.versions[entity.versions.length - 1]!;
+				await fs.promises.rename(path.join(run.dir, vName), path.join(run.dir, entity.file)).catch(() => {});
+				entity.versions.pop();
+			}
+			entity.status = entity.file ? "done" : "failed";
+		}
+		await writeDesignBible(run, doc);
+	}
+
+	// 复审重绘卡：定向小批量调用，确认修复效果
+	if (redrawn.length > 0) {
+		pushEvent(
+			run,
+			"art",
+			"reviewer",
+			"handoff",
+			`${redrawn.map((e) => `「${e.name}」`).join("、")}已按审核意见重绘，提交复审…`,
+		);
+		try {
+			const { reviewed } = await reviewDesignBible(sc.ctx, run, signal, redrawn.map((e) => e.id));
+			const fixed = reviewed.filter((e) => e.review?.verdict !== "fail");
+			const still = reviewed.filter((e) => e.review?.verdict === "fail");
+			appendSpan(
+				run,
+				{
+					stage: "visual",
+					name: "美术设计·重绘复审",
+					kind: "qa",
+					status: still.length > 0 ? "semantic-fail" : "ok",
+					input: `${redrawn.length} 张重绘卡复审`,
+					output: `${fixed.length} 修复 / ${still.length} 仍不合格`,
+				},
+				Date.now(),
+			);
+			pushEvent(
+				run,
+				"reviewer",
+				"client",
+				"status",
+				still.length > 0
+					? `设计图重绘后仍有问题 ⚠️：${still.map((e) => `「${e.name}」${e.review!.issues.join("、")}`).join("；")}。已在卡片上标注，请在美术设计面板人工定夺（可手动重绘或确认放行）。`
+					: `设计图审核问题已全部修复 ✅ ${fixed.map((e) => `「${e.name}」`).join("、")}复审通过。`,
+				{ stage: "bible", label: "查看设计图" },
+			);
+		} catch (error) {
+			if (signal.aborted) throw error;
+			pushEvent(run, "reviewer", "producer", "status", "重绘卡复审未成功 ⚠️，请在美术设计面板手动发起审核确认。");
+		}
+	}
 }
 
 /** 手动调整重绘一张设计图（server 端点用；同步等待出图） */
@@ -1252,7 +1387,7 @@ async function redesignEntityInner(
 			sc,
 			designSheetPrompt(entity, bible, instruction || undefined),
 			`design-${entity.category}-${entity.id}`,
-			"1024x1024",
+			imageSizeFor(optionsOf(run).aspectRatio),
 			{ referenceImage: prevRef },
 		);
 		if (!file) {
@@ -1342,12 +1477,41 @@ async function stageKeyframes(sc: StageCtx, script?: ScriptDoc, bible?: VisualBi
 	// 重跑分镜会重塑画面原料：上一轮确认清单随之作废，必须重新经过关键帧闸门。
 	keyframes.confirmedShotIds = [];
 	for (const frame of keyframes.frames) delete frame.confirmed;
+	// 上游 refine 过期级联：帧的提示词签名与当前 prompts.json 不一致（画面原料已变）→
+	// 标 stale 复用既有级联机制（确认闸门拦截 + UI 过期徽标），而不是让旧画面静默过关。
+	const staleShots: string[] = [];
+	for (const frame of keyframes.frames) {
+		if (frame.status !== "done" || !frame.file || !frame.promptSig) continue; // 旧 run 无签名：跳过
+		const shot = scriptDoc.shots.find((s) => s.id === frame.shotId);
+		if (!shot) continue; // 该镜已不存在（refine 改了镜头清单）：留给下方循环处理
+		const currentSig = promptSigOf(shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual);
+		if (currentSig !== frame.promptSig) {
+			frame.staleRefs = [...new Set([...(frame.staleRefs ?? []), "prompts"])];
+			delete frame.confirmed;
+			staleShots.push(frame.shotId);
+		}
+	}
+	if (staleShots.length > 0) {
+		if (Array.isArray(keyframes.confirmedShotIds))
+			keyframes.confirmedShotIds = keyframes.confirmedShotIds.filter((id) => !staleShots.includes(id));
+		pushEvent(
+			run,
+			"storyboard",
+			"client",
+			"redo",
+			`分镜提示词已更新 ⚠️ ${staleShots.length} 镜关键帧基于旧画面描述（${staleShots.join("、")}），已标过期：请逐镜重绘同步后再确认。`,
+			{ stage: "keyframes", label: "去处理" },
+		);
+	}
 	for (const [i, shot] of scriptDoc.shots.entries()) {
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
 		await ensureKeyframe(sc, shot.id, prompt, bibleDoc, keyframes, shot);
 		setStage(run, "keyframes", "running", Math.round(5 + ((i + 1) / scriptDoc.shots.length) * 90));
 	}
+	// 关键帧自审：帧 vs 其锚定的设计定稿（fail 帧自动重绘一轮再复审）。
+	// 关键帧是视频首帧，外观漂移会直接定格进成片；审核失败不阻断管线。
+	await autoReviewKeyframes(sc);
 	setStage(run, "keyframes", "done", 100);
 	pushEvent(
 		run,
@@ -1396,6 +1560,11 @@ async function fileDataUrl(dir: string, relPath: string): Promise<string | null>
 	} catch {
 		return null;
 	}
+}
+
+/** 分镜提示词签名：上游 refine 后签名变化 → 关键帧可据此判定过期（B8 级联依据） */
+function promptSigOf(prompt: string): string {
+	return createHash("sha1").update(prompt).digest("hex").slice(0, 12);
 }
 
 /**
@@ -1472,9 +1641,8 @@ async function keyframeReferencesOf(
 	const doc = await readDesignBible(run);
 	const entities = pickKeyframeReferences(doc, `${shotVisual ?? ""}\n${shotPrompt}`);
 	if (entities.length === 0) return { entities: [], file: null, dataUrl: null, anchors: "" };
-	const anchorLabel = (e: DesignEntity) =>
-		e.category === "character" ? "人物" : e.category === "scene" ? "场景" : "道具";
-	const anchors = entities.map((entity) => `${anchorLabel(entity)} ${entity.name}: ${entity.design}`).join(" | ");
+	// 锚点全英文拼接（category 标签也用英文）：文生图模型对英文锚点的遵循显著更稳
+	const anchors = entities.map((entity) => `${entity.category} "${entity.name}": ${entity.design}`).join(" | ");
 	const file = await buildReferenceSheet(run, shotId, entities.map((entity) => entity.file!).filter(Boolean));
 	const dataUrl = file ? await fileDataUrl(run.dir, file) : null;
 	pushEvent(
@@ -1569,6 +1737,8 @@ async function ensureKeyframe(
 			entry.file = file;
 			entry.status = "done";
 			entry.error = undefined;
+			// 签名必须随出图落盘：stageKeyframes 的 stale 级联靠它检测上游 refine（缺写=级联死代码）
+			entry.promptSig = promptSigOf(shotPrompt);
 		} else {
 			entry.status = "failed";
 			entry.error = "关键帧生成失败";
@@ -1650,6 +1820,7 @@ async function redesignKeyframeInner(
 	run: RunRecord,
 	shotId: string,
 	instruction: string,
+	opts?: { auto?: boolean },
 ): Promise<{ ok: boolean; error?: string; keyframeWasFailed?: boolean }> {
 	let script: ScriptDoc;
 	try {
@@ -1661,7 +1832,8 @@ async function redesignKeyframeInner(
 	const doc = await readKeyframes(run);
 	let entry = doc.frames.find((f) => f.shotId === shotId);
 	const keyframeWasFailed = entry?.status === "failed";
-	if (entry && entry.attempts >= MAX_IMAGE_REDRAW) {
+	// 手动路径有人工配额护栏；auto（审核自动重绘）天然每轮只跑一次，不占用户手动次数
+	if (!opts?.auto && entry && entry.attempts >= MAX_IMAGE_REDRAW) {
 		return {
 			ok: false,
 			error: `镜头 ${shotId} 关键帧已重绘 ${MAX_IMAGE_REDRAW} 次达上限。建议在分镜提示词阶段微调后整体重跑。`,
@@ -1700,7 +1872,7 @@ async function redesignKeyframeInner(
 			? await buildReferenceSheet(run, shotId, redrawSources)
 			: latestReferences.file;
 	const redrawReferenceImage = redrawReference ? await fileDataUrl(run.dir, redrawReference) : prevSelfRef;
-	entry.attempts += 1;
+	if (!opts?.auto) entry.attempts += 1;
 	delete entry.confirmed;
 	pushEvent(
 		run,
@@ -1742,6 +1914,7 @@ async function redesignKeyframeInner(
 		entry.file = file;
 		entry.status = "done";
 		entry.error = undefined;
+		entry.promptSig = promptSigOf(shotPrompt);
 		// 元数据对齐：重绘即视为同步最新设定；参考矩阵刷新为当前最相关实体集
 		entry.refs = latestReferences.entities.map((entity) => entity.id);
 		if (redrawReference) entry.refSheet = redrawReference;
@@ -1778,6 +1951,99 @@ async function redesignKeyframeInner(
 		await writeJson(run, "keyframes.json", doc);
 		pushEvent(run, "storyboard", "client", "status", `镜头 ${shotId} 关键帧重试出错 ⚠️：${entry.error}`);
 		return { ok: false, error: entry.error ?? "重绘失败" };
+	}
+}
+
+/** 关键帧自审：审核 → fail 帧带审核意见自动重绘（auto 轮，不占手动配额）→ 定向复审 */
+async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
+	const { run, ctx, signal } = sc;
+	const t0 = Date.now();
+	let flagged: KeyframeEntry[];
+	try {
+		pushEvent(run, "reviewer", "storyboard", "status", "审校员核对关键帧：逐帧比对画面与设计定稿…");
+		const { reviewed } = await reviewKeyframes(ctx, run, signal);
+		flagged = reviewed.filter((f) => f.review?.verdict === "fail");
+		const warnCount = reviewed.filter((f) => f.review?.verdict === "warn").length;
+		appendSpan(
+			run,
+			{
+				stage: "keyframes",
+				name: "关键帧·出图自审",
+				kind: "qa",
+				status: flagged.length > 0 ? "semantic-fail" : "ok",
+				input: `${reviewed.length} 帧送审`,
+				output: `${reviewed.length - flagged.length - warnCount} ok / ${warnCount} warn / ${flagged.length} fail`,
+			},
+			t0,
+		);
+		pushEvent(
+			run,
+			"reviewer",
+			"storyboard",
+			flagged.length > 0 ? "redo" : "status",
+			flagged.length > 0
+				? `关键帧自审发现问题 ⚠️：${flagged.map((f) => `镜头 ${f.shotId}（${f.review!.issues.join("、")}）`).join("；")}。安排技术导演带意见重绘。`
+				: `关键帧自审通过 ✅ ${reviewed.length} 帧与设计定稿相符${warnCount > 0 ? `（另有 ${warnCount} 帧小偏差，可人工复核）` : ""}。`,
+		);
+	} catch (error) {
+		if (signal.aborted) throw error;
+		appendSpan(
+			run,
+			{
+				stage: "keyframes",
+				name: "关键帧·出图自审",
+				kind: "qa",
+				status: "error",
+				output: error instanceof Error ? error.message : String(error),
+			},
+			t0,
+		);
+		pushEvent(run, "reviewer", "producer", "status", "关键帧自审未成功 ⚠️（不影响管线），可在关键帧面板手动发起审核。");
+		return;
+	}
+	if (flagged.length === 0) return;
+
+	// fail 帧自动重绘一轮：审核意见即调整指令，重绘走自参考+设计定稿矩阵（不占手动配额）
+	const redrawnShotIds: string[] = [];
+	for (const frame of flagged) {
+		throwIfAborted(signal);
+		const issues = frame.review?.issues.join("；") ?? "";
+		const result = await redesignKeyframeInner(ctx, run, frame.shotId, issues, { auto: true });
+		if (result.ok) redrawnShotIds.push(frame.shotId);
+		else pushEvent(run, "reviewer", "storyboard", "status", `镜头 ${frame.shotId} 按审核意见重绘未成功 ⚠️：${result.error ?? "未知原因"}`);
+	}
+	if (redrawnShotIds.length === 0) return;
+
+	// 复审重绘帧：确认修复效果；仍不合格的标注在帧上交人工（确认闸门仍可拦）
+	try {
+		const { reviewed } = await reviewKeyframes(ctx, run, signal, redrawnShotIds);
+		const fixed = reviewed.filter((f) => f.review?.verdict !== "fail");
+		const still = reviewed.filter((f) => f.review?.verdict === "fail");
+		appendSpan(
+			run,
+			{
+				stage: "keyframes",
+				name: "关键帧·重绘复审",
+				kind: "qa",
+				status: still.length > 0 ? "semantic-fail" : "ok",
+				input: `${redrawnShotIds.length} 帧重绘复审`,
+				output: `${fixed.length} 修复 / ${still.length} 仍不合格`,
+			},
+			Date.now(),
+		);
+		pushEvent(
+			run,
+			"reviewer",
+			"client",
+			"status",
+			still.length > 0
+				? `关键帧重绘后仍有问题 ⚠️：${still.map((f) => `镜头 ${f.shotId}（${f.review!.issues.join("、")}）`).join("；")}。已在帧上标注，确认前请人工定夺（可手动重绘或确认放行）。`
+				: `关键帧审核问题已全部修复 ✅ 镜头 ${fixed.map((f) => f.shotId).join("、")} 复审通过。`,
+			{ stage: "keyframes", label: "查看关键帧" },
+		);
+	} catch (error) {
+		if (signal.aborted) throw error;
+		pushEvent(run, "reviewer", "producer", "status", "重绘帧复审未成功 ⚠️，请在关键帧面板手动发起审核确认。");
 	}
 }
 
@@ -3964,8 +4230,6 @@ async function runQa(
 			{ id: "textQuality", score: clamp(vision.textQuality) },
 		];
 		const score = Math.round(axes.reduce((sum, a) => sum + a.score, 0) / axes.length);
-		const min = Math.min(...axes.map((a) => a.score));
-		const overall = min < 70 ? "fail" : score >= 85 ? "pass" : "warn";
 
 		// 逐镜标注（宽容解析：字段缺失/未知 id 都容忍）
 		const rawShots = Array.isArray(vision.shots) ? vision.shots : [];
@@ -3976,8 +4240,11 @@ async function runQa(
 			return { id: shot.id, verdict: v, reason: String(s?.reason ?? "").slice(0, 120) || "通过" };
 		});
 
-		// semantic-fail：HTTP 200 但语义不合格 —— AI 管线特有的失败模式，单独入 trace
+		// 三态多数决：LLM 的 0-100 分数是伪精确（同帧复评浮动 ±10 常见），分数只保留展示用途；
+		// gate 决策以逐镜 verdict 为准——任一 fail 即 fail，warn 过半才 warn，否则 pass。
 		const failCount = shots.filter((s) => s.verdict === "fail").length;
+		const warnCount = shots.filter((s) => s.verdict === "warn").length;
+		const overall = failCount > 0 ? "fail" : warnCount > shots.length - warnCount - failCount ? "warn" : "pass";
 		appendSpan(
 			run,
 			{

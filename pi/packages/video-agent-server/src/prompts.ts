@@ -167,15 +167,16 @@ export function shotPromptMessages(
 		brief.coSpace?.characters.length || brief.coSpace?.scenes.length ? coSpaceBlock(brief.coSpace) : "",
 		"",
 		"要求:",
-		`1. 运镜幅度: ${MOTION_HINT[opts.motionIntensity]};`,
+		`1. 运镜幅度: ${MOTION_HINT[opts.motionIntensity]}——写明具体镜头运动（dolly push-in / pan left / handheld follow / static locked-off 等），并让运动与该镜情绪匹配；`,
 		`2. 目标画幅 ${opts.aspectRatio}，提示词里写明构图取向（不要写像素值）;`,
 		opts.detailBoost ? "3. 强调高细节、材质质感;" : "3. 保持画面简洁;",
-		"4. 每段提示词 40-80 个英文单词，一段连贯文字，包含主体/环境/光线/运镜/风格；",
+		"4. 每段提示词 60-110 个英文单词，一段连贯文字，必含五要素：主体及其外观锚点短语 / 环境与空间深度 / 光线（方向+性质，如 low warm side light） / 镜头运动 / 风格与调性；",
 		"5. 画面内不得出现任何文字、字幕、logo、UI（这些由后期烧录，模型画字必乱码）；",
 		`6. 在提示词末尾追加一句: "Strictly avoid: ${avoid}"`,
 		"",
 		"示例（仅示意结构，不要照抄内容）:",
-		"Cinematic wide shot of a young boy in an olive-green knit sweater sitting on a sunlit wooden floor, golden hour light through sheer curtains, slow dolly push-in, warm nostalgic grade, cozy lifestyle style. Strictly avoid: on-screen text, watermark",
+		"示例一（静态情绪镜）: Cinematic wide shot of a young boy in an olive-green knit sweater sitting on a sunlit wooden floor, dust motes drifting in the light, golden hour sun streaming low through sheer curtains, static locked-off composition with shallow depth of field, warm nostalgic grade, cozy lifestyle style. Strictly avoid: on-screen text, watermark",
+		"示例二（运动镜）: Handheld tracking shot following a silver-haired 68-year-old man in a navy wool coat walking through a narrow Lyon alley, morning fog softening the background, cool blue dawn light rim-lighting his silhouette, camera moves with him at walking pace then slows to hold on his weathered hands, cinematic documentary tone. Strictly avoid: on-screen text, watermark",
 		"",
 		"只输出如下 JSON（不要围栏）:",
 		`{"prompts": [{"shotId": "SH01", "prompt": "…"}, …]}（覆盖全部 ${script.shots.length} 个镜头）`,
@@ -315,6 +316,14 @@ export function tailoredQuestionsMessages(brief: Brief, answeredSummary: string)
 // 美术设计（人物 / 道具 / 场景概念设计图）
 // ============================================================================
 
+/** 设计卡审核结论（视觉模型对照 design 要点审查出图，step-3.7） */
+export interface DesignReview {
+	verdict: "ok" | "warn" | "fail";
+	/** 与设计要点的具体偏差（无问题为空数组） */
+	issues: string[];
+	checkedAt: string;
+}
+
 /** 设计实体（design-bible.json 内的单张设计卡） */
 export interface DesignEntity {
 	id: string;
@@ -331,6 +340,8 @@ export interface DesignEntity {
 	attempts: number;
 	/** 历史版本文件名（调整重绘时备份） */
 	versions: string[];
+	/** 最近一次出图审核结论（未审核/旧 run 缺省） */
+	review?: DesignReview;
 }
 
 export interface DesignBibleDoc {
@@ -439,8 +450,13 @@ export interface KeyframeEntry {
 	refSheet?: string;
 	/** 这些实体的设计定稿在出图后又更新过：当前画面相对新设定已过期 */
 	staleRefs?: string[];
+	/** 出图时所依据的分镜提示词签名（prompt 前 200 字符的 hash）。
+	 *  上游 refine（剧本/美术/提示词）重跑后签名变化 → 该帧标过期，防止旧画面顶着新分镜进入确认闸门。 */
+	promptSig?: string;
 	/** 用户在本轮关键帧确认时放行该镜；未勾选镜头不会进入视频生成 */
 	confirmed?: boolean;
+	/** 最近一次出图审核结论（帧 vs 其锚定的设计定稿；未审核/旧 run 缺省） */
+	review?: DesignReview;
 	attempts: number;
 	versions: string[];
 }

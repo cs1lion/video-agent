@@ -10,8 +10,11 @@
  * 设计原则：
  *   - 价格未配置 ≠ 0：当 catalog 找不到时，fallback 给一个保守的非零估算，让预算护栏仍生效。
  *   - 货币：默认 CNY；目录里每条价格自带 currency，UI 跟着显示。
- *   - 整数 token 计数不可得时（多数 provider 不返回 usage），按 1 token ≈ 1.5 中文字符 / 4 英文
- *     字符做粗估，约定文档在 `estimateLlmCost` 注释。
+ *   - 整数 token 计数不可得时（多数 provider 不返回 usage），按文本构成粗估：
+ *     中文 ≈ 1 token / 1.5 字符，ASCII ≈ 1 token / 4 字符（见 estimateTokenCounts）；
+ *     多模态输入图按 IMAGE_TOKENS_ESTIMATE / 张 粗估。
+ *   - 成本追踪（trackLlmCost / trackMediaCost）币种必须与 run.metrics.cost.currency 一致，
+ *     不一致的条目跳过并告警——目录混币种时宁可少记，也不把美元加进人民币总额。
  *
  * 数据落盘：单笔计费同步进 `RunMetrics.cost.spent`，落 `run-state.json`；服务端重启可恢复累计。
  */
@@ -19,6 +22,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { MediaAdapterConfig } from "../../coding-agent/examples/extensions/studio/media/adapter.ts";
+import type { ServerContext } from "./config.ts";
+import type { RunRecord } from "./pipeline.ts";
 
 export type Currency = "CNY" | "USD";
 
@@ -205,16 +210,77 @@ export function costOfLlmIn(
 	modelName: string,
 	promptChars: number,
 	completionChars: number,
-	usage?: { input_tokens?: number; output_tokens?: number },
+	usage?: { input_tokens?: number; output_tokens?: number; images?: number },
 ): CostEntry {
 	const spec = lookupLlmSpecIn(catalog, modelName);
-	// 1 token ≈ 4 chars（中英文混合保守估计）
+	// 1 token ≈ 4 chars（中英文混合保守估计；CJK 精估见 estimateTokenCounts）
 	const CHARS_PER_TOKEN = 4;
-	const inputTokens = usage?.input_tokens ?? Math.ceil(promptChars / CHARS_PER_TOKEN);
+	const inputTokens =
+		(usage?.input_tokens ?? Math.ceil(promptChars / CHARS_PER_TOKEN)) + (usage?.images ?? 0) * IMAGE_TOKENS_ESTIMATE;
 	const outputTokens = usage?.output_tokens ?? Math.ceil(completionChars / CHARS_PER_TOKEN);
 	const inCost = (spec.perInputToken ?? catalog.fallback.perInputToken ?? 0) * inputTokens;
 	const outCost = (spec.perOutputToken ?? catalog.fallback.perOutputToken ?? 0) * outputTokens;
 	return { category: "llm", model: modelName, amount: inCost + outCost, currency: spec.currency };
+}
+
+/** 多模态输入图的粗估 token 数（640-1024px 压缩帧的典型视觉 token 量级） */
+export const IMAGE_TOKENS_ESTIMATE = 800;
+
+const CJK_RE = /[\u3400-\u9fff\uf900-\ufaff\u3040-\u30ff]/g;
+
+/** 按文本构成精估 token：中文 ≈ 1 token / 1.5 字符，ASCII ≈ 1 token / 4 字符。
+ *  与文件头注释约定一致；costOfLlmIn 的纯字符回退口径（/4）只作保守下界。 */
+export function estimateTokenCounts(prompt: string, completion: string): {
+	input_tokens: number;
+	output_tokens: number;
+} {
+	const cjkOf = (s: string): number => (s.match(CJK_RE) ?? []).length;
+	const tokensOf = (s: string): number => {
+		const cjk = cjkOf(s);
+		return Math.ceil(cjk / 1.5 + (s.length - cjk) / 4);
+	};
+	return { input_tokens: tokensOf(prompt), output_tokens: tokensOf(completion) };
+}
+
+// ============================================================================
+// 成本追踪（原 pipeline.ts 内联实现迁移至此；币种守卫为 P1 修复）
+// ============================================================================
+
+/** 币种守卫：条目币种与 run 累计币种不一致时跳过并告警，保证总额口径单一 */
+function accumulateCost(run: RunRecord, entry: CostEntry, source: string): void {
+	if (entry.currency !== run.metrics.cost.currency) {
+		console.warn(
+			`[pricing] 跳过 ${source} 成本条目：币种 ${entry.currency} 与 run 累计币种 ${run.metrics.cost.currency} 不一致（金额 ${entry.amount}）`,
+		);
+		return;
+	}
+	run.metrics.cost.spent = round2(run.metrics.cost.spent + entry.amount);
+}
+
+/** 累计本次 LLM 调用的成本。images 为多模态输入图张数（每张按 IMAGE_TOKENS_ESTIMATE 粗估）。 */
+export function trackLlmCost(
+	run: RunRecord,
+	ctx: ServerContext,
+	promptText: string,
+	completionText: string,
+	images = 0,
+): void {
+	const usage = { ...estimateTokenCounts(promptText, completionText), images };
+	const entry = costOfLlmIn(ctx.priceCatalog, ctx.llm.model, promptText.length, completionText.length, usage);
+	accumulateCost(run, entry, `LLM(${ctx.llm.model})`);
+}
+
+/** 累计本次媒体生成的成本。outputSeconds 仅视频/音频有意义；图像/TTS 走 perCall/perKChar。 */
+export function trackMediaCost(
+	run: RunRecord,
+	ctx: ServerContext,
+	adapter: { id: string; kind: "video" | "image" | "tts"; model?: string },
+	params: Record<string, unknown>,
+	outputSeconds = 0,
+): void {
+	const fake = { id: adapter.id, kind: adapter.kind, model: adapter.model ?? adapter.id } as never;
+	const entry = costOfMediaIn(ctx.priceCatalog, fake, params, outputSeconds);
+	accumulateCost(run, entry, `media(${adapter.id})`);
 }
 
 export function round2(n: number): number {

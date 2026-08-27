@@ -17,6 +17,8 @@
  *   POST /api/runs/:id/reshot                  镜头级重做（版本化备份 + 质检反馈回灌）
  *   POST /api/runs/:id/retts                   旁白重录（改写文案或纯表演指导，语音级重做）
  *   POST /api/runs/:id/design/adjust           设计图单卡调整重绘（美术设计）
+ *   POST /api/runs/:id/design/review           设计出图审核（视觉模型逐卡比对设计要点）
+ *   POST /api/runs/:id/keyframes/review        关键帧出图审核（帧 vs 锚定的设计定稿）
  *   POST /api/runs/:id/keyframes/adjust        分镜关键帧单镜重绘
  *   GET  /api/runs/:id/versions                每镜视频/音频版本清单（组合出片用）
  *   POST /api/runs/:id/compose                 按勾选版本装配交付版 cut-N.mp4（限 2 次）
@@ -47,6 +49,7 @@ import {
 } from "../../video-agent/src/index.ts";
 import { loadServerContext, type ServerContext } from "./config.ts";
 import { checkConsistency, getConsistency } from "./consistency.ts";
+import { reviewDesignBible, reviewKeyframes } from "./design-review.ts";
 import {
 	createPaceVariant,
 	listCutVariants,
@@ -838,6 +841,56 @@ function createApp(ctx: ServerContext) {
 	});
 
 	// ---- 美术设计图 / 关键帧：单卡调整重绘（同步等待出图，秒级） ----
+
+	/** 设计出图审核（同步，约 10-30s；结论写回 design-bible.json 的实体 review 字段） */
+	app.post("/api/runs/:id/design/review", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		if (run.status === "running") {
+			res.status(400).json({ error: "管线运行中，请稍候" });
+			return;
+		}
+		const entityIds = Array.isArray(req.body?.entityIds)
+			? req.body.entityIds.filter((x: unknown): x is string => typeof x === "string").slice(0, 9)
+			: undefined;
+		try {
+			const { reviewed } = await reviewDesignBible(ctx, run, run.abort.signal, entityIds);
+			res.json({
+				ok: true,
+				reviewed: reviewed.map((e) => ({ id: e.id, name: e.name, ...e.review })),
+			});
+		} catch (error) {
+			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+		}
+	});
+
+	/** 关键帧出图审核（同步，约 10-30s；结论写回 keyframes.json 的帧 review 字段） */
+	app.post("/api/runs/:id/keyframes/review", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		if (run.status === "running") {
+			res.status(400).json({ error: "管线运行中，请稍候" });
+			return;
+		}
+		const shotIds = Array.isArray(req.body?.shotIds)
+			? req.body.shotIds.filter((x: unknown): x is string => typeof x === "string").slice(0, 12)
+			: undefined;
+		try {
+			const { reviewed } = await reviewKeyframes(ctx, run, run.abort.signal, shotIds);
+			res.json({
+				ok: true,
+				reviewed: reviewed.map((f) => ({ id: f.shotId, ...f.review })),
+			});
+		} catch (error) {
+			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+		}
+	});
 
 	app.post("/api/runs/:id/design/adjust", async (req, res) => {
 		const run = runStore.get(req.params.id);
