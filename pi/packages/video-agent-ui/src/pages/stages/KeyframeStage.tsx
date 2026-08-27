@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ImagePlus, LoaderCircle, RefreshCw } from "lucide-react";
-import type { KeyframesDoc, ScriptDoc, ShotPromptDoc } from "@/api/client";
+import type { DesignBibleDoc, KeyframesDoc, ScriptDoc, ShotPromptDoc } from "@/api/client";
 import { cn } from "@/lib/utils";
 import { EmptyState, StageShell } from "./shared";
 
@@ -18,6 +18,8 @@ function KeyframeCard({
 	status,
 	error,
 	stale,
+	dependency,
+	staleDependency,
 	selected,
 	onToggle,
 	busy,
@@ -31,6 +33,8 @@ function KeyframeCard({
 	status: "pending" | "done" | "failed" | "missing";
 	error?: string;
 	stale?: boolean;
+	dependency: string;
+	staleDependency: string;
 	selected: boolean;
 	onToggle: (shotId: string, selected: boolean) => void;
 	busy: boolean;
@@ -110,6 +114,14 @@ function KeyframeCard({
 					<span className="font-mono text-xs text-cyan-300">{shotId}</span>
 					{narration && <span className="truncate text-[11px] text-zinc-500">{narration}</span>}
 				</div>
+				{dependency && (
+					<div className="flex items-center gap-1 text-[10px] text-zinc-500" title={`参考板依赖：${staleDependency || dependency}`}>
+						<span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-px">
+							锚定 {dependency}
+						</span>
+						{staleDependency && <span className="text-amber-300/90">{staleDependency} 已更新</span>}
+					</div>
+				)}
 				{prompt && <p className="line-clamp-2 font-mono text-[10px] leading-relaxed text-zinc-600">{prompt}</p>}
 				<div className="flex items-center gap-1.5">
 					<input
@@ -150,6 +162,7 @@ export function KeyframeStage({
 	keyframes,
 	script,
 	prompts,
+	design,
 	selectedShotIds,
 	onToggle,
 	busy,
@@ -158,6 +171,7 @@ export function KeyframeStage({
 	keyframes: KeyframesDoc | null;
 	script: ScriptDoc | null;
 	prompts: ShotPromptDoc | null;
+	design?: DesignBibleDoc;
 	selectedShotIds: string[];
 	onToggle: (shotId: string, selected: boolean) => void;
 	busy: boolean;
@@ -170,6 +184,13 @@ export function KeyframeStage({
 	const selectedShots = (script?.shots ?? []).filter((shot) => selectedShotIds.includes(shot.id));
 	const selectedDurationSec = selectedShots.reduce((total, shot) => total + shot.durationSec, 0);
 	const skippedCount = shotIds.length - selectedShotIds.length;
+	const entityNameOf = (id: string): string =>
+		[...(design?.characters ?? []), ...(design?.props ?? []), ...(design?.scenes ?? [])].find((e) => e.id === id)
+			?.name ?? id;
+	const dependencyLabel = (frame: KeyframesDoc["frames"][number]): string =>
+		(frame.refs ?? []).map(entityNameOf).join(" / ");
+	const staleLabel = (frame: KeyframesDoc["frames"][number]): string =>
+		(frame.staleRefs ?? []).map(entityNameOf).join(" / ");
 
 	return (
 		<StageShell kicker="STAGE 03.5 · KEYFRAMES" title="分镜关键帧">
@@ -179,7 +200,8 @@ export function KeyframeStage({
 				<div className="space-y-4">
 					<p className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-4 py-2.5 text-xs leading-relaxed text-cyan-100/90">
 						视频按「关键帧锚定 + 分镜提示词」生成：每镜先出一张首帧锚定图锁定构图与色调，再由视频模型延展成动态镜头。
-						对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。
+									每张关键帧的服务端参考板会把命中的角色、场景与道具定稿合成为一张视觉锚定图，视频原料严格跟随美术设计。
+									对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。
 						勾选「进入成片」可选择 N/M 镜部分确认。本次预计消耗 {selectedShotIds.length} 段视频（约 {selectedDurationSec}s）和{" "}
 						{selectedShotIds.length} 条配音；未勾选的 {skippedCount} 镜不会提交视频生成，也不会消耗额度。
 						{staleCount > 0 && (
@@ -202,6 +224,8 @@ export function KeyframeStage({
 									status={frame?.status ?? "missing"}
 									error={frame?.error}
 									stale={(frame?.staleRefs ?? []).length > 0}
+									dependency={frame ? dependencyLabel(frame) : ""}
+									staleDependency={frame ? staleLabel(frame) : ""}
 									selected={selectedShotIds.includes(id)}
 									onToggle={onToggle}
 									busy={busy && Boolean(frame?.attempts)}

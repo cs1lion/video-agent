@@ -224,8 +224,10 @@ export interface KeyframeEntry {
 	url?: string;
 	status: "pending" | "done" | "failed";
 	error?: string;
-	/** 生成时用作参考图的设计实体 id（缺省 = 纯文本锚点出图） */
+	/** 本帧参考板包含的设计实体 id；也是设计源更新的精确级联依据 */
 	refs?: string[];
+	/** 服务端合成的多实体参考板文件；缺省表示无视觉参考或旧版单图 run */
+	refSheet?: string;
 	/** 这些实体的设计定稿在出图后又更新过：当前画面相对新设定已过期 */
 	staleRefs?: string[];
 	/** 本轮用户确认时放行该镜；未勾选镜头不会进入视频生成 */

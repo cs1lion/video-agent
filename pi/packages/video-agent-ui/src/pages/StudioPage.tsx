@@ -477,6 +477,7 @@ export function StudioPage() {
 										keyframes={artifacts?.keyframes ?? null}
 										script={artifacts?.script ?? null}
 										prompts={artifacts?.prompts ?? null}
+										design={artifacts?.design}
 										selectedShotIds={selectedKeyframes}
 										onToggle={(shotId, selected) =>
 											setSelectedKeyframes((prev) =>

@@ -41,8 +41,10 @@ import {
 	buildAssSubtitles,
 	concatWithSubtitles,
 	extractFrame,
+	FfmpegError,
 	normalizeShot,
 	probeDuration,
+	runFfmpeg,
 	SFX_LABEL,
 	type SfxType,
 	type SubtitleEntry,
@@ -67,6 +69,7 @@ import {
 	narrationFor,
 	normalizeDesignDoc,
 	PROMPT_VERSION,
+	pickKeyframeReferences,
 	rettsNarrationMessages,
 	type ScriptDoc,
 	type ShotPromptDoc,
@@ -1193,34 +1196,78 @@ async function designAnchorsOf(run: RunRecord): Promise<string> {
 	return parts.join(" | ");
 }
 
-/**
- * 挑选与镜头最相关的设计定稿参考：优先人物（身份锚定最重要），其次场景；
- * 实体名出现在画面描述中加分。单镜只挂一张参考 —— 多参考图各供应商行为不一，
- * 单张最稳，且主要漂移风险来自人物。
- */
-function pickReferenceEntity(doc: DesignBibleDoc | null, haystack: string): DesignEntity | null {
-	const best = (list: { status: string; file?: string; name: string }[]): DesignEntity | null => {
-		const ranked = list
-			.filter((e) => e.status === "done" && e.file)
-			.map((e) => ({ entity: e as DesignEntity, hits: haystack.split(e.name).length - 1 }))
-			.sort((a, b) => b.hits - a.hits);
-		return ranked[0]?.entity ?? null;
-	};
-	return best(doc?.characters ?? []) ?? best(doc?.scenes ?? []);
+/** 把多张设计定稿纵向拼成一张参考板：适配器仍收单图，但画面包含全部视觉原料 */
+async function buildReferenceSheet(run: RunRecord, shotId: string, sources: string[]): Promise<string | null> {
+	if (sources.length === 0) return null;
+	if (sources.length === 1) return sources[0]!;
+	const outRel = path.join(".refs", `key-${shotId}-sheet.png`);
+	const outAbs = path.join(run.dir, outRel);
+	await fs.promises.mkdir(path.dirname(outAbs), { recursive: true });
+	const normalized = sources
+		.map(
+			(_, i) =>
+				`[${i}:v]scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2,setsar=1[t${i}]`,
+		)
+		.join(";");
+	const stack = `[${sources.map((_, i) => `t${i}`).join("][")}]hstack=inputs=${sources.length}[out]`;
+	try {
+		await runFfmpeg(
+			[
+				"-y",
+				"-loglevel",
+				"error",
+				...sources.flatMap((source) => ["-i", source.replace(/\\/g, "/")]),
+				"-filter_complex",
+				`${normalized};${stack}`,
+				"-map",
+				"[out]",
+				"-frames:v",
+				"1",
+				outRel.replace(/\\/g, "/"),
+			],
+			run.dir,
+			run.abort.signal,
+		);
+		const stat = await fs.promises.stat(outAbs).catch(() => null);
+		if (!stat || stat.size === 0) throw new FfmpegError("参考板输出为空");
+		return outRel;
+	} catch (error) {
+		if (run.abort.signal.aborted) throw error;
+		pushEvent(run, "tech", "producer", "status", `镜头 ${shotId} 多实体参考板合成失败 ⚠️，已降级最高优先参考图。`);
+		return sources[0]!;
+	}
 }
 
-/** 该镜参考图解析：返回设计实体 id + dataURL（无匹配定稿 → null，走纯文本锚点） */
-async function keyframeReferenceOf(
+interface KeyframeReferenceBundle {
+	entities: DesignEntity[];
+	file: string | null;
+	dataUrl: string | null;
+	anchors: string;
+}
+
+/** 该镜多实体依赖解析：返回 ID 矩阵 + 合成参考板（无匹配定稿 → null，走纯文本锚点） */
+async function keyframeReferencesOf(
+	shotId: string,
 	run: RunRecord,
 	shotPrompt: string,
 	shotVisual?: string,
-): Promise<{ entityId: string; dataUrl: string } | null> {
+): Promise<KeyframeReferenceBundle> {
 	const doc = await readDesignBible(run);
-	const picked = pickReferenceEntity(doc, `${shotVisual ?? ""}\n${shotPrompt}`);
-	if (!picked?.file) return null;
-	pushEvent(run, "tech", "producer", "status", `镜头画面将锚定设计定稿「${picked.name}」（设计图 → 参考图传导）。`);
-	const dataUrl = await fileDataUrl(run.dir, picked.file);
-	return dataUrl ? { entityId: picked.id, dataUrl } : null;
+	const entities = pickKeyframeReferences(doc, `${shotVisual ?? ""}\n${shotPrompt}`);
+	if (entities.length === 0) return { entities: [], file: null, dataUrl: null, anchors: "" };
+	const anchorLabel = (e: DesignEntity) =>
+		e.category === "character" ? "人物" : e.category === "scene" ? "场景" : "道具";
+	const anchors = entities.map((entity) => `${anchorLabel(entity)} ${entity.name}: ${entity.design}`).join(" | ");
+	const file = await buildReferenceSheet(run, shotId, entities.map((entity) => entity.file!).filter(Boolean));
+	const dataUrl = file ? await fileDataUrl(run.dir, file) : null;
+	pushEvent(
+		run,
+		"tech",
+		"producer",
+		"status",
+		`镜头画面将锚定 ${entities.length} 个设计定稿：${entities.map((e) => `${e.name}(${e.id})`).join("、")}。`,
+	);
+	return { entities, file, dataUrl, anchors };
 }
 
 /**
@@ -1246,7 +1293,7 @@ async function propagateEntityUpdate(run: RunRecord, entity: DesignEntity): Prom
 	}
 	// 设计源更新会取消对应帧的放行资格；已记录的制作集同步移除该镜
 	if (Array.isArray(frames.confirmedShotIds))
-		frames.confirmedShotIds = frames.confirmedShotIds.filter((id) => id !== entity.id);
+		frames.confirmedShotIds = frames.confirmedShotIds.filter((id) => !affected.some((f) => f.shotId === id));
 	await writeJson(run, "keyframes.json", frames);
 	pushEvent(
 		run,
@@ -1279,22 +1326,24 @@ async function ensureKeyframe(
 	entry.attempts += 1;
 	entry.status = "pending";
 	const t0 = Date.now();
-	const reference = await keyframeReferenceOf(run, shotPrompt, shot?.visual);
-	const referenceImage = reference?.dataUrl ?? null;
+	const references = await keyframeReferencesOf(shotId, run, shotPrompt, shot?.visual);
+	const referenceImage = references.dataUrl;
 	// 记录本帧依赖的设计定稿：该实体重绘时可精确级联标过期；新出图即视为同步了最新设定
-	entry.refs = reference ? [reference.entityId] : [];
+	entry.refs = references.entities.map((entity) => entity.id);
+	if (references.file) entry.refSheet = references.file;
+	else delete entry.refSheet;
 	delete entry.staleRefs;
 	pushEvent(
 		run,
 		"tech",
 		"producer",
 		"status",
-		`镜头 ${shotId} 先出关键帧（首帧锚定图${referenceImage ? " · 挂设计参考图" : ""}）…`,
+		`镜头 ${shotId} 先出关键帧（首帧锚定图${referenceImage ? ` · ${references.entities.length} 实体参考板` : ""}）…`,
 	);
 	try {
 		const file = await generateImage(
 			sc,
-			keyframePrompt(shotPrompt, bible, await designAnchorsOf(run)),
+			keyframePrompt(shotPrompt, bible, references.anchors),
 			`key-${shotId}`,
 			imageSizeFor(optionsOf(run).aspectRatio),
 			{ referenceImage },
@@ -1418,9 +1467,22 @@ async function redesignKeyframeInner(
 	}
 	const oldFile = entry.file;
 	const t0 = Date.now();
-	// 自参考迭代：以旧帧为底图按反馈微调，而非凭空再画（保持已确认的构图/色调）
+	// 自参考迭代：当前设计定稿矩阵 + 旧帧构图一起合成参考板；既同步新设定，又保留原构图。
 	const prevSelfRef =
 		oldFile && fs.existsSync(path.join(run.dir, oldFile)) ? await fileDataUrl(run.dir, oldFile) : null;
+	const latestReferences = await keyframeReferencesOf(
+		shotId,
+		run,
+		shotPrompt,
+		script.shots.find((s) => s.id === shotId)?.visual,
+	);
+	const redrawSources = [...latestReferences.entities.map((entity) => entity.file!).filter(Boolean)];
+	if (oldFile && fs.existsSync(path.join(run.dir, oldFile))) redrawSources.push(oldFile);
+	const redrawReference =
+		oldFile && fs.existsSync(path.join(run.dir, oldFile))
+			? await buildReferenceSheet(run, shotId, redrawSources)
+			: latestReferences.file;
+	const redrawReferenceImage = redrawReference ? await fileDataUrl(run.dir, redrawReference) : prevSelfRef;
 	entry.attempts += 1;
 	delete entry.confirmed;
 	pushEvent(
@@ -1446,7 +1508,7 @@ async function redesignKeyframeInner(
 				(instruction ? `, adjustment: ${instruction}` : ""),
 			`key-${shotId}`,
 			imageSizeFor(optionsOf(run).aspectRatio),
-			{ referenceImage: prevSelfRef },
+			{ referenceImage: redrawReferenceImage },
 		);
 		if (!file) {
 			// 生成失败：回滚刚备份的旧图，恢复主名
@@ -1463,9 +1525,10 @@ async function redesignKeyframeInner(
 		entry.file = file;
 		entry.status = "done";
 		entry.error = undefined;
-		// 元数据对齐：重绘即视为同步最新设定；参考实体刷新为当前最相关定稿
-		const freshRef = await keyframeReferenceOf(run, shotPrompt, script.shots.find((s) => s.id === shotId)?.visual);
-		if (freshRef) entry.refs = [freshRef.entityId];
+		// 元数据对齐：重绘即视为同步最新设定；参考矩阵刷新为当前最相关实体集
+		entry.refs = latestReferences.entities.map((entity) => entity.id);
+		if (redrawReference) entry.refSheet = redrawReference;
+		else delete entry.refSheet;
 		delete entry.staleRefs;
 		if (Array.isArray(doc.confirmedShotIds))
 			doc.confirmedShotIds = doc.confirmedShotIds.filter((id) => id !== shotId);

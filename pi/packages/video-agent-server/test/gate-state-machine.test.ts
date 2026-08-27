@@ -176,9 +176,10 @@ function installMocks(): void {
 		namedExports: { GenerationQueue: FakeQueue },
 	});
 	// ffmpeg 全替身：形状与真实实现一致（归一化/合成落占位文件，抽帧给真 PNG）
-	mock.module(new URL("../src/ffmpeg.ts", import.meta.url).href, {
-		namedExports: {
-			SFX_LABEL: { whoosh: "嗖", impact: "砰", riser: "升" } as Record<string, string>,
+		mock.module(new URL("../src/ffmpeg.ts", import.meta.url).href, {
+			namedExports: {
+				FfmpegError: class extends Error {},
+				SFX_LABEL: { whoosh: "嗖", impact: "砰", riser: "升" } as Record<string, string>,
 			TRANSITION_LABEL: {
 				cut: "硬切",
 				fade: "淡入淡出",
@@ -442,8 +443,10 @@ describe("确认闸门状态机（全桩）", () => {
 
 		const design = JSON.parse(await readFile(path.join(record2.dir, "design-bible.json"), "utf-8")) as {
 			characters: { id: string; status: string }[];
+			scenes: { id: string; status: string }[];
 		};
 		const char = design.characters[0]!;
+		const scene = design.scenes[0]!;
 		assert.equal(char.status, "done");
 		assert.equal(pipeline.resumeRun(ctx, record2).ok, true);
 		await waitRecord(
@@ -454,10 +457,21 @@ describe("确认闸门状态机（全桩）", () => {
 
 		let frames = JSON.parse(await readFile(path.join(record2.dir, "keyframes.json"), "utf-8")) as {
 			frames: { shotId: string; refs?: string[]; staleRefs?: string[] }[];
+			confirmedShotIds?: string[];
 		};
 		assert.equal(frames.frames[0]?.shotId, "SH01");
-		assert.deepEqual(frames.frames[0]?.refs, [char.id]);
+		assert.deepEqual(
+			frames.frames.map((f) => f.refs),
+			[
+				[char.id, scene.id],
+				[char.id, scene.id],
+			],
+		);
 		assert.equal(frames.frames[0]?.staleRefs, undefined);
+
+		// 回归：级联移除的是“受影响镜头”的制作集 ID，不是实体 ID。
+		frames.confirmedShotIds = ["SH01"];
+		await writeFile(path.join(record2.dir, "keyframes.json"), JSON.stringify(frames), "utf-8");
 
 		// 设计定稿更新后，旧关键帧立即进入“设计已更新”过期态；期间仍不碰视频额度
 		const videosBefore = submittedJobs.filter((j) => j.kind === "video").length;
@@ -465,6 +479,7 @@ describe("确认闸门状态机（全桩）", () => {
 		assert.equal(redesigned.ok, true, redesigned.error ?? "");
 		frames = JSON.parse(await readFile(path.join(record2.dir, "keyframes.json"), "utf-8")) as typeof frames;
 		assert.deepEqual(frames.frames[0]?.staleRefs, [char.id]);
+		assert.deepEqual(frames.confirmedShotIds, []);
 		assert.ok(record2.events.some((e) => e.text.includes("已标过期")));
 		assert.equal(submittedJobs.filter((j) => j.kind === "video").length, videosBefore);
 
@@ -481,7 +496,7 @@ describe("确认闸门状态机（全桩）", () => {
 		assert.equal(synced.ok, true, synced.error ?? "");
 		frames = JSON.parse(await readFile(path.join(record2.dir, "keyframes.json"), "utf-8")) as typeof frames;
 		assert.equal(frames.frames[0]?.staleRefs, undefined);
-		assert.deepEqual(frames.frames[0]?.refs, [char.id]);
+		assert.deepEqual(frames.frames[0]?.refs, [char.id, scene.id]);
 		const run2KeyJobs = submittedJobs.filter(
 			(j) => j.kind === "image" && j.dir === record2.dir && j.outputName === "key-SH01",
 		);

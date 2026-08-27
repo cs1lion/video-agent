@@ -433,8 +433,10 @@ export interface KeyframeEntry {
 	url?: string;
 	status: "pending" | "done" | "failed";
 	error?: string;
-	/** 生成时用作参考图的设计实体 id（缺省 = 纯文本锚点出图） */
+	/** 本帧参考板包含的设计实体 id；顺序与合成板一致，也是设计源更新的精确级联依据 */
 	refs?: string[];
+	/** 服务端合成的多实体参考板；缺省表示无视觉参考或旧版单图 run */
+	refSheet?: string;
 	/** 这些实体的设计定稿在出图后又更新过：当前画面相对新设定已过期 */
 	staleRefs?: string[];
 	/** 用户在本轮关键帧确认时放行该镜；未勾选镜头不会进入视频生成 */
@@ -461,6 +463,39 @@ export function keyframePrompt(shotPrompt: string, bible: VisualBible, character
 	]
 		.filter(Boolean)
 		.join(", ");
+}
+
+/**
+ * 关键帧依赖矩阵（P0）：从美术设计定稿推导一个镜头实际要锚定的实体。
+ *
+ * 规则刻意保持可解释、可测试：
+ * - 主角默认入场（跨镜身份一致性是最强约束）；画面点名的角色最多取 2 个；
+ * - 场景作为环境锚点入场；
+ * - 道具只有在画面中点名时才入场，避免把无关产品压进每个镜头。
+ */
+export function pickKeyframeReferences(
+	doc: Pick<DesignBibleDoc, "characters" | "props" | "scenes"> | null | undefined,
+	haystack: string,
+): DesignEntity[] {
+	const text = haystack.toLowerCase();
+	const available = [...(doc?.characters ?? []), ...(doc?.scenes ?? []), ...(doc?.props ?? [])].filter(
+		(entity): entity is DesignEntity => entity.status === "done" && Boolean(entity.file),
+	);
+	const byNameHits = (a: DesignEntity, b: DesignEntity): number =>
+		text.split(b.name.toLowerCase()).length - text.split(a.name.toLowerCase()).length || a.id.localeCompare(b.id);
+	const mentionsOf = (entity: DesignEntity): number => text.split(entity.name.toLowerCase()).length - 1;
+
+	const characters = available.filter((entity) => entity.category === "character").sort(byNameHits);
+	const namedCharacters = characters.filter((entity) => mentionsOf(entity) > 0).slice(0, 2);
+	const primaryCharacters = namedCharacters.length > 0 ? namedCharacters : characters.slice(0, 1);
+
+	const scenes = available.filter((entity) => entity.category === "scene").sort(byNameHits);
+	const props = available
+		.filter((entity) => entity.category === "prop" && mentionsOf(entity) > 0)
+		.sort(byNameHits)
+		.slice(0, 1);
+
+	return [...primaryCharacters, ...scenes.slice(0, 1), ...props];
 }
 
 // ============================================================================
