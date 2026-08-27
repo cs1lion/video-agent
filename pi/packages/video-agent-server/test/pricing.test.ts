@@ -158,7 +158,7 @@ describe("live cost accumulation (pipeline integration)", () => {
 			priceCatalog: {
 				media: {},
 				llm: {},
-				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 0.8, perKChar: 0.05 },
+				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 1.0, perKChar: 0.05 },
 				source: "<test>",
 			},
 		};
@@ -185,6 +185,18 @@ describe("live cost accumulation (pipeline integration)", () => {
 			const e = costOfMediaIn(ctx.priceCatalog, fake, {}, 5);
 			spent = round2(spent + e.amount);
 		}
-		assert.equal(spent, round2(5 * 5 * 0.8)); // 5 次 × 5s × 0.8
+		assert.equal(spent, round2(5 * 5 * 1.0)); // 5 次 × 5s × 1.0 (fallback perSecond)
+	});
+
+	it("estimateProposalCost 返回结构化金额，与 action 类型绑定", () => {
+		const reedit = estimateProposalCost({ catalog: ctx.priceCatalog, action: "reedit" });
+		assert.equal(reedit.amount, 0);
+		assert.match(reedit.note, /ffmpeg/);
+		const reshot5 = estimateProposalCost({ catalog: ctx.priceCatalog, action: "reshot", clipDurationSec: 5 });
+		assert.equal(reshot5.amount, 5); // 5s × 1.0
+		assert.match(reshot5.note, /视频生成/);
+		const retts = estimateProposalCost({ catalog: ctx.priceCatalog, action: "retts" });
+		assert.equal(retts.amount, 0.05);
+		assert.match(retts.note, /TTS/);
 	});
 });

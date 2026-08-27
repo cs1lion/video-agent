@@ -239,7 +239,21 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 							</span>
 							<span className="font-mono text-[11px] text-cyan-300">{p.target}</span>
 							<span className="min-w-0 flex-1 basis-56 text-[11px] leading-snug text-zinc-400">{p.reason}</span>
-							<span className="text-[10px] text-zinc-600">{p.estimatedCost}</span>
+							{/* P2：结构化成本（金额优先）。零成本（如 reedit）不渲染金额 */}
+							{p.cost ? (
+								<span
+									className="inline-flex items-baseline gap-1 rounded-md border border-amber-300/20 bg-amber-400/[0.06] px-1.5 py-0.5"
+									title={p.cost.note}
+								>
+									<span className="font-mono text-[11px] text-amber-200">
+										{p.cost.currency === "CNY" ? "¥" : "$"}
+										{p.cost.amount.toFixed(2)}
+									</span>
+									<span className="text-[10px] text-zinc-500">{p.cost.note}</span>
+								</span>
+							) : (
+								<span className="text-[10px] text-zinc-600">{p.estimatedCost}</span>
+							)}
 							{adopted === key ? (
 								<span className="inline-flex items-center gap-1 text-[11px] text-emerald-300">
 									<BadgeCheck className="size-3.5" /> 已执行

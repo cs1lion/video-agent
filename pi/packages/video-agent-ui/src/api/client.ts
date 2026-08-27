@@ -402,6 +402,8 @@ export interface DeliberationProposal {
 	shotId?: string;
 	reason: string;
 	estimatedCost: string;
+	/** P2：结构化成本（金额 + 货币 + 注解） */
+	cost?: { amount: number; currency: "CNY" | "USD"; note: string };
 	speed?: number;
 	/** retts 专用：目标音色 id */
 	voice?: string;

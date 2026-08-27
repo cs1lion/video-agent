@@ -30,6 +30,7 @@ import * as piai from "@earendil-works/pi-ai/compat";
 import type { LlmConfig } from "./config.ts";
 import { getConsistency } from "./consistency.ts";
 import { probeDuration, runFfmpeg } from "./ffmpeg.ts";
+import { estimateProposalCost } from "./pricing.ts";
 import { type QaVerdict, type RunRecord, readArtifact, writeJson } from "./pipeline.ts";
 import type { ShotPromptDoc } from "./prompts.ts";
 
@@ -92,8 +93,11 @@ export interface DeliberationProposal {
 	/** reshot/retts 时的目标镜头（可执行的关键） */
 	shotId?: string;
 	reason: string;
-	/** 成本说明（如「仅剪辑渲染」「1 次视频生成 + 约 3 分钟」） */
+	/** LLM 给出的成本说明（自然语言，如「仅剪辑渲染」）
+	 *  本字段与下面结构化的 cost 并存，前者补充语义，后者可供 UI 直接展示金额。 */
 	estimatedCost: string;
+	/** P2：结构化成本（服务端从 action + run options  推导，供 UI  直接展示金额） */
+	cost?: { amount: number; currency: "CNY" | "USD"; note: string };
 	/** reedit 专用：整片播放速度倍率（0.9-1.3，1 = 不变速） */
 	speed?: number;
 }
@@ -360,6 +364,7 @@ function buildTools(
 	run: RunRecord,
 	base: CutVariant,
 	challenger: CutVariant | null,
+	priceCatalog: import("./pricing.ts").PriceCatalog,
 ): { tools: AgentTool[]; getProposal: () => DeliberationDoc | null } {
 	const comparisonTool = defineTool(
 		{
@@ -602,14 +607,24 @@ function buildTools(
 					layer: layers.has(f.layer as AttributionLayer) ? (f.layer as AttributionLayer) : "edit",
 					evidence: f.evidence.slice(0, 400),
 				})),
-				proposals: params.proposals.slice(0, 2).map((p) => ({
-					action: actions.has(p.action as ProposalAction) ? (p.action as ProposalAction) : "reedit",
-					target: p.target.slice(0, 120),
-					...(typeof p.shotId === "string" && /^SH\d{1,3}$/.test(p.shotId) ? { shotId: p.shotId } : {}),
-					reason: p.reason.slice(0, 400),
-					estimatedCost: p.estimatedCost.slice(0, 120),
-					...(typeof p.speed === "number" && p.speed >= 0.85 && p.speed <= 1.35 ? { speed: p.speed } : {}),
-				})),
+				proposals: params.proposals.slice(0, 2).map((p) => {
+					const action = actions.has(p.action as ProposalAction) ? (p.action as ProposalAction) : "reedit";
+					// P2：按 action + run options 算出金额（不依赖 LLM 文案）
+					const costEst = estimateProposalCost({
+						catalog: priceCatalog,
+						action,
+						clipDurationSec: run.brief.generationOptions?.clipDurationSec ?? 5,
+					});
+					return {
+						action,
+						target: p.target.slice(0, 120),
+						...(typeof p.shotId === "string" && /^SH\d{1,3}$/.test(p.shotId) ? { shotId: p.shotId } : {}),
+						reason: p.reason.slice(0, 400),
+						estimatedCost: p.estimatedCost.slice(0, 120),
+						cost: { amount: costEst.amount, currency: priceCatalog.fallback.currency, note: costEst.note },
+						...(typeof p.speed === "number" && p.speed >= 0.85 && p.speed <= 1.35 ? { speed: p.speed } : {}),
+					};
+				}),
 			};
 			return { content: [{ type: "text", text: "提案已记录，审议结束。" }], details: {}, terminate: true };
 		},
@@ -635,7 +650,7 @@ const DIRECTOR_SYSTEM_PROMPT = [
  * 同步等待（循环约 1-3 分钟）；循环失败不阻塞偏好落盘。
  */
 export async function runDeliberation(
-	ctx: { llm: LlmConfig },
+	ctx: { llm: LlmConfig; priceCatalog: import("./pricing.ts").PriceCatalog },
 	run: RunRecord,
 	input: DeliberateInput,
 ): Promise<{ ok: true; round: DeliberationRound } | { ok: false; error: string }> {
@@ -686,7 +701,7 @@ export async function runDeliberation(
 	});
 
 	// 导演归因循环（ReAct：observe → think → propose；循环内无写工具，执行全部在用户批准后）
-	const { tools, getProposal } = buildTools(run, base, rival);
+	const { tools, getProposal } = buildTools(run, base, rival, ctx.priceCatalog);
 	const context: AgentContext = {
 		systemPrompt: DIRECTOR_SYSTEM_PROMPT,
 		messages: [],
