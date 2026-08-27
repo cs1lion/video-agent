@@ -12,7 +12,6 @@ import {
 	AudioLines,
 	Camera,
 	Clapperboard,
-	History,
 	LoaderCircle,
 	PlayCircle,
 	WandSparkles,
@@ -301,41 +300,6 @@ export function StudioPage() {
 				)}
 
 			<div className="ml-auto flex items-center gap-4">
-				{/* P2+审查保护：lastActions pill。让用户在工作台头部能看到「刚才做了什么」，
-				 避免在同一路任（chat / 审议）误点重发。点击展开全部最近 5 条。 */}
-				{run.lastActions && run.lastActions.length > 0 && (
-					<details className="relative hidden sm:block">
-						<summary
-							className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-2.5 py-0.5 text-[11px] text-cyan-100"
-							title={run.lastActions
-								.slice(0, 5)
-								.map((a) => `${a.label}（${new Date(a.at).toLocaleTimeString("zh-CN")}）`)
-								.join("\n")}
-						>
-							<History className="size-3" />
-							<span>最近 {run.lastActions.length} 动</span>
-							<span className="font-mono text-[10px] text-cyan-200/80">
-								{run.lastActions[0]!.label.replace(/镜头\s*/, "")}
-							</span>
-						</summary>
-						<div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-lg border border-white/10 bg-zinc-900/95 p-2 shadow-2xl backdrop-blur">
-							<div className="mb-1 text-[10px] tracking-wide text-zinc-500">最近 5 条动作（按时间倒序）</div>
-							<ul className="space-y-1">
-								{run.lastActions.slice(0, 5).map((a, i) => (
-									<li
-										key={i}
-										className="flex items-center justify-between gap-2 rounded border border-white/5 bg-white/[0.03] px-2 py-1 text-[10px]"
-									>
-										<span className="min-w-0 flex-1 truncate text-zinc-200">{a.label}</span>
-										<span className="shrink-0 font-mono text-[9px] text-zinc-500">
-											{new Date(a.at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
-										</span>
-									</li>
-								))}
-							</ul>
-						</div>
-					</details>
-				)}
 				{/* P2：成本 pill（预估 + 累计，悬停查看阶段明细） */}
 					{run.costEstimate && (
 						<div

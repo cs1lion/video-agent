@@ -428,3 +428,113 @@ describe("computeQaDeltas 派发后回灌文案生成（闸门 4）", () => {
 		assert.match(text!, /pacing 70→90 ✅/);
 	});
 });
+
+describe("computeQaRegressionText 安静版（防报警疲劳）", () => {
+	let root: string;
+	let store: RunStore;
+	let ctx: ServerContext;
+	before(async () => {
+		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-qaregress-"));
+		store = new RunStore();
+		ctx = {
+			studioRoot: root,
+			mediaConfig: { media: [] } as unknown as ServerContext["mediaConfig"],
+			llm: { url: "http://stub", model: "stub", timeoutMs: 1000 },
+			port: 0,
+			priceCatalog: {
+				media: {},
+				llm: {},
+				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 1.0, perKChar: 0.05 },
+				source: "<test>",
+			},
+		};
+	});
+	after(async () => {
+		if (root) await fs.rm(root, { recursive: true, force: true });
+	});
+
+	it("纯改善场景返 null（不推事件，避免报警疲劳）", async () => {
+		const { computeQaRegressionText, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "安静测试 1" });
+		run.verdict = {
+			overall: "warn",
+			score: 70,
+			axes: [
+				{ id: "briefFit", score: 60 },
+				{ id: "pacing", score: 70 },
+			],
+			shots: [{ id: "SH03", verdict: "warn", reason: "" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		run.verdict = {
+			overall: "pass",
+			score: 90,
+			axes: [
+				{ id: "briefFit", score: 88 },
+				{ id: "pacing", score: 90 },
+			],
+			shots: [{ id: "SH03", verdict: "ok", reason: "" }], // 裁决也改善
+		};
+		const after = snapshotShotVerdict(run, "SH03");
+		// 裁决也改善的场景下应该推送（裁决变化是重要信号）
+		const text = computeQaRegressionText("SH03", before, after);
+		assert.ok(text, "裁决改善仍推送以让用户知道状态变化");
+		assert.match(text!, /镜头裁决 warn→ok/);
+	});
+
+	it("轴全改善 + 裁决不变 → null（纯成功不报）", async () => {
+		const { computeQaRegressionText, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "安静测试 2" });
+		run.verdict = {
+			overall: "warn",
+			score: 70,
+			axes: [
+				{ id: "briefFit", score: 60 },
+				{ id: "pacing", score: 70 },
+			],
+			shots: [{ id: "SH03", verdict: "warn", reason: "" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		run.verdict = {
+			overall: "warn", // 裁决不变
+			score: 90,
+			axes: [
+				{ id: "briefFit", score: 85 },
+				{ id: "pacing", score: 90 },
+			],
+			shots: [{ id: "SH03", verdict: "warn", reason: "" }], // 裁决也不变
+		};
+		const after = snapshotShotVerdict(run, "SH03");
+		const text = computeQaRegressionText("SH03", before, after);
+		assert.equal(text, null, "纯改善 + 裁决不变 → 静默");
+	});
+
+	it("轴改善 + 另一轴退步 → 推退步警告（✅ 不出现，只 ⚠️）", async () => {
+		const { computeQaRegressionText, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "安静测试 3" });
+		run.verdict = {
+			overall: "pass",
+			score: 80,
+			axes: [
+				{ id: "briefFit", score: 70 },
+				{ id: "textQuality", score: 90 },
+			],
+			shots: [{ id: "SH03", verdict: "ok", reason: "" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		run.verdict = {
+			overall: "pass",
+			score: 80,
+			axes: [
+				{ id: "briefFit", score: 92 }, // 改善
+				{ id: "textQuality", score: 75 }, // 退步
+			],
+			shots: [{ id: "SH03", verdict: "ok", reason: "" }],
+		};
+		const after = snapshotShotVerdict(run, "SH03");
+		const text = computeQaRegressionText("SH03", before, after);
+		assert.ok(text);
+		assert.match(text!, /textQuality 90→75 ⚠️/);
+		assert.doesNotMatch(text!, /briefFit/, "改善轴不应在报警文案中");
+	});
+});

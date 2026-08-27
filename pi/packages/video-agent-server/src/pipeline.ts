@@ -738,6 +738,33 @@ export function computeQaDeltas(
 	return `重做 ${shotId} 后 QA 评分：${parts.join("；")}`;
 }
 
+/** 派发后回灌的“安静版”文案：只在**退步或裁决变化**时返回文本。
+ *  纯改善场景返 null（调用方不推事件，避免“每次重做都被告知改善了”造成报警疲劳）。
+ *  与 computeQaDeltas 是平等关系，不是子集：调用方按场景二选一。 */
+export function computeQaRegressionText(
+	shotId: string,
+	before: ReturnType<typeof snapshotShotVerdict>,
+	after: ReturnType<typeof snapshotShotVerdict>,
+): string | null {
+	if (!before || !after) return null;
+	const verdictChange = before.shot?.verdict !== after.shot?.verdict
+		? `${before.shot?.verdict ?? "?"}→${after.shot?.verdict ?? "?"}`
+		: null;
+	const regressed: string[] = [];
+	for (const id of Object.keys(after.axes)) {
+		const b = before.axes[id];
+		const a = after.axes[id];
+		if (b === undefined) continue;
+		const delta = a - b;
+		if (delta < 0) regressed.push(`${id} ${b}→${a} ⚠️`);
+	}
+	if (!verdictChange && regressed.length === 0) return null; // 纯改善不报
+	const parts: string[] = [];
+	if (verdictChange) parts.push(`镜头裁决 ${verdictChange}`);
+	if (regressed.length) parts.push(regressed.join(" / "));
+	return `重做 ${shotId} 后 QA 评分：${parts.join("；")}`;
+}
+
 function setStage(run: RunRecord, id: StageId, status: RunStage["status"], progress: number): void {
 	const s = stage(run, id);
 	s.status = status;
@@ -2971,7 +2998,7 @@ export async function reshotRun(
 
 			// P2+派发后回灌：对比新旧 verdict，告诉用户这次重做是改善了还是退步了
 			const afterSnapshot = snapshotShotVerdict(run, shotId);
-			const deltaText = computeQaDeltas(shotId, beforeSnapshot, afterSnapshot);
+			const deltaText = computeQaRegressionText(shotId, beforeSnapshot, afterSnapshot);
 			if (deltaText) {
 				pushEvent(run, "producer", "client", "redo", deltaText, { stage: "review", focus: shotId });
 			}
@@ -3231,7 +3258,7 @@ export async function rettsRun(
 
 			// P2+派发后回灌：配音重录可能影响 textQuality 轴（字幕/咬字对齐）
 			const afterSnapshot = snapshotShotVerdict(run, shotId);
-			const deltaText = computeQaDeltas(shotId, beforeSnapshot, afterSnapshot);
+			const deltaText = computeQaRegressionText(shotId, beforeSnapshot, afterSnapshot);
 			if (deltaText) {
 				pushEvent(run, "producer", "client", "redo", deltaText, { stage: "post", focus: shotId });
 			}
