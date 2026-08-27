@@ -696,6 +696,48 @@ export function pushLastAction(run: RunRecord, action: ActionRecord): void {
 	persistRun(run);
 }
 
+/** P2+派发后回灌：快照当前 QA verdict中 指定镜头的裁决 + 五轴分数。
+ *  传给 reshotRun / rettsRun 在动作前快照，动作完成后与新 verdict 对比。 */
+export function snapshotShotVerdict(
+	run: RunRecord,
+	shotId: string,
+): { axes: Record<string, number>; shot?: QaShotVerdict } | null {
+	if (!run.verdict) return null;
+	const axes = Object.fromEntries(run.verdict.axes.map((a) => [a.id, a.score]));
+	const shot = run.verdict.shots?.find((s) => s.id === shotId);
+	return { axes, ...(shot ? { shot: structuredClone(shot) } : {}) };
+}
+
+/** P2+派发后回灌：对比新旧 QA 快照，生成 pushEvent 文案。
+ *  返回 null 表示无变化，不推事件。有变化时返回中英文混合短句。 */
+export function computeQaDeltas(
+	shotId: string,
+	before: ReturnType<typeof snapshotShotVerdict>,
+	after: ReturnType<typeof snapshotShotVerdict>,
+): string | null {
+	if (!before || !after) return null;
+	const verdictChange = before.shot?.verdict !== after.shot?.verdict
+		? `${before.shot?.verdict ?? "?"}→${after.shot?.verdict ?? "?"}`
+		: null;
+	const allAxisIds = new Set([...Object.keys(before.axes), ...Object.keys(after.axes)]);
+	const improved: string[] = [];
+	const regressed: string[] = [];
+	for (const id of allAxisIds) {
+		const b = before.axes[id];
+		const a = after.axes[id];
+		if (b === undefined || a === undefined) continue;
+		const delta = a - b;
+		if (delta > 0) improved.push(`${id} ${b}→${a} ✅`);
+		else if (delta < 0) regressed.push(`${id} ${b}→${a} ⚠️`);
+	}
+	if (!verdictChange && improved.length === 0 && regressed.length === 0) return null;
+	const parts: string[] = [];
+	if (verdictChange) parts.push(`镜头裁决 ${verdictChange}`);
+	if (improved.length) parts.push(improved.join(" / "));
+	if (regressed.length) parts.push(regressed.join(" / "));
+	return `重做 ${shotId} 后 QA 评分：${parts.join("；")}${parts.every((p) => !p.includes("→")) ? "（无变化）" : ""}`;
+}
+
 function setStage(run: RunRecord, id: StageId, status: RunStage["status"], progress: number): void {
 	const s = stage(run, id);
 	s.status = status;
@@ -2738,6 +2780,8 @@ export async function reshotRun(
 			`镜头 ${shotId} 已重做 ${MAX_RESHOT_PER_SHOT} 次达上限。建议在「分镜提示词」阶段微调后整体重跑，或人工确认当前版本。`,
 		);
 	}
+	// P2+派发后回灌：动作前快照 QA verdict，动作完成后对比
+	const beforeSnapshot = snapshotShotVerdict(run, shotId);
 	run.shotAttempts[shotId] = attempts;
 
 	// 提示词 = 原分镜提示词 + 角色锚点 + 质检/一致性反馈回灌 + 客户指令
@@ -2924,6 +2968,13 @@ export async function reshotRun(
 				at: new Date().toISOString(),
 			});
 			persistRun(run);
+
+			// P2+派发后回灌：对比新旧 verdict，告诉用户这次重做是改善了还是退步了
+			const afterSnapshot = snapshotShotVerdict(run, shotId);
+			const deltaText = computeQaDeltas(shotId, beforeSnapshot, afterSnapshot);
+			if (deltaText) {
+				pushEvent(run, "producer", "client", "redo", deltaText, { stage: "review", focus: shotId });
+			}
 		} catch (error) {
 			if (sc.signal.aborted) {
 				run.status = "cancelled";
@@ -3000,6 +3051,8 @@ export async function rettsRun(
 		return bail(`镜头 ${shotId} 旁白已重录 ${MAX_RETTS_PER_SHOT} 次达上限。建议在「剧本」阶段微调后整体重跑。`);
 	}
 	run.ttsAttempts[shotId] = attempts;
+	// P2+派发后回灌：动作前快照 QA verdict，retts 后配音质量可能影响该镜 quality/textQuality 轴
+	const beforeSnapshot = snapshotShotVerdict(run, shotId);
 
 	pushEvent(
 		run,
@@ -3175,6 +3228,13 @@ export async function rettsRun(
 				at: new Date().toISOString(),
 			});
 			persistRun(run);
+
+			// P2+派发后回灌：配音重录可能影响 textQuality 轴（字幕/咬字对齐）
+			const afterSnapshot = snapshotShotVerdict(run, shotId);
+			const deltaText = computeQaDeltas(shotId, beforeSnapshot, afterSnapshot);
+			if (deltaText) {
+				pushEvent(run, "producer", "client", "redo", deltaText, { stage: "post", focus: shotId });
+			}
 		} catch (error) {
 			if (sc.signal.aborted) {
 				run.status = "cancelled";

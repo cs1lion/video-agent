@@ -258,3 +258,111 @@ describe("pushLastAction 去重保护（P2+审查）", () => {
 		assert.equal(run.lastActions.length, 2, "不同 label 应保留");
 	});
 });
+
+describe("computeQaDeltas 派发后回灌文案生成（闸门 4）", () => {
+	let root: string;
+	let store: RunStore;
+	let ctx: ServerContext;
+	before(async () => {
+		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-qadeltas-"));
+		store = new RunStore();
+		ctx = {
+			studioRoot: root,
+			mediaConfig: { media: [] } as unknown as ServerContext["mediaConfig"],
+			llm: { url: "http://stub", model: "stub", timeoutMs: 1000 },
+			port: 0,
+			priceCatalog: {
+				media: {},
+				llm: {},
+				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 1.0, perKChar: 0.05 },
+				source: "<test>",
+			},
+		};
+	});
+	after(async () => {
+		if (root) await fs.rm(root, { recursive: true, force: true });
+	});
+
+	it("无变化返回 null（不推事件）", async () => {
+		const { computeQaDeltas, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "回灌测试" });
+		run.verdict = {
+			overall: "pass",
+			score: 85,
+			axes: [
+				{ id: "briefFit", score: 80 },
+				{ id: "visualConsistency", score: 90 },
+			],
+			shots: [{ id: "SH03", verdict: "ok", reason: "通过" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		const after = snapshotShotVerdict(run, "SH03");
+		const text = computeQaDeltas("SH03", before, after);
+		assert.equal(text, null);
+	});
+
+	it("轴分提高 → ✅ 推改善事件", async () => {
+		const { computeQaDeltas, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "回灌测试 2" });
+		run.verdict = {
+			overall: "warn",
+			score: 70,
+			axes: [{ id: "briefFit", score: 60 }],
+			shots: [{ id: "SH03", verdict: "warn", reason: "人物装束跳变" }],
+		};
+		const before = snapshotShotVerdict(run, "SH03");
+		// 模拟重做后：评分提升 + shot verdict 也改善
+		run.verdict = {
+			overall: "pass",
+			score: 85,
+			axes: [{ id: "briefFit", score: 88 }],
+			shots: [{ id: "SH03", verdict: "ok", reason: "通过" }],
+		};
+		const after = snapshotShotVerdict(run, "SH03");
+		const text = computeQaDeltas("SH03", before, after);
+		assert.ok(text, "应生成事件文案");
+		assert.match(text!, /briefFit 60→88 ✅/);
+		assert.match(text!, /镜头裁决 warn→ok/);
+	});
+
+	it("轴分下降 → ⚠️ 退步警告", async () => {
+		const { computeQaDeltas, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "回灌测试 3" });
+		run.verdict = {
+			overall: "pass",
+			score: 90,
+			axes: [{ id: "textQuality", score: 92 }],
+			shots: [{ id: "SH05", verdict: "ok", reason: "" }],
+		};
+		const before = snapshotShotVerdict(run, "SH05");
+		run.verdict = {
+			overall: "warn",
+			score: 80,
+			axes: [{ id: "textQuality", score: 75 }],
+			shots: [{ id: "SH05", verdict: "warn", reason: "退步" }],
+		};
+		const after = snapshotShotVerdict(run, "SH05");
+		const text = computeQaDeltas("SH05", before, after);
+		assert.ok(text);
+		assert.match(text!, /textQuality 92→75 ⚠️/);
+		assert.match(text!, /镜头裁决 ok→warn/);
+	});
+
+	it("before 缺失（首次 QA）→ 返回 null，不推事件", async () => {
+		const { computeQaDeltas, snapshotShotVerdict } = await import("../src/pipeline.ts");
+		const run = startRun(ctx, store, { logline: "回灌测试 4" });
+		run.verdict = {
+			overall: "pass",
+			score: 80,
+			axes: [{ id: "briefFit", score: 80 }],
+			shots: [{ id: "SH01", verdict: "ok", reason: "" }],
+		};
+		const before = snapshotShotVerdict(run, "SH01");
+		// before 指向 run.verdict；但如果 verdict 是 undefined...
+		run.verdict = undefined;
+		assert.equal(snapshotShotVerdict(run, "SH01"), null);
+		const after = snapshotShotVerdict(run, "SH01");
+		const text = computeQaDeltas("SH01", before, after);
+		assert.equal(text, null);
+	});
+});
