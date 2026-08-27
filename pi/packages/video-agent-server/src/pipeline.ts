@@ -37,7 +37,10 @@ import {
 } from "../../video-agent/src/index.ts";
 import type { ServerContext } from "./config.ts";
 import {
+	costOfLlmIn,
+	costOfMediaIn,
 	estimateRunCost as pricingEstimateRun,
+	round2,
 } from "./pricing.ts";
 import {
 	assembleTimeline,
@@ -620,6 +623,38 @@ function stage(run: RunRecord, id: StageId): RunStage {
 	return run.stages.find((s) => s.id === id)!;
 }
 
+/** P2：累计本次 LLM 调用的成本（按 prompt/completion 字符数粗估）。 */
+function trackLlmCost(run: RunRecord, ctx: ServerContext, promptText: string, completionText: string): void {
+	const entry = costOfLlmIn(ctx.priceCatalog, ctx.llm.model, promptText.length, completionText.length);
+	run.metrics.cost.spent = round2(run.metrics.cost.spent + entry.amount);
+}
+
+/** P2：累计本次媒体生成的成本。outputSeconds 仅视频/音频有意义；图像/TTS 走 perCall。 */
+function trackMediaCost(
+	run: RunRecord,
+	ctx: ServerContext,
+	adapter: { id: string; kind: "video" | "image" | "tts"; model?: string },
+	params: Record<string, unknown>,
+	outputSeconds = 0,
+): void {
+	const fake = { id: adapter.id, kind: adapter.kind, model: adapter.model ?? adapter.id } as never;
+	const entry = costOfMediaIn(ctx.priceCatalog, fake, params, outputSeconds);
+	run.metrics.cost.spent = round2(run.metrics.cost.spent + entry.amount);
+}
+
+/** P2：查找视频适配器（可能不存在：某些项目只配了图像） */
+function videoAdapterOf(ctx: ServerContext): { id: string; kind: "video"; model?: string } | null {
+	const a = ctx.mediaConfig.media.find((m) => m.kind === "video");
+	if (!a) return null;
+	return { id: a.id, kind: "video", model: a.model };
+}
+/** P2：查找 TTS 适配器 */
+function ttsAdapterOf(ctx: ServerContext): { id: string; kind: "tts"; model?: string } | null {
+	const a = ctx.mediaConfig.media.find((m) => m.kind === "tts");
+	if (!a) return null;
+	return { id: a.id, kind: "tts", model: a.model };
+}
+
 function setStage(run: RunRecord, id: StageId, status: RunStage["status"], progress: number): void {
 	const s = stage(run, id);
 	s.status = status;
@@ -892,6 +927,10 @@ async function generateImage(
 		finished = await attempt(false);
 	}
 	if (!(finished.status === "done" && finished.filePath)) return null;
+	const imageAdapter = sc.ctx.mediaConfig.media.find((m) => m.kind === "image");
+	if (imageAdapter) {
+		trackMediaCost(run, sc.ctx, { id: imageAdapter.id, kind: "image", model: imageAdapter.model }, {});
+	}
 	return path.relative(run.dir, finished.filePath!);
 }
 
@@ -916,12 +955,14 @@ async function deriveDesignBible(sc: StageCtx, script: ScriptDoc, bible: VisualB
 	let doc: DesignBibleDoc;
 	const t0 = Date.now();
 	try {
+		const designBiblePrompt = promptsToText(designBibleMessages(run.brief, script, bible));
 		const raw = await chatJson<Partial<Record<"characters" | "props" | "scenes", unknown>>>(
 			sc.ctx.llm,
-			promptsToText(designBibleMessages(run.brief, script, bible)),
+			designBiblePrompt,
 			signal,
 		);
 		run.metrics.llmCalls += 1;
+		trackLlmCost(run, sc.ctx, designBiblePrompt, JSON.stringify(raw));
 		doc = normalizeDesignDoc(raw);
 		appendSpan(
 			run,
@@ -1688,6 +1729,17 @@ async function stageClips(
 		}
 		const ok = finished.status === "done" && finished.filePath;
 		clipFiles.push(ok ? finished.filePath! : null);
+		// P2：视频生成成功时探测实际时长，按 perSecond 计费
+		if (ok && finished.filePath) {
+			try {
+				const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
+				const adapter = videoAdapterOf(sc.ctx);
+				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, dur ?? opts.clipDurationSec);
+			} catch {
+				const adapter = videoAdapterOf(sc.ctx);
+				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, opts.clipDurationSec);
+			}
+		}
 		appendSpan(
 			run,
 			{
@@ -1758,12 +1810,14 @@ async function ensureVoiceDirections(sc: StageCtx, scriptDoc: ScriptDoc): Promis
 
 	const t0 = Date.now();
 	try {
+		const voiceDirectionsPrompt = promptsToText(voiceDirectionsMessages(run.brief, scriptDoc, optionsOf(run)));
 		const raw = await chatJson<{ directions?: { shotId?: unknown; instruction?: unknown }[] }>(
 			ctx.llm,
-			promptsToText(voiceDirectionsMessages(run.brief, scriptDoc, optionsOf(run))),
+			voiceDirectionsPrompt,
 			signal,
 		);
 		run.metrics.llmCalls += 1;
+		trackLlmCost(run, ctx, voiceDirectionsPrompt, JSON.stringify(raw));
 		for (const shot of scriptDoc.shots) {
 			const found = (raw.directions ?? []).find((d) => String(d?.shotId ?? "") === shot.id);
 			const instruction = typeof found?.instruction === "string" ? found.instruction.trim().slice(0, 200) : "";
@@ -1863,6 +1917,11 @@ async function stageAudio(
 		const finished = await sc.queue.awaitJob(job.id, undefined, signal).catch(() => null);
 		const ok = finished?.status === "done" && finished.filePath;
 		audioFiles.push(ok ? finished!.filePath! : null);
+		// P2：TTS 成功时按 prompt 字符数计费
+		if (ok) {
+			const adapter = ttsAdapterOf(sc.ctx);
+			if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: text });
+		}
 		appendSpan(
 			run,
 			{
@@ -2016,8 +2075,10 @@ async function stageExport(
 			narration: narrationFor(s, opts.promptLanguage).trim().slice(0, 40),
 			visual: s.visual.slice(0, 80),
 		}));
-		edl = await chatJson<EdlDoc>(ctx.llm, edlPrompt(edlShots), signal);
+		const edlText = edlPrompt(edlShots);
+		edl = await chatJson<EdlDoc>(ctx.llm, edlText, signal);
 		run.metrics.llmCalls += 1;
+		trackLlmCost(run, ctx, edlText, JSON.stringify(edl));
 		appendSpan(
 			run,
 			{
@@ -2715,6 +2776,17 @@ export async function reshotRun(
 			run.metrics.mediaCalls += 1;
 			const finished = await queue.awaitJob(job.id, undefined, sc.signal);
 			const ok = finished.status === "done" && finished.filePath;
+			// P2：重做镜头成功后按实际时长计费
+			if (ok && finished.filePath) {
+				try {
+					const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
+					const adapter = videoAdapterOf(sc.ctx);
+					if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, dur ?? opts.clipDurationSec);
+				} catch {
+					const adapter = videoAdapterOf(sc.ctx);
+					if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, opts.clipDurationSec);
+				}
+			}
 			appendSpan(
 				run,
 				{
@@ -2955,6 +3027,11 @@ export async function rettsRun(
 			run.metrics.mediaCalls += 1;
 			const finished = await queue.awaitJob(job.id, undefined, sc.signal);
 			const ok = finished.status === "done" && finished.filePath;
+			// P2：旁白重录成功后按 prompt 字符数计费
+			if (ok) {
+				const adapter = ttsAdapterOf(sc.ctx);
+				if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: text });
+			}
 			appendSpan(
 				run,
 				{
@@ -3390,6 +3467,7 @@ async function planDirectorReply(ctx: ServerContext, run: RunRecord, text: strin
 	try {
 		run.metrics.llmCalls += 1;
 		const plan = await chatJson<Partial<DirectorPlan>>(ctx.llm, user);
+		trackLlmCost(run, ctx, user, JSON.stringify(plan));
 		const intent = (["reshot", "retts", "reexport", "none"] as const).includes(plan.intent as DirectorIntent)
 			? (plan.intent as DirectorIntent)
 			: "none";
@@ -3587,6 +3665,7 @@ async function generateDoc<T>(
 			images.length > 0
 				? await chatVisionJson<T>(ctx.llm, userPrompt, images, signal)
 				: await chatJson<T>(ctx.llm, userPrompt, signal);
+		trackLlmCost(run, ctx, userPrompt, JSON.stringify(doc));
 		appendSpan(
 			run,
 			{
@@ -3673,6 +3752,7 @@ async function runQa(
 			signal,
 		);
 		run.metrics.llmCalls += 1;
+		trackLlmCost(run, ctx, "qa-visual", JSON.stringify(vision));
 		const ttsOk = audioFiles.filter((f) => f !== null).length;
 		const audioSync = audioFiles.length > 0 ? Math.round((ttsOk / audioFiles.length) * 100) : 100;
 		const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));

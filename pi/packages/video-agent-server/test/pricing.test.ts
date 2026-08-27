@@ -3,7 +3,10 @@
  */
 
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 import {
 	type CostEntry,
 	costOfLlmIn,
@@ -14,6 +17,8 @@ import {
 	loadPriceCatalog,
 	round2,
 } from "../src/pricing.ts";
+import type { ServerContext } from "../src/config.ts";
+import { RunStore, startRun } from "../src/pipeline.ts";
 
 const CATALOG = {
 	media: {
@@ -136,5 +141,50 @@ describe("formatCost", () => {
 		assert.equal(formatCost(12.5, "CNY"), "¥12.50");
 		assert.equal(formatCost(0.005, "CNY"), "¥<0.01");
 		assert.equal(formatCost(3.14, "USD"), "$3.14");
+	});
+});
+
+describe("live cost accumulation (pipeline integration)", () => {
+	let ctx: ServerContext;
+	let root: string;
+	let store: RunStore;
+	before(async () => {
+		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-pricing-live-"));
+		ctx = {
+			studioRoot: root,
+			mediaConfig: { media: [] } as unknown as ServerContext["mediaConfig"],
+			llm: { url: "http://stub", model: "stub", timeoutMs: 1000 },
+			port: 0,
+			priceCatalog: {
+				media: {},
+				llm: {},
+				fallback: { currency: "CNY", perCall: 0.5, perInputToken: 0.0001, perOutputToken: 0.0003, perSecond: 0.8, perKChar: 0.05 },
+				source: "<test>",
+			},
+		};
+		store = new RunStore();
+	});
+	after(async () => {
+		if (root) await fs.rm(root, { recursive: true, force: true });
+	});
+
+	it("startRun 在 run 上落 costEstimate（pre-flight 独立于 LLM 累计）", () => {
+		const run = startRun(ctx, store, { logline: "测试广告" });
+		assert.ok(run.costEstimate);
+		assert.equal(run.costEstimate!.currency, "CNY");
+		assert.ok(run.costEstimate!.total > 0);
+		// 初始 metrics.cost.spent 必须是数字（后续才累加）
+		assert.equal(typeof run.metrics.cost.spent, "number");
+		assert.equal(run.metrics.cost.spent, 0);
+	});
+
+	it("costOfLlmIn 连续累加会单调递增", () => {
+		let spent = 0;
+		const fake = { id: "x", kind: "video" as const };
+		for (let i = 0; i < 5; i++) {
+			const e = costOfMediaIn(ctx.priceCatalog, fake, {}, 5);
+			spent = round2(spent + e.amount);
+		}
+		assert.equal(spent, round2(5 * 5 * 0.8)); // 5 次 × 5s × 0.8
 	});
 });
