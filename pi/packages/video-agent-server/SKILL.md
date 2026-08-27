@@ -40,6 +40,8 @@ POST /api/generate
 1. **gate=design（美术设计确认）**：风格/色板 + 人物·道具·场景概念图完成后 `status=awaiting, run.gate="design"`。把设计图交给用户：可直接确认走 `POST /api/runs/:id/resume`；有意见则先 `POST /api/runs/:id/design/adjust {"entityId","instruction"}` 单卡重绘（≤3 次），改完再让用户确认后才 resume。此时管线停在关键帧之前，不会消耗视频额度。
 2. **gate=keyframes（关键帧确认）**：分镜提示词与全部首帧关键帧完成后 `status=awaiting, run.gate="keyframes"`。逐镜首帧交用户审阅：单镜重绘走 `POST /api/runs/:id/keyframes/adjust {"shotId","instruction"}`（≤3 次）；用户确认后才 resume 进入片段生成。
 
+一致性传导实现说明：关键帧与单卡重绘默认把对应**美术设计定稿图**作为参考图（`params.image`）随提示词提交——设计图不再是纯文本描述的间接约束；供应商不支持该字段时自动降级为纯提示词并记录事件。
+
 任何在 awaiting 状态下直接触发生成的行为都被禁止；refine 重跑视觉或提示词阶段会自动重新挂上对应闸门。
 
 ### 2. 访谈制片（质量更高）

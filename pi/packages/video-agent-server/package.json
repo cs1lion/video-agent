@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": "tsx watch src/server.ts",
 		"start": "tsx src/server.ts",
-		"test": "tsx --test test/*.test.ts",
+		"test": "tsx --test --experimental-test-module-mocks test/*.test.ts",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {

@@ -731,14 +731,40 @@ export function imageSizeFor(aspectRatio: string): string {
 }
 
 /** 生一张图（走队列 kind=image）；返回 assets 相对路径，失败返回 null（abort 向上抛） */
-async function generateImage(sc: StageCtx, prompt: string, outputName: string, size: string): Promise<string | null> {
+/**
+ * 出图：可选参考图（美术设计定稿 dataURL，经 params.image 透传给适配器）。
+ * 供应商不识别额外字段或拒绝引用时自动降级为纯提示词重试一次 ——
+ * 与视频链路“图生视频失败退文生视频”的降级策略对齐，不因增强功能牺牲可用性。
+ */
+async function generateImage(
+	sc: StageCtx,
+	prompt: string,
+	outputName: string,
+	size: string,
+	options: { referenceImage?: string | null } = {},
+): Promise<string | null> {
 	const { run, signal } = sc;
-	const job = sc.queue.submit(
-		{ roleName: "video-agent", kind: "image", prompt, params: { size }, outputName },
-		run.dir,
-	);
-	run.metrics.mediaCalls += 1;
-	const finished = await sc.queue.awaitJob(job.id, undefined, signal);
+	const baseParams: Record<string, unknown> = { size };
+	const attempt = (withReference: boolean) => {
+		const job = sc.queue.submit(
+			{
+				roleName: "video-agent",
+				kind: "image",
+				prompt,
+				params:
+					withReference && options.referenceImage ? { ...baseParams, image: options.referenceImage } : baseParams,
+				outputName,
+			},
+			run.dir,
+		);
+		run.metrics.mediaCalls += 1;
+		return sc.queue.awaitJob(job.id, undefined, signal);
+	};
+	let finished = await attempt(Boolean(options.referenceImage));
+	if (!(finished.status === "done" && finished.filePath) && options.referenceImage) {
+		pushEvent(run, "art", "producer", "status", "带参考图生成未成功，已降级纯提示词重试 ⚠️");
+		finished = await attempt(false);
+	}
 	if (!(finished.status === "done" && finished.filePath)) return null;
 	return path.relative(run.dir, finished.filePath!);
 }
@@ -922,6 +948,9 @@ async function redesignEntityInner(
 	);
 	const queue = new GenerationQueue(ctx.mediaConfig);
 	const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
+	// 参考传导：以该实体旧版定稿为参考，重绘是增量调整而非凭空再画（防人物改脸漂移）
+	const prevRef =
+		entity.file && fs.existsSync(path.join(run.dir, entity.file)) ? await fileDataUrl(run.dir, entity.file) : null;
 	entity.attempts += 1;
 	pushEvent(
 		run,
@@ -932,25 +961,35 @@ async function redesignEntityInner(
 	);
 	const t0 = Date.now();
 	try {
+		// 先备份旧图、再生成（与关键帧重绘同规：否则新图会先覆盖主名，
+		// 随后的“备份”实际存的是新图、且旧图被静默销毁）。
+		let backedUpOld = false;
+		if (entity.file && fs.existsSync(path.join(run.dir, entity.file))) {
+			const ext = path.extname(entity.file);
+			const vName = `design-${entity.category}-${entity.id}_v${entity.versions.length + 1}${ext}`;
+			await fs.promises.rename(path.join(run.dir, entity.file), path.join(run.dir, "assets", vName)).catch(() => {});
+			entity.versions.push(path.join("assets", vName));
+			backedUpOld = true;
+		}
 		const file = await generateImage(
 			sc,
 			designSheetPrompt(entity, bible, instruction || undefined),
 			`design-${entity.category}-${entity.id}`,
 			"1024x1024",
+			{ referenceImage: prevRef },
 		);
 		if (!file) {
-			entity.status = "failed";
+			// 两次尝试（带/不带参考）均失败：回滚刚备份的旧主图
+			if (backedUpOld && entity.file && entity.versions.length > 0) {
+				const prev = entity.versions[entity.versions.length - 1]!;
+				await fs.promises.rename(path.join(run.dir, prev), path.join(run.dir, entity.file)).catch(() => {});
+				entity.versions.pop();
+			}
+			entity.status = entity.file ? "done" : "failed";
 			entity.error = "图像生成失败";
 			await writeDesignBible(run, doc);
 			pushEvent(run, "art", "client", "status", `设计图「${entity.name}」重绘未成功 ⚠️，可稍后在卡片上再次重试。`);
 			return { ok: false, error: "图像生成失败，请稍后重试" };
-		}
-		// 旧图版本化备份
-		if (entity.file) {
-			const ext = path.extname(entity.file);
-			const vName = `design-${entity.category}-${entity.id}_v${entity.versions.length + 1}${ext}`;
-			await fs.promises.rename(path.join(run.dir, entity.file), path.join(run.dir, "assets", vName)).catch(() => {});
-			entity.versions.push(path.join("assets", vName));
 		}
 		entity.file = file;
 		entity.status = "done";
@@ -1015,7 +1054,7 @@ async function stagePrompts(sc: StageCtx, script?: ScriptDoc, bible?: VisualBibl
 	for (const [i, shot] of scriptDoc.shots.entries()) {
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
-		await ensureKeyframe(sc, shot.id, prompt, bibleDoc, keyframes);
+		await ensureKeyframe(sc, shot.id, prompt, bibleDoc, keyframes, shot);
 		setStage(run, "prompts", "running", 30 + Math.round(((i + 1) / scriptDoc.shots.length) * 60));
 	}
 	setStage(run, "prompts", "done", 100);
@@ -1069,6 +1108,31 @@ async function designAnchorsOf(run: RunRecord): Promise<string> {
 	return parts.join(" | ");
 }
 
+/**
+ * 挑选与镜头最相关的设计定稿参考：优先人物（身份锚定最重要），其次场景；
+ * 实体名出现在画面描述中加分。单镜只挂一张参考 —— 多参考图各供应商行为不一，
+ * 单张最稳，且主要漂移风险来自人物。
+ */
+function pickReferenceEntity(doc: DesignBibleDoc | null, haystack: string): DesignEntity | null {
+	const best = (list: { status: string; file?: string; name: string }[]): DesignEntity | null => {
+		const ranked = list
+			.filter((e) => e.status === "done" && e.file)
+			.map((e) => ({ entity: e as DesignEntity, hits: haystack.split(e.name).length - 1 }))
+			.sort((a, b) => b.hits - a.hits);
+		return ranked[0]?.entity ?? null;
+	};
+	return best(doc?.characters ?? []) ?? best(doc?.scenes ?? []);
+}
+
+/** 该镜关键帧的参考图 dataURL：无则 null（不挂），有则由 generateImage 挂到 params.image */
+async function keyframeReferenceOf(run: RunRecord, shotPrompt: string, shotVisual?: string): Promise<string | null> {
+	const doc = await readDesignBible(run);
+	const picked = pickReferenceEntity(doc, `${shotVisual ?? ""}\n${shotPrompt}`);
+	if (!picked?.file) return null;
+	pushEvent(run, "tech", "producer", "status", `镜头画面将锚定设计定稿「${picked.name}」（设计图 → 参考图传导）。`);
+	return await fileDataUrl(run.dir, picked.file);
+}
+
 /** 确保该镜有关键帧；缺失则按分镜提示词生成一张（版本化备份由调用方重绘路径负责） */
 async function ensureKeyframe(
 	sc: StageCtx,
@@ -1076,6 +1140,7 @@ async function ensureKeyframe(
 	shotPrompt: string,
 	bible: VisualBible,
 	doc: KeyframesDoc,
+	shot?: { visual: string },
 ): Promise<KeyframeEntry> {
 	const { run, signal } = sc;
 	let entry = doc.frames.find((f) => f.shotId === shotId);
@@ -1087,13 +1152,21 @@ async function ensureKeyframe(
 	entry.attempts += 1;
 	entry.status = "pending";
 	const t0 = Date.now();
-	pushEvent(run, "tech", "producer", "status", `镜头 ${shotId} 先出关键帧（首帧锚定图）…`);
+	const referenceImage = await keyframeReferenceOf(run, shotPrompt, shot?.visual);
+	pushEvent(
+		run,
+		"tech",
+		"producer",
+		"status",
+		`镜头 ${shotId} 先出关键帧（首帧锚定图${referenceImage ? " · 挂设计参考图" : ""}）…`,
+	);
 	try {
 		const file = await generateImage(
 			sc,
 			keyframePrompt(shotPrompt, bible, await designAnchorsOf(run)),
 			`key-${shotId}`,
 			imageSizeFor(optionsOf(run).aspectRatio),
+			{ referenceImage },
 		);
 		if (file) {
 			entry.file = file;
@@ -1302,7 +1375,7 @@ async function stageClips(
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
 		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）
-		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes);
+		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes, shot);
 		const imageDataUrl = frame.file ? await fileDataUrl(run.dir, frame.file) : null;
 		pushEvent(
 			run,
@@ -2039,6 +2112,8 @@ async function refineStageWithContext(
 /** 从最早未完成阶段继续推进到导出 */
 export function resumeRun(ctx: ServerContext, run: RunRecord): { ok: boolean; error?: string } {
 	if (run.status === "running") return { ok: false, error: "管线运行中，请稍候" };
+	const next = run.stages.find((s) => s.status !== "done");
+	if (!next) return { ok: false, error: "所有阶段已完成，无需推进" };
 	// 确认闸门通过：清闸门并记录
 	if (run.gate === "design") {
 		pushEvent(run, "producer", "all", "status", "美术设计已确认 ✅ 开始绘制分镜关键帧。");
@@ -2047,8 +2122,6 @@ export function resumeRun(ctx: ServerContext, run: RunRecord): { ok: boolean; er
 		pushEvent(run, "producer", "all", "status", "关键帧已确认 ✅ 开始视频生成（片段按队列提交）。");
 		run.gate = undefined;
 	}
-	const next = run.stages.find((s) => s.status !== "done");
-	if (!next) return { ok: false, error: "所有阶段已完成，无需推进" };
 	pushEvent(run, "producer", "all", "status", `确认推进 ▶ 从「${stageLabel(next.id)}」继续，直至成片。`);
 	run.status = "running";
 	persistRun(run);
