@@ -44,8 +44,8 @@ import {
 	writeJson,
 } from "../pipeline.ts";
 import { designAnchorsOf } from "../pipeline.ts";
-import type { ScriptDoc, ShotPromptDoc, VisualBible } from "../prompts.ts";
 import type { ServerContext } from "../config.ts";
+import type { ScriptDoc, ShotPromptDoc, VisualBible } from "../prompts.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
 
 /**
@@ -130,56 +130,11 @@ export async function reshotRun(
 		const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
 		const opts = optionsOf(run);
 		try {
-			// 1. 备份现有片段（版本化：clip-SHxx_v{n}.mp4）。使用 withVersionedAsset
-			// 抽出"备份→生成→回滚"公共模式，i2v→t2v 回退放在 generate 内部。
-			run.shotVersions[shotId] = run.shotVersions[shotId] ?? [];
-			const versions = run.shotVersions[shotId];
-			const { file: okRel } = await withVersionedAsset({
-				run,
-				mainRelPath: `assets/clip-${shotId}.mp4`,
-				versions,
-				backupRelPath: `assets/clip-${shotId}_v${versions.length + 1}.mp4`,
-				generate: async () => {
-					const i2vJob = queue.submit(
-						{
-							roleName: "video-agent",
-							kind: "video",
-							prompt,
-							params: videoSubmitParams(sc.ctx, opts, width, height, kfDataUrl),
-							outputName: `clip-${shotId}`,
-						},
-						run.dir,
-					);
-					run.metrics.mediaCalls += 1;
-					const i2v = await queue.awaitJob(i2vJob.id, undefined, sc.signal);
-					if (i2v.status === "done" && i2v.filePath) {
-						return path.relative(run.dir, i2v.filePath);
-					}
-					// 图生视频退化为文生视频（同一份输出名，会覆盖主文件）
-					const t2vJob = queue.submit(
-						{
-							roleName: "video-agent",
-							kind: "video",
-							prompt,
-							params: videoSubmitParams(sc.ctx, opts, width, height, null),
-							outputName: `clip-${shotId}`,
-						},
-						run.dir,
-					);
-					run.metrics.mediaCalls += 1;
-					const t2v = await queue.awaitJob(t2vJob.id, undefined, sc.signal);
-					return t2v.status === "done" && t2v.filePath ? path.relative(run.dir, t2v.filePath) : null;
-				},
-			});
-			const ok = Boolean(okRel);
-			const finished = okRel ? { status: "done" as const, filePath: path.join(run.dir, okRel) } : null;
-			// withVersionedAsset 返回 { file: string | null }；reshotRun 需要的是
-			// 相对路径 (null 时 string 为 null) 以及 final filePath 绝对值。
-			// 由于 generate 返了相对路径（会写入主名），需要根据主名反算绝对路径：
-
-			// 2. 外观类反馈（客户指令/质检/一致性）→ 先重绘关键帧再图生视频：
+			// 1. 外观类反馈（客户指令/质检/一致性）→ 先重绘关键帧再图生视频：
 			//    视频以首帧锚定时，旧关键帧的外观（如发色年龄）会压过文本指令，
 			//    旧实现直接复用旧首帧导致"重做了但画面没变"。
+			//    顺序约束：必须先于视频生成的 withVersionedAsset——其 generate 闭包
+			//    要用重绘后的 kfDataUrl 与 width/height（此前顺序颠倒导致 TDZ 崩溃）。
 			const { width, height } = pixelDimensions(opts.resolution, opts.aspectRatio);
 			const kfDoc = await readKeyframes(run);
 			const kf = kfDoc.frames.find((f) => f.shotId === shotId);
@@ -236,6 +191,52 @@ export async function reshotRun(
 				"status",
 				`镜头 ${shotId} 重新提交生成（第 ${attempts} 轮${kfDataUrl ? " · 关键帧锚定" : ""}）。`,
 			);
+
+			// 2. 备份现有片段（版本化：clip-SHxx_v{n}.mp4）。使用 withVersionedAsset
+			//    抽出"备份→生成→回滚"公共模式，i2v→t2v 回退放在 generate 内部。
+			//    withVersionedAsset 返回 { file }，generate 写入的是主名（相对 run.dir），
+			//    因此这里用主名反算绝对路径。
+			run.shotVersions[shotId] = run.shotVersions[shotId] ?? [];
+			const versions = run.shotVersions[shotId];
+			const { file: okRel } = await withVersionedAsset({
+				run,
+				mainRelPath: `assets/clip-${shotId}.mp4`,
+				versions,
+				backupRelPath: `assets/clip-${shotId}_v${versions.length + 1}.mp4`,
+				generate: async () => {
+					const i2vJob = queue.submit(
+						{
+							roleName: "video-agent",
+							kind: "video",
+							prompt,
+							params: videoSubmitParams(sc.ctx, opts, width, height, kfDataUrl),
+							outputName: `clip-${shotId}`,
+						},
+						run.dir,
+					);
+					run.metrics.mediaCalls += 1;
+					const i2v = await queue.awaitJob(i2vJob.id, undefined, sc.signal);
+					if (i2v.status === "done" && i2v.filePath) {
+						return path.relative(run.dir, i2v.filePath);
+					}
+					// 图生视频退化为文生视频（同一份输出名，会覆盖主文件）
+					const t2vJob = queue.submit(
+						{
+							roleName: "video-agent",
+							kind: "video",
+							prompt,
+							params: videoSubmitParams(sc.ctx, opts, width, height, null),
+							outputName: `clip-${shotId}`,
+						},
+						run.dir,
+					);
+					run.metrics.mediaCalls += 1;
+					const t2v = await queue.awaitJob(t2vJob.id, undefined, sc.signal);
+					return t2v.status === "done" && t2v.filePath ? path.relative(run.dir, t2v.filePath) : null;
+				},
+			});
+			const ok = Boolean(okRel);
+			const finished = okRel ? { status: "done" as const, filePath: path.join(run.dir, okRel) } : null;
 			const t0 = Date.now();
 			// P2：重做镜头成功后按实际时长计费
 			if (ok && finished) {

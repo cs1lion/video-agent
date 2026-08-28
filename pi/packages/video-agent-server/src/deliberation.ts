@@ -10,7 +10,7 @@
  *   - 循环内工具全部只读（看数据/看帧），唯一有写语义的是 propose（终结工具）；
  *     一切花钱的动作（reshot/retts/重剪辑）都在循环外由用户批准后走既有端点。
  *   - 轮次上限 MAX_DELIB_PER_RUN=3；候选上限 MAX_CUT_VARIANTS=4；
- *     看帧预算每轮 4 次；LLM 轮次上限 DELIB_MAX_TURNS=8。
+ *     看帧预算每轮 4 次；LLM 轮次上限 DELIB_MAX_TURNS=12。
  *   - LLM 429/5xx 自动退避重试（streamWithRetry）。
  */
 
@@ -31,7 +31,14 @@ import type { LlmConfig } from "./config.ts";
 import { getConsistency } from "./consistency.ts";
 import { probeDuration, runFfmpeg } from "./ffmpeg.ts";
 import { estimateProposalCost } from "./pricing.ts";
-import { type QaVerdict, type RunRecord, LAST_ACTION_DEDUP_MS, readArtifact, writeJson } from "./pipeline.ts";
+import {
+	type ActionRecord,
+	type QaVerdict,
+	type RunRecord,
+	LAST_ACTION_DEDUP_MS,
+	readArtifact,
+	writeJson,
+} from "./pipeline.ts";
 import type { ShotPromptDoc } from "./prompts.ts";
 
 // ---- 常量 ----
@@ -333,7 +340,8 @@ function streamWithRetry(
 			}
 			const retryable = message.stopReason === "error" && /429|rate|500|502|503/i.test(message.errorMessage ?? "");
 			if (retryable && attempt < 3) {
-				await sleep(20_000 * (attempt + 1));
+				// 退避必须可中止：否则用户取消审议后进程还会在 sleep 里干等最长 60s
+				await sleep(20_000 * (attempt + 1), options?.signal ?? undefined);
 				continue;
 			}
 			const out = piai.createAssistantMessageEventStream();
@@ -607,6 +615,16 @@ function buildTools(
 		async (_id, params) => {
 			const actions = new Set<ProposalAction>(["reedit", "reshot", "retts", "rescript"]);
 			const layers = new Set<AttributionLayer>(["edit", "asset", "prompt", "audio"]);
+			// 合法镜头集合：以 script.json 为准。闸门 1 此前是 fail-open（find 不到就放行），
+			// QA 降级（verdict.shots 缺失）或 LLM 幻觉出不存在的镜头号时护栏静默失效——
+			// 未知即拒绝，而不是未知即放行。
+			let validShotIds: Set<string> | null = null;
+			try {
+				const script = await readArtifact<{ shots: { id: string }[] }>(run, "script.json");
+				validShotIds = new Set(script.shots.map((s) => s.id));
+			} catch {
+				// script 缺失（异常 run）：跳过存在性校验，仅保留下方 QA 底线检查
+			}
 			proposal = {
 				rootCause: params.rootCause.slice(0, 300),
 				findings: params.findings.slice(0, 6).map((f) => ({
@@ -616,8 +634,16 @@ function buildTools(
 				})),
 				proposals: params.proposals.slice(0, 2).map((p) => {
 					const action = actions.has(p.action as ProposalAction) ? (p.action as ProposalAction) : "reedit";
-					// 闸门 1质量底线：对QA 评分为 ok 的镜头禁止提议 reshot/retts（防 LLM 幻觉乱重做好镜头）
-					if ((action === "reshot" || action === "retts") && p.shotId) {
+					// 闸门 1 质量底线：reshot/retts 必须指向真实存在的镜头，且 QA 评分为 ok 的镜头禁止重做
+					if (action === "reshot" || action === "retts") {
+						if (!p.shotId) {
+							throw new Error(`${action} 提案缺少 shotId。请指定具体镜头（如 SH03）后重新提交。`);
+						}
+						if (validShotIds && !validShotIds.has(p.shotId)) {
+							throw new Error(
+								`镜头 ${p.shotId} 不存在（本片镜头：${[...validShotIds].join("、")}）。请核对镜头编号后重新提交。`,
+							);
+						}
 						const target = run.verdict?.shots?.find((s) => s.id === p.shotId);
 						if (target?.verdict === "ok") {
 							throw new Error(
@@ -625,11 +651,14 @@ function buildTools(
 							);
 						}
 					}
-					// 闸门 3：lastActions 去重保护。3 分钟内同 (kind, shotId, label) 刚做过 → 直接拒
+					// 闸门 3：lastActions 去重保护。3 分钟内同镜头刚做过同类动作 → 直接拒。
+					// （此前条件里残留 `action.replace("retts","retts")` 这类 no-op，纯靠 kind 与 action
+					//  同名侥幸生效；现在显式映射，kind 重命名也不会静默失效。）
 					if ((action === "reshot" || action === "retts") && p.shotId) {
+						const actionKind: ActionRecord["kind"] = action; // reshot|retts → 同名
 						const duplicate = run.lastActions.find(
 							(a) =>
-								(a.kind === action || a.kind === action.replace("retts", "retts") || a.kind === action) &&
+								a.kind === actionKind &&
 								a.shotId === p.shotId &&
 								Date.now() - new Date(a.at).getTime() < LAST_ACTION_DEDUP_MS,
 						);
@@ -738,10 +767,13 @@ export async function runDeliberation(
 
 	// 导演归因循环（ReAct：observe → think → propose；循环内无写工具，执行全部在用户批准后）
 	const { tools, getProposal } = buildTools(run, base, rival, ctx.priceCatalog);
-	const recentActionsHint = run.lastActions.length > 0
-		? `\n\n【最近 3 分钟已执行的动作 — 避免重复提议】\n${
-				run.lastActions
-					.slice(0, 8)
+	// 只注入去重窗口内（LAST_ACTION_DEDUP_MS=3 分钟）的动作——此前写"最近 3 分钟"
+	// 却取最近 8 条不过滤时间，几小时前的旧账会误导模型放弃本就合理的建议。
+	const cutoff = Date.now() - LAST_ACTION_DEDUP_MS;
+	const recentActions = run.lastActions.filter((a) => new Date(a.at).getTime() >= cutoff);
+	const recentActionsHint = recentActions.length > 0
+		? `\n\n【最近几分钟已执行的动作 — 避免重复提议】\n${
+				recentActions
 					.map(
 						(a) =>
 							`- ${a.kind}${a.shotId ? ` ${a.shotId}` : ""}: ${a.label}（${new Date(a.at).toLocaleTimeString("zh-CN")}）`,

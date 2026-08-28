@@ -66,6 +66,9 @@ export interface WithVersionedAssetResult {
 /**
  * 备份→生成→回滚三段式封装。失败时把刚备份的文件还原为主名，从 versions 弹出。
  * 主文件不存在时不备份直接调用 generate（支持 brand new 镜首次出图）。
+ *
+ * 失败的两种形态都要回滚：generate 返回 null，或 generate 抛异常。
+ * 只认 null 不认异常的话，主文件已被 rename 进版本库却无人还原（主名悬空）。
  */
 export async function withVersionedAsset(args: WithVersionedAssetArgs): Promise<WithVersionedAssetResult> {
 	const { run, mainRelPath, versions, backupRelPath, generate } = args;
@@ -81,9 +84,8 @@ export async function withVersionedAsset(args: WithVersionedAssetArgs): Promise<
 		versions.push(backupRelPath);
 		backedUp = true;
 	}
-	const file = await generate();
-	if (!file) {
-		// 失败还原：仅当 versions 末尾仍是本次刚 push 的 backupRelPath 时才弹出（并发安全）。
+	/** 失败还原：仅当 versions 末尾仍是本次刚 push 的 backupRelPath 时才弹出（并发安全）。 */
+	const rollback = async (): Promise<void> => {
 		if (backedUp && versions.length > 0) {
 			const prev = versions[versions.length - 1]!;
 			if (prev === backupRelPath) {
@@ -91,6 +93,16 @@ export async function withVersionedAsset(args: WithVersionedAssetArgs): Promise<
 				versions.pop();
 			}
 		}
+	};
+	let file: string | null;
+	try {
+		file = await generate();
+	} catch (error) {
+		await rollback();
+		throw error;
+	}
+	if (!file) {
+		await rollback();
 		return { file: null };
 	}
 	return { file };
