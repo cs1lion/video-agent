@@ -1131,7 +1131,9 @@ export { stagePrompts };
 // stageKeyframes 已迁到 ./stages/keyframes.ts
 import { stageKeyframes } from "./stages/keyframes.js";
 export { stageKeyframes };
-
+// stageAudio 已迁到 ./stages/audio.ts
+import { stageAudio } from "./stages/audio.ts";
+export { stageAudio };
 // 分镜关键帧：每镜一张首帧锚定图（组图预览 + 图生视频输入）
 // ---------------------------------------------------------------------------
 
@@ -1657,303 +1659,12 @@ async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
 		);
 	} catch (error) {
 		if (signal.aborted) throw error;
-		pushEvent(run, "reviewer", "producer", "status", "重绘帧复审未成功 ⚠️，请在关键帧面板手动发起审核确认。");
 	}
 }
 
-async function stageClips(
-	sc: StageCtx,
-	script?: ScriptDoc,
-): Promise<{ script: ScriptDoc; clipFiles: (string | null)[] }> {
-	const { run, signal } = sc;
-	const opts = optionsOf(run);
-	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
-	const shotPrompts = await readArtifact<ShotPromptDoc>(run, "prompts.json");
-	const bible = await readArtifact<VisualBible>(run, "visual-bible.json").catch(
-		() => ({ styleKeywords: [], palette: [], lighting: "", grade: "" }) as VisualBible,
-	);
-	const keyframes = await readKeyframes(run);
-	setStage(run, "clips", "running", 0);
-	// 部分确认：只把用户明确放行的关键帧交给视频队列；未勾选镜头不消耗额度。
-	// 返回过滤后的 script，使 audio/export 与“实际制作集”保持同一顺序与同一长度。
-	// 关键区分：undefined 是旧 run / 未确认；空数组是显式清空（禁止），有值则严格按清单。
-	const hasRecordedSelection = Array.isArray(keyframes.confirmedShotIds);
-	const productionShots = hasRecordedSelection
-		? scriptDoc.shots.filter((shot) => keyframes.confirmedShotIds?.includes(shot.id))
-		: scriptDoc.shots;
-	const { width, height } = pixelDimensions(opts.resolution, opts.aspectRatio);
-	const clipFiles: (string | null)[] = [];
-	for (const [i, shot] of productionShots.entries()) {
-		throwIfAborted(signal);
-		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
-		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）
-		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes, shot);
-		const imageDataUrl = frame.file ? await fileDataUrl(run.dir, frame.file) : null;
-		pushEvent(
-			run,
-			"tech",
-			"producer",
-			"status",
-			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${opts.clipDurationSec}s · ${imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
-		);
-		const t0 = Date.now();
-		const submitClip = (withImage: boolean) =>
-			sc.queue.submit(
-				{
-					roleName: "video-agent",
-					kind: "video",
-					prompt,
-					// seed 不透传：未知参数可能被供应商 400 拒绝，仅在 options 中保留
-					params: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null),
-					outputName: `clip-${shot.id}`,
-				},
-				run.dir,
-			);
-		run.metrics.mediaCalls += 1;
-		let finished = await sc.queue.awaitJob(submitClip(Boolean(imageDataUrl)).id, undefined, signal);
-		// 图生视频整单失败 → 降级为文生视频再试一次
-		if (!(finished.status === "done" && finished.filePath) && imageDataUrl) {
-			pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 图生视频未成功，降级为文生视频重试。`);
-			run.metrics.mediaCalls += 1;
-			finished = await sc.queue.awaitJob(submitClip(false).id, undefined, signal);
-		}
-		const ok = finished.status === "done" && finished.filePath;
-		clipFiles.push(ok ? finished.filePath! : null);
-		// P2：视频生成成功时探测实际时长，按 perSecond 计费
-		if (ok && finished.filePath) {
-			try {
-				const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
-				const adapter = videoAdapterOf(sc.ctx);
-				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, dur ?? opts.clipDurationSec);
-			} catch {
-				const adapter = videoAdapterOf(sc.ctx);
-				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, opts.clipDurationSec);
-			}
-		}
-		appendSpan(
-			run,
-			{
-				stage: "clips",
-				name: `镜头 ${shot.id} 生成`,
-				kind: "media",
-				status: ok ? "ok" : "error",
-				input: `${imageDataUrl ? "[keyframe+i2v] " : ""}${prompt.slice(0, 120)}`,
-				output: ok ? path.basename(finished.filePath!) : `队列状态 ${finished.status}`,
-			},
-			t0,
-		);
-		if (ok) {
-			pushEvent(
-				run,
-				"tech",
-				"editor",
-				"status",
-				`镜头 ${shot.id} 生成完成 ✅（${i + 1}/${productionShots.length}）`,
-				{ stage: "generate", focus: shot.id, label: "查看片段" },
-			);
-		} else {
-			pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 生成失败 ⚠️，已跳过并由剪辑师在时间线上补位。`, {
-				stage: "generate",
-				focus: shot.id,
-				label: "查看该镜",
-			});
-		}
-		setStage(run, "clips", "running", Math.round(((i + 1) / productionShots.length) * 100));
-	}
-	const okCount = clipFiles.filter((f) => f !== null).length;
-	if (okCount === 0) {
-		throw new Error("全部镜头生成失败（详见队列重试记录）");
-	}
-	setStage(run, "clips", "done", 100);
-	pushEvent(
-		run,
-		"tech",
-		"editor",
-		"handoff",
-		`镜头批次交付：${okCount}/${productionShots.length} 镜成功，移交剪辑师归一化与合成。`,
-	);
-	return { script: { ...scriptDoc, shots: productionShots }, clipFiles };
-}
 
-/** 逐镜表演指导表（voice-directions.json） */
-interface VoiceDirectionsDoc {
-	directions: { shotId: string; instruction: string }[];
-	generatedAt?: string;
-}
 
-/**
- * 确保每镜有表演指导：优先读盘（refine/续跑复用），缺失时 LLM 一次生成全片指导，
- * 失败按情绪意图兜底。指导同时回写 script.json 的 ttsDirection 字段。
- */
-async function ensureVoiceDirections(sc: StageCtx, scriptDoc: ScriptDoc): Promise<Map<string, string>> {
-	const { run, ctx, signal } = sc;
-	const map = new Map<string, string>();
-	try {
-		const saved = await readArtifact<VoiceDirectionsDoc>(run, "voice-directions.json");
-		for (const d of saved.directions ?? []) {
-			if (typeof d.shotId === "string" && typeof d.instruction === "string") map.set(d.shotId, d.instruction);
-		}
-	} catch {
-		// 首次生成
-	}
-	if (scriptDoc.shots.every((s) => map.has(s.id))) return map;
-
-	const t0 = Date.now();
-	try {
-		const voiceDirectionsPrompt = promptsToText(voiceDirectionsMessages(run.brief, scriptDoc, optionsOf(run)));
-		const raw = await chatJson<{ directions?: { shotId?: unknown; instruction?: unknown }[] }>(
-			ctx.llm,
-			voiceDirectionsPrompt,
-			signal,
-		);
-		run.metrics.llmCalls += 1;
-		trackLlmCost(run, ctx, voiceDirectionsPrompt, JSON.stringify(raw));
-		for (const shot of scriptDoc.shots) {
-			const found = (raw.directions ?? []).find((d) => String(d?.shotId ?? "") === shot.id);
-			const instruction = typeof found?.instruction === "string" ? found.instruction.trim().slice(0, 200) : "";
-			map.set(shot.id, instruction || fallbackVoiceDirection(run.brief));
-		}
-		await writeJson(run, "voice-directions.json", {
-			directions: scriptDoc.shots.map((s) => ({
-				shotId: s.id,
-				instruction: map.get(s.id) ?? fallbackVoiceDirection(run.brief),
-			})),
-			generatedAt: new Date().toISOString(),
-		} satisfies VoiceDirectionsDoc);
-		appendSpan(
-			run,
-			{
-				stage: "audio",
-				name: "配音导演·表演指导",
-				kind: "llm",
-				status: "ok",
-				input: `${scriptDoc.shots.length} 镜旁白`,
-				output: scriptDoc.shots.map((s) => `${s.id}:${(map.get(s.id) ?? "").slice(0, 18)}…`).join(" "),
-			},
-			t0,
-		);
-	} catch (error) {
-		if (signal.aborted) throw error;
-		for (const shot of scriptDoc.shots) {
-			if (!map.has(shot.id)) map.set(shot.id, fallbackVoiceDirection(run.brief));
-		}
-		appendSpan(
-			run,
-			{
-				stage: "audio",
-				name: "配音导演·表演指导",
-				kind: "llm",
-				status: "error",
-				output: `${error instanceof Error ? error.message : String(error)}（按情绪意图兜底）`,
-			},
-			t0,
-		);
-	}
-	// 回写进剧本，供重录时的语境参考
-	let dirty = false;
-	for (const shot of scriptDoc.shots) {
-		const next = map.get(shot.id);
-		if (next && shot.ttsDirection !== next) {
-			shot.ttsDirection = next;
-			dirty = true;
-		}
-	}
-	if (dirty) {
-		await fs.promises
-			.writeFile(path.join(run.dir, "script.json"), JSON.stringify(scriptDoc, null, "\t"), "utf-8")
-			.catch(() => {});
-	}
-	return map;
-}
-
-async function stageAudio(
-	sc: StageCtx,
-	script?: ScriptDoc,
-): Promise<{ script: ScriptDoc; audioFiles: (string | null)[] }> {
-	const { run, signal } = sc;
-	const opts = optionsOf(run);
-	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
-	setStage(run, "audio", "running", 0);
-	pushEvent(
-		run,
-		"sound",
-		"editor",
-		"status",
-		`声音设计开工：配音导演逐镜撰写表演指导，按 ${opts.promptLanguage === "en" ? "英文" : "中文"}旁白录制有情绪起伏的 TTS。`,
-	);
-	const directions = await ensureVoiceDirections(sc, scriptDoc);
-	const audioFiles: (string | null)[] = [];
-	for (const [i, shot] of scriptDoc.shots.entries()) {
-		throwIfAborted(signal);
-		const text = narrationFor(shot, opts.promptLanguage).trim();
-		if (!text) {
-			audioFiles.push(null);
-			setStage(run, "audio", "running", Math.round(((i + 1) / scriptDoc.shots.length) * 100));
-			continue;
-		}
-		const instruction = directions.get(shot.id) ?? fallbackVoiceDirection(run.brief);
-		const t0 = Date.now();
-		const job = sc.queue.submit(
-			{
-				roleName: "video-agent",
-				kind: "tts",
-				prompt: text,
-				params: { instruction },
-				outputName: `tts-${shot.id}`,
-			},
-			run.dir,
-		);
-		run.metrics.mediaCalls += 1;
-		const finished = await sc.queue.awaitJob(job.id, undefined, signal).catch(() => null);
-		const ok = finished?.status === "done" && finished.filePath;
-		audioFiles.push(ok ? finished!.filePath! : null);
-		// P2：TTS 成功时按 prompt 字符数计费
-		if (ok) {
-			const adapter = ttsAdapterOf(sc.ctx);
-			if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: text });
-		}
-		appendSpan(
-			run,
-			{
-				stage: "audio",
-				name: `镜头 ${shot.id} 配音`,
-				kind: "media",
-				status: ok ? "ok" : "error",
-				input: `[指导] ${instruction.slice(0, 60)}｜${text.slice(0, 80)}`,
-				output: ok ? path.basename(finished!.filePath!) : "TTS 失败",
-			},
-			t0,
-		);
-		if (ok) {
-			pushEvent(
-				run,
-				"sound",
-				"editor",
-				"status",
-				`旁白录制完成 ✅ 镜头 ${shot.id}（指导：${instruction.slice(0, 30)}…）`,
-				{ stage: "post", focus: shot.id, label: "试听配音" },
-			);
-		} else {
-			pushEvent(run, "sound", "producer", "status", `旁白录制失败 ⚠️ 镜头 ${shot.id}（该镜将以无声画面进时间线）。`, {
-				stage: "post",
-				focus: shot.id,
-				label: "查看该镜",
-			});
-		}
-		setStage(run, "audio", "running", Math.round(((i + 1) / scriptDoc.shots.length) * 100));
-	}
-	setStage(run, "audio", "done", 100);
-	const ttsOk = audioFiles.filter((f) => f !== null).length;
-	pushEvent(
-		run,
-		"sound",
-		"editor",
-		"handoff",
-		`旁白轨交付：${ttsOk}/${audioFiles.length} 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。`,
-	);
-	return { script: scriptDoc, audioFiles };
-}
-
+/** stageExport 已迁到 ./stages/export.ts（暂未迁，保持内联） */
 async function stageExport(
 	sc: StageCtx,
 	script?: ScriptDoc,
@@ -3113,3 +2824,209 @@ export function promptsToText(messages: { role: string; content: string | { text
 		.map((m) => (typeof m.content === "string" ? m.content : m.content.map((part) => part.text ?? "").join("\n")))
 		.join("\n");
 }
+
+export async function stageClips(
+	sc: StageCtx,
+	script?: ScriptDoc,
+): Promise<{ script: ScriptDoc; clipFiles: (string | null)[] }> {
+	const { run, signal } = sc;
+	const opts = optionsOf(run);
+	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
+	const shotPrompts = await readArtifact<ShotPromptDoc>(run, "prompts.json");
+	const bible = await readArtifact<VisualBible>(run, "visual-bible.json").catch(
+		() => ({ styleKeywords: [], palette: [], lighting: "", grade: "" }) as VisualBible,
+	);
+	const keyframes = await readKeyframes(run);
+	setStage(run, "clips", "running", 0);
+	// 部分确认：只把用户明确放行的关键帧交给视频队列；未勾选镜头不消耗额度。
+	// 返回过滤后的 script，使 audio/export 与“实际制作集”保持同一顺序与同一长度。
+	// 关键区分：undefined 是旧 run / 未确认；空数组是显式清空（禁止），有值则严格按清单。
+	const hasRecordedSelection = Array.isArray(keyframes.confirmedShotIds);
+	const productionShots = hasRecordedSelection
+		? scriptDoc.shots.filter((shot) => keyframes.confirmedShotIds?.includes(shot.id))
+		: scriptDoc.shots;
+	const { width, height } = pixelDimensions(opts.resolution, opts.aspectRatio);
+	const clipFiles: (string | null)[] = [];
+	for (const [i, shot] of productionShots.entries()) {
+		throwIfAborted(signal);
+		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
+		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）
+		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes, shot);
+		const imageDataUrl = frame.file ? await fileDataUrl(run.dir, frame.file) : null;
+		pushEvent(
+			run,
+			"tech",
+			"producer",
+			"status",
+			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${opts.clipDurationSec}s · ${imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
+		);
+		const t0 = Date.now();
+		const submitClip = (withImage: boolean) =>
+			sc.queue.submit(
+				{
+					roleName: "video-agent",
+					kind: "video",
+					prompt,
+					// seed 不透传：未知参数可能被供应商 400 拒绝，仅在 options 中保留
+					params: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null),
+					outputName: `clip-${shot.id}`,
+				},
+				run.dir,
+			);
+		run.metrics.mediaCalls += 1;
+		let finished = await sc.queue.awaitJob(submitClip(Boolean(imageDataUrl)).id, undefined, signal);
+		// 图生视频整单失败 → 降级为文生视频再试一次
+		if (!(finished.status === "done" && finished.filePath) && imageDataUrl) {
+			pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 图生视频未成功，降级为文生视频重试。`);
+			run.metrics.mediaCalls += 1;
+			finished = await sc.queue.awaitJob(submitClip(false).id, undefined, signal);
+		}
+		const ok = finished.status === "done" && finished.filePath;
+		clipFiles.push(ok ? finished.filePath! : null);
+		// P2：视频生成成功时探测实际时长，按 perSecond 计费
+		if (ok && finished.filePath) {
+			try {
+				const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
+				const adapter = videoAdapterOf(sc.ctx);
+				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, dur ?? opts.clipDurationSec);
+			} catch {
+				const adapter = videoAdapterOf(sc.ctx);
+				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, opts.clipDurationSec);
+			}
+		}
+		appendSpan(
+			run,
+			{
+				stage: "clips",
+				name: `镜头 ${shot.id} 生成`,
+				kind: "media",
+				status: ok ? "ok" : "error",
+				input: `${imageDataUrl ? "[keyframe+i2v] " : ""}${prompt.slice(0, 120)}`,
+				output: ok ? path.basename(finished.filePath!) : `队列状态 ${finished.status}`,
+			},
+			t0,
+		);
+		if (ok) {
+			pushEvent(
+				run,
+				"tech",
+				"editor",
+				"status",
+				`镜头 ${shot.id} 生成完成 ✅（${i + 1}/${productionShots.length}）`,
+				{ stage: "generate", focus: shot.id, label: "查看片段" },
+			);
+		} else {
+			pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 生成失败 ⚠️，已跳过并由剪辑师在时间线上补位。`, {
+				stage: "generate",
+				focus: shot.id,
+				label: "查看该镜",
+			});
+		}
+		setStage(run, "clips", "running", Math.round(((i + 1) / productionShots.length) * 100));
+	}
+	const okCount = clipFiles.filter((f) => f !== null).length;
+	if (okCount === 0) {
+		throw new Error("全部镜头生成失败（详见队列重试记录）");
+	}
+	setStage(run, "clips", "done", 100);
+	pushEvent(
+		run,
+		"tech",
+		"editor",
+		"handoff",
+		`镜头批次交付：${okCount}/${productionShots.length} 镜成功，移交剪辑师归一化与合成。`,
+	);
+	return { script: { ...scriptDoc, shots: productionShots }, clipFiles };
+}
+
+/** 逐镜表演指导表（voice-directions.json） */
+interface VoiceDirectionsDoc {
+	directions: { shotId: string; instruction: string }[];
+	generatedAt?: string;
+}
+
+/**
+ * 确保每镜有表演指导：优先读盘（refine/续跑复用），缺失时 LLM 一次生成全片指导，
+ * 失败按情绪意图兜底。指导同时回写 script.json 的 ttsDirection 字段。
+ */
+export async function ensureVoiceDirections(sc: StageCtx, scriptDoc: ScriptDoc): Promise<Map<string, string>> {
+	const { run, ctx, signal } = sc;
+	const map = new Map<string, string>();
+	try {
+		const saved = await readArtifact<VoiceDirectionsDoc>(run, "voice-directions.json");
+		for (const d of saved.directions ?? []) {
+			if (typeof d.shotId === "string" && typeof d.instruction === "string") map.set(d.shotId, d.instruction);
+		}
+	} catch {
+		// 首次生成
+	}
+	if (scriptDoc.shots.every((s) => map.has(s.id))) return map;
+
+	const t0 = Date.now();
+	try {
+		const voiceDirectionsPrompt = promptsToText(voiceDirectionsMessages(run.brief, scriptDoc, optionsOf(run)));
+		const raw = await chatJson<{ directions?: { shotId?: unknown; instruction?: unknown }[] }>(
+			ctx.llm,
+			voiceDirectionsPrompt,
+			signal,
+		);
+		run.metrics.llmCalls += 1;
+		trackLlmCost(run, ctx, voiceDirectionsPrompt, JSON.stringify(raw));
+		for (const shot of scriptDoc.shots) {
+			const found = (raw.directions ?? []).find((d) => String(d?.shotId ?? "") === shot.id);
+			const instruction = typeof found?.instruction === "string" ? found.instruction.trim().slice(0, 200) : "";
+			map.set(shot.id, instruction || fallbackVoiceDirection(run.brief));
+		}
+		await writeJson(run, "voice-directions.json", {
+			directions: scriptDoc.shots.map((s) => ({
+				shotId: s.id,
+				instruction: map.get(s.id) ?? fallbackVoiceDirection(run.brief),
+			})),
+			generatedAt: new Date().toISOString(),
+		} satisfies VoiceDirectionsDoc);
+		appendSpan(
+			run,
+			{
+				stage: "audio",
+				name: "配音导演·表演指导",
+				kind: "llm",
+				status: "ok",
+				input: `${scriptDoc.shots.length} 镜旁白`,
+				output: scriptDoc.shots.map((s) => `${s.id}:${(map.get(s.id) ?? "").slice(0, 18)}…`).join(" "),
+			},
+			t0,
+		);
+	} catch (error) {
+		if (signal.aborted) throw error;
+		for (const shot of scriptDoc.shots) {
+			if (!map.has(shot.id)) map.set(shot.id, fallbackVoiceDirection(run.brief));
+		}
+		appendSpan(
+			run,
+			{
+				stage: "audio",
+				name: "配音导演·表演指导",
+				kind: "llm",
+				status: "error",
+				output: `${error instanceof Error ? error.message : String(error)}（按情绪意图兜底）`,
+			},
+			t0,
+		);
+	}
+	// 回写进剧本，供重录时的语境参考
+	let dirty = false;
+	for (const shot of scriptDoc.shots) {
+		const next = map.get(shot.id);
+		if (next && shot.ttsDirection !== next) {
+			shot.ttsDirection = next;
+			dirty = true;
+		}
+	}
+	if (dirty) {
+		await fs.promises
+			.writeFile(path.join(run.dir, "script.json"), JSON.stringify(scriptDoc, null, "\t"), "utf-8")
+			.catch(() => {});
+	}
+	return map;
+}
+
