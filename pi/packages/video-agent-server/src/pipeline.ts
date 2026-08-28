@@ -660,19 +660,6 @@ function stage(run: RunRecord, id: StageId): RunStage {
  *  实现在 pricing.ts（trackLlmCost / trackMediaCost），此处仅保留类型说明：
  *  trackLlmCost(run, ctx, promptText, completionText, images?) / trackMediaCost(run, ctx, adapter, params, outputSeconds?) */
 
-/** P2：查找视频适配器（可能不存在：某些项目只配了图像） */
-function videoAdapterOf(ctx: ServerContext): { id: string; kind: "video"; model?: string } | null {
-	const a = ctx.mediaConfig.media.find((m) => m.kind === "video");
-	if (!a) return null;
-	return { id: a.id, kind: "video", model: a.model };
-}
-/** P2：查找 TTS 适配器 */
-function ttsAdapterOf(ctx: ServerContext): { id: string; kind: "tts"; model?: string } | null {
-	const a = ctx.mediaConfig.media.find((m) => m.kind === "tts");
-	if (!a) return null;
-	return { id: a.id, kind: "tts", model: a.model };
-}
-
 /** P2+审查保护：推送一条最近动作。3 分钟内同 (kind, shotId, label) 去重，
  *  超 L20 丢弃最旧。该函数只 push + persistRun，不动其他状态。 */
 export function pushLastAction(run: RunRecord, action: ActionRecord): void {
@@ -777,39 +764,12 @@ function throwIfAborted(signal: AbortSignal): void {
  *  返回：成功返 { file: 新主名 }，失败返 { file: null, backupRestored: true }。
  */
 /** 重做路径公共抽象（backup→generate→rollback）。已迁到 ./asset-version.ts 独立维护 */
-import { withVersionedAsset } from "./asset-version.ts";
+import { withVersionedAsset, fileDataUrl } from "./asset-version.ts";
 export { withVersionedAsset };
 
-/** 视频适配器是否为 Agnes 2.5 系列（OpenAI Videos 兼容参数体系） */
-function isAgnesVideo25(ctx: ServerContext): boolean {
-	return /2\.5/.test(ctx.mediaConfig.media.find((a) => a.kind === "video")?.model ?? "");
-}
+/** 媒体适配器查找 + 视频请求参数（亚尼斯 2.5 vs 2.0 区别）。已迁到 ./redo-adapters.ts */
+import { isAgnesVideo25, ttsAdapterOf, videoAdapterOf, videoSubmitParams } from "./redo-adapters.ts";
 
-/**
- * 视频生成请求参数（按适配器代际分支）：
- * - Agnes 2.5：seconds 为字符串 "4"-"12"（不足 4s 按 4s 生成，剪辑阶段裁切）；
- *   width/height/frame_rate/image 均禁传（400）；首帧锚定走 mode=keyframe + first_frame（data URI 已实测可用）。
- * - Agnes 2.0 及其他：像素 + 帧数体系，image 为图生视频。
- */
-function videoSubmitParams(
-	ctx: ServerContext,
-	opts: GenerationOptions,
-	width: number,
-	height: number,
-	imageDataUrl: string | null,
-): Record<string, unknown> {
-	if (isAgnesVideo25(ctx)) {
-		const seconds = String(Math.min(12, Math.max(4, Math.round(opts.clipDurationSec))));
-		return imageDataUrl ? { seconds, mode: "keyframe", first_frame: imageDataUrl } : { seconds, mode: "text" };
-	}
-	return {
-		width,
-		height,
-		frame_rate: opts.fps,
-		seconds: opts.clipDurationSec,
-		...(imageDataUrl ? { image: imageDataUrl } : {}),
-	};
-}
 
 function optionsOf(run: RunRecord): GenerationOptions {
 	return run.brief.generationOptions ?? resolveGenerationOptions();
@@ -1559,16 +1519,7 @@ function persistKeyframeConfirmations(run: RunRecord, doc: KeyframesDoc, confirm
 	fs.renameSync(tmp, path.join(run.dir, "keyframes.json"));
 }
 
-async function fileDataUrl(dir: string, relPath: string): Promise<string | null> {
-	try {
-		const buf = await fs.promises.readFile(path.join(dir, relPath));
-		const ext = path.extname(relPath).toLowerCase();
-		const mime = ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : ext === ".webp" ? "image/webp" : "image/png";
-		return `data:${mime};base64,${buf.toString("base64")}`;
-	} catch {
-		return null;
-	}
-}
+/** fileDataUrl 已迁到 ./asset-version.ts（与 withVersionedAsset 同源） */
 
 /** 分镜提示词签名：上游 refine 后签名变化 → 关键帧可据此判定过期（B8 级联依据） */
 function promptSigOf(prompt: string): string {

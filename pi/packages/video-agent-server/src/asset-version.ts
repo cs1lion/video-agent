@@ -34,6 +34,18 @@ interface RunDir {
 	readonly dir: string;
 }
 
+/** 把 run 里的文件转成 data URL（多模态生成 / 续写参考图常用）。失败返 null（文件不存在） */
+export async function fileDataUrl(dir: string, relPath: string): Promise<string | null> {
+	try {
+		const buf = await fs.promises.readFile(path.join(dir, relPath));
+		const ext = path.extname(relPath).toLowerCase();
+		const mime = ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : ext === ".webp" ? "image/webp" : "image/png";
+		return `data:${mime};base64,${buf.toString("base64")}`;
+	} catch {
+		return null;
+	}
+}
+
 export interface WithVersionedAssetArgs {
 	run: RunDir;
 	/** 主文件相对路径，如 "assets/clip-SH03.mp4" 或 "design-CH01.png" */
