@@ -11,6 +11,14 @@ metadata:
 
 驱动本地 pi-video-agent 制片管线：从一句话需求到成片交付，含人工审议闭环。
 
+## 必读（接手本项目前）
+
+- **`AGENTS.md`**（仓库根）：所有 AI agent 的必读协作约定
+- **`packages/video-agent-server/docs/dev-log.md`**：修改设计日志
+  - 为什么这么做 / 暂不做什么 / 当前路线
+  - 跨 session 续写：每次大动作前先读最后一节
+- **`packages/video-agent-server/docs/architecture/director-agent.md`**：Director agent 架构（单 agent 论证 + 工具边界）
+
 ## 基础约定
 
 - **Base URL**: `http://localhost:8790`（启动：`PORT=8790 npx tsx src/server.ts`，工作目录 `pi/packages/video-agent-server`）

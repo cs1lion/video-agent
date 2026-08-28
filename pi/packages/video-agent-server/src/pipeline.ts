@@ -776,40 +776,9 @@ function throwIfAborted(signal: AbortSignal): void {
  *  失败：把刚备份的文件还原为主名、从 versions 弹出一项。
  *  返回：成功返 { file: 新主名 }，失败返 { file: null, backupRestored: true }。
  */
-export async function withVersionedAsset(args: {
-	run: RunRecord;
-	/** run.dir 下的主文件相对路径，如 "assets/clip-SH03.mp4" 或 "design-CH01.png" */
-	mainRelPath: string;
-	/** 调用者拥有的版本列表（本函数会 PUSH/POP 原子交与）。 */
-	versions: string[];
-	/** 备份的相对路径，如 "assets/design-CH01_v1.png"。需包含完整子路径。 */
-	backupRelPath: string;
-	/** 实际生成调用；返主名（相对 run.dir）或 null。 */
-	generate: () => Promise<string | null>;
-}): Promise<{ file: string | null }> {
-	const { run, mainRelPath, versions, backupRelPath, generate } = args;
-	const mainAbs = path.join(run.dir, mainRelPath);
-	const backupAbs = path.join(run.dir, backupRelPath);
-	let backedUp = false;
-	if (fs.existsSync(mainAbs)) {
-		await fs.promises.rename(mainAbs, backupAbs).catch(() => {});
-		versions.push(backupRelPath);
-		backedUp = true;
-	}
-	const file = await generate();
-	if (!file) {
-		// 生成失败：还原刚备份的主图（主名）、从版本列表弹出。原子：同时检查。
-		if (backedUp && versions.length > 0) {
-			const prev = versions[versions.length - 1]!;
-			if (prev === backupRelPath) {
-				await fs.promises.rename(backupAbs, mainAbs).catch(() => {});
-				versions.pop();
-			}
-		}
-		return { file: null };
-	}
-	return { file };
-}
+/** 重做路径公共抽象（backup→generate→rollback）。已迁到 ./asset-version.ts 独立维护 */
+import { withVersionedAsset } from "./asset-version.ts";
+export { withVersionedAsset };
 
 /** 视频适配器是否为 Agnes 2.5 系列（OpenAI Videos 兼容参数体系） */
 function isAgnesVideo25(ctx: ServerContext): boolean {
