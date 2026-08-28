@@ -2947,48 +2947,9 @@ const REEXPORT_ASPECTS: readonly AspectRatio[] = ["16:9", "9:16", "1:1", "4:3"];
  * 典型场景：上传/更换 BGM 后重新合成、重新让剪辑师出转场、
  * 多平台分发（指定 aspectRatio 产出 final-9x16.mp4 等多画幅版本）。
  */
-export function reexportRun(ctx: ServerContext, run: RunRecord, aspectRatio?: string): { ok: boolean; error?: string } {
-	if (run.status === "running") return { ok: false, error: "管线运行中，请稍候" };
-	const audioDone = stage(run, "audio").status === "done";
-	const clipsDone = stage(run, "clips").status === "done";
-	if (!clipsDone || !audioDone) return { ok: false, error: "镜头与配音尚未全部完成，无法重新导出" };
-
-	let targetAspect: AspectRatio | undefined;
-	if (aspectRatio !== undefined) {
-		if (!REEXPORT_ASPECTS.includes(aspectRatio as AspectRatio)) {
-			return { ok: false, error: `不支持的画幅 ${aspectRatio}（可选 ${REEXPORT_ASPECTS.join(" / ")}）` };
-		}
-		targetAspect = aspectRatio as AspectRatio;
-	}
-	run.exportAspectRatio = targetAspect;
-
-	const aspectNote =
-		targetAspect && targetAspect !== optionsOf(run).aspectRatio ? `（目标画幅 ${targetAspect}，多平台分发版）` : "";
-	pushEvent(
-		run,
-		"producer",
-		"editor",
-		"redo",
-		`收到重新导出请求：按现有镜头与配音重跑剪辑（转场决策 + 混音${run.status === "done" ? "（含最新 BGM）" : ""}）${aspectNote}。`,
-	);
-	setStage(run, "export", "pending", 0);
-	run.verdict = undefined;
-	run.videoUrl = undefined;
-	run.status = "running";
-	run.redoActive = {
-		kind: "reexport",
-		label: aspectNote ? `重出 ${targetAspect} 分发版` : "重新导出成片",
-	};
-	pushReexportAction(run, run.redoActive.label);
-	persistRun(run);
-	void executeStages(ctx, run, ["export"], { fromResume: true })
-		.catch(() => {})
-		.finally(() => {
-			run.redoActive = null;
-			persistRun(run);
-		});
-	return { ok: true };
-}
+// reexportRun 已迁到 ./redo/reexport.ts 独立维护
+import { reexportRun } from "./redo/reexport.ts";
+export { reexportRun };
 
 /** 读取 run 的 traces.ndjson（服务端端点用；坏行容忍） */
 export async function readTraces(run: RunRecord): Promise<TraceSpan[]> {
