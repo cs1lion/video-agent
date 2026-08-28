@@ -144,6 +144,88 @@ describe("formatCost", () => {
 	});
 });
 
+describe("withVersionedAsset 备份→生成→回滚统一抽象", () => {
+	let root: string;
+	before(async () => {
+		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-versioned-"));
+	});
+	after(async () => {
+		if (root) await fs.rm(root, { recursive: true, force: true });
+	});
+
+	// 抽一个独立测试：手起 run 仓，不走 store.create 同步路径（避免 mkdir 跳过）
+	async function makeRun(): Promise<RunRecord> {
+		const runDir = path.join(root, `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`);
+		await fs.mkdir(runDir, { recursive: true });
+		return { id: "test", dir: runDir, brief: {} as never, status: "awaiting", stages: [], metrics: { llmCalls: 0, mediaCalls: 0, retries: 0, perAdapter: {}, cost: { spent: 0, currency: "CNY" } }, images: [], events: [], shotAttempts: {}, shotVersions: {}, ttsAttempts: {}, ttsVersions: {}, redoActive: null, lastActions: [] } as unknown as RunRecord;
+	}
+
+	it("生成成功 → 主文件存在，版本列表增加 1 项", async () => {
+		const { withVersionedAsset } = await import("../src/pipeline.ts");
+		const run = await makeRun();
+		const mainPath = "assets/test.png";
+		await fs.mkdir(path.join(run.dir, "assets"), { recursive: true });
+		await fs.writeFile(path.join(run.dir, mainPath), "OLD");
+		const versions: string[] = [];
+		const result = await withVersionedAsset({
+			run,
+			mainRelPath: mainPath,
+			versions,
+			backupRelPath: "assets/test_v1.png",
+			generate: async () => {
+				// 模拟 generate 写真文件：覆盖主名为主路径
+				await fs.writeFile(path.join(run.dir, mainPath), "NEW");
+				return mainPath;
+			},
+		});
+		assert.ok(result.file);
+		assert.equal(versions.length, 1);
+		assert.equal(versions[0], "assets/test_v1.png");
+		// 主文件被 generate 覆盖
+		assert.equal(await fs.readFile(path.join(run.dir, mainPath), "utf-8"), "NEW");
+	});
+
+	it("生成返 null → 主文件恢复，versions 弹回原长", async () => {
+		const { withVersionedAsset } = await import("../src/pipeline.ts");
+		const run = await makeRun();
+		const mainPath = "assets/test2.png";
+		await fs.mkdir(path.join(run.dir, "assets"), { recursive: true });
+		await fs.writeFile(path.join(run.dir, mainPath), "ORIGINAL");
+		const versions: string[] = [];
+		const result = await withVersionedAsset({
+			run,
+			mainRelPath: mainPath,
+			versions,
+			backupRelPath: "assets/test2_v1.png",
+			generate: async () => null, // 模拟 generate 失败
+		});
+		assert.equal(result.file, null);
+		assert.equal(versions.length, 0, "失败时版本应弹出");
+		// 主文件应该是原始内容（不是被 generate 动过）
+		assert.equal(await fs.readFile(path.join(run.dir, mainPath), "utf-8"), "ORIGINAL");
+	});
+
+	it("主文件不存在 → 不备份，直接调用 generate", async () => {
+		const { withVersionedAsset } = await import("../src/pipeline.ts");
+		const run = await makeRun();
+		const versions: string[] = [];
+		let generateCalled = false;
+		const result = await withVersionedAsset({
+			run,
+			mainRelPath: "assets/nonexistent.png",
+			versions,
+			backupRelPath: "assets/nonexistent_v1.png",
+			generate: async () => {
+				generateCalled = true;
+				return "assets/created.png";
+			},
+		});
+		assert.ok(result.file);
+		assert.equal(generateCalled, true);
+		assert.equal(versions.length, 0, "新文件不备份，versions 不增加");
+	});
+});
+
 describe("MAX_IMAGE_AUTO_REDRAW 独立上限（auto vs 手动不互吃）", () => {
 	let root: string;
 	let store: RunStore;

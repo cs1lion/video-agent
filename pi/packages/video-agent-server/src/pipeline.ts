@@ -770,6 +770,47 @@ function throwIfAborted(signal: AbortSignal): void {
 	if (signal.aborted) throw new Error("已中止");
 }
 
+/**
+ * 重做路径的"备份→生成→回滚"统一抽象。resbot/retts/重绘设计稿/重绘关键帧均复用。
+ * 重要不变量：先备份再生成，顺序反了会把新图误挪进版本库、令主名悬空（原代码注释里反复强调）。
+ *  失败：把刚备份的文件还原为主名、从 versions 弹出一项。
+ *  返回：成功返 { file: 新主名 }，失败返 { file: null, backupRestored: true }。
+ */
+export async function withVersionedAsset(args: {
+	run: RunRecord;
+	/** run.dir 下的主文件相对路径，如 "assets/clip-SH03.mp4" 或 "design-CH01.png" */
+	mainRelPath: string;
+	/** 调用者拥有的版本列表（本函数会 PUSH/POP 原子交与）。 */
+	versions: string[];
+	/** 备份的相对路径，如 "assets/design-CH01_v1.png"。需包含完整子路径。 */
+	backupRelPath: string;
+	/** 实际生成调用；返主名（相对 run.dir）或 null。 */
+	generate: () => Promise<string | null>;
+}): Promise<{ file: string | null }> {
+	const { run, mainRelPath, versions, backupRelPath, generate } = args;
+	const mainAbs = path.join(run.dir, mainRelPath);
+	const backupAbs = path.join(run.dir, backupRelPath);
+	let backedUp = false;
+	if (fs.existsSync(mainAbs)) {
+		await fs.promises.rename(mainAbs, backupAbs).catch(() => {});
+		versions.push(backupRelPath);
+		backedUp = true;
+	}
+	const file = await generate();
+	if (!file) {
+		// 生成失败：还原刚备份的主图（主名）、从版本列表弹出。原子：同时检查。
+		if (backedUp && versions.length > 0) {
+			const prev = versions[versions.length - 1]!;
+			if (prev === backupRelPath) {
+				await fs.promises.rename(backupAbs, mainAbs).catch(() => {});
+				versions.pop();
+			}
+		}
+		return { file: null };
+	}
+	return { file };
+}
+
 /** 视频适配器是否为 Agnes 2.5 系列（OpenAI Videos 兼容参数体系） */
 function isAgnesVideo25(ctx: ServerContext): boolean {
 	return /2\.5/.test(ctx.mediaConfig.media.find((a) => a.kind === "video")?.model ?? "");
@@ -1378,30 +1419,23 @@ async function redesignEntityInner(
 	);
 	const t0 = Date.now();
 	try {
-		// 先备份旧图、再生成（与关键帧重绘同规：否则新图会先覆盖主名，
-		// 随后的“备份”实际存的是新图、且旧图被静默销毁）。
-		let backedUpOld = false;
-		if (entity.file && fs.existsSync(path.join(run.dir, entity.file))) {
-			const ext = path.extname(entity.file);
-			const vName = `design-${entity.category}-${entity.id}_v${entity.versions.length + 1}${ext}`;
-			await fs.promises.rename(path.join(run.dir, entity.file), path.join(run.dir, "assets", vName)).catch(() => {});
-			entity.versions.push(path.join("assets", vName));
-			backedUpOld = true;
-		}
-		const file = await generateImage(
-			sc,
-			designSheetPrompt(entity, bible, instruction || undefined),
-			`design-${entity.category}-${entity.id}`,
-			imageSizeFor(optionsOf(run).aspectRatio),
-			{ referenceImage: prevRef },
-		);
+		// 备份旧图、再生成。顺序反了会把新图误挪进版本库、令主名悬空（详见 withVersionedAsset）。
+		const vRelPath = `assets/design-${entity.category}-${entity.id}_v${entity.versions.length + 1}${path.extname(entity.file ?? "")}`;
+		const { file } = await withVersionedAsset({
+			run,
+			mainRelPath: entity.file ?? "",
+			versions: entity.versions,
+			backupRelPath: vRelPath,
+			generate: () =>
+				generateImage(
+					sc,
+					designSheetPrompt(entity, bible, instruction || undefined),
+					`design-${entity.category}-${entity.id}`,
+					imageSizeFor(optionsOf(run).aspectRatio),
+					{ referenceImage: prevRef },
+				),
+		});
 		if (!file) {
-			// 两次尝试（带/不带参考）均失败：回滚刚备份的旧主图
-			if (backedUpOld && entity.file && entity.versions.length > 0) {
-				const prev = entity.versions[entity.versions.length - 1]!;
-				await fs.promises.rename(path.join(run.dir, prev), path.join(run.dir, entity.file)).catch(() => {});
-				entity.versions.pop();
-			}
 			entity.status = entity.file ? "done" : "failed";
 			entity.error = "图像生成失败";
 			await writeDesignBible(run, doc);
@@ -1903,28 +1937,23 @@ async function redesignKeyframeInner(
 	try {
 		// 先备份旧图、再生成：生成会写入同名主文件，若先生成后备份，
 		// 会把新图误挪进版本库并让主文件悬空（UI 404、首帧锚定失效）。
-		let backedUpOld = false;
-		if (oldFile && fs.existsSync(path.join(run.dir, oldFile))) {
-			const vName = `key-${shotId}_v${entry.versions.length + 1}${path.extname(oldFile)}`;
-			await fs.promises.rename(path.join(run.dir, oldFile), path.join(run.dir, "assets", vName)).catch(() => {});
-			entry.versions.push(path.join("assets", vName));
-			backedUpOld = true;
-		}
-		const file = await generateImage(
-			sc,
-			keyframePrompt(shotPrompt, bible, await designAnchorsOf(run)) +
-				(instruction ? `, adjustment: ${instruction}` : ""),
-			`key-${shotId}`,
-			imageSizeFor(optionsOf(run).aspectRatio),
-			{ referenceImage: redrawReferenceImage },
-		);
+		const vRelPath = `assets/key-${shotId}_v${entry.versions.length + 1}${path.extname(oldFile ?? "")}`;
+		const { file } = await withVersionedAsset({
+			run,
+			mainRelPath: oldFile ?? "",
+			versions: entry.versions,
+			backupRelPath: vRelPath,
+			generate: async () =>
+				generateImage(
+					sc,
+					keyframePrompt(shotPrompt, bible, await designAnchorsOf(run)) +
+						(instruction ? `, adjustment: ${instruction}` : ""),
+					`key-${shotId}`,
+					imageSizeFor(optionsOf(run).aspectRatio),
+					{ referenceImage: redrawReferenceImage },
+				),
+		});
 		if (!file) {
-			// 生成失败：回滚刚备份的旧图，恢复主名
-			if (backedUpOld && oldFile && entry.versions.length) {
-				const vName = entry.versions[entry.versions.length - 1]!;
-				await fs.promises.rename(path.join(run.dir, vName), path.join(run.dir, oldFile)).catch(() => {});
-				entry.versions.pop();
-			}
 			entry.status = oldFile ? "done" : "failed";
 			await writeJson(run, "keyframes.json", doc);
 			pushEvent(run, "storyboard", "client", "status", `镜头 ${shotId} 关键帧重试未成功 ⚠️，可稍后再次重试。`);
@@ -3143,17 +3172,52 @@ export async function reshotRun(
 		const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
 		const opts = optionsOf(run);
 		try {
-			// 1. 备份现有片段（版本化：clip-SHxx_v{n}.mp4）
-			const mainClip = path.join(run.dir, "assets", `clip-${shotId}.mp4`);
-			const versions = run.shotVersions[shotId] ?? [];
-			let backedUp = false;
-			if (fs.existsSync(mainClip)) {
-				const vName = `clip-${shotId}_v${versions.length + 1}.mp4`;
-				await fs.promises.rename(mainClip, path.join(run.dir, "assets", vName));
-				versions.push(vName);
-				run.shotVersions[shotId] = versions;
-				backedUp = true;
-			}
+			// 1. 备份现有片段（版本化：clip-SHxx_v{n}.mp4）。使用 withVersionedAsset
+			// 抽出“备份→生成→回滚”公共模式，i2v→t2v 回退放在 generate 内部。
+			run.shotVersions[shotId] = run.shotVersions[shotId] ?? [];
+			const versions = run.shotVersions[shotId];
+			const { file: okRel, file: relPath } = await withVersionedAsset({
+				run,
+				mainRelPath: `assets/clip-${shotId}.mp4`,
+				versions,
+				backupRelPath: `assets/clip-${shotId}_v${versions.length + 1}.mp4`,
+				generate: async () => {
+					const i2vJob = queue.submit(
+						{
+							roleName: "video-agent",
+							kind: "video",
+							prompt,
+							params: videoSubmitParams(sc.ctx, opts, width, height, kfDataUrl),
+							outputName: `clip-${shotId}`,
+						},
+						run.dir,
+					);
+					run.metrics.mediaCalls += 1;
+					const i2v = await queue.awaitJob(i2vJob.id, undefined, sc.signal);
+					if (i2v.status === "done" && i2v.filePath) {
+						return path.relative(run.dir, i2v.filePath);
+					}
+					// 图生视频退化为文生视频（同一份输出名，会覆盖主文件）
+					const t2vJob = queue.submit(
+						{
+							roleName: "video-agent",
+							kind: "video",
+							prompt,
+							params: videoSubmitParams(sc.ctx, opts, width, height, null),
+							outputName: `clip-${shotId}`,
+						},
+						run.dir,
+					);
+					run.metrics.mediaCalls += 1;
+					const t2v = await queue.awaitJob(t2vJob.id, undefined, sc.signal);
+					return t2v.status === "done" && t2v.filePath ? path.relative(run.dir, t2v.filePath) : null;
+				},
+			}).then((r) => ({ file: r.file }));
+			// withVersionedAsset 返回 { file: string | null }；reshotRun 需要的是
+			// 相对路径 (null 时 string 为 null) 以及 final filePath 绝对值。
+			// 由于 generate 返了相对路径（会写入主名），需要根据主名反算绝对路径：
+			const ok = Boolean(okRel);
+			const finished = okRel ? { status: "done" as const, filePath: path.join(run.dir, okRel) } : null;
 
 			// 2. 外观类反馈（客户指令/质检/一致性）→ 先重绘关键帧再图生视频：
 			//    视频以首帧锚定时，旧关键帧的外观（如发色年龄）会压过文本指令，
@@ -3176,30 +3240,25 @@ export async function reshotRun(
 					() => ({ styleKeywords: [], palette: [], lighting: "", grade: "" }) as VisualBible,
 				);
 				// 先备份旧图、再生成：生成写入同名主文件，若先生成后备份，
-				// 会把新图误挪进版本库并让主文件悬空（UI 404、首帧锚定失效）。
-				let backedUpKf = false;
-				if (fs.existsSync(path.join(run.dir, kf.file))) {
-					const vName = `key-${shotId}_v${(kf.versions?.length ?? 0) + 1}${path.extname(kf.file)}`;
-					await fs.promises
-						.rename(path.join(run.dir, kf.file), path.join(run.dir, "assets", vName))
-						.catch(() => {});
-					kf.versions = [...(kf.versions ?? []), path.join("assets", vName)];
-					backedUpKf = true;
-				}
-				const newKf = await generateImage(
-					sc,
-					`${keyframePrompt(basePrompt, bible, anchors)}, adjustment: ${appearanceFeedback}`,
-					`key-${shotId}`,
-					imageSizeFor(opts.aspectRatio),
-				);
+				// 备份旧图再生成（顺序反了会把新图误挪进版本库）。kf.versions 可能为 undefined（旧 run）。
+				const kfVersions = kf.versions ?? [];
+				const vRelPath = `assets/key-${shotId}_v${kfVersions.length + 1}${path.extname(kf.file)}`;
+				const { file: newKf } = await withVersionedAsset({
+					run,
+					mainRelPath: kf.file,
+					versions: (kf.versions = kfVersions),
+					backupRelPath: vRelPath,
+					generate: () =>
+						generateImage(
+							sc,
+							`${keyframePrompt(basePrompt, bible, anchors)}, adjustment: ${appearanceFeedback}`,
+							`key-${shotId}`,
+							imageSizeFor(opts.aspectRatio),
+						),
+				});
 				if (newKf) {
 					kf.file = newKf;
 					await writeJson(run, "keyframes.json", kfDoc);
-				} else if (backedUpKf && kf.versions.length) {
-					// 重绘失败：回滚刚备份的旧图，恢复主名，仍按旧首帧补拍
-					const vName = kf.versions[kf.versions.length - 1]!;
-					await fs.promises.rename(path.join(run.dir, vName), path.join(run.dir, kf.file)).catch(() => {});
-					kf.versions.pop();
 				}
 				if (!newKf) {
 					pushEvent(
@@ -3220,21 +3279,8 @@ export async function reshotRun(
 				`镜头 ${shotId} 重新提交生成（第 ${attempts} 轮${kfDataUrl ? " · 关键帧锚定" : ""}）。`,
 			);
 			const t0 = Date.now();
-			const job = queue.submit(
-				{
-					roleName: "video-agent",
-					kind: "video",
-					prompt,
-					params: videoSubmitParams(sc.ctx, opts, width, height, kfDataUrl),
-					outputName: `clip-${shotId}`,
-				},
-				run.dir,
-			);
-			run.metrics.mediaCalls += 1;
-			const finished = await queue.awaitJob(job.id, undefined, sc.signal);
-			const ok = finished.status === "done" && finished.filePath;
 			// P2：重做镜头成功后按实际时长计费
-			if (ok && finished.filePath) {
+			if (ok && finished) {
 				try {
 					const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
 					const adapter = videoAdapterOf(sc.ctx);
@@ -3252,19 +3298,14 @@ export async function reshotRun(
 					kind: "media",
 					status: ok ? "ok" : "error",
 					input: prompt.slice(0, 120),
-					output: ok ? path.basename(finished.filePath!) : `队列状态 ${finished.status}`,
+					output: ok && finished ? path.basename(finished.filePath) : `队列状态 ${finished?.status ?? "error"}`,
 				},
 				t0,
 			);
 			if (!ok) {
-				// 生成失败：回滚旧版本（保证 run 不坏）
-				if (backedUp) {
-					const vName = versions[versions.length - 1]!;
-					await fs.promises.rename(path.join(run.dir, "assets", vName), mainClip).catch(() => {});
-					versions.pop();
-				}
+				// withVersionedAsset 已自动回滚（还有可重试机会、版本数 PUSH/POP 原子）。
 				pushEvent(run, "tech", "producer", "status", `镜头 ${shotId} 重做失败 ⚠️，已恢复旧版本。可稍后重试。`);
-				throw new Error(`镜头 ${shotId} 重做失败（队列状态 ${finished.status}），旧版本已回滚`);
+				throw new Error(`镜头 ${shotId} 重做失败（旧版本已回滚）`);
 			}
 
 			// 3. 重新装配 + 质检（stageExport 从磁盘读取 assets 内片段）
@@ -3464,41 +3505,35 @@ export async function rettsRun(
 		).trim();
 		try {
 			// 1. 备份现有 TTS（版本化：tts-SHxx_v{n}.mp3）
-			const mainTts = path.join(run.dir, "assets", `tts-${shotId}.mp3`);
-			const versions = run.ttsVersions[shotId] ?? [];
-			let backedUp = false;
-			if (fs.existsSync(mainTts)) {
-				const vName = `tts-${shotId}_v${versions.length + 1}.mp3`;
-				await fs.promises.rename(mainTts, path.join(run.dir, "assets", vName));
-				versions.push(vName);
-				run.ttsVersions[shotId] = versions;
-				backedUp = true;
-			}
-
-			// 2. 重新合成该镜旁白（带最新表演指导；queue 产物直写 assets/tts-SHxx.mp3）
+			run.ttsVersions[shotId] = run.ttsVersions[shotId] ?? [];
+			const versions = run.ttsVersions[shotId];
 			const voiceDirection =
 				script.shots.find((s) => s.id === shotId)?.ttsDirection ?? fallbackVoiceDirection(run.brief);
-			pushEvent(
+			const { file: okRel } = await withVersionedAsset({
 				run,
-				"sound",
-				"producer",
-				"redo",
-				`镜头 ${shotId} 旁白重新进棚录制（第 ${attempts} 轮）${resolvedVoice ? `，音色：${resolvedVoice}。` : "，表演指导："}${resolvedVoice ? "" : voiceDirection.slice(0, 50)}。`,
-			);
-			const t0 = Date.now();
-			const job = queue.submit(
-				{
-					roleName: "video-agent",
-					kind: "tts",
-					prompt: text,
-					params: { instruction: voiceDirection, ...(resolvedVoice ? { voice: resolvedVoice } : {}) },
-					outputName: `tts-${shotId}`,
+				mainRelPath: `assets/tts-${shotId}.mp3`,
+				versions,
+				backupRelPath: `assets/tts-${shotId}_v${versions.length + 1}.mp3`,
+				generate: async () => {
+					const job = queue.submit(
+						{
+							roleName: "video-agent",
+							kind: "tts",
+							prompt: text,
+							params: { instruction: voiceDirection, ...(resolvedVoice ? { voice: resolvedVoice } : {}) },
+							outputName: `tts-${shotId}`,
+						},
+						run.dir,
+					);
+					const finished = await queue.awaitJob(job.id, undefined, sc.signal);
+					return finished.status === "done" && finished.filePath
+						? path.relative(run.dir, finished.filePath)
+						: null;
 				},
-				run.dir,
-			);
-			run.metrics.mediaCalls += 1;
-			const finished = await queue.awaitJob(job.id, undefined, sc.signal);
-			const ok = finished.status === "done" && finished.filePath;
+			});
+			const finished = okRel ? { status: "done" as const, filePath: path.join(run.dir, okRel) } : null;
+			const ok = Boolean(okRel);
+			const t0 = Date.now();
 			// P2：旁白重录成功后按 prompt 字符数计费
 			if (ok) {
 				const adapter = ttsAdapterOf(sc.ctx);
@@ -3512,19 +3547,14 @@ export async function rettsRun(
 					kind: "media",
 					status: ok ? "ok" : "error",
 					input: text.slice(0, 120),
-					output: ok ? path.basename(finished.filePath!) : `队列状态 ${finished.status}`,
+					output: ok && finished ? path.basename(finished.filePath) : `队列状态 ${finished?.status ?? "error"}`,
 				},
 				t0,
 			);
 			if (!ok) {
-				// 合成失败：回滚旧版本
-				if (backedUp) {
-					const vName = versions[versions.length - 1]!;
-					await fs.promises.rename(path.join(run.dir, "assets", vName), mainTts).catch(() => {});
-					versions.pop();
-				}
+				// withVersionedAsset 已回滚，这里只事件上报
 				pushEvent(run, "sound", "producer", "redo", `镜头 ${shotId} 旁白重录失败 ⚠️，已恢复旧录音。可稍后重试。`);
-				throw new Error(`镜头 ${shotId} 旁白重录失败（队列状态 ${finished.status}），旧版本已回滚`);
+				throw new Error(`镜头 ${shotId} 旁白重录失败（旧版本已回滚）`);
 			}
 
 			// 3. 新语音就位：重跑 export（重新归一化该镜 → 时长随旁白重排 → 装配 → 复审）
