@@ -1295,7 +1295,7 @@ async function propagateEntityUpdate(run: RunRecord, entity: DesignEntity): Prom
 }
 
 /** 确保该镜有关键帧；缺失则按分镜提示词生成一张（版本化备份由调用方重绘路径负责） */
-async function ensureKeyframe(
+export async function ensureKeyframe(
 	sc: StageCtx,
 	shotId: string,
 	shotPrompt: string,
@@ -2825,6 +2825,98 @@ export function promptsToText(messages: { role: string; content: string | { text
 		.join("\n");
 }
 
+
+/** 逐镜表演指导表（voice-directions.json） */
+interface VoiceDirectionsDoc {
+	directions: { shotId: string; instruction: string }[];
+	generatedAt?: string;
+}
+
+/**
+ * 确保每镜有表演指导：优先读盘（refine/续跑复用），缺失时 LLM 一次生成全片指导，
+ * 失败按情绪意图兜底。指导同时回写 script.json 的 ttsDirection 字段。
+ */
+export async function ensureVoiceDirections(sc: StageCtx, scriptDoc: ScriptDoc): Promise<Map<string, string>> {
+	const { run, ctx, signal } = sc;
+	const map = new Map<string, string>();
+	try {
+		const saved = await readArtifact<VoiceDirectionsDoc>(run, "voice-directions.json");
+		for (const d of saved.directions ?? []) {
+			if (typeof d.shotId === "string" && typeof d.instruction === "string") map.set(d.shotId, d.instruction);
+		}
+	} catch {
+		// 首次生成
+	}
+	if (scriptDoc.shots.every((s) => map.has(s.id))) return map;
+
+	const t0 = Date.now();
+	try {
+		const voiceDirectionsPrompt = promptsToText(voiceDirectionsMessages(run.brief, scriptDoc, optionsOf(run)));
+		const raw = await chatJson<{ directions?: { shotId?: unknown; instruction?: unknown }[] }>(
+			ctx.llm,
+			voiceDirectionsPrompt,
+			signal,
+		);
+		run.metrics.llmCalls += 1;
+		trackLlmCost(run, ctx, voiceDirectionsPrompt, JSON.stringify(raw));
+		for (const shot of scriptDoc.shots) {
+			const found = (raw.directions ?? []).find((d) => String(d?.shotId ?? "") === shot.id);
+			const instruction = typeof found?.instruction === "string" ? found.instruction.trim().slice(0, 200) : "";
+			map.set(shot.id, instruction || fallbackVoiceDirection(run.brief));
+		}
+		await writeJson(run, "voice-directions.json", {
+			directions: scriptDoc.shots.map((s) => ({
+				shotId: s.id,
+				instruction: map.get(s.id) ?? fallbackVoiceDirection(run.brief),
+			})),
+			generatedAt: new Date().toISOString(),
+		} satisfies VoiceDirectionsDoc);
+		appendSpan(
+			run,
+			{
+				stage: "audio",
+				name: "配音导演·表演指导",
+				kind: "llm",
+				status: "ok",
+				input: `${scriptDoc.shots.length} 镜旁白`,
+				output: scriptDoc.shots.map((s) => `${s.id}:${(map.get(s.id) ?? "").slice(0, 18)}…`).join(" "),
+			},
+			t0,
+		);
+	} catch (error) {
+		if (signal.aborted) throw error;
+		for (const shot of scriptDoc.shots) {
+			if (!map.has(shot.id)) map.set(shot.id, fallbackVoiceDirection(run.brief));
+		}
+		appendSpan(
+			run,
+			{
+				stage: "audio",
+				name: "配音导演·表演指导",
+				kind: "llm",
+				status: "error",
+				output: `${error instanceof Error ? error.message : String(error)}（按情绪意图兜底）`,
+			},
+			t0,
+		);
+	}
+	// 回写进剧本，供重录时的语境参考
+	let dirty = false;
+	for (const shot of scriptDoc.shots) {
+		const next = map.get(shot.id);
+		if (next && shot.ttsDirection !== next) {
+			shot.ttsDirection = next;
+			dirty = true;
+		}
+	}
+	if (dirty) {
+		await fs.promises
+			.writeFile(path.join(run.dir, "script.json"), JSON.stringify(scriptDoc, null, "\t"), "utf-8")
+			.catch(() => {});
+	}
+	return map;
+}
+
 export async function stageClips(
 	sc: StageCtx,
 	script?: ScriptDoc,
@@ -2938,95 +3030,3 @@ export async function stageClips(
 	);
 	return { script: { ...scriptDoc, shots: productionShots }, clipFiles };
 }
-
-/** 逐镜表演指导表（voice-directions.json） */
-interface VoiceDirectionsDoc {
-	directions: { shotId: string; instruction: string }[];
-	generatedAt?: string;
-}
-
-/**
- * 确保每镜有表演指导：优先读盘（refine/续跑复用），缺失时 LLM 一次生成全片指导，
- * 失败按情绪意图兜底。指导同时回写 script.json 的 ttsDirection 字段。
- */
-export async function ensureVoiceDirections(sc: StageCtx, scriptDoc: ScriptDoc): Promise<Map<string, string>> {
-	const { run, ctx, signal } = sc;
-	const map = new Map<string, string>();
-	try {
-		const saved = await readArtifact<VoiceDirectionsDoc>(run, "voice-directions.json");
-		for (const d of saved.directions ?? []) {
-			if (typeof d.shotId === "string" && typeof d.instruction === "string") map.set(d.shotId, d.instruction);
-		}
-	} catch {
-		// 首次生成
-	}
-	if (scriptDoc.shots.every((s) => map.has(s.id))) return map;
-
-	const t0 = Date.now();
-	try {
-		const voiceDirectionsPrompt = promptsToText(voiceDirectionsMessages(run.brief, scriptDoc, optionsOf(run)));
-		const raw = await chatJson<{ directions?: { shotId?: unknown; instruction?: unknown }[] }>(
-			ctx.llm,
-			voiceDirectionsPrompt,
-			signal,
-		);
-		run.metrics.llmCalls += 1;
-		trackLlmCost(run, ctx, voiceDirectionsPrompt, JSON.stringify(raw));
-		for (const shot of scriptDoc.shots) {
-			const found = (raw.directions ?? []).find((d) => String(d?.shotId ?? "") === shot.id);
-			const instruction = typeof found?.instruction === "string" ? found.instruction.trim().slice(0, 200) : "";
-			map.set(shot.id, instruction || fallbackVoiceDirection(run.brief));
-		}
-		await writeJson(run, "voice-directions.json", {
-			directions: scriptDoc.shots.map((s) => ({
-				shotId: s.id,
-				instruction: map.get(s.id) ?? fallbackVoiceDirection(run.brief),
-			})),
-			generatedAt: new Date().toISOString(),
-		} satisfies VoiceDirectionsDoc);
-		appendSpan(
-			run,
-			{
-				stage: "audio",
-				name: "配音导演·表演指导",
-				kind: "llm",
-				status: "ok",
-				input: `${scriptDoc.shots.length} 镜旁白`,
-				output: scriptDoc.shots.map((s) => `${s.id}:${(map.get(s.id) ?? "").slice(0, 18)}…`).join(" "),
-			},
-			t0,
-		);
-	} catch (error) {
-		if (signal.aborted) throw error;
-		for (const shot of scriptDoc.shots) {
-			if (!map.has(shot.id)) map.set(shot.id, fallbackVoiceDirection(run.brief));
-		}
-		appendSpan(
-			run,
-			{
-				stage: "audio",
-				name: "配音导演·表演指导",
-				kind: "llm",
-				status: "error",
-				output: `${error instanceof Error ? error.message : String(error)}（按情绪意图兜底）`,
-			},
-			t0,
-		);
-	}
-	// 回写进剧本，供重录时的语境参考
-	let dirty = false;
-	for (const shot of scriptDoc.shots) {
-		const next = map.get(shot.id);
-		if (next && shot.ttsDirection !== next) {
-			shot.ttsDirection = next;
-			dirty = true;
-		}
-	}
-	if (dirty) {
-		await fs.promises
-			.writeFile(path.join(run.dir, "script.json"), JSON.stringify(scriptDoc, null, "\t"), "utf-8")
-			.catch(() => {});
-	}
-	return map;
-}
-
