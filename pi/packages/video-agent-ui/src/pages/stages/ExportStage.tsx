@@ -297,7 +297,8 @@ function ComposeDesk({
 	cuts?: CutsView;
 	onPreview: (url: string) => void;
 }) {
-	const { compose } = useStudio();
+	// selector 订阅：动作函数引用稳定，store 其他字段变化不再触发本组件重渲染
+	const compose = useStudio((s) => s.compose);
 	const [data, setData] = useState<VersionsView | null>(null);
 	const [selVideo, setSelVideo] = useState<Record<string, string>>({});
 	const [selAudio, setSelAudio] = useState<Record<string, string>>({});

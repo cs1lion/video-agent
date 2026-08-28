@@ -10,11 +10,13 @@
  *   - 审议循环 get_shot_evidence 取证时带上，归因"人物形象不一致"类反馈直接有据可依
  */
 
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { LlmConfig } from "./config.ts";
 import { runFfmpeg } from "./ffmpeg.ts";
 import { chat, tryParseJson } from "./llm.ts";
+import { trackLlmCost, type PriceCatalog } from "./pricing.ts";
 import { type RunRecord, readArtifact, writeJson } from "./pipeline.ts";
 import type { KeyframesDoc } from "./prompts.ts";
 
@@ -29,6 +31,8 @@ export interface ConsistencyIssue {
 export interface ConsistencyDoc {
 	checkedAt: string;
 	model: string;
+	/** 输入指纹：关键帧集合（路径+大小+mtime）的 hash，命中则复用本结果 */
+	fingerprint?: string;
 	/** 一句话总体一致性评价 */
 	overall: string;
 	shots: ConsistencyIssue[];
@@ -39,11 +43,28 @@ const SYSTEM_PROMPT =
 	"只报告画面中确实可见的差异，不要臆测；没有差异就给空数组。";
 
 /**
+ * 关键帧输入指纹：任一帧的路径/大小/mtime 变化即失效。
+ * redo 路径会重写关键帧文件（mtime 必变），所以"没动过的帧"指纹稳定，
+ * "动过的帧"指纹必变——不会出现该重算却吃到旧缓存的情况。
+ */
+/** 导出供行为测试锁定「该命中时命中 / 该失效时失效」两类缓存语义
+ *  （test/consistency-cache.test.ts）——缓存类 bug 是最典型的静默故障。 */
+export function framesFingerprint(run: RunRecord, frames: { shotId: string; file: string }[]): string {
+	const hash = createHash("sha256");
+	for (const f of frames) {
+		const st = fs.statSync(path.join(run.dir, f.file));
+		hash.update(`${f.shotId}|${f.file}|${st.size}|${Math.floor(st.mtimeMs)}`);
+	}
+	return hash.digest("hex").slice(0, 16);
+}
+
+/**
  * 跑一次跨镜一致性检查（同步，约 15-40s：一次多模态调用带全部关键帧）。
  * 关键帧少于 2 张时抛错（单镜无从比较）。
  */
 export async function checkConsistency(
-	ctx: { llm: LlmConfig },
+	/** 只需 llm + priceCatalog 两字段（调用方传完整 ServerContext 亦兼容） */
+	ctx: { llm: LlmConfig; priceCatalog: PriceCatalog },
 	run: RunRecord,
 	signal?: AbortSignal,
 ): Promise<ConsistencyDoc> {
@@ -53,6 +74,12 @@ export async function checkConsistency(
 			f.status === "done" && Boolean(f.file) && fs.existsSync(path.join(run.dir, f.file ?? "")),
 	);
 	if (frames.length < 2) throw new Error("关键帧不足 2 张，无法做跨镜一致性检查");
+
+	// 指纹缓存：放在 ffmpeg 压缩之前，命中时连 640px JPEG 的功夫都省掉。
+	// 旧 consistency.json 无 fingerprint 字段 → 判不命中 → 重跑一次后开始生效。
+	const fingerprint = framesFingerprint(run, frames);
+	const cached = await getConsistency(run);
+	if (cached && cached.fingerprint === fingerprint) return cached;
 
 	const order = frames.map((f, i) => `第 ${i + 1} 张 = ${f.shotId}`).join("，");
 	// 关键帧原图是高分辨率 PNG（单张 1-2MB），直接 base64 会把请求撑到超时；
@@ -91,15 +118,19 @@ export async function checkConsistency(
 			role: "user",
 			content: [
 				{ type: "text", text: userPrompt },
+				// 帧已由 ffmpeg 压成 JPEG，MIME 必须与实际字节一致（此前声明 image/png，
+				// 等于把正确性押在供应商会嗅探容错上）
 				...images.map((b64) => ({
 					type: "image_url" as const,
-					image_url: { url: `data:image/png;base64,${b64}` },
+					image_url: { url: `data:image/jpeg;base64,${b64}` },
 				})),
 			],
 		},
 	];
 
 	const raw = await chat(llm, content, signal);
+	// 多模态调用计入成本（此前遗漏：一致性预检是全帧调用，成本不可忽略）
+	trackLlmCost(run, ctx, userPrompt, raw, images.length);
 	const parsed = tryParseJson<{ overall?: unknown; shots?: unknown }>(raw);
 	const shotsRaw = Array.isArray(parsed?.shots) ? parsed.shots : [];
 	const known = new Set(frames.map((f) => f.shotId));
@@ -121,6 +152,7 @@ export async function checkConsistency(
 	const doc: ConsistencyDoc = {
 		checkedAt: new Date().toISOString(),
 		model: ctx.llm.model,
+		fingerprint,
 		overall: typeof parsed?.overall === "string" ? parsed.overall.slice(0, 300) : "",
 		shots,
 	};

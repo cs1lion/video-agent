@@ -37,6 +37,7 @@ import {
 	api,
 } from "@/api/client";
 import { useStudio } from "@/store/store";
+import { useShallow } from "zustand/react/shallow";
 import { GlowButton, Segmented } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 
@@ -56,8 +57,10 @@ const ACTION_STYLE: Record<DeliberationAction, string> = {
 	rescript: "border-rose-300/40 bg-rose-400/10 text-rose-200",
 };
 
-function variantUrl(runId: string, file: string): string {
-	return `/api/runs/${encodeURIComponent(runId)}/files/${file.split(/[\\/]/).join("/")}`;
+/** 服务端已给出 url 时直接用（路径分隔符规范化在服务端完成），缺失时本地兜底拼装 */
+function variantUrl(runId: string, variant: { file: string; url?: string }): string {
+	if (variant.url) return variant.url;
+	return `/api/runs/${encodeURIComponent(runId)}/files/${variant.file.split(/[\\/]/).join("/")}`;
 }
 
 /** P2+闸门 2 颜色点。high 不染色（默认认为可信），medium 琥珀提示，low 玫红警告。
@@ -180,7 +183,7 @@ function ComparePlayer({
 				)}
 			</div>
 			{variant ? (
-				<video src={variantUrl(runId, variant.file)} controls className="max-h-[38vh] w-full object-contain" />
+				<video src={variantUrl(runId, variant)} controls className="max-h-[38vh] w-full object-contain" />
 			) : (
 				<div className="flex h-40 items-center justify-center text-xs text-zinc-600">在上方选择对比候选</div>
 			)}
@@ -190,15 +193,21 @@ function ComparePlayer({
 
 /** 导演提案卡片：rootCause 横幅 + findings 证据链 + 可采纳的提案动作 */
 function ProposalCard({ round, runId }: { round: DeliberationRound; runId: string }) {
-	const { reshot, retts } = useStudio();
+	// selector 订阅：动作函数引用稳定，避免整页 store 变化带着卡片重渲染
+	const reshot = useStudio((s) => s.reshot);
+	const retts = useStudio((s) => s.retts);
 	const [adopted, setAdopted] = useState<string | null>(null);
 	const [adoptError, setAdoptError] = useState<string | null>(null);
+	/** 执行中的提案 key：按钮置灰防双击（否则重复生成媒体 = 重复烧钱） */
+	const [adopting, setAdopting] = useState<string | null>(null);
 	/** P2+闸门 2 启用：low 置信度提案需二次确认。key = `p${index}`。 */
 	const [pendingConfirm, setPendingConfirm] = useState<string | null>(null);
 
 	const adopt = async (proposal: DeliberationProposal, index: number) => {
 		setAdoptError(null);
 		const key = `p${index}`;
+		if (adopting !== null) return;
+		setAdopting(key);
 		try {
 			if (proposal.action === "reedit") {
 				const variants = await api.fetchCutVariants(runId);
@@ -206,17 +215,37 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 				if (!base) throw new Error("基准候选不存在");
 				await api.createPaceVariant(runId, base.id, proposal.speed ?? 1.1);
 			} else if (proposal.action === "reshot" && proposal.shotId) {
-				await reshot(proposal.shotId, proposal.reason.slice(0, 400));
+				// store 的 runAction 失败时返回 false 而不是 throw——必须检查返回值，
+				// 否则失败也会走到下面的 setAdopted，把没成功的重做标记成"已采纳"（永久置灰）。
+				const ok = await reshot(proposal.shotId, proposal.reason.slice(0, 400));
+				if (!ok) {
+					setAdoptError("补拍未成功（原因见顶部提示），提案未采纳，可修正后重试");
+					return;
+				}
 			} else if (proposal.action === "retts" && proposal.shotId) {
-				await retts(proposal.shotId, proposal.reason.slice(0, 400), proposal.voice);
+				const ok = await retts(proposal.shotId, proposal.reason.slice(0, 400), proposal.voice);
+				if (!ok) {
+					setAdoptError("旁白重录未成功（原因见顶部提示），提案未采纳，可修正后重试");
+					return;
+				}
 			} else {
 				setAdoptError("该动作需在剧本阶段微调后重新推进，暂不支持一键执行");
 				return;
 			}
-			await api.markAdopted(runId, round.id, proposal.action, proposal.target);
+			// 执行已成功即视为采纳：置位必须发生在 markAdopted 之前。
+			// 否则 markAdopted 网络抖动失败会让用户重复点击 → 对同一提案重复生成媒体（重复烧钱）。
+			// 采纳台账是给下一轮审议看的历史记录，写失败只降级告警，不影响本地的已采纳态。
 			setAdopted(key);
+			setPendingConfirm(null);
+			try {
+				await api.markAdopted(runId, round.id, proposal.action, proposal.target);
+			} catch (error) {
+				console.warn("[DeliberationPanel] markAdopted 失败（不影响本次执行，仅缺历史台账）", error);
+			}
 		} catch (error) {
 			setAdoptError(error instanceof Error ? error.message : String(error));
+		} finally {
+			setAdopting(null);
 		}
 	};
 
@@ -297,13 +326,14 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 								<span className="flex flex-wrap items-center gap-2 rounded-md border border-rose-300/40 bg-rose-400/10 px-2 py-1.5">
 									<AlertTriangle className="size-3.5 shrink-0 text-rose-300" />
 									<span className="text-[10px] leading-tight text-rose-100">导演把握度低，确认仍要采纳？</span>
-									<GlowButton
-										variant="danger"
-										className="px-2.5 py-1 text-[10px]"
-										onClick={() => void adopt(p, i)}
-									>
-										仍采纳
-									</GlowButton>
+								<GlowButton
+									variant="danger"
+									className="px-2.5 py-1 text-[10px]"
+									disabled={adopting !== null}
+									onClick={() => void adopt(p, i)}
+								>
+									仍采纳
+								</GlowButton>
 									<button
 										type="button"
 										className="cursor-pointer rounded-md border border-white/10 px-2 py-1 text-[10px] text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200"
@@ -315,7 +345,7 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 							) : (
 								<GlowButton
 									variant="outline"
-									disabled={!executable}
+									disabled={!executable || adopting !== null}
 									className="px-3 py-1.5 text-xs"
 									onClick={() => {
 										// P2+闸门 2：low 置信度提案不直接执行，需二次确认
@@ -327,7 +357,7 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 									}}
 								>
 									<Check className="size-3.5" />
-									采纳并执行
+									{adopting === key ? "执行中…" : "采纳并执行"}
 								</GlowButton>
 							)}
 						</div>
@@ -340,7 +370,14 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 }
 
 export function DeliberationPanel({ run }: { run: RunView }) {
-	const { startDeliberation, deliberating, lastDeliberation } = useStudio();
+	// useShallow：多字段订阅时按浅比较，只有这三个字段真正变化才重渲染
+	const { startDeliberation, deliberating, lastDeliberation } = useStudio(
+		useShallow((s) => ({
+			startDeliberation: s.startDeliberation,
+			deliberating: s.deliberating,
+			lastDeliberation: s.lastDeliberation,
+		})),
+	);
 	const [data, setData] = useState<CutVariantsView | null>(null);
 	const [rounds, setRounds] = useState<DeliberationRound[]>([]);
 	const [baseId, setBaseId] = useState<string | null>(null);
@@ -352,19 +389,27 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 	const [panelError, setPanelError] = useState<string | null>(null);
 	const [showHistory, setShowHistory] = useState(false);
 
-	const reload = useCallback(async () => {
-		try {
-			const [v, d] = await Promise.all([api.fetchCutVariants(run.id), api.fetchDeliberations(run.id)]);
-			setData(v);
-			setRounds(d.rounds);
-			setBaseId((prev) => prev ?? v.variants[0]?.id ?? null);
-		} catch {
-			// 旧 run / 服务不可达：面板隐藏由 data === null 兜底
-		}
-	}, [run.id]);
+	const reload = useCallback(
+		async (alive?: () => boolean) => {
+			try {
+				const [v, d] = await Promise.all([api.fetchCutVariants(run.id), api.fetchDeliberations(run.id)]);
+				if (alive && !alive()) return; // 组件已卸载：丢弃迟到响应
+				setData(v);
+				setRounds(d.rounds);
+				setBaseId((prev) => prev ?? v.variants[0]?.id ?? null);
+			} catch {
+				// 旧 run / 服务不可达：面板隐藏由 data === null 兜底
+			}
+		},
+		[run.id],
+	);
 
 	useEffect(() => {
-		void reload();
+		let mounted = true;
+		void reload(() => mounted);
+		return () => {
+			mounted = false;
+		};
 	}, [reload]);
 
 	if (!data || data.variants.length === 0) return null;

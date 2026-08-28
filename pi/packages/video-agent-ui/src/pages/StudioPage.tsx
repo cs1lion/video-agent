@@ -18,6 +18,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useStudio } from "@/store/store";
+import { useShallow } from "zustand/react/shallow";
 import { Backdrop } from "@/components/fx/Backdrop";
 import { StageRail, UI_STAGES, type UiStageId } from "@/components/StageRail";
 import { DirectorChat } from "@/components/DirectorChat";
@@ -99,11 +100,35 @@ export function StudioPage() {
 		reshot,
 		retts,
 		designAdjust,
+		designReview,
 		keyframeAdjust,
 		resume,
 		cancel,
-	} =
-		useStudio();
+		// useShallow：只订阅本页真正用到的字段（不含 deliberating/lastDeliberation），
+		// 审议子状态变化不再带着整页重渲染；SSE 高频推流时尤其明显。
+	} = useStudio(
+		useShallow((s) => ({
+			run: s.run,
+			artifacts: s.artifacts,
+			error: s.error,
+			chatBusy: s.chatBusy,
+			refining: s.refining,
+			lastRefine: s.lastRefine,
+			transport: s.transport,
+			bind: s.bind,
+			unbind: s.unbind,
+			refresh: s.refresh,
+			sendChat: s.sendChat,
+			submitRefine: s.submitRefine,
+			reshot: s.reshot,
+			retts: s.retts,
+			designAdjust: s.designAdjust,
+			designReview: s.designReview,
+			keyframeAdjust: s.keyframeAdjust,
+			resume: s.resume,
+			cancel: s.cancel,
+		})),
+	);
 	// 深链：#/studio/:id?stage=keyframes&focus=SH01 → 初始阶段 + 卡片滚动定位
 	const deepLink = (() => {
 		const q = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
@@ -489,6 +514,7 @@ export function StudioPage() {
 										design={artifacts?.design}
 										onRefine={onRefine}
 										onDesignAdjust={(entityId, instruction) => void designAdjust(entityId, instruction)}
+										onDesignReview={() => void designReview()}
 										designBusy={refining}
 									/>
 								)}
@@ -555,7 +581,8 @@ export function StudioPage() {
 					</div>
 				</main>
 
-			<DirectorChat events={run.events} busy={chatBusy} onSend={(text) => void sendChat(text)} onJump={jumpToArtifact} />
+				{/* 指挥台自行订阅 store 的 events 字段：新事件只重渲染它，不牵动本页 */}
+			<DirectorChat onJump={jumpToArtifact} />
 		</div>
 
 		{/* 底部时间线：镜头按时长比例排列，点击定位 */}

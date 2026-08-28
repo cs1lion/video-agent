@@ -175,9 +175,11 @@ export interface RunSummary {
 	updatedAt?: string;
 }
 
-/** SSE 快照处理器；浏览器 EventSource 会自动重连，错误只表示当前暂时退回轮询 */
+/** SSE 处理器；浏览器 EventSource 会自动重连，错误只表示当前暂时退回轮询。
+ *  onRun = 完整快照（状态级变化）；onEvent = 单条团队事件增量（ndjson 化后的高频通道）。 */
 export interface RunStreamHandlers {
 	onRun: (run: RunView) => void;
+	onEvent?: (event: TeamEvent) => void;
 	onOpen?: () => void;
 	onError?: () => void;
 }
@@ -214,6 +216,13 @@ export interface ShotPromptDoc {
 	prompts: { shotId: string; prompt: string }[];
 }
 
+/** 设计卡审核结论（视觉模型对照 design 要点审查出图） */
+export interface DesignReview {
+	verdict: "ok" | "warn" | "fail";
+	issues: string[];
+	checkedAt: string;
+}
+
 /** 美术设计：人物/道具/场景概念图（design-bible.json；旧 run 可能缺失） */
 export interface DesignEntity {
 	id: string;
@@ -226,6 +235,8 @@ export interface DesignEntity {
 	error?: string;
 	attempts: number;
 	versions: string[];
+	/** 最近一次出图审核结论（未审核/旧 run 缺省） */
+	review?: DesignReview;
 }
 
 export interface DesignBibleDoc {
@@ -357,7 +368,10 @@ export interface CutsView {
 export interface CutVariant {
 	id: string;
 	label: string;
+	/** run 内相对路径（assets/...） */
 	file: string;
+	/** 播放 URL（服务端组装；旧 run / 老接口可能缺失，UI 需兜底） */
+	url?: string;
 	durationSec: number;
 	origin: "compose" | "explore";
 	baseId?: string;
@@ -375,8 +389,6 @@ export interface PacePreset {
 export interface CutVariantsView {
 	variants: CutVariant[];
 	presets: PacePreset[];
-	/** run 内相对路径 → 播放 URL */
-	variantUrlOf: (file: string) => string;
 }
 
 export type DeliberationLayer = "edit" | "asset" | "prompt" | "audio";
@@ -440,25 +452,7 @@ export interface DeliberationRound {
 	adopted?: { action: string; target: string; at: string };
 }
 
-/** 跨镜一致性预检结果（consistency.json） */
-export interface ConsistencyIssue {
-	shotId: string;
-	appearance: string;
-	issues: string[];
-}
-
-export interface ConsistencyDoc {
-	checkedAt: string;
-	model: string;
-	overall: string;
-	shots: ConsistencyIssue[];
-}
-
-/** 用户反馈预设标签（审议发起时引导点选） */
-export const DELIBERATION_TAGS = ["节奏", "画面", "旁白", "整体感觉"] as const;
-
-// ---- 跨镜一致性预检（与 server consistency.ts 的 ConsistencyDoc 对齐） ----
-
+/** 跨镜一致性预检结果（与 server consistency.ts 的 ConsistencyDoc 对齐） */
 export interface ConsistencyIssue {
 	shotId: string;
 	/** 该镜角色外观/画风摘要（服装颜色与类型、发型、色调质感） */
@@ -474,6 +468,9 @@ export interface ConsistencyDoc {
 	overall: string;
 	shots: ConsistencyIssue[];
 }
+
+/** 用户反馈预设标签（审议发起时引导点选） */
+export const DELIBERATION_TAGS = ["节奏", "画面", "旁白", "整体感觉"] as const;
 
 // ---- 访谈题目视图（中文文案已展开） ----
 
@@ -626,6 +623,14 @@ export const api = {
 				handlers.onError?.();
 			}
 		});
+		// 事件级增量通道（ndjson 化后团队事件只走这条，不再为每条消息重发完整快照）
+		source.addEventListener("ev", (event) => {
+			try {
+				handlers.onEvent?.(JSON.parse((event as MessageEvent<string>).data) as TeamEvent);
+			} catch {
+				// 单条事件解析失败不影响快照通道
+			}
+		});
 		return () => source.close();
 	},
 	async listRuns(limit = 50): Promise<RunSummary[]> {
@@ -660,6 +665,13 @@ export const api = {
 	/** 设计图单卡调整重绘（美术设计） */
 	async designAdjust(runId: string, entityId: string, instruction: string): Promise<void> {
 		await postJson(`/api/runs/${encodeURIComponent(runId)}/design/adjust`, { entityId, instruction });
+	},
+	/** 设计出图审核（同步，约 10-30s；结论写回 design-bible.json，随 artifacts 透出） */
+	async designReview(
+		runId: string,
+		entityIds?: string[],
+	): Promise<{ ok: true; reviewed: (DesignReview & { id: string; name: string })[] }> {
+		return postJson(`/api/runs/${encodeURIComponent(runId)}/design/review`, { entityIds });
 	},
 	/** 分镜关键帧单镜重绘 */
 	async keyframeAdjust(runId: string, shotId: string, instruction: string): Promise<void> {

@@ -79,6 +79,8 @@ import {
 	type StageId,
 	startRun,
 	subscribeRun,
+	subscribeRunEvents,
+	type TeamEvent,
 } from "./pipeline.ts";
 import { type CutsDoc, type CutsView, MAX_COMPOSE_PER_RUN } from "./redo/compose.ts";
 import {
@@ -91,7 +93,19 @@ import {
 } from "./prompts.ts";
 
 const COOKIE_NAME = "va_sid";
-const sessions = new Map<string, Clarifier>();
+/** 访谈会话：带最后活跃时间，超 SESSION_TTL 未访问即回收（cookie Max-Age 同为 24h） */
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const SESSION_SWEEP_INTERVAL_MS = 10 * 60 * 1000;
+const sessions = new Map<string, { session: Clarifier; at: number }>();
+let lastSweepAt = Date.now();
+function sessionSweep(): void {
+	const now = Date.now();
+	if (now - lastSweepAt < SESSION_SWEEP_INTERVAL_MS) return;
+	lastSweepAt = now;
+	for (const [sid, entry] of sessions) {
+		if (now - entry.at > SESSION_TTL_MS) sessions.delete(sid);
+	}
+}
 const runStore = new RunStore();
 
 // ---- 上传素材登记 ----
@@ -289,9 +303,17 @@ function sessionOf(req: Request): Clarifier | undefined {
 	const raw = req.headers.cookie ?? "";
 	for (const part of raw.split(";")) {
 		const [name, ...rest] = part.trim().split("=");
-		if (name === COOKIE_NAME) return sessions.get(decodeURIComponent(rest.join("=")));
+		if (name === COOKIE_NAME) return touchSession(decodeURIComponent(rest.join("=")));
 	}
 	return undefined;
+}
+
+/** 取会话并续期；顺带做一次惰性清理，避免长时间运行的进程里 Map 只增不减（review B10） */
+function touchSession(sid: string): Clarifier | undefined {
+	const entry = sessions.get(sid);
+	if (entry) entry.at = Date.now();
+	else sessionSweep();
+	return entry?.session;
 }
 
 function requireSession(req: Request, res: Response): Clarifier | undefined {
@@ -372,7 +394,8 @@ function createApp(ctx: ServerContext) {
 			return;
 		}
 		const sid = randomUUID();
-		sessions.set(sid, new Clarifier({ creative: brief }));
+		sessions.set(sid, { session: new Clarifier({ creative: brief }), at: Date.now() });
+		sessionSweep();
 		res.setHeader("Set-Cookie", `${COOKIE_NAME}=${sid}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`);
 		res.json({ ok: true });
 	});
@@ -554,7 +577,9 @@ function createApp(ctx: ServerContext) {
 		res.json(runView(run));
 	});
 
-	// SSE：一次长连接接收 run 快照变更。每条消息都是完整 RunView，
+	// SSE：一次长连接接收 run 变更。两类消息：
+	//   "run" = 完整 RunView 快照（状态级变化时；首连立即一条）
+	//   "ev"  = 单条团队事件增量（ndjson 化后 pushEvent 不再触发全量快照）
 	// 前端据此立即刷新产物；轮询继续保留为断线兜底。
 	app.get("/api/runs/:id/events", (req, res) => {
 		const run = runStore.get(req.params.id);
@@ -573,7 +598,12 @@ function createApp(ctx: ServerContext) {
 			if (res.writableEnded || !runStore.get(run.id)) return;
 			res.write(`event: run\ndata: ${JSON.stringify(runView(run))}\n\n`);
 		};
+		const sendEvent = (event: TeamEvent): void => {
+			if (res.writableEnded || !runStore.get(run.id)) return;
+			res.write(`event: ev\ndata: ${JSON.stringify(event)}\n\n`);
+		};
 		const unsubscribe = subscribeRun(run.id, send);
+		const unsubscribeEvents = subscribeRunEvents(run.id, sendEvent);
 		send();
 
 		const heartbeat = setInterval(() => {
@@ -582,6 +612,7 @@ function createApp(ctx: ServerContext) {
 		const close = (): void => {
 			clearInterval(heartbeat);
 			unsubscribe();
+			unsubscribeEvents();
 			res.end();
 		};
 		req.on("close", close);
@@ -716,10 +747,14 @@ function createApp(ctx: ServerContext) {
 			notFoundRun(res, req.params.id);
 			return;
 		}
+		// 此前返回了个函数（JSON.stringify 静默丢弃）——改为服务端直接给 url 字段
+		const variants = await listCutVariants(run);
 		res.json({
-			variants: await listCutVariants(run),
+			variants: variants.map((v) => ({
+				...v,
+				url: `/api/runs/${run.id}/files/${v.file.split(path.sep).join("/")}`,
+			})),
 			presets: PACE_PRESETS,
-			variantUrlOf: (file: string) => `/api/runs/${run.id}/files/${file.split(path.sep).join("/")}`,
 		});
 	});
 
