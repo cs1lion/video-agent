@@ -18,3 +18,17 @@ tools/ffmpeg/
 *.tmp
 Thumbs.db
 .DS_Store
+# 密钥/凭据：绝不能入库（工具模型.txt 内含 StepFun / Agnes 明文 API key）
+工具模型.txt
+*.key
+.env
+.env.*
+
+# 本地实验产物：TTS/视频试跑的音视频文件（体积大、无版本价值）
+_tts_test/
+*.wav
+*.mp3
+*.mp4
+
+# 会话导出与设计/验证报告（一次性产物，不入代码库）
+pi-session-*.html
