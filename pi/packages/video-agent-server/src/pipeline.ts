@@ -887,50 +887,14 @@ async function refImageBase64(run: RunRecord): Promise<string[]> {
 	return out;
 }
 
-function refImageNote(run: RunRecord): string {
+export function refImageNote(run: RunRecord): string {
 	if (run.images.length === 0) return "";
 	return `参考素材: 用户上传了 ${run.images.length} 张图片。画面主体、产品外观与氛围请以参考图为准，在剧本与视觉规范中主动呼应图中的风格元素。`;
 }
 
-async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
-	const { run, signal } = sc;
-	const opts = optionsOf(run);
-	setStage(run, "script", "running", 10);
-	pushEvent(run, "writer", "producer", "status", `编剧开工：解析需求，搭建 ${opts.shotCount} 镜叙事骨架。`);
-	throwIfAborted(signal);
-	let script = await generateDoc<ScriptDoc>(sc, scriptMessages(run.brief, opts), refImageNote(run), "script");
-	script = normalizeScript(script, opts);
-	if (script.shots.length !== opts.shotCount) {
-		throwIfAborted(signal);
-		const fixed = await generateDoc<ScriptDoc>(
-			sc,
-			scriptMessages(run.brief, opts),
-			`（注意：必须恰好 ${opts.shotCount} 个镜头，上一轮只给了 ${script.shots.length} 个。）\n\n${refImageNote(run)}`,
-			"script",
-		);
-		script = normalizeScript(fixed, opts);
-		// 两次都未命中数量：不硬跑失败（下游对镜头数本身宽容），但必须让用户知情
-		if (script.shots.length !== opts.shotCount) {
-			pushEvent(
-				run,
-				"writer",
-				"producer",
-				"status",
-				`⚠️ 编剧两轮均未给出设定的 ${opts.shotCount} 镜（实际 ${script.shots.length} 镜），已按实际镜头数继续。可在「剧本」阶段微调后重跑。`,
-			);
-		}
-	}
-	await writeJson(run, "script.json", script);
-	setStage(run, "script", "done", 100);
-	pushEvent(
-		run,
-		"writer",
-		"art",
-		"handoff",
-		`剧本《${script.title}》完成：${script.shots.length} 镜，${script.shots.reduce((a, s) => a + s.durationSec, 0)}s。Logline：${script.logline}。请据此制定全片视觉规范。`,
-	);
-	return script;
-}
+// stageScript 已迁到 ./stages/script.ts
+import { stageScript } from "./stages/script.ts";
+export { stageScript };
 
 async function stageVisual(sc: StageCtx, script?: ScriptDoc): Promise<VisualBible> {
 	const { run, signal } = sc;
@@ -3401,7 +3365,7 @@ async function runQa(
 // LLM 输出修正（防字段缺失/越界）
 // ============================================================================
 
-function normalizeScript(script: ScriptDoc, opts: GenerationOptions): ScriptDoc {
+export function normalizeScript(script: ScriptDoc, opts: GenerationOptions): ScriptDoc {
 	const shots = Array.isArray(script.shots) ? script.shots : [];
 	return {
 		title: typeof script.title === "string" && script.title ? script.title : "Untitled Ad",
