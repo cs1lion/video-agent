@@ -335,3 +335,32 @@ ffmpeg 的 stageExport。观测契约：成功/失败两边都会把 `run.redoAc
 - **`pricing.test.ts` 单独耗时 43s**，是套件（~60s）的绝对大头，与本次改动无关；
   值得单独排查（是否有真实等待/重试），但不阻塞。
 - reshot 的**成功路径**端到端测试仍缺（需要 ffmpeg + 真实 export，mock 面大）。
+
+## 2026-08-28 续：Phase 0 —— 混音链回归测试（音频驱动改造的安全垫）
+
+对应《音频驱动与并发调度-总文档.md》（设计+计划+handoff 单文档版，已并入旧实施计划并更新 Phase 0 为已完成）的 Phase 0。计划文档已先核实过：报告「额外发现②」
+（export 丢弃视频源音轨）在当前代码**依然成立**（`ffmpeg.ts:492` 只取 `[i:v]`），
+而这条链此前**零测试** —— A3 要动它，等于闭眼改。
+
+**新增 `test/ffmpeg-mix.test.ts`（10 用例，64 → 74）**，分两层：
+
+- **A. `buildDmeFilters` 纯函数（6 用例）**：三层全空 → anullsrc 静音兜底、
+  旁白 adelay 秒→毫秒换算（J-cut 定位）、BGM 按 totalSec 裁齐 + 淡入淡出、
+  BGM+旁白 → sidechaincompress 闪避、无旁白不挂 sidechain、多 SFX 先混成 sfxmix。
+  为此把 `buildDmeFilters` 与 `DmeInput` 导出（纯函数，无 I/O，可精确断言）。
+- **B. `assembleTimeline` 集成（4 用例）**：真跑 ffmpeg 验证产物。
+  ffmpeg 在本机可用（chocolatey），故集成用例默认执行；环境缺失时自动 skip，不阻塞 CI。
+
+**核心用例「镜头自带响亮音轨，但成片静音」—— 冲突②的回归锁**：
+给镜头塞一条很响的 440Hz 音轨，却不给旁白 / BGM / SFX；若源音轨被丢弃，成片必然静音。
+该用例带**前置自检**（先断言素材本身 `mean > -30dB`），否则"输出静音"会退化成假通过。
+
+**已做变异验证**：把 `narrations` 的过滤改成"无旁白时拿自身视频当音源"（模拟 A3 打开
+keepSourceAudio），该用例立刻变红 —— `成片应静音，实测 mean=-14.3dB`（可闻），
+提示信息里写明了"它变红正是设计意图，请同步更新本用例"。恢复后回到 10/10。
+
+**顺带核实并用到的环境事实**：`ffmpeg` / `ffprobe` 均在 PATH（chocolatey），
+`runFfmpeg` 直接 `execFile("ffmpeg", ...)` 依赖 PATH 解析。
+素材生成用 lavfi（testsrc + sine）免外部素材，codec 用 libx264 + aac。
+
+验证：server tsc clean，`npm test` **74/74**（约 70s）。

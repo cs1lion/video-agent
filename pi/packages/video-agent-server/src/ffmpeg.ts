@@ -319,7 +319,7 @@ export interface TimelineSfx {
 }
 
 /** DME 混音链构建参数（输入索引由调用方决定：测量遍不含镜头视频） */
-interface DmeInput {
+export interface DmeInput {
 	/** 旁白输入起始索引 */
 	narrBase: number;
 	/** BGM 输入索引（-1 = 无 BGM） */
@@ -339,7 +339,9 @@ interface DmeInput {
  * E（音效）lavfi 合成 → adelay 定位。
  * 返回滤镜数组与混音输出标签（供 loudnorm 接续）。
  */
-function buildDmeFilters(input: DmeInput): { filters: string[]; preLoud: string; silent: boolean } {
+/** 导出供行为测试锁定滤镜串构造语义（test/ffmpeg-mix.test.ts）。
+ *  纯函数、无 I/O：混音链是台词模式改造的胜负手（源音轨当前被丢弃），必须可精确断言。 */
+export function buildDmeFilters(input: DmeInput): { filters: string[]; preLoud: string; silent: boolean } {
 	const { narrBase, bgmIdx, narrations, sfx, totalSec } = input;
 	const filters: string[] = [];
 	const narrParts: string[] = [];
