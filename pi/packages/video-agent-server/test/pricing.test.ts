@@ -149,8 +149,11 @@ describe("withVersionedAsset 备份→生成→回滚统一抽象", () => {
 	before(async () => {
 		root = await fs.mkdtemp(path.join(os.tmpdir(), "pi-versioned-"));
 	});
+	// 清理竞态兜底：Windows 上子测试的文件句柄未必立即释放，rm 可能 EBUSY/ENOTEMPTY。
+	// after 抛错会拖住整个测试进程（多文件时表现为"挂死"），残留临时目录交给 OS 清理。
+	// 此 catch 与下方各 describe 的 after 同理，由 replace_all 统一加上。
 	after(async () => {
-		if (root) await fs.rm(root, { recursive: true, force: true });
+		if (root) await fs.rm(root, { recursive: true, force: true }).catch(() => {});
 	});
 
 	// 抽一个独立测试：手起 run 仓，不走 store.create 同步路径（避免 mkdir 跳过）
@@ -246,8 +249,11 @@ describe("MAX_IMAGE_AUTO_REDRAW 独立上限（auto vs 手动不互吃）", () =
 			},
 		};
 	});
+	// 清理竞态兜底：Windows 上子测试的文件句柄未必立即释放，rm 可能 EBUSY/ENOTEMPTY。
+	// after 抛错会拖住整个测试进程（多文件时表现为"挂死"），残留临时目录交给 OS 清理。
+	// 此 catch 与下方各 describe 的 after 同理，由 replace_all 统一加上。
 	after(async () => {
-		if (root) await fs.rm(root, { recursive: true, force: true });
+		if (root) await fs.rm(root, { recursive: true, force: true }).catch(() => {});
 	});
 
 	it("auto 重绘超 MAX_IMAGE_AUTO_REDRAW 被拒，手动 quota 仍可用", async () => {
@@ -303,8 +309,11 @@ describe("live cost accumulation (pipeline integration)", () => {
 		};
 		store = new RunStore();
 	});
+	// 清理竞态兜底：Windows 上子测试的文件句柄未必立即释放，rm 可能 EBUSY/ENOTEMPTY。
+	// after 抛错会拖住整个测试进程（多文件时表现为"挂死"），残留临时目录交给 OS 清理。
+	// 此 catch 与下方各 describe 的 after 同理，由 replace_all 统一加上。
 	after(async () => {
-		if (root) await fs.rm(root, { recursive: true, force: true });
+		if (root) await fs.rm(root, { recursive: true, force: true }).catch(() => {});
 	});
 
 	it("startRun 在 run 上落 costEstimate（pre-flight 独立于 LLM 累计）", () => {
@@ -360,8 +369,11 @@ describe("pushLastAction 去重保护（P2+审查）", () => {
 			},
 		};
 	});
+	// 清理竞态兜底：Windows 上子测试的文件句柄未必立即释放，rm 可能 EBUSY/ENOTEMPTY。
+	// after 抛错会拖住整个测试进程（多文件时表现为"挂死"），残留临时目录交给 OS 清理。
+	// 此 catch 与下方各 describe 的 after 同理，由 replace_all 统一加上。
 	after(async () => {
-		if (root) await fs.rm(root, { recursive: true, force: true });
+		if (root) await fs.rm(root, { recursive: true, force: true }).catch(() => {});
 	});
 
 	it("首次 push 入栈；同 (kind, shotId, label) 3 分钟内重复 push 被吞掉", () => {
@@ -418,8 +430,11 @@ describe("computeQaDeltas 派发后回灌文案生成（闸门 4）", () => {
 			},
 		};
 	});
+	// 清理竞态兜底：Windows 上子测试的文件句柄未必立即释放，rm 可能 EBUSY/ENOTEMPTY。
+	// after 抛错会拖住整个测试进程（多文件时表现为"挂死"），残留临时目录交给 OS 清理。
+	// 此 catch 与下方各 describe 的 after 同理，由 replace_all 统一加上。
 	after(async () => {
-		if (root) await fs.rm(root, { recursive: true, force: true });
+		if (root) await fs.rm(root, { recursive: true, force: true }).catch(() => {});
 	});
 
 	it("无变化返回 null（不推事件）", async () => {
@@ -588,8 +603,11 @@ describe("computeQaRegressionText 安静版（防报警疲劳）", () => {
 			},
 		};
 	});
+	// 清理竞态兜底：Windows 上子测试的文件句柄未必立即释放，rm 可能 EBUSY/ENOTEMPTY。
+	// after 抛错会拖住整个测试进程（多文件时表现为"挂死"），残留临时目录交给 OS 清理。
+	// 此 catch 与下方各 describe 的 after 同理，由 replace_all 统一加上。
 	after(async () => {
-		if (root) await fs.rm(root, { recursive: true, force: true });
+		if (root) await fs.rm(root, { recursive: true, force: true }).catch(() => {});
 	});
 
 	it("纯改善场景返 null（不推事件，避免报警疲劳）", async () => {

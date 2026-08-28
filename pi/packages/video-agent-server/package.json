@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": "tsx watch src/server.ts",
 		"start": "tsx src/server.ts",
-		"test": "tsx --test --experimental-test-module-mocks test/*.test.ts",
+		"test": "tsx --test --experimental-test-module-mocks --test-concurrency=1 test/*.test.ts",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {

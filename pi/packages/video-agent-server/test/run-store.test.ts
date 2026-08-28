@@ -108,6 +108,7 @@ describe("RunStore.loadAll 重启恢复语义", () => {
 	});
 
 	after(async () => {
-		if (root) await rm(root, { recursive: true, force: true });
+		// Windows 句柄释放延迟可能令 rm EBUSY，after 抛错会拖住测试进程 → 加兜底
+		if (root) await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }).catch(() => {});
 	});
 });
