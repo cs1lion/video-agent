@@ -753,7 +753,7 @@ export function setStage(run: RunRecord, id: StageId, status: RunStage["status"]
 	persistRun(run);
 }
 
-function throwIfAborted(signal: AbortSignal): void {
+export function throwIfAborted(signal: AbortSignal): void {
 	if (signal.aborted) throw new Error("已中止");
 }
 
@@ -1408,31 +1408,10 @@ async function redesignEntityInner(
 	}
 }
 
-async function stagePrompts(sc: StageCtx, script?: ScriptDoc, bible?: VisualBible): Promise<ShotPromptDoc> {
-	const { run, signal } = sc;
-	const opts = optionsOf(run);
-	setStage(run, "prompts", "running", 10);
-	pushEvent(run, "storyboard", "tech", "status", "分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。");
-	throwIfAborted(signal);
-	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
-	const bibleDoc = bible ?? (await readArtifact<VisualBible>(run, "visual-bible.json"));
-	// 角色外观锚点：美术设计若已产出，注入逐镜 prompt（跨镜服装/发型一致性）
-	const designDoc = await readArtifact<DesignBibleDoc>(run, "design-bible.json").catch(() => null);
-	const shotPrompts = normalizeShotPrompts(
-		await generateDoc<ShotPromptDoc>(
-			sc,
-			shotPromptMessages(run.brief, scriptDoc, bibleDoc, opts, designDoc),
-			"",
-			"prompts",
-		),
-		scriptDoc,
-		bibleDoc,
-	);
-	shotPrompts.promptVersion = PROMPT_VERSION;
-	await writeJson(run, "prompts.json", shotPrompts);
-	setStage(run, "prompts", "done", 100);
-	return shotPrompts;
-}
+// stagePrompts 已迁到 ./stages/prompts.ts
+import { stagePrompts } from "./stages/prompts.ts";
+export { stagePrompts };
+/** @deprecated 旧内联定义位置标记（实际已迁出） */
 
 /** 独立关键帧阶段：分镜文本定稿后逐镜绘制首帧锚定图，完成后挂关键帧确认闸门 */
 async function stageKeyframes(sc: StageCtx, script?: ScriptDoc, bible?: VisualBible): Promise<void> {
@@ -3253,7 +3232,7 @@ function applyInstruction(run: RunRecord, stageId: StageId, instruction: string)
 // 生成辅助：文本 or 视觉（有参考图时自动升级为多模态）
 // ---------------------------------------------------------------------------
 
-async function generateDoc<T>(
+export async function generateDoc<T>(
 	sc: StageCtx,
 	messages: { role: string; content: string | { text?: string }[] }[],
 	extraNote = "",
@@ -3451,7 +3430,7 @@ function normalizeBible(bible: VisualBible): VisualBible {
 	};
 }
 
-function normalizeShotPrompts(doc: ShotPromptDoc, script: ScriptDoc, bible: VisualBible): ShotPromptDoc {
+export function normalizeShotPrompts(doc: ShotPromptDoc, script: ScriptDoc, bible: VisualBible): ShotPromptDoc {
 	const fallback = (visual: string) =>
 		[bible.styleKeywords.join(", "), visual, bible.lighting, bible.grade].filter(Boolean).join(", ");
 	const prompts = script.shots.map((shot, i) => {
