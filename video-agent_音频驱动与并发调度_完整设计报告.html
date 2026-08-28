@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>video-agent 两大改造完整设计报告 · 音频驱动 + 并发调度</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#faf9f7; --line:#e6e3dd; --line2:#d3d1c7;
+  --tx:#2c2c2a; --tx2:#5f5e5a; --tx3:#888780;
+  --purple:#EEEDFE; --purple-l:#534AB7; --purple-d:#3C3489;
+  --teal:#E1F5EE; --teal-l:#0F6E56; --teal-d:#085041;
+  --amber:#FAEEDA; --amber-l:#854F0B; --amber-d:#633806;
+  --blue:#E6F1FB; --blue-l:#185FA5; --blue-d:#0C447C;
+  --red:#FCEBEB; --red-l:#A32D2D; --red-d:#791F1F;
+  --gray:#F1EFE8;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;padding:48px 24px 120px;background:var(--bg);color:var(--tx);
+  font:400 15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:960px;margin:0 auto}
+h1{font:500 30px/1.3 inherit;margin:0 0 10px;letter-spacing:-.015em}
+.sub{color:var(--tx2);font-size:16px;margin:0 0 8px}
+.meta{color:var(--tx3);font-size:13px;margin:0 0 36px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+h2{font:500 22px/1.45 inherit;margin:60px 0 16px;padding-top:28px;border-top:1px solid var(--line);scroll-margin-top:20px}
+h2:first-of-type{border-top:none;padding-top:0}
+h3{font:500 17px/1.5 inherit;margin:32px 0 10px;color:var(--tx);scroll-margin-top:20px}
+h4{font:500 15px/1.5 inherit;margin:22px 0 8px;color:var(--tx2)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 7px}
+code{font:400 13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--gray);padding:1.5px 5px;border-radius:4px;color:var(--tx)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;overflow-x:auto;margin:0 0 18px}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.7;color:var(--tx)}
+table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--tx2);font-size:13px;
+  padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--surface)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+tr:last-child td{border-bottom:none}
+.lead{background:var(--purple);border:1px solid var(--purple-l);border-radius:12px;
+  padding:22px 24px;margin:0 0 32px}
+.lead p{margin:0 0 10px;color:var(--purple-d);font-size:15px}
+.lead p:last-child{margin:0}
+.lead strong{font-weight:500}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;
+  font-weight:500;white-space:nowrap}
+.t-purple{background:var(--purple);color:var(--purple-d);border:1px solid var(--purple-l)}
+.t-teal{background:var(--teal);color:var(--teal-d);border:1px solid var(--teal-l)}
+.t-amber{background:var(--amber);color:var(--amber-d);border:1px solid var(--amber-l)}
+.t-red{background:var(--red);color:var(--red-d);border:1px solid var(--red-l)}
+.t-blue{background:var(--blue);color:var(--blue-d);border:1px solid var(--blue-l)}
+.note{border-left:3px solid var(--amber-l);background:var(--amber);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--amber-d)}
+.note p{margin:0 0 8px}
+.note p:last-child{margin:0}
+.warn{border-left:3px solid var(--red-l);background:var(--red);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--red-d)}
+.warn p{margin:0 0 8px}
+.warn p:last-child{margin:0}
+.warn strong{font-weight:500}
+.ok{border-left:3px solid var(--teal-l);background:var(--teal);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--teal-d)}
+.ok p{margin:0}
+.find{border-left:3px solid var(--purple-l);background:var(--purple);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--purple-d)}
+.find p{margin:0 0 8px}
+.find p:last-child{margin:0}
+.find strong{font-weight:500}
+.fin{background:var(--teal);border:1px solid var(--teal-l);border-radius:12px;
+  padding:24px 26px;margin:48px 0 0}
+.fin h3{margin:0 0 12px;color:var(--teal-d)}
+.fin p{margin:0 0 12px;color:var(--teal-d);font-size:15px}
+.fin p:last-child{margin:0}
+.ref{color:var(--tx3);font-size:12.5px}
+.toc{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:20px 24px;margin:0 0 44px}
+.toc h4{margin:0 0 12px;color:var(--tx2);font-size:13px}
+.toc ol{margin:0;padding-left:20px;columns:2;column-gap:36px;font-size:14px}
+@media(max-width:720px){.toc ol{columns:1}}
+.toc li{margin:0 0 6px}
+.toc a{color:var(--tx);text-decoration:none;border-bottom:1px solid var(--line2)}
+.toc a:hover{border-bottom-color:var(--tx2)}
+.part{display:inline-block;background:var(--tx);color:#fff;font-size:12px;
+  padding:3px 11px;border-radius:20px;margin-bottom:10px;font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>video-agent 两大改造完整设计报告</h1>
+<p class="sub">角色台词驱动（音频先行） + 异构配额池并发调度（ReAct 代理）</p>
+<p class="meta">2026-08-28 · 含实测数据、源码实读发现、设计决策与落地路径 · 验证状态：<strong>声音 + 口型效果已确认 OK</strong></p>
+
+<div class="lead">
+<p><strong>这两件事解决的是同一个问题的两面：</strong>音频驱动改造让「每一条视频生成」变贵了（改台词会级联触发重生成），而多 key 并发调度负责让「变贵的配额」花在刀刃上。前者改变的是 <strong>DAG 拓扑</strong>，后者改变的是 <strong>执行层资源分配</strong>——两者不冲突，但存在明确的方向性依赖：<em>先建配额账本，再放开昂贵的动作</em>。</p>
+<p>本报告整合了两轮讨论的全部设计内容，并标注了 8 处「额外发现」——它们来自源码实读与 API 实测，是讨论初期并未意识到、但会直接决定方案成败的关键点。</p>
+</div>
+
+<div class="toc">
+<h4>目录</h4>
+<ol>
+<li><a href="#p1">技术验证：音频驱动可行性的实测证据</a></li>
+<li><a href="#p2">现状：旁白方案的源码级事实</a></li>
+<li><a href="#p3">额外发现：三个会直接卡死方案的冲突</a></li>
+<li><a href="#p4">核心设计：旁白降级为每镜三态</a></li>
+<li><a href="#p5">台词模式的「更严格」清单</a></li>
+<li><a href="#p6">时长对齐与失败降级</a></li>
+<li><a href="#p7">共创工作室限定开放 + 前端变更</a></li>
+<li><a href="#p8">Agnes 限流事实（官方查证）</a></li>
+<li><a href="#p9">为什么静态队列会失效</a></li>
+<li><a href="#p10">烤炉模型：异构资源的形式化</a></li>
+<li><a href="#p11">ReAct 调度器的三段设计</a></li>
+<li><a href="#p12">职责边界与角色分工</a></li>
+<li><a href="#p13">成本控制、降级与度量</a></li>
+<li><a href="#p14">额外发现：文本与图像多 key 是无用功</a></li>
+<li><a href="#p15">两项改造的关联与实施顺序</a></li>
+<li><a href="#p16">落地路径与风险评估</a></li>
+<li><a href="#p17">附录：产物、代码索引与总结</a></li>
+</ol>
+</div>
+
+<h2 id="p1"><span class="part">第一部分</span><br>一、技术验证：音频驱动可行性的实测证据</h2>
+
+<p>这一部分的所有结论都来自真实 API 调用，不是文档推断。过程中的关键转折点是一次<strong>结论翻转</strong>。</p>
+
+<h3>1.1 三个前置问题的实测答案</h3>
+
+<table>
+<thead><tr><th style="width:26%">问题</th><th style="width:16%">结论</th><th style="width:58%">证据</th></tr></thead>
+<tbody>
+<tr><td>TTS 生成有 URL 吗？</td><td><span class="tag t-red">没有</span></td><td>StepFun <code>/v1/audio/speech</code> 返回<strong>二进制 MP3</strong>，不返回 URL，必须自行托管</td></tr>
+<tr><td>Agnes 要求的「媒体 URL 公开可访问、任务完成前保持有效」能满足吗？</td><td><span class="tag t-teal">能满足</span></td><td>CloudBase 上传后，匿名 <code>Range</code> 请求返回 <code>206 / audio/mpeg</code>，URL 永久有效</td></tr>
+<tr><td>「先生成语音 → 交给视频模型驱动口型」可行吗？</td><td><span class="tag t-teal">可行</span></td><td>见 1.3，2.5-flash 实测相关系数 0.620</td></tr>
+</tbody>
+</table>
+
+<h3>1.2 结论翻转：v2.0 与 2.5-flash 是两种完全不同的东西</h3>
+
+<p>最初只测了 <code>agnes-video-v2.0</code>，得出「音频参数被静默忽略」的错误结论。用户要求用 2.5-flash 重测后，结论<strong>完全反转</strong>：</p>
+
+<table>
+<thead><tr><th style="width:20%">模型</th><th style="width:26%">对 <code>audios</code> 参数</th><th style="width:54%">决定性证据</th></tr></thead>
+<tbody>
+<tr><td><strong>v2.0</strong></td><td><span class="tag t-red">静默忽略</span></td><td>传入<strong>根本不存在的 URL</strong> 仍返回 200（说明参数压根没被读取）；输出口型与参考音频相关系数 <strong>−0.056</strong>（无关联）</td></tr>
+<tr><td><strong>v2.0 的另一面</strong></td><td><span class="tag t-amber">原生音画同生</span></td><td>不传音频、只把台词写进 prompt，模型会<strong>自己生成人声并对口型</strong>：中文台词 5 秒内 68% 时长持续有声；对照实验里只说一个词 <code>Wait.</code> 时仅 0.4 秒出声——说明它确实在按台词长度控制发声</td></tr>
+<tr><td><strong>2.5-flash</strong></td><td><span class="tag t-teal">真正采纳</span></td><td>① 蜂鸣参考（440Hz）→ 输出频谱 <strong>440Hz 分量占 63.4%</strong>（原音频直通）；② 中文语音参考 → 输出音轨包络与参考<strong>相关系数 0.620</strong>，逐秒形态几乎一致</td></tr>
+</tbody>
+</table>
+
+<div class="find">
+<p><strong>额外发现 ①：国际站其实有 2.5-flash，而且当前 Key 可用。</strong>此前判断「音频驱动行不通」是因为只测了 v2.0，且误以为 2.5 系列只在中国站。实测 <code>apihub.agnes-ai.com</code> 上同时存在 <code>agnes-video-2.5-flash</code> 和 <code>agnes-video-2.5</code>；而中国站 <code>api.agnes-ai.cn</code> 对当前 Key 返回 401「无效的令牌」。</p>
+</div>
+
+<h3>1.3 中文语音参考的逐秒吻合（决定性证据）</h3>
+
+<p>参考音频选的是一段<strong>非周期、形态独特</strong>的中文语音（0.4s 起 → 2.0s 满 → 3.0s 单发 → 4.2s 再起），作为"指纹"验证输出是否真的跟随：</p>
+
+<pre><code>参考语音包络:  0.4s 起 → 2.0s 满 → 3.0s 单发 → 4.2s 再起
+输出音轨包络:  几乎完全一致
+相关系数:      0.620   （v2.0 对照组为 −0.056）
+
+结论：2.5-flash 真的按你给的音频对口型，
+      并直接采用该音频作为成片声轨。</code></pre>
+
+<h3>1.4 调用要点（踩过的坑）</h3>
+
+<table>
+<thead><tr><th style="width:26%">项</th><th style="width:74%">正确做法</th></tr></thead>
+<tbody>
+<tr><td>端点</td><td><code>POST https://apihub.agnes-ai.com/v1/videos</code>（国际站，当前 Key 有效）</td></tr>
+<tr><td>模型</td><td><code>agnes-video-2.5-flash</code></td></tr>
+<tr><td>参数</td><td><code>mode:"reference"</code> + <code>audios:[公开URL]</code> + prompt 内写 <code>&lt;Audio 1&gt;</code> 占位符</td></tr>
+<tr><td>状态查询</td><td><code>GET /v1/videos/{id}</code>，<strong>不是</strong> v2.0 用的 <code>/agnesapi?video_id=</code>（2.5 的 id 是 <code>task_</code> 前缀，走 agnesapi 会 404）</td></tr>
+<tr><td>限流</td><td>视频生成 <strong>2 次/分钟</strong>（实测撞过两次 429）</td></tr>
+<tr><td>出片耗时</td><td>2.5-flash 约 40–90 秒</td></tr>
+</tbody>
+</table>
+
+<div class="ok">
+<p><strong>验证状态：用户已确认声音 + 口型效果 OK。</strong>这意味着第一部分的方向已经锁定，可以进入工程化改造，无需再验证技术可行性。</p>
+</div>
+
+<h2 id="p2">二、现状：旁白方案的源码级事实</h2>
+
+<p>在设计之前，先把当前实现钉死。以下全部来自源码实读，标注了文件与行号。</p>
+
+<pre><code>script  →  visual  →  prompts  →  clips  →  audio  →  export
+                                  (视频)     (旁白TTS)   (拼合)
+                                          ↑ audio 在 clips 之后</code></pre>
+
+<table>
+<thead><tr><th style="width:22%">环节</th><th style="width:78%">实现事实</th></tr></thead>
+<tbody>
+<tr><td>旁白文本</td><td><code>narrationFor(shot, locale)</code> 取 <code>shot.narrationZh / narrationEn</code>　<span class="ref">prompts.ts:190</span></td></tr>
+<tr><td>表演指导</td><td><code>ensureVoiceDirections()</code> 用 LLM 逐镜生成，存 <code>shot.ttsDirection</code>　<span class="ref">pipeline.ts:2252</span></td></tr>
+<tr><td>TTS 合成</td><td><code>queue.submit({kind:"tts", prompt: text, params:{instruction}})</code>；<strong>失败不阻断</strong>，该镜以无声画面进时间线　<span class="ref">audio.ts:41 / :54</span></td></tr>
+<tr><td>视频音轨</td><td><strong>被完全丢弃</strong>——输入只 push <code>-i s.path</code>，但视频链只用 <code>[i:v]</code>　<span class="ref">ffmpeg.ts:475 / :492</span></td></tr>
+<tr><td>成片音轨</td><td>DME 三层合成：旁白（amix）+ BGM（sidechaincompress 闪避）+ SFX　<span class="ref">ffmpeg.ts:342</span></td></tr>
+<tr><td>旁白定位</td><td>J-cut，<code>narrStart = cursor - JCUT_LEAD</code>，旁白略先于画面进入　<span class="ref">export.ts:214</span></td></tr>
+<tr><td>重录旁白</td><td>只 <code>setStage(run,"export","pending")</code> 重排导出，<strong>不重做视频</strong>　<span class="ref">retts.ts:139</span></td></tr>
+<tr><td>时长选项</td><td><code>CLIP_DURATIONS = [3,5,8,10]</code> 白名单，越界回退默认　<span class="ref">options.ts:92</span></td></tr>
+<tr><td>共创工作室</td><td><code>CoCreatePage.tsx</code>，已有「共创空间」沉淀 <code>characters</code> / <code>scenes</code> 实体 + 成本预估　<span class="ref">CoCreatePage.tsx:2 / :120</span></td></tr>
+</tbody>
+</table>
+
+<h2 id="p3">三、额外发现：三个会直接卡死方案的冲突</h2>
+
+<p>这是本报告最有价值的部分。三个冲突都不是设计层面的权衡，而是<strong>如果不处理，代码会静默产生错误结果</strong>。</p>
+
+<div class="warn">
+<p><strong>额外发现 ②（最致命）· export 会把角色台词全部丢掉。</strong></p>
+<p>当前混音链里<strong>根本没有视频源音轨这一路</strong>——ffmpeg 输入只 push 了 <code>-i s.path</code>，但视频链只用 <code>[i:v]</code>（<code>ffmpeg.ts:492</code>），成片声音完全由 DME 三层（旁白 + BGM + SFX）重建。</p>
+<p>台词模式下视频自带的就是角色对白音轨，照现有逻辑会被<strong>静默丢弃</strong>，然后再叠一条旁白上去。结果就是：<em>角色张嘴无声、画外音乱入</em>——而且不会报错，成片能正常导出，问题只在观看时暴露。</p>
+<p><strong>修法：</strong>给 <code>TimelineShot</code> 增 <code>keepSourceAudio: boolean</code>，台词镜把 <code>[i:a]</code> 接入混音链（带 adelay 定位），且该镜 <code>narrationPath = null</code>。<strong>这一步不做，前面所有链路改造全部白干。</strong></p>
+</div>
+
+<div class="warn">
+<p><strong>额外发现 ③ · 重做级联，成本结构彻底改变。</strong></p>
+<p>现在 <code>retts</code> 只重排导出（<code>retts.ts:139</code>），因为旁白是贴上去的、与画面无关。台词模式下改一句台词 → 音频变了 → <strong>口型必然对不上 → 该镜视频必须重生成</strong>。</p>
+<p>一次「重录」的成本结构：</p>
+<p>　旧：<code>1 次 TTS + 重混音</code>　→　新：<code>1 次 TTS + 托管 + 1 次视频生成（吃 RPM 与每日时长配额 + 等 40–90 秒）</code></p>
+<p>前端必须显式提示并预估配额，否则用户会随手点爆 500 秒/天的天花板。</p>
+</div>
+
+<div class="warn">
+<p><strong>额外发现 ④ · 时长耦合，而 <code>clipDuration</code> 是白名单。</strong></p>
+<p>现在镜长由用户从 [3,5,8,10] 里选；台词模式下<strong>镜长必须由音频时长决定</strong>，否则要么尾段嘴瓢、要么台词被截断。但 <code>resolveGenerationOptions</code> 对 <code>clipDurationSec</code> 做白名单校验、越界回退默认——动态镜长会被<strong>静默 clamp 掉</strong>，开发者很可能完全 unaware。</p>
+</div>
+
+<h2 id="p4">四、核心设计：旁白降级为每镜三态</h2>
+
+<p><strong>结论：旁白不删，也不被台词取代。</strong>它们是两种叙事形态（画外音解说 vs 角色对白），不是新旧替代关系。一部片子天然会混用——开场旁白交代背景、中间角色对话、转场空镜无声。</p>
+
+<p>因此 <code>audioMode</code> 应该是 <strong>ScriptShot 的属性</strong>，不是 run 的全局开关。</p>
+
+<table>
+<thead><tr><th style="width:15%">模式</th><th style="width:24%">语义</th><th style="width:26%">生成顺序</th><th style="width:35%">适用场景</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-blue">narration</span><br>旁白</td><td>画外音解说，与口型无关</td><td>先视频 → 后 TTS → 贴上（现状）</td><td>产品片、解说片、宣传片；容错高、成本低</td></tr>
+<tr><td><span class="tag t-purple">dialogue</span><br>台词</td><td>角色对白，<strong>驱动口型</strong></td><td>先 TTS → 托管公开 URL → 视频参考生成</td><td>剧情片、角色对话；要求高、成本高</td></tr>
+<tr><td><span class="tag" style="background:var(--gray);color:#444441;border:1px solid var(--line2)">silent</span><br>无声</td><td>纯画面，只有 BGM/SFX</td><td>只生成视频</td><td>空镜、转场、蒙太奇</td></tr>
+</tbody>
+</table>
+
+<h3>4.1 数据模型变更</h3>
+
+<pre><code>// ScriptShot 增字段（默认 narration，向后兼容既有作品）
+audioMode?: "narration" | "dialogue" | "silent";   // 缺省 = narration
+
+dialogue?: {
+  characterId: string;       // 绑定共创空间的角色实体
+  voiceId: string;           // StepFun voice（如 cixingnansheng）
+  lines: { zh: string; en: string };
+  emotion?: string;          // 情绪/表演指导（建议放宽现有 ≤80 字上限）
+  pace?: "slow" | "normal" | "fast";
+  pausesSec?: number[];      // 台词内停顿——见第五节，这是新增要求
+  audioDurationSec?: number; // TTS 后 ffprobe 实测
+  audioUrl?: string;         // CloudBase 托管公开 URL（可复用，避免重复上传）
+};</code></pre>
+
+<h3>4.2 台词态的调用链</h3>
+
+<pre><code>1. TTS       StepFun /v1/audio/speech  → 本地 mp3（按角色选 voice + instruction）
+2. 补静音    ffprobe 实测 → 按 pausesSec 插入停顿 / 尾部补齐到镜长
+3. 托管      CloudBase 上传 → 公开 URL（写入 audioUrl，可复用）
+4. 生视频    2.5-flash，mode=reference，audios=[URL]，prompt 内含 &lt;Audio 1&gt;
+5. 轮询      GET /v1/videos/{id}  直到 completed
+6. 导出      keepSourceAudio=true，该镜 narrationPath=null</code></pre>
+
+<h2 id="p5">五、台词模式的「更严格」清单</h2>
+
+<p>音频从「贴上去的旁白」变成「驱动源」后，质量要求是<strong>数量级</strong>的提升。逐条对照现状：</p>
+
+<table>
+<thead><tr><th style="width:16%">维度</th><th style="width:32%">旁白（现状要求）</th><th style="width:52%">台词（新增要求）</th></tr></thead>
+<tbody>
+<tr><td>音色</td><td>单一 narrator，全局统一</td><td><strong>每角色一个 voice</strong>，且跨镜头必须稳定——重录后音色漂移会导致与已生成画面不一致</td></tr>
+<tr><td>情绪指导</td><td>一句 instruction，≤80 字</td><td>需描述气口、语速变化、停顿位置；<strong>建议放宽字数上限并结构化</strong>（emotion / pace / pauses 分字段）</td></tr>
+<tr><td>静音段</td><td>无所谓，J-cut 自动对齐</td><td><strong>新增且关键</strong>：台词间停顿决定口型闭合时机，必须显式设计</td></tr>
+<tr><td>时长</td><td>可长可短，混音时裁齐</td><td><strong>必须 ≤ 镜长</strong>，否则尾段嘴瓢；需实测并对齐</td></tr>
+<tr><td>数量</td><td>每镜一条</td><td><strong>每镜一条主语音</strong>——多角色对白必须拆镜，或只取主说话人（<code>audios</code> 传多条会互相干扰）</td></tr>
+<tr><td>可复现</td><td>重录即可，无所谓漂移</td><td>需固定 voice + 参数，保证重做时音色一致</td></tr>
+</tbody>
+</table>
+
+<div class="find">
+<p><strong>额外发现 ⑤ · 静音段是表演的一部分，这是最容易漏的一条。</strong></p>
+<p>实测表明 2.5-flash 是<strong>严格按音频包络对口型</strong>的（相关系数 0.62、原音直通）。这意味着音频里的<em>停顿就是闭嘴</em>。</p>
+<p>如果不显式设计 <code>pausesSec</code>，角色会一路说到底、中间没有换气——看起来非常诡异。所以静音段不是"锦上添花的润色"，而是<strong>表演指令的组成部分</strong>：哪里停顿、停多久，直接决定角色的呼吸感和真实性。</p>
+</div>
+
+<h2 id="p6">六、时长对齐与失败降级</h2>
+
+<h3>6.1 时长对齐策略</h3>
+
+<ol>
+<li>TTS 产出后 <code>ffprobe</code> 实测时长 → 写入 <code>audioDurationSec</code></li>
+<li><strong>短于镜长</strong>：尾部补静音到目标长度——让口型自然闭合，留白比硬拉好看</li>
+<li><strong>长于镜长</strong>：优先让 LLM 精简台词重写（±20% 约束，可复用 <code>rettsNarrationMessages</code> 的 copy-edit 逻辑）；仍超则放宽该镜时长</li>
+<li><strong>建议默认策略</strong>：以音频时长为准反推镜长（<code>ceil(audioDur)</code>），并<strong>放开 <code>clipDurationSec</code> 白名单</strong>允许动态值（解决冲突 ④）</li>
+</ol>
+
+<h3>6.2 失败降级：延续现有设计哲学</h3>
+
+<p>现有 <code>audio.ts</code> 的好传统是「TTS 失败不阻断，该镜以无声画面进时间线」。台词模式要延续，但降级链更长：</p>
+
+<table>
+<thead><tr><th style="width:30%">失败点</th><th style="width:70%">降级行为</th></tr></thead>
+<tbody>
+<tr><td>TTS 合成失败</td><td>该镜降级为 <code>silent</code>（无声画面 + BGM），不阻断管线</td></tr>
+<tr><td>托管失败 / URL 不可访问</td><td><strong>降级为 narration 模式</strong>：先出视频，再把这段台词当旁白贴上——成片仍能看，只是口型不对</td></tr>
+<tr><td>视频模型忽略音频（如误用 v2.0）</td><td>同上；并在 QA 阶段标记该镜「口型未驱动」提示用户</td></tr>
+<tr><td>配额不足</td><td>提前 escalate，按优先级把部分台词镜降级为旁白镜</td></tr>
+</tbody>
+</table>
+
+<h2 id="p7">七、共创工作室限定开放 + 前端变更</h2>
+
+<h3>7.1 为什么放共创工作室最合理</h3>
+
+<div class="find">
+<p><strong>额外发现 ⑥ · 这不是"藏起来"，是天然依赖。</strong></p>
+<p><code>CoCreatePage</code> 已有 <code>characters</code> 实体——那<strong>正好是台词模式的音色绑定载体</strong>。给共创空间的每个角色卡片加一个音色下拉，「角色 → voice」的映射就自然成立了。换句话说，台词模式<strong>本来就依赖角色实体</strong>，而全项目只有共创工作室有这个实体。这是把它放在那里的最强理由，不是产品策略上的权宜之计。</p>
+<p>此外它已有成本预估（<code>CoCreatePage.tsx:120</code>），加台词成本顺理成章。</p>
+</div>
+
+<h3>7.2 实现路径</h3>
+
+<pre><code>// 1) options.ts 增字段，默认关闭，走既有白名单校验
+export interface GenerationOptions {
+  ...
+  /** 音频驱动：off=纯旁白，dialogue=启用角色台词（共创工作室限定） */
+  audioDrive?: "off" | "dialogue";
+}
+// DEFAULT_GENERATION_OPTIONS.audioDrive = "off"
+
+// 2) 服务端校验：非共创来源强制回落 off
+//    （resolveGenerationOptions 已有逐字段白名单机制，直接加一条即可）
+
+// 3) UI 层：仅 CoCreatePage 渲染该开关；启动制作时随简报提交</code></pre>
+
+<div class="note">
+<p><strong>建议保留服务端兜底校验，不要只在 UI 藏开关。</strong>前端隐藏只是体验层，直接打 API 仍能传 <code>dialogue</code>——按项目「闸门优先于派发」的原则，服务端必须自己把关。</p>
+</div>
+
+<h3>7.3 前端变更清单（7 处）</h3>
+
+<table>
+<thead><tr><th style="width:24%">位置</th><th style="width:76%">改动</th></tr></thead>
+<tbody>
+<tr><td><strong>CoCreatePage</strong><br>共创工作室</td><td>① 角色卡片增「音色」下拉（StepFun voice 列表）；② 高级区增「音频驱动·角色台词」开关；③ 成本预估加 TTS + 视频重生成缓冲</td></tr>
+<tr><td><strong>ScriptStage</strong><br>剧本阶段</td><td>每镜增「声音模式」三态切换；台词镜展开角色 + 台词 + 情绪 + 停顿编辑</td></tr>
+<tr><td><strong>PostStage</strong><br>后期</td><td>台词镜打「口型驱动」标签；波形预览；<strong>不可用普通「重录旁白」入口</strong></td></tr>
+<tr><td><strong>RettsModal</strong></td><td>台词镜文案改为「重录台词（将重新生成该镜画面）」，并<strong>显式展示配额消耗预估</strong>——冲突 ③ 的体验兜底</td></tr>
+<tr><td><strong>PipelineFlow / StageRail</strong></td><td>台词模式下流程图要表达 <code>audio → clips</code> 的<strong>反向依赖</strong>（现状 audio 在 clips 之后），阶段顺序需动态渲染</td></tr>
+<tr><td><strong>TimelineBar</strong></td><td>台词镜显示音频波形 / 口型驱动标记，与旁白镜视觉区分</td></tr>
+<tr><td><strong>OptionsForm</strong></td><td>「高级选项」区增音频驱动说明（仅共创流程可见）</td></tr>
+</tbody>
+</table>
+
+<h2 id="p8"><span class="part">第二部分</span><br>八、Agnes 限流事实（官方查证）</h2>
+
+<h3>8.1 核心规则：限流按 key 类型共享，不按单个 key</h3>
+
+<div class="warn">
+<p>官方原文：<em>"Limits are shared by API key type, not by each individual key. <strong>Creating multiple keys of the same type does not increase total RPM or quota.</strong>"</em></p>
+<p>这<strong>推翻了</strong>早期讨论中「多 key 分片线性扩容」的设想——对 Agnes 不成立。同类型多 key 只方便轮换与隔离，不扩容。</p>
+</div>
+
+<h3>8.2 各模型实际 RPM（Enterprise = 当前 Key 层级）</h3>
+
+<table>
+<thead><tr><th style="width:26%">模型类型</th><th style="width:20%">Free / 默认</th><th style="width:20%">Enterprise</th><th style="width:34%">Token Plan</th></tr></thead>
+<tbody>
+<tr><td><strong>视频</strong>（实际执行 RPM）</td><td>1</td><td><strong>2</strong></td><td>5（公开请求 6）</td></tr>
+<tr><td>文本（实际执行 RPM）</td><td>20</td><td>40</td><td>1,000</td></tr>
+<tr><td>图像 1K（实际执行 RPM）</td><td>20</td><td>40</td><td>100</td></tr>
+<tr><td>图像 2K（实际执行 RPM）</td><td>10</td><td>20</td><td>80</td></tr>
+</tbody>
+</table>
+
+<p>实测「2 次/分钟」正好对上 Enterprise，说明当前 Key 是企业认证层级。</p>
+
+<h3>8.3 订阅配额（与 RPM 同时生效）</h3>
+
+<ul>
+<li>视频：Token Plan <strong>500 秒/天</strong>（Starter / Plus / Pro 同值）≈ 100 个 5s 片段/天</li>
+<li>图像：4,000 张/天</li>
+<li>文本：Starter 1,500 次/5 小时，15,000 次/周</li>
+<li><strong>RPM 控频率、配额控总量，两者同时生效</strong>（官方明确：Both Limits Apply）</li>
+</ul>
+
+<h3>8.4 扩容的三条路径（按推荐度排序）</h3>
+
+<table>
+<thead><tr><th style="width:22%">路径</th><th style="width:26%">能否叠加</th><th style="width:52%">说明</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-teal">同账号多类型 key</span></td><td><span class="tag t-teal">能（官方支持）</span></td><td>官方原文支持用户同时持有 free + enterprise + TokenPlan 三类 key，<strong>每类独立池</strong>。例：enterprise 2 + free 1 + TokenPlan 5 ≈ 8 RPM，且仅 TokenPlan 池带 500 秒/天配额。<strong>这是无需多账号就能提吞吐的正路</strong></td></tr>
+<tr><td><span class="tag t-amber">多账号</span></td><td><span class="tag t-amber">逻辑能，但有风险</span></td><td>不同账号 = 不同池，N 个 TokenPlan 账号 ≈ N×5 RPM + N×500 秒/天。但属滥用防御条款范围（官方："may adjust ... based on ... abuse prevention"），且平台对免费层有「单 IP 默认 5 并发线程、大规模商用需单独签约」的隐式管控——批量注册有 ToS 与关联识别风险</td></tr>
+<tr><td><span class="tag t-blue">商务签约付费套餐</span></td><td><span class="tag t-teal">最稳</span></td><td>官方明确留了口子（"大规模商用需单独签约付费套餐"），扩 RPM 与时长配额都靠它</td></tr>
+</tbody>
+</table>
+
+<div class="find">
+<p><strong>额外发现 ⑦ · 视频是异步生成，RPM 只卡「提交频率」。</strong>已提交的任务在后台队列并行出片。所以真实吞吐不等于 <code>min(RPM, 并行数)</code>：<em>投料频率受限，但炉内可以同时烤多个</em>。这是"烤炉"类比成立的物理基础，也意味着长片生产必须靠异步队列平滑提交。</p>
+</div>
+
+<h2 id="p9">九、为什么静态队列会失效</h2>
+
+<p>早期给出的方案（全局令牌桶 + Worker 池）有一个隐含假设：<strong>槽位是同质的</strong>。槽位同质时，FIFO + 令牌桶就是最优解。但真实情况是异构的：</p>
+
+<table>
+<thead><tr><th style="width:16%">异构维度</th><th style="width:34%">真实表现</th><th style="width:50%">静态队列的失效点</th></tr></thead>
+<tbody>
+<tr><td>配额类型</td><td>TokenPlan 有 500 秒/天硬配额；Enterprise / Free 只有 RPM，无明确时长配额</td><td>不知道「该把有限的 312 秒花在哪」，可能把配额耗在低价值镜头上</td></tr>
+<tr><td>提交速率</td><td>Free 1 / Enterprise 2 / TokenPlan 5 RPM</td><td>简单轮询会把高优先级任务排进慢池，白白拉长交付时间</td></tr>
+<tr><td>成熟度</td><td>5 秒与 10 秒片段耗时不同；不同模型出片速度不同</td><td><strong>队头阻塞</strong>：一个 10 秒长任务堵住后面五个短任务</td></tr>
+<tr><td>上游依赖</td><td>片段依赖关键帧、TTS、脚本就绪</td><td>只能无脑 pop，无法感知「现在哪些任务真正可提交」</td></tr>
+<tr><td>失败语义</td><td><strong>失败重试同样消耗配额</strong>（按生成秒数计）</td><td>固定次数重试持续烧稀缺配额，且不判断「这个镜头还值不值得救」</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p><strong>关键判断：</strong>当资源异构且稀缺时，「把任务排好队」就不再是限速问题，而是<strong>资源分配优化问题</strong>——这正是 ReAct 代理的用武之地。但要注意：ReAct 调度的价值<strong>随异构性和稀缺性增长</strong>；如果只有一两个同质 key、配额充足，静态队列就够，加代理是过度设计。</p>
+</div>
+
+<h2 id="p10">十、烤炉模型：异构资源的形式化</h2>
+
+<p>代理能做出好决策的前提，是它看到的世界被<strong>结构化</strong>。把每个 key 池抽象为一个烤炉：</p>
+
+<pre><code>Oven {
+  id: string                  // 池标识，如 "tp-1" / "ent-1"
+  keyType: 'free' | 'enterprise' | 'tokenplan'
+  rpmCap: number              // 令牌桶容量（每分钟可提交数）
+  tokens: number              // 当前可用令牌（实时衰减）
+  dailyQuotaSec: number|null  // 每日时长配额，null = 无明确配额
+  remainingQuotaSec: number   // 今日剩余秒数
+  inFlight: Task[]            // 后台正在生成的任务（异步！）
+  etaSec: number              // 最早空出时间
+}</code></pre>
+
+<p>注意 <code>inFlight</code> 与 <code>etaSec</code> 这两个字段——它们正是「额外发现 ⑦（异步生成）」在数据结构上的体现：一个炉的占用程度不由「当前在跑几个」单独决定，还要看最早什么时候空出来。</p>
+
+<h2 id="p11">十一、ReAct 调度器的三段设计</h2>
+
+<h3>11.1 Observe：代理看到什么</h3>
+
+<p>每次调度前，代理收到一份结构化的「厨房快照」。要点是<strong>只给决策相关信息</strong>——不要把几百条事件全塞进去，噪声会显著劣化推理质量。</p>
+
+<pre><code>{
+  "ovens": [
+    {"id":"tp-1","keyType":"tokenplan","tokens":2,"rpmCap":5,
+     "remainingQuotaSec":312,"inFlight":3,"etaSec":18},
+    {"id":"ent-1","keyType":"enterprise","tokens":1,"rpmCap":2,
+     "remainingQuotaSec":null,"inFlight":1,"etaSec":7},
+    {"id":"free-1","keyType":"free","tokens":0,"rpmCap":1,
+     "remainingQuotaSec":null,"inFlight":0,"etaSec":0}
+  ],
+  "readyTasks": [
+    {"id":"clip-07","seconds":5,"depsMet":true,"priority":"P0",
+     "value":"hero_shot","retryCount":0},
+    {"id":"clip-08","seconds":10,"depsMet":true,"priority":"P2",
+     "value":"b_roll","retryCount":2},
+    {"id":"clip-09","seconds":5,"depsMet":false,
+     "waitingOn":["keyframe-09"],"priority":"P1"}
+  ],
+  "recentFailures":[
+    {"taskId":"clip-06","reason":"429","ovenId":"tp-1","at":"18:02:11"}
+  ],
+  "budget":{"usedSec":188,"totalSec":500,"deadline":"今日 23:59"}
+}</code></pre>
+
+<h3>11.2 Reason：代理在权衡什么</h3>
+
+<p>这是 LLM 真正创造价值的地方——<strong>多维权衡</strong>，规则引擎难以穷举。面对上面的快照，一条合格推理链是：</p>
+
+<ul>
+<li><code>clip-07</code> 是 hero_shot（P0），只花 5 秒配额 → 高价值低成本，<strong>必须保</strong>，优先投进最快的 tp-1</li>
+<li><code>clip-08</code> 已重试 2 次，每次烧 10 秒，沉没成本 20 秒；它只是 b_roll（P2）→ <strong>继续重试不划算</strong>，降级为 5 秒版或复用既有素材</li>
+<li><code>clip-09</code> 依赖 keyframe-09 未就绪 → 不提交，但<strong>向上游发优先级提升信号</strong>，避免它后面成为新的队头阻塞</li>
+<li><code>free-1</code> 当前 tokens=0，但 1 RPM 且空闲 → 把低优先级任务排给它等，不占用高价值池</li>
+</ul>
+
+<h3>11.3 Act：代理输出什么</h3>
+
+<p>必须是<strong>结构化动作</strong>而非自由文本，否则无法被守卫层校验。同时要求附推理理由，用于审计与回放。</p>
+
+<pre><code>{
+  "actions": [
+    {"type":"submit",   "taskId":"clip-07","ovenId":"tp-1"},
+    {"type":"submit",   "taskId":"clip-08","ovenId":"free-1","deferSec":18},
+    {"type":"escalate", "taskId":"clip-08",
+     "reason":"retry_budget_exhausted","suggestion":"downgrade_to_5s"},
+    {"type":"signal",   "target":"keyframe-stage",
+     "taskId":"clip-09","message":"priority_boost"}
+  ],
+  "reasoning": "clip-07 为 P0 主镜头且仅需 5s 配额，投入 tp-1 保交付；
+                clip-08 已烧 20s 沉没配额且为 P2，转 free 池并建议降级；
+                clip-09 上游未就绪，改发催办信号。"
+}</code></pre>
+
+<h3>11.4 工具集</h3>
+
+<table>
+<thead><tr><th style="width:30%">工具</th><th style="width:70%">语义</th></tr></thead>
+<tbody>
+<tr><td><code>observe_kitchen()</code></td><td>返回烤炉状态 + 就绪任务 + 配额账本 + 近期失败</td></tr>
+<tr><td><code>submit(taskId, ovenId)</code></td><td>请求提交，<strong>经 L2 守卫校验</strong>后交 L1 执行</td></tr>
+<tr><td><code>defer(taskId, seconds)</code></td><td>延迟重试，让出高价值池给更紧急任务</td></tr>
+<tr><td><code>downgrade(taskId, options)</code></td><td>降级：缩短时长 / 降分辨率 / 换 flash 模型，直接降低配额消耗</td></tr>
+<tr><td><code>escalate(taskId, reason)</code></td><td>上报导演或人类："配额不足，请裁剪分镜"</td></tr>
+<tr><td><code>signal(stage, message)</code></td><td>给上游阶段发信号（催关键帧 / 催 TTS），化解依赖阻塞</td></tr>
+<tr><td><code>record_decision(reasoning)</code></td><td>决策留痕，用于审计、回放与后续评估</td></tr>
+</tbody>
+</table>
+
+<h2 id="p12">十二、职责边界与角色分工</h2>
+
+<h3>12.1 三层职责：决策权与否决权分离（不可妥协）</h3>
+
+<table>
+<thead><tr><th style="width:8%">层</th><th style="width:30%">职责</th><th style="width:15%">由谁做</th><th style="width:47%">失效后果</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-purple">L3</span></td><td>决定投哪个任务到哪个炉、何时投、要不要重试 / 降级 / 放弃</td><td>ReAct 代理</td><td>次优决策，浪费配额，但<strong>不会违规</strong></td></tr>
+<tr><td><span class="tag t-teal">L2</span></td><td>校验决策是否违反硬约束（RPM 令牌、剩余配额、依赖未满足、炉 ID 存在性）；违规则拒绝并退回安全默认</td><td>确定性代码</td><td>拦截违规，返回代理重新决策</td></tr>
+<tr><td><span class="tag" style="background:var(--gray);color:#444441;border:1px solid var(--line2)">L1</span></td><td>实际发 HTTP、429 指数退避、webhook 收结果、幂等键去重</td><td>确定性代码</td><td>重试 / 进死信队列</td></tr>
+</tbody>
+</table>
+
+<div class="warn">
+<p><strong>为什么必须分层：</strong>LLM 会算错、会幻觉、会输出不存在的 <code>ovenId</code> 或超配额的决策。而硬约束违规的代价不是「慢一点」，是<strong>真金白银的配额被烧掉 + 429 限流惩罚</strong>。原则是：<em>代理有建议权，代码有否决权。</em></p>
+<p><strong>这正是 defense-in-depth 在 agent 架构的落点</strong>——决策层（agent）与约束执行层（guardrail）分离，对应郭煜正在研究的「执行层与数据层分离」模式。</p>
+</div>
+
+<h3>12.2 角色分工：新设「制片主任」，不给导演</h3>
+
+<table>
+<thead><tr><th style="width:20%">候选</th><th style="width:12%">适合度</th><th style="width:68%">理由</th></tr></thead>
+<tbody>
+<tr><td>导演 Director</td><td><span class="tag t-amber">中</span></td><td>导演关注<strong>创作质量</strong>（分镜、一致性、台词）。让它管配额会被资源噪声淹没。但它应该<strong>下优先级指令</strong>：哪些镜头必须保、质量标准是什么</td></tr>
+<tr><td>制片主任 Producer<br>（新 ReAct 代理）</td><td><span class="tag t-teal">高</span></td><td>新角色，只管<strong>资源与进度</strong>：配额账本、并发仲裁、优先级排序、进度汇报</td></tr>
+<tr><td>纯代码队列</td><td><span class="tag t-red">低</span></td><td>无法做价值权衡，见第九节</td></tr>
+</tbody>
+</table>
+
+<h4>两个 agent 之间的契约</h4>
+
+<pre><code>// 导演 → 制片主任：创意权威下达优先级
+{ "clipId":"clip-07", "priority":"P0",
+  "qualityBar":"must_keep", "maxRetries":1,
+  "deadlineHint":"成片主线，不可裁剪" }
+
+// 制片主任 → 导演：资源约束反向通报
+{ "type":"budget_alert", "message":"剩余配额 312s，按当前分镜需 480s",
+  "suggestion":"裁剪 2 个 b_roll 或降级为 5s 版" }</code></pre>
+
+<p>这个分工本身就是很好的工程叙事：<strong>把创意决策与资源决策解耦成两个 agent，中间用结构化契约通信</strong>，而不是让一个巨型 agent 同时操心艺术和配额。</p>
+
+<h2 id="p13">十三、成本控制、降级与度量</h2>
+
+<h3>13.1 触发时机与成本控制</h3>
+
+<p>ReAct 每轮都要调 LLM，必须控制频率，否则省下的配额还不够付推理成本：</p>
+
+<ul>
+<li><strong>事件驱动</strong>而非轮询：任务就绪 / 炉空出 / 任务完成 / 失败 / 配额跨过阈值（如 80%、90%）</li>
+<li><strong>批量决策优先</strong>：一次观察后输出<strong>整批</strong>调度方案，而不是每个任务跑一轮 O-R-A，摊薄成本</li>
+<li><strong>最小调度间隔</strong>（建议 5 秒）：窗口内的事件合并成一轮决策</li>
+<li><strong>决策去重 + 冷却期</strong>：同一任务 N 秒内不改变分配，防止代理反复改主意（抖动）</li>
+</ul>
+
+<h3>13.2 降级路径</h3>
+
+<table>
+<thead><tr><th style="width:30%">故障</th><th style="width:70%">降级行为</th></tr></thead>
+<tbody>
+<tr><td>LLM 不可用 / 超时</td><td>退回确定性 FIFO + 令牌桶（L2 / L1 仍完整可用，产线不停）</td></tr>
+<tr><td>LLM 输出非法动作</td><td>L2 守卫拒绝 → 回退安全默认（按优先级排队等待）</td></tr>
+<tr><td>配额即将耗尽</td><td>代理应提前 <code>escalate</code>，而不是硬撞 429 才反应</td></tr>
+<tr><td>决策抖动</td><td>冷却期 + 去重，见 13.1</td></tr>
+<tr><td>代理判定无解</td><td>上报人类，附带它算出的配额缺口与裁剪建议</td></tr>
+</tbody>
+</table>
+
+<h3>13.3 度量：怎么证明它比静态队列好</h3>
+
+<p>必须可度量，否则就是自我感动。建议这组指标做 A/B（相同配额预算下比交付量）：</p>
+
+<table>
+<thead><tr><th style="width:24%">指标</th><th style="width:76%">定义与意义</th></tr></thead>
+<tbody>
+<tr><td><strong>配额利用率</strong></td><td>有效成片秒数 ÷ 消耗配额秒数。重试浪费是主要损耗，这是核心指标</td></tr>
+<tr><td><strong>有效吞吐</strong></td><td>单位时间交付的可交付片段数</td></tr>
+<tr><td><strong>P0 延迟</strong></td><td>主镜头从就绪到完成的 P95。衡量「好钢是否用在刀刃上」</td></tr>
+<tr><td><strong>配额浪费率</strong></td><td>失败 / 被弃片段消耗的秒数占比</td></tr>
+<tr><td><strong>决策被拒率</strong></td><td>L2 守卫拦截代理决策的比例 —— <em>这个指标反映代理是否在瞎指挥</em>，持续偏高说明观察信息不足或提示词有问题，需常驻监控</td></tr>
+</tbody>
+</table>
+
+<h2 id="p14">十四、额外发现：文本与图像的多 key 是无用功</h2>
+
+<div class="find">
+<p><strong>额外发现 ⑧ · 给「写剧本 / 生图 / 审视频」做多 key 并发改造，收益接近零。</strong>有两个层次的理由，第二个很反直觉。</p>
+<p><strong>理由一：视频才是唯一瓶颈，差 20 倍。</strong>文本模型 Enterprise 40 RPM、图像 1K 40 RPM，而视频只有 2 RPM。关键帧每镜才一张，文本调用虽多但 40 RPM 根本用不完。给它们做多 key 并发，没有要解决的问题。</p>
+<p><strong>理由二（反直觉）：多 key「分工」根本不隔离。</strong>你可能会想「一个 key 写剧本、一个 key 审校，互不挤占」——但官方规则是<strong>同类型 key 共享同一个池</strong>。两个 enterprise key 加起来仍是 40 RPM，和不分工<strong>完全一样</strong>。所谓隔离不存在，因为池是共享的。</p>
+<p><strong>真正能叠加 / 隔离的只有一条路：用不同类型的 key</strong>（free + enterprise + tokenplan 是三个独立池）。比如剧本走 enterprise（40 RPM）、审校走 tokenplan（1000 RPM），这才是真隔离。或者在应用层用单 key + 内部令牌桶做配额预留——但那是应用层调度，多 key 只是记账更清晰，不是 key 本身带来的收益。</p>
+</div>
+
+<h2 id="p15"><span class="part">第三部分</span><br>十五、两项改造的关联与实施顺序</h2>
+
+<h3>15.1 关联性：改的是不同层，但互补</h3>
+
+<table>
+<thead><tr><th style="width:30%">维度</th><th style="width:35%">音频驱动改造</th><th style="width:35%">多 key 并发调度</th></tr></thead>
+<tbody>
+<tr><td>改什么层</td><td><strong>DAG 拓扑与依赖</strong>（audio 从 clips 后移到前）</td><td><strong>执行层资源调度</strong>（不改拓扑）</td></tr>
+<tr><td>技术耦合</td><td colspan="2">无直接耦合，理论上可独立实施</td></tr>
+</tbody>
+</table>
+
+<p>但有三条实质关联：</p>
+
+<ol>
+<li><strong>音频驱动会放大 clips 的稀缺性。</strong>台词模式下一次「重录」变成「TTS + 一次视频生成」，视频调用量随重做次数增长，2 RPM 会更挤——<em>它让调度变得更值钱</em>。</li>
+<li><strong>底座是成本护栏。</strong>级联重做是个"更贵的动作"，没有配额账本和调度就放开它，等于让用户随手点爆 500 秒/天。<strong>先装电表，再接大功率电器</strong>——这是把底座排在前面的核心理由。</li>
+<li><strong>接口要预留。</strong>调度器不能假设「任务是一次性批量提交」，得支持「依赖就绪才能投」（<code>audioUrl</code> 有了才能投 clips）和「重做任务插队」。这个设计约束现在就该定，不然后面返工。</li>
+</ol>
+
+<h3>15.2 实施顺序</h3>
+
+<table>
+<thead><tr><th style="width:8%">序</th><th style="width:24%">任务</th><th style="width:32%">内容</th><th style="width:36%">为什么排在这里</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>音频单镜验证</strong></td><td>一个 TTS + 一次 2.5-flash 调用</td><td><span class="tag t-teal">已完成</span> 唯一能<strong>证伪整个方向</strong>的动作。用户已确认声音 + 口型 OK，方向锁定</td></tr>
+<tr><td>2</td><td><strong>多 key 确定性底座</strong></td><td>多池令牌桶 + 事件队列 + 幂等 + webhook + <strong>配额账本</strong></td><td>收益确定、风险低；且是后续所有媒体调用的基础，更是级联重做的成本护栏</td></tr>
+<tr><td>3</td><td><strong>音频驱动全链路</strong></td><td>数据模型 / export 改造 / 时长对齐 / 级联重做</td><td>依赖 1 验证通过。其中 <strong>export 改造与 2 无依赖，可并行</strong></td></tr>
+<tr><td>4</td><td><strong>ReAct 调度层</strong></td><td>制片主任代理 + L2 守卫</td><td>价值随异构性与稀缺性增长，而音频驱动正好放大稀缺性；且需确定性底座作为降级路径</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p><strong>第 2、3 步大部分可并行</strong>：export 的 <code>keepSourceAudio</code> 改造、时长对齐、数据模型，和令牌桶队列之间没有依赖。真正的硬依赖只有一条——<strong>级联重做上线前，配额账本必须先就位</strong>。</p>
+</div>
+
+<h2 id="p16">十六、落地路径与风险评估</h2>
+
+<h3>16.1 音频驱动的分步落地</h3>
+
+<ol>
+<li><strong>数据模型 + 服务端校验</strong>：<code>audioMode</code> 三态、<code>GenerationOptions.audioDrive</code>、白名单与回落。此步不含功能，纯兼容层。</li>
+<li><strong>打通台词链路（单镜）</strong>：TTS → 托管公开 URL → 2.5-flash <code>audio</code> 参考出片。<span class="tag t-teal">已验证可行</span></li>
+<li><strong>改造 export</strong>：<code>keepSourceAudio</code> 接入 <code>[i:a]</code>。<strong>这一步不做，前面全白干</strong>（冲突 ②）。</li>
+<li><strong>时长对齐 + 静音段</strong>：ffprobe 实测、补静音、精简台词重写。</li>
+<li><strong>重做级联与成本提示</strong>：retts 在台词镜下改走重生成路径 + 前端显式预估（冲突 ③）。</li>
+<li><strong>放开镜长白名单</strong>，允许动态值（冲突 ④）。</li>
+<li><strong>UI 全量跟上</strong> + 补行为测试（尤其 export 混音链，当前无回归锁）。</li>
+</ol>
+
+<h3>16.2 并发调度的分步落地</h3>
+
+<ol>
+<li><strong>确定性底座</strong>：多池令牌桶 + 事件驱动队列 + 幂等 + webhook 收结果。<strong>不加任何 LLM</strong>，先把「不违规」和「不丢任务」做扎实。</li>
+<li><strong>只读观察者</strong>：代理只 <code>observe_kitchen()</code> 并输出<strong>建议</strong>，人来看，不自动执行。用这个阶段校准提示词与观察信息的充分性。</li>
+<li><strong>开启自动执行 + L2 守卫</strong>：代理决策自动提交，硬约束由代码强制拦截，监控决策被拒率。</li>
+<li><strong>接通导演契约</strong>：引入优先级指令与预算告警，形成双向闭环。</li>
+<li><strong>上 A/B 与回归测试</strong>：配额利用率、P0 延迟对比静态队列基线。</li>
+</ol>
+
+<h3>16.3 诚实的风险评估</h3>
+
+<table>
+<thead><tr><th style="width:26%">风险</th><th style="width:74%">说明与应对</th></tr></thead>
+<tbody>
+<tr><td><strong>调度收益有上限</strong></td><td>如果只有一两个同质 key、配额充足，代理调度收益有限，静态队列更划算。当前场景（三档配额 + 500 秒硬顶）是值得的，但别在演示环境为了炫技而加</td></tr>
+<tr><td><strong>技术债要先补</strong></td><td>项目里 <code>reshot</code> / 一致性预检缓存<strong>都还没有回归测试闭环</strong>。再多一个 agent 的状态和故障模式，调试会非常痛苦——<strong>建议加代理前先把这两块补上</strong></td></tr>
+<tr><td><strong>提示词是新的脆弱点</strong></td><td>观察信息的格式一变，推理质量可能断崖下跌。要为 <code>observe_kitchen()</code> 的输出加契约测试</td></tr>
+<tr><td><strong>可解释性是双刃剑</strong></td><td>代理给出推理理由便于审计，但也容易被过度信任。「决策被拒率」必须常驻监控</td></tr>
+<tr><td><strong>export 混音链无回归锁</strong></td><td>冲突 ② 的改造正在动这条链，而它当前没有行为测试——改造时同步补测试</td></tr>
+</tbody>
+</table>
+
+<h2 id="p17">十七、附录</h2>
+
+<h3>附录 A · 实测产物清单</h3>
+
+<table>
+<thead><tr><th style="width:28%">文件</th><th style="width:72%">内容</th></tr></thead>
+<tbody>
+<tr><td><code>flash_cn.mp4</code></td><td>2.5-flash + 中文语音参考成片（相关系数 0.620 的验证对象）</td></tr>
+<tr><td><code>flash_audio.mp4</code></td><td>2.5-flash + 440Hz 蜂鸣参考成片（440Hz 占 63.4% 的验证对象）</td></tr>
+<tr><td><code>cn_out.mp4</code></td><td>v2.0 原生台词生成成片（中文 5 秒内 68% 时长有声）</td></tr>
+<tr><td><code>v20.mp4</code></td><td>v2.0 基线（证明其音画同生但不采纳外部音频）</td></tr>
+<tr><td><code>cn_ref.mp3 / test_rhythm.mp3</code></td><td>参考音频（中文语音指纹 / 规则节拍）</td></tr>
+<tr><td><code>out.mp3</code></td><td>StepFun TTS 产物（证明返回二进制而非 URL）</td></tr>
+<tr><td><code>task_*.json</code></td><td>各次任务提交与状态响应</td></tr>
+</tbody>
+</table>
+
+<h3>附录 B · 源码引用索引</h3>
+
+<table>
+<thead><tr><th style="width:34%">位置</th><th style="width:66%">要点</th></tr></thead>
+<tbody>
+<tr><td><code>stages/audio.ts:41,54</code></td><td>TTS 提交；失败不阻断</td></tr>
+<tr><td><code>prompts.ts:190</code></td><td><code>narrationFor</code> 取旁白文本</td></tr>
+<tr><td><code>prompts.ts:200</code></td><td><code>rettsNarrationMessages</code>（copy-edit / voice-only 双模式，可复用于台词精简）</td></tr>
+<tr><td><code>pipeline.ts:2252</code></td><td><code>ensureVoiceDirections</code> 生成表演指导</td></tr>
+<tr><td><code>ffmpeg.ts:475,492</code></td><td><strong>视频源音轨被丢弃的现场</strong>（冲突 ②）</td></tr>
+<tr><td><code>ffmpeg.ts:342</code></td><td>DME 三层混音构建</td></tr>
+<tr><td><code>stages/export.ts:214,243</code></td><td>J-cut 定位；<code>TimelineShot</code> 构造</td></tr>
+<tr><td><code>redo/retts.ts:139</code></td><td><strong>只重排导出不重做视频</strong>（冲突 ③ 的根源）</td></tr>
+<tr><td><code>generation/options.ts:24,92</code></td><td><code>GenerationOptions</code>；<code>CLIP_DURATIONS</code> 白名单（冲突 ④）</td></tr>
+<tr><td><code>pages/CoCreatePage.tsx:2,120</code></td><td>共创工作室；成本预估</td></tr>
+</tbody>
+</table>
+
+<h3>附录 C · 一句话总结</h3>
+
+<div class="fin">
+<h3>技术版</h3>
+<p>音频侧：把旁白从全局方案下沉为每镜三态（narration / dialogue / silent），台词态走「先 TTS → 托管公开 URL → 2.5-flash 参考出片」，实测口型相关系数 0.62、原音直通；胜负手不在生成链路，而在三个副作用——混音链原本丢弃视频源音轨、改台词会级联触发视频重生成、镜长白名单会 clamp 掉动态时长。</p>
+<p>调度侧：多 key 是能力、配额、成熟度各异的异构烤炉而非同质扩容，用 ReAct 代理（制片主任）做价值与配额的权衡决策，用确定性代码守死 RPM 与时长硬约束——<strong>代理有建议权，代码有否决权</strong>，LLM 不可用则降级回静态队列，产线不停。</p>
+<h3 style="margin-top:20px">面试版</h3>
+<p>「我把音频从后期贴片改成了前期驱动源，但保留了旁白形态——它们是不同叙事形态而非新旧替代，所以设计成每镜三态共存；真正难的链路改造，而是三个副作用：混音链原本丢弃视频音轨、重录台词会级联触发视频重生成、镜长白名单会 clamp 掉动态时长。同时因为台词模式让每次视频生成变贵了，我配套做了异构配额池的调度：上层 ReAct 代理权衡任务价值与配额成本，下层确定性代码守死硬约束，决策层与执行层分离，代理挂了产线也不违规、不停摆。另外我验证过一个反直觉的点：多 key 只在视频模型上有意义，文本和图像因为同类型 key 共享限流池，既不能扩容也不能隔离。」</p>
+</div>
+
+</div>
+</body>
+</html>

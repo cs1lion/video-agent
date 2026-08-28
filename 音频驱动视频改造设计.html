@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音频驱动视频：从旁白到角色台词的改造设计</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#faf9f7; --line:#e6e3dd; --line2:#d3d1c7;
+  --tx:#2c2c2a; --tx2:#5f5e5a; --tx3:#888780;
+  --purple:#EEEDFE; --purple-l:#534AB7; --purple-d:#3C3489;
+  --teal:#E1F5EE; --teal-l:#0F6E56; --teal-d:#085041;
+  --amber:#FAEEDA; --amber-l:#854F0B; --amber-d:#633806;
+  --blue:#E6F1FB; --blue-l:#185FA5; --blue-d:#0C447C;
+  --red:#FCEBEB; --red-l:#A32D2D; --red-d:#791F1F;
+  --gray:#F1EFE8;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:48px 24px 96px;background:var(--bg);color:var(--tx);
+  font:400 15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:920px;margin:0 auto}
+h1{font:500 27px/1.35 inherit;margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--tx2);font-size:15px;margin:0 0 8px}
+.meta{color:var(--tx3);font-size:13px;margin:0 0 40px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+h2{font:500 20px/1.45 inherit;margin:52px 0 14px;padding-top:26px;border-top:1px solid var(--line)}
+h2:first-of-type{border-top:none;padding-top:0}
+h3{font:500 16px/1.5 inherit;margin:30px 0 10px;color:var(--tx)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 7px}
+code{font:400 13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--gray);padding:1.5px 5px;border-radius:4px;color:var(--tx)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;overflow-x:auto;margin:0 0 18px}
+pre code{background:none;padding:0;font-size:13px;line-height:1.65;color:var(--tx)}
+table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--tx2);font-size:13px;
+  padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--surface)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+tr:last-child td{border-bottom:none}
+.lead{background:var(--purple);border:1px solid var(--purple-l);border-radius:12px;
+  padding:20px 22px;margin:0 0 30px}
+.lead p{margin:0;color:var(--purple-d);font-size:15px}
+.lead strong{font-weight:500}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;
+  font-weight:500;white-space:nowrap}
+.t-purple{background:var(--purple);color:var(--purple-d);border:1px solid var(--purple-l)}
+.t-teal{background:var(--teal);color:var(--teal-d);border:1px solid var(--teal-l)}
+.t-amber{background:var(--amber);color:var(--amber-d);border:1px solid var(--amber-l)}
+.t-red{background:var(--red);color:var(--red-d);border:1px solid var(--red-l)}
+.t-blue{background:var(--blue);color:var(--blue-d);border:1px solid var(--blue-l)}
+.note{border-left:3px solid var(--amber-l);background:var(--amber);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--amber-d)}
+.note p{margin:0 0 8px}
+.note p:last-child{margin:0}
+.warn{border-left:3px solid var(--red-l);background:var(--red);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--red-d)}
+.warn p{margin:0 0 8px}
+.warn p:last-child{margin:0}
+.warn strong{font-weight:500}
+.ok{border-left:3px solid var(--teal-l);background:var(--teal);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--teal-d)}
+.ok p{margin:0}
+.fin{background:var(--teal);border:1px solid var(--teal-l);border-radius:12px;
+  padding:22px 24px;margin:44px 0 0}
+.fin h3{margin:0 0 10px;color:var(--teal-d)}
+.fin p{margin:0 0 12px;color:var(--teal-d);font-size:15px}
+.fin p:last-child{margin:0}
+.ref{color:var(--tx3);font-size:12.5px;margin:-6px 0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>从旁白到角色台词</h1>
+<p class="sub">音频驱动视频的改造设计：三态共存、级联重做与共创工作室限定开放</p>
+<p class="meta">设计报告 · 2026-08-28 · 基于 video-agent-server / video-agent-ui 源码实读</p>
+
+<div class="lead">
+<p><strong>核心判断：</strong>旁白不该删，也不能被台词取代——它们是<strong>两种叙事形态</strong>（画外音解说 vs 角色对白）。正确做法是下沉为<strong>每镜三态</strong>（旁白 / 台词 / 无声），同一部片子里可以混用。但改造过程中有三个代码级冲突必须先解决，否则新链路跑不通。</p>
+</div>
+
+<h2>一、现状：代码层事实</h2>
+
+<p>先把当前链路钉死，避免在设计里空谈。以下均来自源码实读。</p>
+
+<pre><code>script  →  visual  →  prompts  →  clips  →  audio  →  export
+                                  (视频)     (旁白TTS)   (拼合)</code></pre>
+
+<table>
+<thead><tr><th style="width:30%">环节</th><th style="width:70%">实现事实（文件:行）</th></tr></thead>
+<tbody>
+<tr><td>旁白文本</td><td><code>narrationFor(shot, locale)</code> 取 <code>shot.narrationZh / narrationEn</code>　<span class="ref">prompts.ts:190</span></td></tr>
+<tr><td>表演指导</td><td><code>ensureVoiceDirections()</code> 用 LLM 逐镜生成，存 <code>shot.ttsDirection</code>　<span class="ref">pipeline.ts:2252</span></td></tr>
+<tr><td>TTS 合成</td><td><code>queue.submit({kind:"tts", prompt: text, params:{instruction}})</code>；<strong>失败不阻断</strong>，该镜以无声画面进时间线　<span class="ref">audio.ts:41 / :54</span></td></tr>
+<tr><td>视频音轨</td><td><strong>被完全丢弃</strong>——输入只 push <code>-i s.path</code>，但视频链只用 <code>[i:v]</code>　<span class="ref">ffmpeg.ts:475 / :492</span></td></tr>
+<tr><td>成片音轨</td><td>DME 三层合成：旁白（amix）+ BGM（sidechaincompress 闪避）+ SFX　<span class="ref">ffmpeg.ts:342</span></td></tr>
+<tr><td>旁白定位</td><td>J-cut，<code>narrStart = cursor - JCUT_LEAD</code>，旁白略先于画面进入　<span class="ref">export.ts:214</span></td></tr>
+<tr><td>重录旁白</td><td>只 <code>setStage(run,"export","pending")</code> 重排导出，<strong>不重做视频</strong>　<span class="ref">retts.ts:139</span></td></tr>
+<tr><td>时长选项</td><td><code>CLIP_DURATIONS = [3,5,8,10]</code> 白名单，越界回退默认　<span class="ref">options.ts:92</span></td></tr>
+<tr><td>共创工作室</td><td><code>CoCreatePage.tsx</code>，已有「共创空间」沉淀 <code>characters</code> / <code>scenes</code> 实体　<span class="ref">CoCreatePage.tsx:2</span></td></tr>
+</tbody>
+</table>
+
+<h2>二、三个必须先解决的冲突</h2>
+
+<div class="warn">
+<p><strong>冲突 1 · export 会把角色台词全丢掉。</strong>当前混音链里根本没有视频源音轨这一路（只有 <code>[i:v]</code>），成片声音完全由 DME 三层重建。台词模式下视频自带的就是角色对白音轨，照现有逻辑会被静默丢弃，然后再叠一条旁白上去——结果是<strong>角色张嘴无声、画外音乱入</strong>。</p>
+<p>必须给 <code>TimelineShot</code> 增 <code>keepSourceAudio</code>，台词镜把 <code>[i:a]</code> 接入混音链（带 adelay 定位），且该镜 <code>narrationPath = null</code>。</p>
+</div>
+
+<div class="warn">
+<p><strong>冲突 2 · 重做级联，成本从「几十秒」变成「烧一次视频配额」。</strong>现在 <code>retts</code> 只重排导出，因为旁白是贴上去的、与画面无关。台词模式下改一句台词 → 音频变了 → <strong>口型必然对不上 → 该镜视频必须重生成</strong>。</p>
+<p>一次「重录」的成本结构彻底改变：从「1 次 TTS + 重混音」变成「1 次 TTS + 托管 + 1 次视频生成（吃 RPM 与每日时长配额 + 等几分钟）」。前端必须显式提示并预估，否则用户会随手点爆配额。</p>
+</div>
+
+<div class="warn">
+<p><strong>冲突 3 · 时长耦合，而 <code>clipDuration</code> 是白名单。</strong>现在镜长由用户从 [3,5,8,10] 里选；台词模式下<strong>镜长必须由音频时长决定</strong>，否则要么尾段嘴瓢、要么台词被截断。但 <code>resolveGenerationOptions</code> 对 <code>clipDurationSec</code> 做白名单校验、越界回退默认——动态镜长会被静默 clamp 掉。</p>
+<p>台词模式需要放开该字段为任意值（或按音频时长取整后退到最近合法档）。</p>
+</div>
+
+<h2>三、核心建议：旁白降级为「每镜三态」</h2>
+
+<p>不要做成全局开关，因为一部片子天然会混用：<em>开场用旁白交代背景，中间角色对话用台词，转场空镜用无声</em>。所以 <code>audioMode</code> 应该是 <strong>ScriptShot 的属性</strong>，不是 run 的属性。</p>
+
+<table>
+<thead><tr><th style="width:16%">模式</th><th style="width:25%">语义</th><th style="width:24%">生成顺序</th><th style="width:35%">适用场景</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-blue">narration</span><br>旁白</td><td>画外音解说，与口型无关</td><td>先视频 → 后 TTS → 贴上（现状）</td><td>产品片、解说片、宣传片；容错高、成本低</td></tr>
+<tr><td><span class="tag t-purple">dialogue</span><br>台词</td><td>角色对白，<strong>驱动口型</strong></td><td>先 TTS → 托管公开 URL → 视频参考生成</td><td>剧情片、角色对话；要求高、成本高</td></tr>
+<tr><td><span class="tag" style="background:var(--gray);color:#444441;border:1px solid var(--line2)">silent</span><br>无声</td><td>纯画面，只有 BGM/SFX</td><td>只生成视频</td><td>空镜、转场、蒙太奇</td></tr>
+</tbody>
+</table>
+
+<h3>数据模型变更</h3>
+
+<pre><code>// ScriptShot 增字段（默认 narration，向后兼容既有作品）
+audioMode?: "narration" | "dialogue" | "silent";
+
+dialogue?: {
+  characterId: string;      // 绑定共创空间的角色实体
+  voiceId: string;          // StepFun voice（如 cixingnansheng）
+  lines: { zh: string; en: string };
+  emotion?: string;         // 情绪/表演指导（建议放宽现有 ≤80 字上限）
+  pausesSec?: number[];     // 台词内停顿——见下节，这是新增要求
+  audioDurationSec?: number;// TTS 后 ffprobe 实测
+  audioUrl?: string;        // CloudBase 托管公开 URL（可复用）
+};</code></pre>
+
+<div class="ok">
+<p><strong>契合点：</strong>共创工作室已有 <code>characters</code> 实体，<strong>正好是台词模式的音色绑定基础</strong>——给共创空间的每个角色卡片加一个音色下拉，角色与 voice 的映射就自然成立了。这是把高级功能放在共创工作室的最强理由，不只是「藏起来」。</p>
+</div>
+
+<h2>四、台词模式「更严格」在哪里：具体清单</h2>
+
+<p>音频从「贴上去的旁白」变成「驱动源」后，质量要求是<strong>数量级</strong>的提升。逐条对照：</p>
+
+<table>
+<thead><tr><th style="width:18%">维度</th><th style="width:33%">旁白（现状要求）</th><th style="width:49%">台词（新增要求）</th></tr></thead>
+<tbody>
+<tr><td>音色</td><td>单一 narrator，全局统一</td><td><strong>每角色一个 voice</strong>，且跨镜头必须稳定——重录后音色漂移会导致与已生成画面不一致</td></tr>
+<tr><td>情绪指导</td><td>一句 instruction，≤80 字</td><td>需描述气口、语速变化、停顿位置，<strong>建议放宽字数上限</strong>并结构化（emotion / pace / pauses 分字段）</td></tr>
+<tr><td>静音段</td><td>无所谓，J-cut 自动对齐</td><td><strong>新增且关键</strong>：台词间的停顿决定口型闭合时机，需显式设计（SSML 或后处理补静音）</td></tr>
+<tr><td>时长</td><td>可长可短，混音时裁齐</td><td><strong>必须 ≤ 镜长</strong>，否则尾段嘴瓢；需实测并对齐</td></tr>
+<tr><td>数量</td><td>每镜一条</td><td><strong>每镜一条主语音</strong>——多角色对白必须拆镜，或只取主说话人（传多条会互相干扰）</td></tr>
+<tr><td>可复现</td><td>重录即可，无所谓漂移</td><td>需固定 voice + 参数，保证重做时音色一致</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p><strong>静音段为什么重要：</strong>实测里 2.5-flash 是<strong>严格按音频包络对口型</strong>的（相关系数 0.62、原音直通）。这意味着音频里的<em>停顿就是闭嘴</em>。如果不设计静音段，角色会一路说到底、中间没有换气——看起来非常诡异。所以 <code>pausesSec</code> 不是锦上添花，是<strong>表演的一部分</strong>。</p>
+</div>
+
+<h2>五、时长对齐策略（新增逻辑）</h2>
+
+<ol>
+<li>TTS 产出后 <code>ffprobe</code> 实测时长 → 写入 <code>audioDurationSec</code></li>
+<li><strong>短于镜长</strong>：尾部补静音到目标长度——让口型自然闭合，留白比硬拉好看</li>
+<li><strong>长于镜长</strong>：优先让 LLM 精简台词重写（±20% 约束，可复用 <code>rettsNarrationMessages</code> 的 copy-edit 逻辑）；仍超则放宽该镜时长</li>
+<li><strong>建议默认策略</strong>：以音频时长为准反推镜长（<code>ceil(audioDur)</code>），并<strong>放开 <code>clipDurationSec</code> 白名单</strong>允许动态值（冲突 3）</li>
+</ol>
+
+<h2>六、失败降级：保持现有设计哲学</h2>
+
+<p>现有 <code>audio.ts</code> 的好传统是「TTS 失败不阻断，该镜以无声画面进时间线」。台词模式要延续这个思路，但降级链更长：</p>
+
+<table>
+<thead><tr><th style="width:32%">失败点</th><th style="width:68%">降级行为</th></tr></thead>
+<tbody>
+<tr><td>TTS 合成失败</td><td>该镜降级为 <code>silent</code>（无声画面 + BGM），不阻断管线</td></tr>
+<tr><td>托管失败 / URL 不可访问</td><td><strong>降级为 narration 模式</strong>：先出视频，再把这段台词当旁白贴上——成片仍能看，只是口型不对</td></tr>
+<tr><td>视频模型忽略音频（如误用 v2.0）</td><td>同上；并在 QA 阶段标记该镜「口型未驱动」提示用户</td></tr>
+<tr><td>配额不足</td><td>提前 escalate，按优先级把部分台词镜降级为旁白镜</td></tr>
+</tbody>
+</table>
+
+<h2>七、共创工作室限定开放：怎么落</h2>
+
+<h3>为什么放这里最合理</h3>
+<ul>
+<li>它面向「想深度参与设计的用户」，与高级功能定位一致</li>
+<li>它已有 <code>characters</code> / <code>scenes</code> 实体——<strong>台词模式的音色绑定需要角色实体</strong>，这是天然依赖，不是硬塞</li>
+<li>它已有成本预估（<code>CoCreatePage.tsx:120</code> 的 estimate），加台词成本顺理成章</li>
+</ul>
+
+<h3>实现路径</h3>
+<pre><code>// 1) options.ts 增字段，默认关闭，走既有白名单校验
+export interface GenerationOptions {
+  ...
+  /** 音频驱动：off=纯旁白，dialogue=启用角色台词（共创工作室限定） */
+  audioDrive?: "off" | "dialogue";
+}
+// DEFAULT_GENERATION_OPTIONS.audioDrive = "off"
+
+// 2) 服务端校验：非共创来源强制回落 off
+//    （resolveGenerationOptions 已有逐字段白名单机制，直接加一条即可）
+
+// 3) UI 层：仅 CoCreatePage 渲染该开关；
+//    启动制作时随简报提交，进入 run.options</code></pre>
+
+<div class="note">
+<p><strong>建议保留服务端兜底校验</strong>，不要只在 UI 藏开关。前端隐藏只是体验层，别人直接打 API 仍能传 <code>dialogue</code>——按你项目里「闸门优先于派发」的原则，服务端必须自己把关。</p>
+</div>
+
+<h2>八、前端变化清单</h2>
+
+<table>
+<thead><tr><th style="width:26%">位置</th><th style="width:74%">改动</th></tr></thead>
+<tbody>
+<tr><td><strong>CoCreatePage</strong><br>共创工作室</td><td>① 角色卡片增「音色」下拉（StepFun voice 列表）；② 高级区增「音频驱动·角色台词」开关；③ 成本预估加 TTS + 视频重生成缓冲</td></tr>
+<tr><td><strong>ScriptStage</strong><br>剧本阶段</td><td>每镜增「声音模式」三态切换；台词镜展开角色 + 台词 + 情绪 + 停顿编辑</td></tr>
+<tr><td><strong>PostStage</strong><br>后期</td><td>台词镜打「口型驱动」标签；波形预览；<strong>不可用普通「重录旁白」入口</strong></td></tr>
+<tr><td><strong>RettsModal</strong></td><td>台词镜文案改为「重录台词（将重新生成该镜画面）」，并<strong>显式展示配额消耗预估</strong>——冲突 2 的体验兜底</td></tr>
+<tr><td><strong>PipelineFlow / StageRail</strong></td><td>台词模式下流程图要表达 <code>audio → clips</code> 的<strong>反向依赖</strong>（现状 audio 在 clips 之后），阶段顺序需动态渲染</td></tr>
+<tr><td><strong>TimelineBar</strong></td><td>台词镜显示音频波形 / 口型驱动标记，与旁白镜视觉区分</td></tr>
+<tr><td><strong>OptionsForm</strong></td><td>「高级选项」区增音频驱动说明（仅共创流程可见）</td></tr>
+</tbody>
+</table>
+
+<h2>九、落地路径</h2>
+
+<ol>
+<li><strong>先做数据模型 + 服务端校验</strong>：<code>audioMode</code> 三态、<code>GenerationOptions.audioDrive</code>、白名单与回落。此步不含功能，纯兼容层。</li>
+<li><strong>打通台词链路（单镜）</strong>：TTS → 托管公开 URL → 2.5-flash <code>audio</code> 参考出片。<strong>先用一个镜跑通</strong>，验证口型与音色。</li>
+<li><strong>改造 export</strong>：<code>keepSourceAudio</code> 接入 <code>[i:a]</code>，解决冲突 1。这一步不做，前面全白干。</li>
+<li><strong>时长对齐 + 静音段</strong>：ffprobe 实测、补静音、精简台词重写。</li>
+<li><strong>重做级联与成本提示</strong>：retts 在台词镜下改走重生成路径 + 前端显式预估（冲突 2）。</li>
+<li><strong>放开镜长白名单</strong>，允许动态值（冲突 3）。</li>
+<li><strong>UI 全量跟上</strong> + 补行为测试（尤其 export 混音链，当前无回归锁）。</li>
+</ol>
+
+<div class="fin">
+<h3>一句话总结</h3>
+<p>旁白不该删、也不该被取代——把它下沉为「每镜三态」（旁白 / 台词 / 无声）中的一种，台词态走「先 TTS → 托管公开 URL → 视频参考生成」，与旁白态在同一部片子里共存；改造的胜负手不在生成链路，而在三个容易被忽略的地方：export 必须保留视频源音轨、改台词会级联触发视频重生成、镜长必须由音频时长反推。</p>
+<p><strong>面试版：</strong>「我把音频从后期贴片改成了前期驱动源，但保留了旁白形态——因为它们是不同叙事形态而非新旧替代，所以设计成每镜三态共存。真正难的链路改造，而是三个副作用：混音链原本丢弃视频音轨、重录台词会级联触发视频重生成、镜长白名单会 clamp 掉动态时长。」</p>
+</div>
+
+</div>
+</body>
+</html>

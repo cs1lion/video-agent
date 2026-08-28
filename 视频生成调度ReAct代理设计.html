@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视频生成并发调度的 ReAct 代理设计</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#faf9f7; --line:#e6e3dd; --line2:#d3d1c7;
+  --tx:#2c2c2a; --tx2:#5f5e5a; --tx3:#888780;
+  --purple:#EEEDFE; --purple-l:#534AB7; --purple-d:#3C3489;
+  --teal:#E1F5EE; --teal-l:#0F6E56; --teal-d:#085041;
+  --amber:#FAEEDA; --amber-l:#854F0B; --amber-d:#633806;
+  --blue:#E6F1FB; --blue-l:#185FA5; --blue-d:#0C447C;
+  --red:#FCEBEB; --red-l:#A32D2D; --red-d:#791F1F;
+  --gray:#F1EFE8;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:48px 24px 96px;background:var(--bg);color:var(--tx);
+  font:400 15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:920px;margin:0 auto}
+h1{font:500 27px/1.35 inherit;margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--tx2);font-size:15px;margin:0 0 8px}
+.meta{color:var(--tx3);font-size:13px;margin:0 0 40px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+h2{font:500 20px/1.45 inherit;margin:52px 0 14px;padding-top:26px;border-top:1px solid var(--line)}
+h2:first-of-type{border-top:none;padding-top:0}
+h3{font:500 16px/1.5 inherit;margin:30px 0 10px;color:var(--tx)}
+p{margin:0 0 14px}
+ul{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 7px}
+code{font:400 13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--gray);padding:1.5px 5px;border-radius:4px;color:var(--tx)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;overflow-x:auto;margin:0 0 18px}
+pre code{background:none;padding:0;font-size:13px;line-height:1.65;color:var(--tx)}
+table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--tx2);font-size:13px;
+  padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--surface)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+tr:last-child td{border-bottom:none}
+.lead{background:var(--purple);border:1px solid var(--purple-l);border-radius:12px;
+  padding:20px 22px;margin:0 0 30px}
+.lead p{margin:0;color:var(--purple-d);font-size:15px}
+.lead strong{font-weight:500}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;
+  font-weight:500;letter-spacing:.01em}
+.t-purple{background:var(--purple);color:var(--purple-d);border:1px solid var(--purple-l)}
+.t-teal{background:var(--teal);color:var(--teal-d);border:1px solid var(--teal-l)}
+.t-amber{background:var(--amber);color:var(--amber-d);border:1px solid var(--amber-l)}
+.t-red{background:var(--red);color:var(--red-d);border:1px solid var(--red-l)}
+.t-blue{background:var(--blue);color:var(--blue-d);border:1px solid var(--blue-l)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 20px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--surface)}
+.card h4{margin:0 0 7px;font:500 15px/1.4 inherit}
+.card p{margin:0;font-size:13.5px;color:var(--tx2);line-height:1.65}
+.note{border-left:3px solid var(--amber-l);background:var(--amber);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--amber-d)}
+.note p{margin:0}
+.warn{border-left:3px solid var(--red-l);background:var(--red);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--red-d)}
+.warn p{margin:0}
+.fin{background:var(--teal);border:1px solid var(--teal-l);border-radius:12px;
+  padding:22px 24px;margin:44px 0 0}
+.fin h3{margin:0 0 10px;color:var(--teal-d)}
+.fin p{margin:0 0 12px;color:var(--teal-d);font-size:15px}
+.fin p:last-child{margin:0}
+ol{margin:0 0 14px;padding-left:22px}
+ol li{margin:0 0 9px}
+.tt{color:var(--tx3);font-size:12.5px;margin:-6px 0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>异构配额池下的视频生成并发调度</h1>
+<p class="sub">用 ReAct 代理做资源分配决策，用确定性代码守住硬约束</p>
+<p class="meta">设计报告 · 2026-08-28 · 面向 video-agent 的 clips 阶段</p>
+
+<div class="lead">
+<p><strong>核心命题：</strong>你的多个 key 不是一个"更大的池子"，而是几个<strong>能力、配额、成熟度都不同的烤炉</strong>。当资源异构且稀缺时，"把任务排好队"就不再是限速问题，而是<strong>分配优化问题</strong>——这正是 ReAct 代理的用武之地。但决策权归代理，否决权必须归代码。</p>
+</div>
+
+<h2>一、为什么静态队列在这里会失效</h2>
+
+<p>上一轮给你的方案（全局令牌桶 + Worker 池）有一个隐含假设：<strong>槽位是同质的</strong>。只要槽位同质，FIFO + 令牌桶就是最优解。但你的真实情况是异构的，下表逐条对照这个假设在哪里崩掉。</p>
+
+<table>
+<thead><tr><th style="width:17%">异构维度</th><th style="width:36%">真实表现</th><th style="width:47%">静态队列的失效点</th></tr></thead>
+<tbody>
+<tr><td>配额类型</td><td>TokenPlan 池有 <strong>500 秒/天</strong>硬配额；Enterprise / Free 池只有 RPM，无明确时长配额</td><td>队列不知道"该把有限的 312 秒花在哪"，可能把配额耗在低价值镜头上</td></tr>
+<tr><td>提交速率</td><td>Free 1 RPM / Enterprise 2 RPM / TokenPlan 5 RPM</td><td>简单轮询（round-robin）会把高优先级任务排进慢池，白白拉长交付时间</td></tr>
+<tr><td>成熟度</td><td>5 秒片段与 10 秒片段耗时不同；2.5-flash 与 v2.0 出片速度不同</td><td><strong>队头阻塞</strong>：一个 10 秒长任务堵住后面五个短任务</td></tr>
+<tr><td>上游依赖</td><td>片段依赖关键帧、TTS、脚本就绪</td><td>队列只能无脑 pop，无法感知"现在哪些任务真正可提交"</td></tr>
+<tr><td>失败语义</td><td>失败重试<strong>同样消耗配额</strong>（按生成秒数计）</td><td>固定次数重试会持续烧掉稀缺配额，且不会判断"这个镜头还值不值得救"</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p>关键判断：ReAct 调度的价值<strong>随异构性和稀缺性增长</strong>。如果你只有一两个同质 key、配额充足，静态队列就够，加代理是过度设计。你有三档配额且每日 500 秒是硬天花板——这才值得上代理。</p>
+</div>
+
+<h2>二、烤炉模型：把异构资源形式化</h2>
+
+<p>代理能做出好决策的前提，是它看到的世界被<strong>结构化</strong>。把每个 key 池抽象为一个烤炉（Oven）：</p>
+
+<pre><code>Oven {
+  id: string                 // 池标识，如 "tp-1" / "ent-1"
+  keyType: 'free' | 'enterprise' | 'tokenplan'
+  rpmCap: number             // 令牌桶容量（每分钟可提交数）
+  tokens: number             // 当前可用令牌（实时衰减）
+  dailyQuotaSec: number|null // 每日时长配额，null = 无明确配额
+  remainingQuotaSec: number  // 今日剩余秒数
+  inFlight: Task[]           // 后台正在生成的任务（异步！）
+  etaSec: number             // 最早空出时间
+}</code></pre>
+
+<p>这里有一个容易被忽略但极关键的洞察：<strong>RPM 只卡"提交频率"，已提交的任务在后台并行出片</strong>。所以"烤炉"的比喻非常贴切——<em>投料频率受限，但炉内可以同时烤多个</em>。真实吞吐不等于 <code>min(RPM, 并行数)</code>，而是：</p>
+
+<ul>
+<li><strong>提交速率</strong>受各池 RPM 限制（每秒能投几个）</li>
+<li><strong>在烤数量</strong>取决于 Agnes 侧后台队列，我们控制不了，但可以通过多池多投来放大</li>
+<li><strong>总产出</strong>最终被每日时长配额锁死</li>
+</ul>
+
+<h2>三、ReAct 调度器的三段设计</h2>
+
+<h3>Observe：代理看到什么</h3>
+<p>每次调度前，代理收到一份结构化的"厨房快照"。要点是<strong>只给决策相关信息</strong>，不要把 400 条事件全塞进去——噪声会显著劣化推理质量。</p>
+
+<pre><code>{
+  "ovens": [
+    {"id":"tp-1","keyType":"tokenplan","tokens":2,"rpmCap":5,
+     "remainingQuotaSec":312,"inFlight":3,"etaSec":18},
+    {"id":"ent-1","keyType":"enterprise","tokens":1,"rpmCap":2,
+     "remainingQuotaSec":null,"inFlight":1,"etaSec":7},
+    {"id":"free-1","keyType":"free","tokens":0,"rpmCap":1,
+     "remainingQuotaSec":null,"inFlight":0,"etaSec":0}
+  ],
+  "readyTasks": [
+    {"id":"clip-07","seconds":5,"depsMet":true,"priority":"P0",
+     "value":"hero_shot","retryCount":0},
+    {"id":"clip-08","seconds":10,"depsMet":true,"priority":"P2",
+     "value":"b_roll","retryCount":2},
+    {"id":"clip-09","seconds":5,"depsMet":false,
+     "waitingOn":["keyframe-09"],"priority":"P1"}
+  ],
+  "recentFailures":[
+    {"taskId":"clip-06","reason":"429","ovenId":"tp-1","at":"18:02:11"}
+  ],
+  "budget":{"usedSec":188,"totalSec":500,"deadline":"今日 23:59"}
+}</code></pre>
+
+<h3>Reason：代理在权衡什么</h3>
+<p>这是 LLM 真正创造价值的地方——<strong>多维权衡</strong>，规则引擎难以穷举。面对上面的快照，一条合格推理链大致是：</p>
+
+<ul>
+<li><code>clip-07</code> 是 hero_shot（P0），只花 5 秒配额 → 高价值低成本，<strong>必须保</strong>，优先投进最快的 tp-1</li>
+<li><code>clip-08</code> 已重试 2 次，每次烧 10 秒，沉没成本 20 秒；它只是 b_roll（P2）→ <strong>继续重试不划算</strong>，降级为 5 秒版或复用既有素材</li>
+<li><code>clip-09</code> 依赖 keyframe-09 未就绪 → 不提交，但<strong>向上游发优先级提升信号</strong>，避免它在后面成为新的队头阻塞</li>
+<li><code>free-1</code> 当前 tokens=0，但 1 RPM 且空闲 → 把低优先级任务排给它等，不占用高价值池</li>
+</ul>
+
+<h3>Act：代理输出什么</h3>
+<p>输出必须是<strong>结构化动作</strong>，不是自由文本——否则无法被守卫层校验。同时要求附推理理由，用于审计与回放。</p>
+
+<pre><code>{
+  "actions": [
+    {"type":"submit",   "taskId":"clip-07","ovenId":"tp-1"},
+    {"type":"submit",   "taskId":"clip-08","ovenId":"free-1","deferSec":18},
+    {"type":"escalate", "taskId":"clip-08",
+     "reason":"retry_budget_exhausted","suggestion":"downgrade_to_5s"},
+    {"type":"signal",   "target":"keyframe-stage",
+     "taskId":"clip-09","message":"priority_boost"}
+  ],
+  "reasoning": "clip-07 为 P0 主镜头且仅需 5s 配额，投入 tp-1 保交付；clip-08 已烧 20s 沉没配额且为 P2，转 free 池并建议降级；clip-09 上游未就绪，改发催办信号。"
+}</code></pre>
+
+<h2>四、职责边界：决策权与否决权分离</h2>
+
+<p>这是整个设计里<strong>最不能妥协</strong>的一条，也是你正在研究的 defense-in-depth 模式在此处的落点：<strong>绝不能让 LLM 直接碰硬约束。</strong></p>
+
+<table>
+<thead><tr><th style="width:9%">层</th><th style="width:30%">职责</th><th style="width:15%">由谁做</th><th style="width:46%">失效后果</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-purple">L3</span></td><td>决定投哪个任务到哪个炉、何时投、要不要重试 / 降级 / 放弃</td><td>ReAct 代理</td><td>次优决策，浪费配额，但<strong>不会违规</strong></td></tr>
+<tr><td><span class="tag t-teal">L2</span></td><td>校验决策是否违反硬约束（RPM 令牌、剩余配额、依赖未满足、炉 ID 存在性）；违规则拒绝并退回安全默认</td><td>确定性代码</td><td>拦截违规，返回代理重新决策</td></tr>
+<tr><td><span class="tag t-gray" style="background:var(--gray);color:#444441;border:1px solid var(--line2)">L1</span></td><td>实际发 HTTP、429 指数退避、webhook 收结果、幂等键去重</td><td>确定性代码</td><td>重试 / 进死信队列</td></tr>
+</tbody>
+</table>
+
+<div class="warn">
+<p><strong>为什么必须分层：</strong>LLM 会算错、会幻觉、会输出不存在的 <code>ovenId</code> 或超配额的决策。而硬约束违规的代价不是"慢一点"，是<strong>真金白银的配额被烧掉，外加 429 限流惩罚</strong>。所以原则是：<em>代理有建议权，代码有否决权。</em></p>
+</div>
+
+<h2>五、角色分工：为什么该是「制片主任」而不是导演</h2>
+
+<p>你的团队频道里已有导演（<code>planDirectorReply</code>、导演审议）。但调度不该交给导演，理由是<strong>关注点会被噪声淹没</strong>。</p>
+
+<table>
+<thead><tr><th style="width:22%">候选</th><th style="width:12%">适合度</th><th style="width:66%">理由</th></tr></thead>
+<tbody>
+<tr><td>导演 Director</td><td><span class="tag t-amber">中</span></td><td>导演关注<strong>创作质量</strong>（分镜、一致性、台词）。让它同时管配额，会被资源噪声淹没。但它应该<strong>下优先级指令</strong>：哪些镜头必须保、质量标准是什么</td></tr>
+<tr><td>制片主任 Producer<br>（新 ReAct 代理）</td><td><span class="tag t-teal">高</span></td><td>新角色，只管<strong>资源与进度</strong>：配额账本、并发仲裁、优先级排序、进度汇报</td></tr>
+<tr><td>纯代码队列</td><td><span class="tag t-red">低</span></td><td>无法做价值权衡，见第一节</td></tr>
+</tbody>
+</table>
+
+<h3>两个 agent 之间的契约</h3>
+<pre><code>// 导演 → 制片主任：创意权威下达优先级
+{ "clipId":"clip-07", "priority":"P0",
+  "qualityBar":"must_keep", "maxRetries":1,
+  "deadlineHint":"成片主线，不可裁剪" }
+
+// 制片主任 → 导演：资源约束反向通报
+{ "type":"budget_alert", "message":"剩余配额 312s，按当前分镜需 480s",
+  "suggestion":"裁剪 2 个 b_roll 或降级为 5s 版" }</code></pre>
+
+<p>这个分工本身就是很好的工程叙事：<strong>把创意决策与资源决策解耦成两个 agent，中间用结构化契约通信</strong>，而不是让一个巨型 agent 同时操心艺术和配额。</p>
+
+<h2>六、工具集设计</h2>
+
+<p>制片主任可用的工具（注意 <code>submit</code> 是"请求提交"而非直接发 HTTP）：</p>
+
+<table>
+<thead><tr><th style="width:32%">工具</th><th style="width:68%">语义</th></tr></thead>
+<tbody>
+<tr><td><code>observe_kitchen()</code></td><td>返回烤炉状态 + 就绪任务 + 配额账本 + 近期失败</td></tr>
+<tr><td><code>submit(taskId, ovenId)</code></td><td>请求提交，<strong>经 L2 守卫校验</strong>后交 L1 执行</td></tr>
+<tr><td><code>defer(taskId, seconds)</code></td><td>延迟重试，让出高价值池给更紧急任务</td></tr>
+<tr><td><code>downgrade(taskId, options)</code></td><td>降级：缩短时长 / 降分辨率 / 换 flash 模型，直接降低配额消耗</td></tr>
+<tr><td><code>escalate(taskId, reason)</code></td><td>上报导演或人类："配额不足，请裁剪分镜"</td></tr>
+<tr><td><code>signal(stage, message)</code></td><td>给上游阶段发信号（催关键帧 / 催 TTS），化解依赖阻塞</td></tr>
+<tr><td><code>record_decision(reasoning)</code></td><td>决策留痕，用于审计、回放与后续评估</td></tr>
+</tbody>
+</table>
+
+<h2>七、触发时机与成本控制</h2>
+
+<p>ReAct 每轮都要调 LLM，必须控制频率，否则省下的配额还不够付推理成本：</p>
+
+<ul>
+<li><strong>事件驱动</strong>，而非轮询：任务就绪 / 炉空出 / 任务完成 / 失败 / 配额跨过阈值（如 80%、90%）</li>
+<li><strong>批量决策优先</strong>：一次观察后输出<strong>整批</strong>调度方案，而不是每个任务跑一轮 O-R-A，摊薄成本</li>
+<li><strong>最小调度间隔</strong>（建议 5 秒）：窗口内的事件合并成一轮决策</li>
+<li><strong>决策去重 + 冷却期</strong>：同一任务 N 秒内不改变分配，防止代理反复改主意（抖动）</li>
+</ul>
+
+<h2>八、降级路径</h2>
+
+<table>
+<thead><tr><th style="width:32%">故障</th><th style="width:68%">降级行为</th></tr></thead>
+<tbody>
+<tr><td>LLM 不可用 / 超时</td><td>退回确定性 FIFO + 令牌桶（L2 / L1 仍完整可用，产线不停）</td></tr>
+<tr><td>LLM 输出非法动作</td><td>L2 守卫拒绝 → 回退安全默认（按优先级排队等待）</td></tr>
+<tr><td>配额即将耗尽</td><td>代理应提前 <code>escalate</code>，而不是硬撞 429 才反应</td></tr>
+<tr><td>决策抖动</td><td>冷却期 + 去重，见第七节</td></tr>
+<tr><td>代理判定无解</td><td>上报人类，附带它算出的配额缺口与裁剪建议</td></tr>
+</tbody>
+</table>
+
+<h2>九、怎么证明它比静态队列好</h2>
+
+<p>必须可度量，否则就是自我感动。建议这组指标做 A/B（相同配额预算下比交付量）：</p>
+
+<table>
+<thead><tr><th style="width:26%">指标</th><th style="width:74%">定义与意义</th></tr></thead>
+<tbody>
+<tr><td><strong>配额利用率</strong></td><td>有效成片秒数 ÷ 消耗配额秒数。重试浪费是主要损耗，这是核心指标</td></tr>
+<tr><td><strong>有效吞吐</strong></td><td>单位时间交付的可交付片段数</td></tr>
+<tr><td><strong>P0 延迟</strong></td><td>主镜头从就绪到完成的 P95。衡量"好钢是否用在刀刃上"</td></tr>
+<tr><td><strong>配额浪费率</strong></td><td>失败 / 被弃片段消耗的秒数占比</td></tr>
+<tr><td><strong>决策被拒率</strong></td><td>L2 守卫拦截代理决策的比例 —— <em>这个指标反映代理是否在瞎指挥</em>，持续偏高说明观察信息不足或提示词有问题</td></tr>
+</tbody>
+</table>
+
+<h2>十、诚实的风险评估</h2>
+
+<div class="warn">
+<p><strong>收益上限取决于异构性。</strong>如果只有一两个同质 key、配额充足，代理调度的收益有限，静态队列更划算。你的场景（三档配额 + 500 秒硬顶）是值得的，但不要在演示环境里为了炫技而加。</p>
+</div>
+
+<ul>
+<li><strong>复杂度成本真实存在</strong>：多一个 agent = 多一套状态、测试、故障模式。你的项目里 reshot / 一致性预检缓存都还没有回归测试闭环，<strong>加这个之前建议先把那两个补上</strong>，否则调试会非常痛苦。</li>
+<li><strong>提示词会成为新的脆弱点</strong>：观察信息的格式一变，推理质量可能断崖下跌。要为 <code>observe_kitchen()</code> 的输出加契约测试。</li>
+<li><strong>可解释性是双刃剑</strong>：代理给出推理理由便于审计，但也容易被过度信任。决策被拒率必须常驻监控。</li>
+</ul>
+
+<h2>十一、落地路径（分阶段，避免一口吃成胖子）</h2>
+
+<ol>
+<li><strong>先做确定性底座</strong>：多池令牌桶 + 事件驱动队列 + 幂等 + webhook 收结果。这一步不加任何 LLM，先把"不违规"和"不丢任务"做扎实。</li>
+<li><strong>加只读观察者</strong>：让代理只 <code>observe_kitchen()</code> 并输出<strong>建议</strong>，人来看，不自动执行。用这个阶段校准提示词和观察信息的充分性。</li>
+<li><strong>开启自动执行 + L2 守卫</strong>：代理决策自动提交，但硬约束由代码强制拦截，监控决策被拒率。</li>
+<li><strong>接通导演契约</strong>：引入优先级指令与预算告警，形成双向闭环。</li>
+<li><strong>上 A/B 与回归测试</strong>：配额利用率、P0 延迟对比静态队列基线。</li>
+</ol>
+
+<div class="fin">
+<h3>一句话总结</h3>
+<p>把多个 key 池抽象成能力、配额、成熟度各异的"烤炉"，用 ReAct 代理（制片主任）做异构资源分配决策——它观察炉况与任务价值，推理配额成本与沉没成本，输出结构化调度动作；但所有动作必须经确定性守卫层校验硬约束，<strong>代理有建议权，代码有否决权</strong>，LLM 不可用则降级回静态队列。</p>
+<p><strong>面试版：</strong>"视频生成的多 key 不是同质扩容而是异构资源池，所以我把它建模成调度优化问题：上层用 ReAct 代理做价值与配额的权衡决策，下层用确定性代码守死 RPM 和配额硬约束——决策层与执行层分离，代理挂了产线也不违规、不停摆。"</p>
+</div>
+
+</div>
+</body>
+</html>

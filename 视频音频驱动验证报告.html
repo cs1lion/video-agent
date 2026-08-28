@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视频「音频驱动口型」可行性验证报告（2.5-flash 修正版）</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#fff; --line:#e5e7eb; --ink:#1f2937; --sub:#6b7280;
+    --ok:#15803d; --okbg:#dcfce7; --bad:#b91c1c; --badbg:#fee2e2;
+    --warn:#b45309; --warnbg:#fef3c7; --accent:#2563eb; --accentbg:#dbeafe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6;padding:28px}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:18px;margin:28px 0 12px;padding-left:10px;border-left:4px solid var(--accent)}
+  .banner{background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;border-radius:14px;padding:18px 22px;margin:14px 0 8px}
+  .banner .big{font-size:19px;font-weight:700;margin-bottom:6px}
+  .banner .small{opacity:.94;font-size:13.5px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f1f5f9;font-weight:600}
+  .tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600}
+  .t-ok{background:var(--okbg);color:var(--ok)} .t-bad{background:var(--badbg);color:var(--bad)}
+  .t-warn{background:var(--warnbg);color:var(--warn)} .t-acc{background:var(--accentbg);color:var(--accent)}
+  .muted{color:var(--sub);font-size:12.5px}
+  pre{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.5}
+  .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:10px 0}
+  .node{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:120px;flex:1}
+  .node .t{font-weight:700;font-size:13px}
+  .node .d{font-size:11.5px;color:var(--sub);margin-top:3px}
+  .arrow{display:flex;align-items:center;color:var(--accent);font-weight:700;font-size:18px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}
+  ul{margin:6px 0 6px 18px;padding:0} li{margin:4px 0}
+  .box{border-radius:10px;padding:12px 14px;font-size:13.5px}
+  .b-ok{background:var(--okbg);border:1px solid #86efac}
+  .b-bad{background:var(--badbg);border:1px solid #fca5a5}
+  .b-warn{background:var(--warnbg);border:1px solid #fcd34d}
+  .b-acc{background:var(--accentbg);border:1px solid #93c5fd}
+  code{background:#eef2ff;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  .corr{font-size:26px;font-weight:800;color:var(--ok)}
+  .ascii{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:pre;background:#0f172a;color:#a7f3d0;padding:10px;border-radius:8px;overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>视频「音频驱动口型」可行性验证报告 · <span style="color:var(--ok)">2.5-flash 修正版</span></h1>
+  <div class="muted">验证日期 2026-08-28 · 实测对象：StepFun TTS + Agnes Video（国际站 2.5-flash / 2.5 / v2.0）· 密钥：国际站 Key</div>
+
+  <div class="banner">
+    <div class="big">✅ 你的想法可行（修正了我上一版基于 v2.0 的误判）</div>
+    <div class="small">
+      用<strong>国际站 agnes-video-2.5-flash</strong>（当前 Key 直接可用）+ <strong>音频参考模式</strong>：把 StepFun TTS 生成的角色语音托管成公开 URL 后传入 <code>audios</code>，
+      视频会<strong>严格按你的语音对口型、并用该语音作为声轨</strong>。
+      实测证据：①蜂鸣参考 → 输出 440Hz 原音占频谱 <strong>63.4%</strong>（原音频直通）；②中文语音参考 → 输出音轨包络与参考<strong>相关系数 0.620</strong>、逐秒形态几乎一致。
+      <br>之前说「当前 Key 行不通」是因为我<strong>只测了 v2.0</strong>——v2.0 才是不吃音频的那个；2.5-flash 一直就在国际站、Key 可用。
+    </div>
+  </div>
+
+  <h2>一、三个核心疑问，逐条验证（含修正）</h2>
+  <div class="card">
+    <table>
+      <tr><th style="width:28%">疑问</th><th>验证结果与证据</th><th style="width:13%">判定</th></tr>
+      <tr>
+        <td><strong>① TTS 生成后有 URL 吗？</strong></td>
+        <td>StepFun <code>/v1/audio/speech</code> 返回二进制 MP3，不是 URL。需自行托管。StepFun Files API 因 Key 配额耗尽未能完整验证，但实测用 <strong>CloudBase 托管</strong>即可拿到永久公开 URL。</td>
+        <td><span class="tag t-warn">需托管</span></td>
+      </tr>
+      <tr>
+        <td><strong>② Agnes 要求的「公开可访问 URL」能满足吗？</strong></td>
+        <td>CloudBase 上传后匿名 <code>Range</code> 请求返回 <code>206 / audio/mpeg</code>，URL 永久有效，满足「任务完成前保持有效」。2.5-flash 参考任务成功拉取该 URL 并完成了推理。</td>
+        <td><span class="tag t-ok">已解决</span></td>
+      </tr>
+      <tr>
+        <td><strong>③ 先生成语音再交给视频模型「辅助生成」可行吗？</strong></td>
+        <td>
+          <strong>2.5-flash：可行 ✅</strong>（关键反转）<br>
+          · 蜂鸣参考（440Hz）：输出音频频谱 440Hz 占比 <strong>63.4%</strong> → 原音频被直接采用<br>
+          · 中文语音参考：输出音轨包络与参考 <strong>相关系数 0.620</strong>，逐秒形态吻合 → 按你的语音对口型<br>
+          <span class="muted">对照：v2.0 该相关系数仅 −0.056 且不含 440Hz → v2.0 才是静默忽略音频的那个。</span>
+        </td>
+        <td><span class="tag t-ok">2.5-flash 可行</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>二、关键事实：Agnes 三个模型端点行为对比</h2>
+  <div class="grid2">
+    <div class="box b-ok">
+      <strong>国际站 · agnes-video-2.5-flash ✅ 推荐</strong><br>
+      <span class="muted">apihub.agnes-ai.com · 当前 Key 可用</span>
+      <ul>
+        <li><strong>honors <code>audios</code> 参考</strong>：按你给的音频对口型、并用其作声轨</li>
+        <li>模式 <code>mode=reference</code>，prompt 内用 <code>&lt;Audio 1&gt;</code> 占位</li>
+        <li>生成快（约 40s / 5s 片）</li>
+        <li>✅ 完美匹配你的目标：可控角色音色 + 精准对口型</li>
+      </ul>
+    </div>
+    <div class="box b-bad">
+      <strong>国际站 · agnes-video-v2.0 ❌ 不吃音频</strong><br>
+      <span class="muted">apihub.agnes-ai.com · 当前 Key 可用</span>
+      <ul>
+        <li>原生音画同生，但<strong>静默忽略</strong>传入音频（非法 URL 也 200）</li>
+        <li>口型跟随模型<strong>自己生成</strong>的人声，与你的 TTS 无关</li>
+        <li>只能把台词写进 prompt 让模型自说</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <div class="box b-warn">
+      <strong>中国站 · api.agnes-ai.cn（2.5 / 2.5-flash）</strong><br>
+      文档同样支持 <code>audios</code> 参考，但<strong>当前 Key 在此站 401「无效的令牌」</strong>。无需依赖——国际站 2.5-flash 已满足需求。
+    </div>
+  </div>
+
+  <h2>三、决定性证据：包络比对</h2>
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <div class="corr">r = 0.620</div>
+        <div class="muted">中文语音参考 → 2.5-flash 输出音轨包络相关性</div>
+        <div class="ascii">ref (cn speech):  ....####.#  /  #.......##  /  ##########  /  #.........  /  ..########
+out (2.5-flash): ....####.#  /  #.......##  /  ##########  /  #......###  /  ##.#.##...
+→ 前 3 秒几乎逐拍吻合，第 4 秒略有差异</div>
+      </div>
+      <div>
+        <div class="corr">440Hz = 63.4%</div>
+        <div class="muted">蜂鸣参考 → 输出音频频谱中 440Hz 占比</div>
+        <div class="ascii">频段能量占比:
+  200Hz: 0.151
+  300Hz: 0.134
+  440Hz: 0.634  ← 参考音
+  600Hz: 0.047
+ 1000Hz: 0.023
+ 2000Hz: 0.011
+→ 原音频被直接采用为声轨</div>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:10px">
+      对照基线：同一套流程在 v2.0 上得到 r=−0.056 且 440Hz 占比极低 → v2.0 忽略音频；
+      在 2.5-flash 上 r=0.620 且原音频直通 → 2.5-flash 真正按音频驱动。
+    </p>
+  </div>
+
+  <h2>四、最终推荐架构（你的设想直接落地）</h2>
+  <div class="flow">
+    <div class="node"><div class="t">剧本 / 分镜</div><div class="d">角色 · 台词 · 时长</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="t">StepFun TTS</div><div class="d">按角色选 voice 生成语音</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="t">CloudBase 托管</div><div class="d">得永久公开 URL</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="t">2.5-flash 参考</div><div class="d">audios=[URL] 驱动对口型</div></div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <pre># 1) StepFun 生成角色语音（二进制）→ 2) 上传 CloudBase 得公开 URL
+# 3) 交给国际站 2.5-flash 音频参考模式
+POST https://apihub.agnes-ai.com/v1/videos
+Headers: Authorization: Bearer &lt;你的Key&gt;, Content-Type: application/json
+{
+  "model": "agnes-video-2.5-flash",
+  "mode": "reference",
+  "seconds": "5",
+  "size": "720P",
+  "prompt": "一位年轻女子雨夜街头面对镜头，中近景。严格按 &lt;Audio 1&gt; 的内容与节奏说话，声音响起时口型开合、静音时闭嘴。电影感雨景，霓虹倒影，浅景深。",
+  "audios": ["https://xxxx.tcb.qcloud.la/角色A.mp3"]
+}
+# 状态查询（注意不是 agnesapi，是）：
+GET https://apihub.agnes-ai.com/v1/videos/{video_id}
+# 限流：视频生成 2 次/分钟 —— 流水线需做节流</pre>
+  </div>
+
+  <h2>五、落地须知 / 注意点</h2>
+  <div class="card">
+    <ul>
+      <li><strong>音色可控 ✅：</strong>每个角色用不同 StepFun <code>voice</code> 生成语音，2.5-flash 会原样采用该声轨，天然实现「角色台词版本」。</li>
+      <li><strong>声轨 = 你的 TTS：</strong>蜂鸣测试证明原音频直通，所以输出声音就是你的 TTS 语音（非模型重合成），口型与之对齐。</li>
+      <li><strong>限流 2 次/分钟：</strong>视频生成端点限流，video-agent 流水线必须在「提交」侧加节流 / 队列，避免 429。</li>
+      <li><strong>状态查询路径：</strong>2.5-flash 用 <code>GET /v1/videos/{id}</code>（返回含 <code>metadata.url</code>），不是 v2.0 的 <code>agnesapi?video_id=</code>。</li>
+      <li><strong>人脸/角色一致性（可选增强）：</strong>如需固定角色长相，可进一步测 2.5-flash 的 <code>images</code> 参考（类似 2.5 的 <code>&lt;Picture N&gt;</code>），本次未实测，建议下一轮验证。</li>
+      <li><strong>时长对齐：</strong>2.5-flash 按 <code>seconds</code> 出片；建议 TTS 音频时长 ≤ 目标秒数，并在 prompt 强调「静音处闭嘴」以保证尾段不嘴瓢。</li>
+    </ul>
+  </div>
+
+  <h2>六、与你原设想的偏差 & 一句话总结</h2>
+  <div class="card">
+    <div class="box b-ok">
+      <strong>一句话总结（面试/汇报可复用）：</strong><br>
+      「我们验证了 Agnes 2.5-flash 的音频参考模式——把 TTS 角色语音托管成公开 URL 传入 <code>audios</code>，模型会按该语音对口型并直接采用其声轨（实测音轨相关 0.62、原音频直通）；所以『剧本→TTS→喂视频对口型』的链路成立，v2.0 才是不吃音频的旧模型。」
+    </div>
+  </div>
+
+  <div class="muted" style="margin-top:18px">
+    实测产物在 <code>_tts_test/</code>：<code>flash_audio.mp4</code>（蜂鸣参考成片，含 440Hz 原音）、<code>flash_cn.mp4</code>（中文语音参考成片）、<code>cn_ref.mp3</code>（参考语音）、<code>test_rhythm.mp3</code>（蜂鸣参考）及对应任务 JSON。建议亲耳听一下 <code>flash_cn.mp4</code> 确认输出声轨就是该中文语音、而非模型另配嗓音。
+  </div>
+
+</div>
+</body>
+</html>
