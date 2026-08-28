@@ -62,11 +62,9 @@ import { chat, chatJson } from "./llm.ts";
 import { estimateRunCost as pricingEstimateRun } from "./pricing.ts";
 import {
 	availableVoices,
-	type CutsDoc,
 	composeCut,
 	directorChat,
 	listShotVersions,
-	MAX_COMPOSE_PER_RUN,
 	RunStore,
 	readTraces,
 	redesignEntity,
@@ -82,6 +80,7 @@ import {
 	startRun,
 	subscribeRun,
 } from "./pipeline.ts";
+import { type CutsDoc, type CutsView, MAX_COMPOSE_PER_RUN } from "./redo/compose.ts";
 import {
 	type DesignBibleDoc,
 	type KeyframesDoc,
