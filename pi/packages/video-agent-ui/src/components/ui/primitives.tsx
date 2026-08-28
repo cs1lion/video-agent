@@ -100,7 +100,7 @@ export function Chip({
 export function StatusDot({ tone }: { tone: "done" | "active" | "pending" | "error" | "redo" }) {
 	const map = {
 		done: "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]",
-		active: "bg-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.9)] pulse-dot",
+		active: "bg-zinc-100 shadow-[0_0_12px_rgba(244,244,245,0.9)] pulse-dot",
 		pending: "bg-zinc-600",
 		error: "bg-rose-400 shadow-[0_0_10px_rgba(251,113,133,0.8)]",
 		redo: "bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.95)] pulse-dot",
@@ -114,7 +114,7 @@ export function ProgressBar({ value, hue }: { value: number; hue?: number }) {
 			<motion.div
 				className="absolute inset-y-0 left-0 rounded-full"
 				style={{
-					background: `linear-gradient(90deg, hsl(${hue ?? 35} 85% 50%), #fb7185)`,
+					background: `linear-gradient(90deg, hsl(${hue ?? 40} 90% 55%), #f59e0b)`,
 				}}
 				animate={{ width: `${Math.min(100, value)}%` }}
 				transition={{ ease: "easeOut", duration: 0.3 }}
@@ -155,8 +155,8 @@ export function ProgressRing({
 				/>
 				<defs>
 					<linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-						<stop offset="0%" stopColor="#22d3ee" />
-						<stop offset="100%" stopColor="#8b5cf6" />
+						<stop offset="0%" stopColor="#fcd34d" />
+						<stop offset="100%" stopColor="#d97706" />
 					</linearGradient>
 				</defs>
 			</svg>

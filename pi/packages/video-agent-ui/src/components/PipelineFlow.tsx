@@ -1,5 +1,5 @@
 /**
- * 流水线实况：后端 6 阶段横向 DAG（编剧 → 美术 → 分镜 → 技术导演 → 声音 → 剪辑）。
+ * 流水线实况：后端 7 阶段横向 DAG（编剧 → 美术 → 分镜 → 关键帧 → 片段 → 声音 → 剪辑）。
  * - 传 stages：实时模式（工作台 / 有 run 的场景）
  * - demo：自循环演示动画（首页展示用），阶段依次点亮走一遍
  * 节点状态灯复用 StatusDot，连线复用 .flow-line 流动虚线。
@@ -31,7 +31,8 @@ export const PIPELINE_NODES: readonly PipelineNode[] = [
 	{ id: "script", label: "剧本", role: "编剧", icon: BookOpenText },
 	{ id: "visual", label: "美术设计", role: "美术指导", icon: Palette },
 	{ id: "prompts", label: "分镜提示词", role: "分镜师", icon: Film },
-	{ id: "clips", label: "关键帧与片段", role: "技术导演", icon: Video },
+	{ id: "keyframes", label: "分镜关键帧", role: "技术导演", icon: Images },
+	{ id: "clips", label: "片段生成", role: "技术导演", icon: Video },
 	{ id: "audio", label: "声音设计", role: "声音设计", icon: Volume2 },
 	{ id: "export", label: "成片导出", role: "剪辑师", icon: Clapperboard },
 ] as const;
@@ -70,7 +71,7 @@ export function PipelineFlow({
 
 	return (
 		<div className={cn("overflow-x-auto pb-1", className)}>
-			<div className="flex min-w-[680px] items-stretch">
+			<div className="flex min-w-[760px] items-stretch">
 				{PIPELINE_NODES.map((node, idx) => {
 					const status = statusOf(node.id, idx);
 					const running = status === "running";
@@ -142,6 +143,3 @@ export function PipelineFlow({
 		</div>
 	);
 }
-
-/** 关键帧节点图标单独导出（工作台 DAG 化时复用，避免重复定义） */
-export { Images as KeyframeIcon };

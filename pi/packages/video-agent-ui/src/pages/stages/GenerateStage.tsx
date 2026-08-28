@@ -58,9 +58,20 @@ export function GenerateStage({
 								className="overflow-hidden rounded-xl border border-white/10 bg-black/40"
 							>
 								{playing ? (
-									<video key={playing.url} src={playing.url} controls preload="metadata" className="aspect-video w-full" />
+									<div className="relative">
+										<video key={playing.url} src={playing.url} controls preload="metadata" className="aspect-video w-full" />
+										{/* 监看角标：镜头号 + 暗角，监视器墙观感 */}
+										<span className="pointer-events-none absolute left-2 top-2 rounded bg-black/60 px-1.5 py-0.5 font-mono text-[10px] text-amber-200">
+											{id}
+										</span>
+										<span className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_62%,rgba(0,0,0,0.42)_100%)]" />
+									</div>
 								) : (
-									<div className="flex aspect-video w-full items-center justify-center bg-white/[0.02]">
+									<div className="skeleton relative flex aspect-video w-full items-center justify-center">
+										<span className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/50 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">
+											<span className="inline-block size-1.5 animate-pulse rounded-full bg-rose-400" />
+											REC {id}
+										</span>
 										<span className="font-mono text-xs text-zinc-600">生成中…</span>
 									</div>
 								)}

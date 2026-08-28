@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 type Phase = "brief" | "interview" | "ready";
 
 /** Lightfall 主题色：暗底亮暖（琥珀→橙→暖玫）；模块级常量保持引用稳定（组件内 effect 依赖它） */
-const HERO_LIGHTFALL_COLORS = ["#fbbf24", "#fb923c", "#fb7185"];
+const HERO_LIGHTFALL_COLORS = ["#fbbf24", "#e4e4e7", "#52525b"];
 
 export function HomePage() {
 	const navigate = useNavigate();
@@ -184,7 +184,7 @@ export function HomePage() {
 					WebkitMaskImage: "linear-gradient(180deg, black 0%, black 40%, transparent 82%)",
 				}}
 				colors={HERO_LIGHTFALL_COLORS}
-				backgroundColor="#1c0e03"
+				backgroundColor="#0a0a0b"
 				speed={0.45}
 				streakCount={3}
 				streakWidth={1.4}
@@ -198,7 +198,7 @@ export function HomePage() {
 				mixBlendMode="screen"
 			/>
 			{/* 暗角收紧：中心透明区缩小，边缘压得更暗 */}
-			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_26%,rgba(7,6,5,0.8)_100%)]" />
+			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_26%,rgba(10,10,11,0.85)_100%)]" />
 
 			<main className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-16 px-5 pb-16 pt-24">
 				{/* ---------- Hero：一句话开拍 ---------- */}
@@ -218,10 +218,11 @@ export function HomePage() {
 						trigger="mount"
 						perspective={900}
 						creaseShading={0.5}
-						color="#fff7ed"
+						color="#f4f4f5"
 						fontSize="clamp(2.4rem, 8vw, 4.6rem)"
-						fontWeight={800}
+						fontWeight={900}
 						className="block cursor-default"
+						style={{ fontFamily: "var(--font-display)", letterSpacing: "0.02em" }}
 					/>
 					<p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">
 						导演、编剧、美术、分镜、技术导演、声音与剪辑接力协作，全程可视化，关键产物经你确认后再消耗生成额度。
@@ -538,10 +539,12 @@ export function HomePage() {
 					</AnimatePresence>
 				</section>
 
-				<footer className="flex items-center justify-center gap-2 text-[11px] text-zinc-600">
-					<Film className="size-3.5" />
-					powered by pi-video-agent pipeline · LLM + generative media
-					<Sparkles className="size-3.5" />
+				<footer className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-zinc-600">
+					{["pi-video-agent pipeline", "StepFun", "DAG 7 阶段", "LLM + 生成媒体", "多 Agent 协作"].map((s) => (
+						<span key={s} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1 font-mono text-[10px] tracking-wide">
+							{s}
+						</span>
+					))}
 				</footer>
 			</main>
 		</div>

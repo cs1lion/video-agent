@@ -5,10 +5,16 @@
  */
 
 import { useState } from "react";
-import { LoaderCircle, Package, RefreshCw, ScrollText, UserRound } from "lucide-react";
+import { BadgeCheck, LoaderCircle, Package, RefreshCw, ScrollText, TriangleAlert, UserRound, Wand2 } from "lucide-react";
 import type { DesignBibleDoc, DesignEntity, StageId, VisualBible } from "@/api/client";
 import { Chip } from "@/components/ui/primitives";
 import { EmptyState, RefineAction, StageShell } from "./shared";
+
+const REVIEW_BADGE = {
+	ok: { icon: BadgeCheck, cls: "bg-emerald-500/85 text-white", label: "审核通过" },
+	warn: { icon: TriangleAlert, cls: "bg-amber-500/85 text-black", label: "小偏差" },
+	fail: { icon: TriangleAlert, cls: "bg-rose-500/85 text-white", label: "审核未过" },
+} as const;
 
 function DesignCard({
 	entity,
@@ -20,6 +26,8 @@ function DesignCard({
 	onAdjust: (entityId: string, instruction: string) => void;
 }) {
 	const [instruction, setInstruction] = useState("");
+	const review = entity.review;
+	const badge = review ? REVIEW_BADGE[review.verdict] : null;
 	return (
 		<div id={`art-${entity.id}`} className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
 			<div className="relative">
@@ -51,6 +59,15 @@ function DesignCard({
 						<LoaderCircle className="size-6 animate-spin text-amber-300" />
 					</div>
 				)}
+				{badge && (
+					<div
+						title={`出图审核：${badge.label}${review && review.issues.length > 0 ? `——${review.issues.join("；")}` : ""}`}
+						className={`absolute right-2 top-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium shadow-lg ${badge.cls}`}
+					>
+						<badge.icon className="size-3" />
+						{badge.label}
+					</div>
+				)}
 				<div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-8">
 					<span className="font-mono text-[10px] text-cyan-300">{entity.id}</span>
 					<span className="truncate text-xs font-medium text-zinc-100">{entity.name}</span>
@@ -58,6 +75,23 @@ function DesignCard({
 			</div>
 			<div className="space-y-2 px-3 py-2.5">
 				<p className="line-clamp-3 text-[11px] leading-relaxed text-zinc-500">{entity.design}</p>
+				{review && review.verdict !== "ok" && review.issues.length > 0 && (
+					<div className="space-y-1.5 rounded-lg border border-rose-400/25 bg-rose-500/10 px-2.5 py-2">
+						<p className="text-[11px] leading-relaxed text-rose-200/90">
+							审核意见：{review.issues.join("；")}
+						</p>
+						{!busy && (
+							<button
+								type="button"
+								onClick={() => onAdjust(entity.id, review.issues.join("；"))}
+								className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-rose-300/40 px-2 py-1 text-[11px] text-rose-100 transition-colors hover:bg-rose-400/15"
+							>
+								<Wand2 className="size-3" />
+								按审核意见重绘
+							</button>
+						)}
+					</div>
+				)}
 				<div className="flex items-center gap-1.5">
 					<input
 						value={instruction}
@@ -106,12 +140,14 @@ export function BibleStage({
 	design,
 	onRefine,
 	onDesignAdjust,
+	onDesignReview,
 	designBusy = false,
 }: {
 	bible: VisualBible | null;
 	design?: DesignBibleDoc;
 	onRefine?: (stageId: StageId) => void;
 	onDesignAdjust?: (entityId: string, instruction: string) => void;
+	onDesignReview?: () => void;
 	designBusy?: boolean;
 }) {
 	const hasAnyDesign =
@@ -166,7 +202,23 @@ export function BibleStage({
 					</div>
 
 					{/* 美术设计：概念设计图板 */}
-					{onDesignAdjust &&
+				{hasAnyDesign && onDesignReview && (
+					<div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
+						<span className="text-[11px] text-zinc-500">
+							出图审核：视觉模型逐卡比对设计图与设计要点；未过的卡片可一键按审核意见重绘。
+						</span>
+						<button
+							type="button"
+							disabled={designBusy}
+							onClick={onDesignReview}
+							className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-cyan-400/40 px-2.5 py-1.5 text-xs text-cyan-200 transition-colors hover:bg-cyan-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							{designBusy ? <LoaderCircle className="size-3.5 animate-spin" /> : <BadgeCheck className="size-3.5" />}
+							重新审核
+						</button>
+					</div>
+				)}
+				{onDesignAdjust &&
 						DESIGN_GROUPS.map(({ key, title, icon: Icon, note }) => {
 							const entities = design?.[key] ?? [];
 							if (!hasAnyDesign && entities.length === 0) return null;

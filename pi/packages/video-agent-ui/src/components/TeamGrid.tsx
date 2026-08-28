@@ -25,7 +25,8 @@ interface RoleCard {
 	icon: typeof Film;
 }
 
-const ROLES: readonly RoleCard[] = [
+/** 角色名册：首页团队卡与工作台 TeamPresence 共用 */
+export const ROLES: readonly RoleCard[] = [
 	{ id: "director", label: "导演", duty: "与你对话，统筹创作方向", icon: Megaphone },
 	{ id: "producer", label: "制片人", duty: "拆解需求，排定制作计划", icon: ClipboardList },
 	{ id: "writer", label: "编剧", duty: "剧本、旁白与叙事节奏", icon: PenLine },
