@@ -278,6 +278,9 @@ export interface RunView {
 	ttsVersions: Record<string, string[]>;
 	/** 进行中的重做（进度栏「重做中」态；无重做时缺省） */
 	redoActive?: RedoActive;
+	/** 挂起的确认闸门（design=美术设计 / keyframes=关键帧）。runView 运行时一直返回
+	 *  此字段（`...(run.gate ? {gate} : {})`），此前 interface 漏声明导致前端类型绕行、测试报错 */
+	gate?: "design" | "keyframes";
 	/** P2+审查保护：最近完成的动作账本（reshot/retts/reexport/compose）。
 	 *  审议 agent 拿这个避免重复提议；UI 拿这个显示"刚才做了什么"。 */
 	lastActions?: ActionRecord[];
@@ -328,6 +331,34 @@ function emitRunUpdate(run: RunRecord): void {
 		}
 	}
 }
+
+/** 事件级增量订阅：pushEvent 只推单条事件，不再随每条事件重发完整 RunView */
+export type EventAppendListener = (event: TeamEvent) => void;
+
+const eventListeners = new Map<string, Set<EventAppendListener>>();
+
+function emitEventAppend(run: RunRecord, event: TeamEvent): void {
+	const listeners = eventListeners.get(run.id);
+	if (!listeners?.size) return;
+	for (const listener of listeners) {
+		try {
+			listener(event);
+		} catch {
+			// 同 emitRunUpdate：单订阅者异常不打断管线
+		}
+	}
+}
+
+/** 订阅某 run 的新增事件（SSE 增量通道）。返回取消订阅函数。 */
+export const subscribeRunEvents = (runId: string, listener: EventAppendListener): (() => void) => {
+	const listeners = eventListeners.get(runId) ?? new Set<EventAppendListener>();
+	listeners.add(listener);
+	eventListeners.set(runId, listeners);
+	return () => {
+		listeners.delete(listener);
+		if (listeners.size === 0) eventListeners.delete(runId);
+	};
+};
 
 export function runSummary(run: RunRecord, updatedAt?: string): RunSummary {
 	return structuredClone({
@@ -498,11 +529,29 @@ export class RunStore {
 				const raw = JSON.parse(fs.readFileSync(statePath, "utf-8")) as Omit<RunRecord, "abort">;
 				if (typeof raw?.id !== "string" || !Array.isArray(raw?.stages) || typeof raw?.dir !== "string") continue;
 				const crashed = raw.status === "running";
+				// 事件从 events.ndjson 读取（ndjson 化后不再内嵌 run-state.json）；
+				// 旧 run 首次加载时把内嵌 events 迁移出去，之后 persistRun 不再回写 events 字段。
+				let events = readEventsNdjson(raw.dir);
+				if (events === null) {
+					const legacy = Array.isArray(raw.events) ? raw.events : [];
+					events = legacy.slice(-EVENT_CAP);
+					if (legacy.length > 0) {
+						try {
+							fs.writeFileSync(
+								path.join(raw.dir, EVENTS_NDJSON),
+								`${events.map((e) => JSON.stringify(e)).join("\n")}\n`,
+								"utf-8",
+							);
+						} catch {
+							// 迁移失败不阻塞恢复：下次重启会再试
+						}
+					}
+				}
 				const record: RunRecord = {
 					...raw,
 					images: Array.isArray(raw.images) ? raw.images : [],
 					stages: migrateLegacyRunStages(raw.dir, raw.stages as RunStage[]),
-					events: Array.isArray(raw.events) ? raw.events : [],
+					events,
 					shotAttempts: raw.shotAttempts && typeof raw.shotAttempts === "object" ? raw.shotAttempts : {},
 					lastActions: Array.isArray(raw.lastActions) ? raw.lastActions : [],
 					shotVersions: raw.shotVersions && typeof raw.shotVersions === "object" ? raw.shotVersions : {},
@@ -529,7 +578,9 @@ export class RunStore {
 /** 状态落盘串行队列：并发 persistRun（事件流高频触发）交错写会把 JSON 写坏 */
 let persistChain: Promise<void> = Promise.resolve();
 
-/** 把 run 状态落盘（run-state.json，临时文件 + rename 原子替换），服务重启后可恢复查询/播放 */
+/** 把 run 状态落盘（run-state.json，临时文件 + rename 原子替换），服务重启后可恢复查询/播放。
+ *  事件流已迁出本文件：pushEvent 逐条追加 events.ndjson（ndjson 化），
+ *  本函数只在状态级变化时被调用（setStage/verdict/重做记账等），频率远低于事件。 */
 export function persistRun(run: RunRecord): void {
 	emitRunUpdate(run);
 	const state = {
@@ -543,7 +594,6 @@ export function persistRun(run: RunRecord): void {
 		videoUrl: run.videoUrl,
 		error: run.error,
 		images: run.images,
-		events: run.events.slice(-EVENT_CAP),
 		shotAttempts: run.shotAttempts,
 		shotVersions: run.shotVersions,
 		ttsAttempts: run.ttsAttempts,
@@ -581,9 +631,56 @@ export const ROLE_LABEL: Record<RoleId, string> = {
 	director: "导演",
 };
 
-/** 团队频道事件上限：内存与落盘保持同一上限（此前内存 500 / 落盘 400，
+/** 团队频道事件上限：内存与视图保持同一上限（此前内存 500 / 落盘 400，
  *  重启恢复后事件凭空变少）。 */
 const EVENT_CAP = 400;
+
+// ---- 事件流 ndjson 落盘：每行一条、append-only（O(1)），替代"每条事件全量重写 run-state.json" ----
+
+const EVENTS_NDJSON = "events.ndjson";
+/** 单文件超此大小时压缩为最近 EVENT_CAP 条，防止长期追加无限增长 */
+const EVENTS_NDJSON_COMPACT_AT = 512 * 1024;
+
+function appendEventLine(run: RunRecord, event: TeamEvent): void {
+	try {
+		fs.mkdirSync(run.dir, { recursive: true });
+		const file = path.join(run.dir, EVENTS_NDJSON);
+		fs.appendFileSync(file, `${JSON.stringify(event)}\n`, "utf-8");
+		if (fs.statSync(file).size > EVENTS_NDJSON_COMPACT_AT) {
+			fs.writeFileSync(
+				file,
+				`${run.events.map((e) => JSON.stringify(e)).join("\n")}\n`,
+				"utf-8",
+			);
+		}
+	} catch {
+		// 事件落盘失败不影响管线（与 persistRun 同策略）
+	}
+}
+
+/** 启动恢复：读 events.ndjson 最近 EVENT_CAP 条；文件缺失返回 null（走迁移路径）。
+ *  单行损坏只丢那一行——append 中途崩溃不会拖垮整个 run 的恢复。
+ *  导出供行为测试锁定上述两条语义（test/event-ndjson.test.ts）。 */
+export function readEventsNdjson(dir: string): TeamEvent[] | null {
+	let raw: string;
+	try {
+		raw = fs.readFileSync(path.join(dir, EVENTS_NDJSON), "utf-8");
+	} catch {
+		return null;
+	}
+	const events: TeamEvent[] = [];
+	for (const line of raw.split("\n")) {
+		const t = line.trim();
+		if (!t) continue;
+		try {
+			const e = JSON.parse(t) as TeamEvent;
+			if (typeof e?.id === "string" && typeof e?.text === "string") events.push(e);
+		} catch {
+			// 半行损坏跳过
+		}
+	}
+	return events.slice(-EVENT_CAP);
+}
 
 export function pushEvent(
 	run: RunRecord,
@@ -593,7 +690,7 @@ export function pushEvent(
 	text: string,
 	link?: EventLink,
 ): void {
-	run.events.push({
+	const event: TeamEvent = {
 		id: `ev-${randomUUID().slice(0, 8)}`,
 		at: new Date().toISOString(),
 		from,
@@ -601,9 +698,13 @@ export function pushEvent(
 		kind,
 		text,
 		...(link ? { link } : {}),
-	});
+	};
+	run.events.push(event);
 	if (run.events.length > EVENT_CAP) run.events.splice(0, run.events.length - EVENT_CAP);
-	persistRun(run);
+	appendEventLine(run, event);
+	// 只走事件级增量通道（SSE "ev"）；完整快照由状态级 persistRun 触发，
+	// 不再为每条聊天/进度事件重新序列化整个 RunView。
+	emitEventAppend(run, event);
 }
 
 // ============================================================================
@@ -1020,105 +1121,8 @@ export async function redesignEntity(
 	}
 }
 
-async function redesignEntityInner(
-	ctx: ServerContext,
-	run: RunRecord,
-	entityId: string,
-	instruction: string,
-): Promise<{ ok: boolean; error?: string }> {
-	const doc = await readDesignBible(run);
-	if (!doc) return { ok: false, error: "美术设计图尚未生成" };
-	const entity = [...doc.characters, ...doc.props, ...doc.scenes].find((e) => e.id === entityId);
-	if (!entity) return { ok: false, error: `设计条目 ${entityId} 不存在` };
-	if (entity.attempts >= MAX_IMAGE_REDRAW && instruction) {
-		return {
-			ok: false,
-			error: `「${entity.name}」已重绘 ${MAX_IMAGE_REDRAW} 次达上限。建议在美术设计阶段微调整体风格。`,
-		};
-	}
-
-	const bible = normalizeBible(
-		await readArtifact<VisualBible>(run, "visual-bible.json").catch(() => ({
-			styleKeywords: [],
-			palette: [],
-			lighting: "",
-			grade: "",
-		})),
-	);
-	const queue = new GenerationQueue(ctx.mediaConfig);
-	const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
-	// 参考传导：以该实体旧版定稿为参考，重绘是增量调整而非凭空再画（防人物改脸漂移）
-	const prevRef =
-		entity.file && fs.existsSync(path.join(run.dir, entity.file)) ? await fileDataUrl(run.dir, entity.file) : null;
-	entity.attempts += 1;
-	pushEvent(
-		run,
-		"art",
-		"client",
-		"redo",
-		`美术指导正在重绘设计图「${entity.name}」（第 ${entity.attempts} 次）${instruction ? `：${instruction.slice(0, 60)}` : "（原样重绘）"}…`,
-	);
-	const t0 = Date.now();
-	try {
-		// 备份旧图、再生成。顺序反了会把新图误挪进版本库、令主名悬空（详见 withVersionedAsset）。
-		const vRelPath = `assets/design-${entity.category}-${entity.id}_v${entity.versions.length + 1}${path.extname(entity.file ?? "")}`;
-		const { file } = await withVersionedAsset({
-			run,
-			mainRelPath: entity.file ?? "",
-			versions: entity.versions,
-			backupRelPath: vRelPath,
-			generate: () =>
-				generateImage(
-					sc,
-					designSheetPrompt(entity, bible, instruction || undefined),
-					`design-${entity.category}-${entity.id}`,
-					imageSizeFor(optionsOf(run).aspectRatio),
-					{ referenceImage: prevRef },
-				),
-		});
-		if (!file) {
-			entity.status = entity.file ? "done" : "failed";
-			entity.error = "图像生成失败";
-			await writeDesignBible(run, doc);
-			pushEvent(run, "art", "client", "status", `设计图「${entity.name}」重绘未成功 ⚠️，可稍后在卡片上再次重试。`);
-			return { ok: false, error: "图像生成失败，请稍后重试" };
-		}
-		entity.file = file;
-		entity.status = "done";
-		entity.error = undefined;
-		await writeDesignBible(run, doc);
-		appendSpan(
-			run,
-			{
-				stage: "reshot",
-				name: `设计图 ${entity.id} 调整重绘`,
-				kind: "media",
-				status: "ok",
-				input: (instruction || "原样重绘").slice(0, 120),
-				output: path.basename(file),
-			},
-			t0,
-		);
-		// 失效级联：以旧定稿为参考图的关键帧随本次更新标过期（关键帧闸门内立即可见）
-		await propagateEntityUpdate(run, entity);
-		pushEvent(
-			run,
-			"art",
-			"client",
-			"redo",
-			`设计图「${entity.name}」已按你的意见重绘完成${instruction ? `：${instruction.slice(0, 60)}` : ""}。`,
-			{ stage: "bible", focus: entity.id, label: "查看设计图" },
-		);
-		return { ok: true };
-	} catch (error) {
-		if (sc.signal.aborted) return { ok: false, error: "已中止" };
-		entity.status = entity.file ? "done" : "failed";
-		entity.error = (error instanceof Error ? error.message : String(error)).slice(0, 160);
-		await writeDesignBible(run, doc);
-		pushEvent(run, "art", "client", "status", `设计图「${entity.name}」重绘出错 ⚠️：${entity.error}`);
-		return { ok: false, error: entity.error ?? "重绘失败" };
-	}
-}
+// redesignEntityInner 已迁到 ./redo/entity.ts（单卡设计图重绘）
+import { redesignEntityInner } from "./redo/entity.ts";
 
 // stagePrompts 已迁到 ./stages/prompts.ts
 import { stagePrompts } from "./stages/prompts.ts";
@@ -1165,7 +1169,7 @@ function persistKeyframeConfirmations(run: RunRecord, doc: KeyframesDoc, confirm
 /** fileDataUrl 已迁到 ./asset-version.ts（与 withVersionedAsset 同源） */
 
 /** 分镜提示词签名：上游 refine 后签名变化 → 关键帧可据此判定过期（B8 级联依据） */
-function promptSigOf(prompt: string): string {
+export function promptSigOf(prompt: string): string {
 	return createHash("sha1").update(prompt).digest("hex").slice(0, 12);
 }
 
@@ -1185,7 +1189,7 @@ export async function designAnchorsOf(run: RunRecord): Promise<string> {
 }
 
 /** 把多张设计定稿纵向拼成一张参考板：适配器仍收单图，但画面包含全部视觉原料 */
-async function buildReferenceSheet(run: RunRecord, shotId: string, sources: string[]): Promise<string | null> {
+export async function buildReferenceSheet(run: RunRecord, shotId: string, sources: string[]): Promise<string | null> {
 	if (sources.length === 0) return null;
 	if (sources.length === 1) return sources[0]!;
 	const outRel = path.join(".refs", `key-${shotId}-sheet.png`);
@@ -1261,7 +1265,7 @@ export async function keyframeReferencesOf(
  * 失效级联：某设计定稿更新后，把曾以它为参考图的关键帧标记为相对新设定过期。
  * 纯文本锚点出图的帧没有视觉漂移来源，只提示可选的整体对齐路径，不打扰确认节奏。
  */
-async function propagateEntityUpdate(run: RunRecord, entity: DesignEntity): Promise<void> {
+export async function propagateEntityUpdate(run: RunRecord, entity: DesignEntity): Promise<void> {
 	const frames = await readKeyframes(run);
 	const affected = frames.frames.filter((f) => (f.refs ?? []).includes(entity.id));
 	if (affected.length === 0) {
@@ -1418,152 +1422,8 @@ export async function redesignKeyframe(
 /** 显式运行时导出别名：实验性 module mocks 下函数声明绑定偶发不可见。 */
 export const redrawKeyframe = redesignKeyframe;
 
-async function redesignKeyframeInner(
-	ctx: ServerContext,
-	run: RunRecord,
-	shotId: string,
-	instruction: string,
-	opts?: { auto?: boolean },
-): Promise<{ ok: boolean; error?: string; keyframeWasFailed?: boolean }> {
-	let script: ScriptDoc;
-	try {
-		script = await readArtifact<ScriptDoc>(run, "script.json");
-	} catch {
-		return { ok: false, error: "剧本产物缺失" };
-	}
-	if (!script.shots.some((s) => s.id === shotId)) return { ok: false, error: `镜头 ${shotId} 不存在` };
-	const doc = await readKeyframes(run);
-	let entry = doc.frames.find((f) => f.shotId === shotId);
-	const keyframeWasFailed = entry?.status === "failed";
-	// 手动路径有人工配额护栏；auto 路径独立计数（不占手动配额）
-	if (entry) {
-		if (opts?.auto) {
-			if ((entry.autoAttempts ?? 0) >= MAX_IMAGE_AUTO_REDRAW) {
-				return {
-					ok: false,
-					error: `镜头 ${shotId} 审核自动重绘 ${MAX_IMAGE_AUTO_REDRAW} 轮仍未通过，已停止。问题需在分镜提示词阶段微调后整体重跑。`,
-				};
-			}
-		} else if (entry.attempts >= MAX_IMAGE_REDRAW) {
-			return {
-				ok: false,
-				error: `镜头 ${shotId} 关键帧已重绘 ${MAX_IMAGE_REDRAW} 次达上限。建议在分镜提示词阶段微调后整体重跑。`,
-			};
-		}
-	}
-
-	const bible = await readArtifact<VisualBible>(run, "visual-bible.json").catch(
-		() => ({ styleKeywords: [], palette: [], lighting: "", grade: "" }) as VisualBible,
-	);
-	const shotPrompts = await readArtifact<ShotPromptDoc>(run, "prompts.json").catch(() => null);
-	const shotPrompt =
-		shotPrompts?.prompts.find((p) => p.shotId === shotId)?.prompt ??
-		script.shots.find((s) => s.id === shotId)!.visual;
-
-	const queue = new GenerationQueue(ctx.mediaConfig);
-	const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
-	if (!entry) {
-		entry = { shotId, status: "pending", attempts: 0, versions: [] };
-		doc.frames.push(entry);
-	}
-	const oldFile = entry.file;
-	const t0 = Date.now();
-	// 自参考迭代：当前设计定稿矩阵 + 旧帧构图一起合成参考板；既同步新设定，又保留原构图。
-	const prevSelfRef =
-		oldFile && fs.existsSync(path.join(run.dir, oldFile)) ? await fileDataUrl(run.dir, oldFile) : null;
-	const latestReferences = await keyframeReferencesOf(
-		shotId,
-		run,
-		shotPrompt,
-		script.shots.find((s) => s.id === shotId)?.visual,
-	);
-	const redrawSources = [...latestReferences.entities.map((entity) => entity.file!).filter(Boolean)];
-	if (oldFile && fs.existsSync(path.join(run.dir, oldFile))) redrawSources.push(oldFile);
-	const redrawReference =
-		oldFile && fs.existsSync(path.join(run.dir, oldFile))
-			? await buildReferenceSheet(run, shotId, redrawSources)
-			: latestReferences.file;
-	const redrawReferenceImage = redrawReference ? await fileDataUrl(run.dir, redrawReference) : prevSelfRef;
-	if (opts?.auto) {
-		entry.autoAttempts = (entry.autoAttempts ?? 0) + 1;
-	} else {
-		entry.attempts += 1;
-	}
-	delete entry.confirmed;
-	pushEvent(
-		run,
-		"storyboard",
-		"client",
-		"redo",
-		`正在重试镜头 ${shotId} 关键帧（第 ${entry.attempts} 次）${instruction ? `：${instruction.slice(0, 60)}` : "（原样重绘）"}…`,
-	);
-	try {
-		// 先备份旧图、再生成：生成会写入同名主文件，若先生成后备份，
-		// 会把新图误挪进版本库并让主文件悬空（UI 404、首帧锚定失效）。
-		const vRelPath = `assets/key-${shotId}_v${entry.versions.length + 1}${path.extname(oldFile ?? "")}`;
-		const { file } = await withVersionedAsset({
-			run,
-			mainRelPath: oldFile ?? "",
-			versions: entry.versions,
-			backupRelPath: vRelPath,
-			generate: async () =>
-				generateImage(
-					sc,
-					keyframePrompt(shotPrompt, bible, await designAnchorsOf(run)) +
-						(instruction ? `, adjustment: ${instruction}` : ""),
-					`key-${shotId}`,
-					imageSizeFor(optionsOf(run).aspectRatio),
-					{ referenceImage: redrawReferenceImage },
-				),
-		});
-		if (!file) {
-			entry.status = oldFile ? "done" : "failed";
-			await writeJson(run, "keyframes.json", doc);
-			pushEvent(run, "storyboard", "client", "status", `镜头 ${shotId} 关键帧重试未成功 ⚠️，可稍后再次重试。`);
-			return { ok: false, error: "关键帧生成失败，请稍后重试" };
-		}
-		entry.file = file;
-		entry.status = "done";
-		entry.error = undefined;
-		entry.promptSig = promptSigOf(shotPrompt);
-		// 元数据对齐：重绘即视为同步最新设定；参考矩阵刷新为当前最相关实体集
-		entry.refs = latestReferences.entities.map((entity) => entity.id);
-		if (redrawReference) entry.refSheet = redrawReference;
-		else delete entry.refSheet;
-		delete entry.staleRefs;
-		if (Array.isArray(doc.confirmedShotIds))
-			doc.confirmedShotIds = doc.confirmedShotIds.filter((id) => id !== shotId);
-		await writeJson(run, "keyframes.json", doc);
-		appendSpan(
-			run,
-			{
-				stage: "reshot",
-				name: `关键帧 ${shotId} 重绘`,
-				kind: "media",
-				status: "ok",
-				input: (instruction || "原样重绘").slice(0, 120),
-				output: path.basename(file),
-			},
-			t0,
-		);
-		pushEvent(
-			run,
-			"storyboard",
-			"client",
-			"redo",
-			`镜头 ${shotId} 关键帧已重绘完成${instruction ? `：${instruction.slice(0, 60)}` : ""}。补拍时将以新关键帧锚定画面。`,
-			{ stage: "keyframes", focus: shotId, label: "查看关键帧" },
-		);
-		return { ok: true, keyframeWasFailed };
-	} catch (error) {
-		if (sc.signal.aborted) return { ok: false, error: "已中止" };
-		entry.status = oldFile ? "done" : "failed";
-		entry.error = (error instanceof Error ? error.message : String(error)).slice(0, 160);
-		await writeJson(run, "keyframes.json", doc);
-		pushEvent(run, "storyboard", "client", "status", `镜头 ${shotId} 关键帧重试出错 ⚠️：${entry.error}`);
-		return { ok: false, error: entry.error ?? "重绘失败" };
-	}
-}
+// redesignKeyframeInner 已迁到 ./redo/keyframe.ts（单镜关键帧重绘）
+import { redesignKeyframeInner } from "./redo/keyframe.ts";
 
 /** 关键帧自审：审核 → fail 帧带审核意见自动重绘（auto 轮，不占手动配额）→ 定向复审 */
 async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
@@ -1664,352 +1524,9 @@ async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
 
 
 
-/** stageExport 已迁到 ./stages/export.ts（暂未迁，保持内联） */
-async function stageExport(
-	sc: StageCtx,
-	script?: ScriptDoc,
-	clipFiles?: (string | null)[],
-	audioFiles?: (string | null)[],
-): Promise<void> {
-	const { run, ctx, signal } = sc;
-	const opts = optionsOf(run);
-	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
-	setStage(run, "export", "running", 0);
-	pushEvent(run, "editor", "reviewer", "status", "剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。");
-
-	// clips/audio 阶段的产物在 refine/resume 场景下可能来自磁盘，这里统一从 assets 推导
-	let clips = clipFiles;
-	let audios = audioFiles;
-	if (!clips || !audios) {
-		clips = scriptDoc.shots.map((s) => {
-			const raw = path.join(run.dir, "assets", `clip-${s.id}.mp4`);
-			return fs.existsSync(raw) ? raw : null;
-		});
-		audios = scriptDoc.shots.map((s) => {
-			const raw = path.join(run.dir, "assets", `tts-${s.id}.mp3`);
-			return fs.existsSync(raw) ? raw : null;
-		});
-	}
-
-	// ---- 画幅：重新导出时可指定其他画幅（多平台分发），默认生成时主画幅 ----
-	const exportAspect: AspectRatio = run.exportAspectRatio ?? opts.aspectRatio;
-	const isMainAspect = exportAspect === opts.aspectRatio;
-	const finalName = isMainAspect ? "final.mp4" : `final-${exportAspect.replace(":", "x")}.mp4`;
-	const { width, height } = pixelDimensions(opts.resolution, exportAspect);
-	const normalized: string[] = [];
-	const subtitles: SubtitleEntry[] = [];
-	const keptShots = scriptDoc.shots.filter((_, i) => clips![i] !== null);
-	const totalExportSteps = keptShots.length + 3; // 归一化 + EDL + 合成 + 质检
-	let doneSteps = 0;
-
-	// ---- 节奏 trim：按旁白实际时长定每镜时长（旁白 + 尾留白，剪掉空转） ----
-	const NARR_TAIL_PAD = 0.7; // 旁白结束后画面留白
-	const JCUT_LEAD = 0.35; // J-cut：下一镜旁白较画面切点提前进入
-	const shotDur: number[] = [];
-	const narrDur: (number | null)[] = [];
-	for (const shot of keptShots) {
-		const i = scriptDoc.shots.indexOf(shot);
-		const audioRel = audios![i] ? path.relative(run.dir, audios![i]!) : null;
-		const dur = audioRel ? await probeDuration(audioRel, run.dir) : null;
-		narrDur.push(dur);
-		shotDur.push(
-			dur === null
-				? opts.clipDurationSec // 无旁白：保持整段
-				: Math.min(opts.clipDurationSec, Math.max(1.4, dur + NARR_TAIL_PAD)), // 上限=单镜时长设置（此前硬编码 5.5 导致选 10s 仍被裁成 ~5s）
-		);
-	}
-
-	for (const shot of keptShots) {
-		throwIfAborted(signal);
-		const i = scriptDoc.shots.indexOf(shot);
-		const k = keptShots.indexOf(shot);
-		const out = `shot-${shot.id}.mp4`;
-		const t0 = Date.now();
-		try {
-			await normalizeShot({
-				cwd: run.dir,
-				clipPath: path.relative(run.dir, clips![i]!),
-				audioPath: audios![i] ? path.relative(run.dir, audios![i]!) : null,
-				outPath: path.join("assets", out),
-				width,
-				height,
-				fps: opts.fps,
-				durationSec: shotDur[k]!,
-				signal,
-			});
-			appendSpan(
-				run,
-				{
-					stage: "export",
-					name: `镜头 ${shot.id} 归一化`,
-					kind: "ffmpeg",
-					status: "ok",
-					output: `${out}（${shotDur[k]!.toFixed(1)}s）`,
-				},
-				t0,
-			);
-		} catch (error) {
-			appendSpan(
-				run,
-				{
-					stage: "export",
-					name: `镜头 ${shot.id} 归一化`,
-					kind: "ffmpeg",
-					status: "error",
-					output: error instanceof Error ? error.message : String(error),
-				},
-				t0,
-			);
-			throw error;
-		}
-		normalized.push(`assets/${out}`);
-		doneSteps += 1;
-		setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
-	}
-	// ---- EDL 转场决策：剪辑师 LLM 为每个切点选转场（失败兜底全 cut） ----
-	let edl: EdlDoc | null = null;
-	const tEdl = Date.now();
-	try {
-		const edlShots = keptShots.map((s, k) => ({
-			id: s.id,
-			durationSec: shotDur[k]!,
-			narration: narrationFor(s, opts.promptLanguage).trim().slice(0, 40),
-			visual: s.visual.slice(0, 80),
-		}));
-		const edlText = edlPrompt(edlShots);
-		edl = await chatJson<EdlDoc>(ctx.llm, edlText, signal);
-		run.metrics.llmCalls += 1;
-		trackLlmCost(run, ctx, edlText, JSON.stringify(edl));
-		appendSpan(
-			run,
-			{
-				stage: "export",
-				name: "剪辑决策（转场 EDL）",
-				kind: "llm",
-				status: "ok",
-				input: `${keptShots.length} 镜节奏表`,
-				output: (edl.transitions ?? []).map((t) => `${t.after}:${t.type}`).join(" ") || "空（按 cut 处理）",
-			},
-			tEdl,
-		);
-	} catch (error) {
-		appendSpan(
-			run,
-			{
-				stage: "export",
-				name: "剪辑决策（转场 EDL）",
-				kind: "llm",
-				status: "error",
-				input: "镜头节奏表",
-				output: `${error instanceof Error ? error.message : String(error)}（降级为全硬切）`,
-			},
-			tEdl,
-		);
-	}
-	const VALID_TRANSITIONS: TransitionType[] = ["cut", "fade", "dip", "white", "wipeleft", "slideup"];
-	const VALID_SFX: SfxType[] = ["whoosh", "impact", "riser"];
-	const transitions: TimelineTransition[] = [];
-	for (let i = 0; i < keptShots.length - 1; i += 1) {
-		const raw = (edl?.transitions ?? []).find((t) => Number(t.after) === i + 1);
-		const type = VALID_TRANSITIONS.includes(raw?.type as TransitionType) ? (raw!.type as TransitionType) : "cut";
-		const dur = type === "cut" ? 0 : Math.min(0.8, Math.max(0.3, Number(raw?.durationSec) || 0.5));
-		// 音效：合法值按 LLM 决策；非 cut 转场缺省兜底 whoosh，cut 缺省无声
-		const sfxType = VALID_SFX.includes(raw?.sfx as SfxType)
-			? (raw!.sfx as SfxType)
-			: type !== "cut"
-				? "whoosh"
-				: null;
-		transitions.push({ afterShotIndex: i, type, durationSec: dur, sfxType });
-	}
-	await fs.promises
-		.writeFile(
-			path.join(run.dir, "transitions.json"),
-			JSON.stringify({ transitions, shotDur, generatedAt: new Date().toISOString() }, null, "\t"),
-			"utf-8",
-		)
-		.catch(() => {});
-	doneSteps += 1;
-	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
-
-	// ---- 时间轴：镜头起点（转场重叠吃时长）+ J-cut 旁白起点 + SFX 起点 + 字幕 ----
-	const shotStart: number[] = [];
-	const narrStart: number[] = [];
-	const sfxTimeline: TimelineSfx[] = [];
-	let cursor = 0;
-	for (let i = 0; i < keptShots.length; i += 1) {
-		shotStart.push(cursor);
-		narrStart.push(i > 0 ? Math.max(0, cursor - JCUT_LEAD) : 0);
-		const t = i < transitions.length ? transitions[i]! : undefined;
-		const overlap = t && t.type !== "cut" ? t.durationSec : 0;
-		if (t?.sfxType) {
-			// 音效略先于切点入（提前 0.1s），时长对齐转场时长（0.3-0.9s）
-			const tStart = cursor + shotDur[i]! - overlap;
-			sfxTimeline.push({
-				startSec: Math.max(0, tStart - 0.1),
-				type: t.sfxType,
-				durationSec: Math.min(0.9, Math.max(0.3, t.durationSec || 0.5)),
-			});
-		}
-		cursor += shotDur[i]! - overlap;
-	}
-	const narrationTexts = keptShots.map((s) => narrationFor(s, opts.promptLanguage).trim());
-	for (let i = 0; i < keptShots.length; i += 1) {
-		if (!narrationTexts[i]) continue;
-		const nextStart = i + 1 < keptShots.length ? narrStart[i + 1] : cursor;
-		const dur = Math.max(0.8, Math.min((narrDur[i] ?? 1.5) + 0.3, nextStart - narrStart[i]));
-		subtitles.push({ start: narrStart[i]!, duration: dur, text: narrationTexts[i]! });
-	}
-
-	// ---- 合成：xfade 转场链 + 旁白 J-cut 定位 + BGM 闪避 + SFX 音效层（失败降级 concat） ----
-	const assPath = path.join("assets", "subs.ass");
-	await fs.promises.writeFile(path.join(run.dir, assPath), buildAssSubtitles(subtitles, width, height), "utf-8");
-	const finalPath = path.join("assets", finalName);
-	const BGM_EXTS = [".mp3", ".wav", ".m4a", ".ogg", ".flac"];
-	const bgmPath =
-		BGM_EXTS.map((e) => path.join("assets", `bgm${e}`)).find((p) => fs.existsSync(path.join(run.dir, p))) ?? null;
-	const timelineShots: TimelineShot[] = keptShots.map((s, k) => ({
-		path: normalized[k]!,
-		durationSec: shotDur[k]!,
-		narrationPath:
-			audios![scriptDoc.shots.indexOf(s)] != null && narrDur[k] !== null
-				? path.relative(run.dir, audios![scriptDoc.shots.indexOf(s)]!)
-				: null,
-		narrationStartSec: narrStart[k]!,
-		narrationDurationSec: narrDur[k] ?? 0,
-		subtitle: narrationTexts[k] || null,
-	}));
-	const tConcat = Date.now();
-	let totalSec = cursor;
-	let usedTransitions = 0;
-	let sfxUsed = 0;
-	let degraded = false;
-	try {
-		const info = await assembleTimeline({
-			cwd: run.dir,
-			shots: timelineShots,
-			transitions,
-			sfx: sfxTimeline,
-			bgmPath,
-			assPath,
-			outPath: finalPath,
-			signal,
-		});
-		totalSec = info.totalSec;
-		usedTransitions = info.usedTransitions;
-		sfxUsed = info.sfxUsed;
-	} catch (error) {
-		// xfade/混音滤镜失败：降级为 concat demuxer（旁白已嵌入各镜，字幕照常烧录，转场/音效/响度处理丢失）
-		degraded = true;
-		appendSpan(
-			run,
-			{
-				stage: "export",
-				name: "时间线合成（转场+混音）",
-				kind: "ffmpeg",
-				status: "error",
-				input: `转场 ${usedTransitions} · SFX ${sfxTimeline.length} · BGM ${bgmPath ? "有" : "无"}`,
-				output: `${error instanceof Error ? error.message : String(error)}（降级 concat 硬拼）`,
-			},
-			tConcat,
-		);
-		await concatWithSubtitles({ cwd: run.dir, shotPaths: normalized, assPath, outPath: finalPath, signal });
-		totalSec = shotDur.reduce((sum, d) => sum + d, 0);
-	}
-	run.finalFile = finalName;
-	const transSummary = transitions
-		.filter((t) => t.type !== "cut")
-		.map((t) => `${TRANSITION_LABEL[t.type]} ${t.durationSec.toFixed(1)}s`)
-		.join("、");
-	const sfxSummary = sfxTimeline.map((s) => SFX_LABEL[s.type]).join("、");
-	appendSpan(
-		run,
-		{
-			stage: "export",
-			name: "时间线合成（转场+混音）",
-			kind: "ffmpeg",
-			status: "ok",
-			input: `${transSummary || "全硬切"}${bgmPath ? " · BGM 铺底闪避" : ""}${sfxSummary ? ` · SFX ${sfxSummary}` : ""} · 响度 -14 LUFS`,
-			output: `${finalName}（${keptShots.length} 镜 · ${totalSec.toFixed(1)}s · ${usedTransitions} 处转场 · ${sfxUsed} 处音效${degraded ? " · 已降级" : ""}）`,
-		},
-		tConcat,
-	);
-	doneSteps += 1;
-	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
-	pushEvent(
-		run,
-		"editor",
-		"reviewer",
-		"handoff",
-		`粗剪完成（${keptShots.length} 镜 · ${totalSec.toFixed(1)}s · ${opts.resolution} ${exportAspect}${isMainAspect ? "" : " 版"}，转场：${transSummary || "全硬切"}${sfxSummary ? `，音效：${sfxSummary}` : ""}${bgmPath ? "，BGM 铺底" : ""}，响度 -14 LUFS），移交审片员质检。`,
-		{ stage: "export", focus: "final", label: "播放成片" },
-	);
-
-	// ---- 质检：逐镜抽帧（新时间轴中点） → 视觉模型评分 ----
-	const midpoints = keptShots.map((_, k) => shotStart[k]! + shotDur[k]! / 2);
-	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, midpoints);
-	doneSteps += 1;
-	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
-
-	// ---- 跨镜一致性预检（自动跑，先于用户）：发色/服装/画风突变等跨镜问题，不靠用户主动点按钮 ----
-	let consistencyIssues = 0;
-	try {
-		const consistencyDoc = await checkConsistency(sc.ctx, run, signal);
-		const flagged = consistencyDoc.shots.filter((s) => s.issues.length > 0);
-		consistencyIssues = flagged.length;
-		if (flagged.length > 0) {
-			pushEvent(
-				run,
-				"reviewer",
-				"client",
-				"qa",
-				`跨镜一致性预检 ⚠️ ${flagged.length} 处异常：${flagged
-					.map((s) => `${s.shotId}${s.appearance ? `（${s.appearance.slice(0, 30)}）` : ""}`)
-					.join("、")}。可在质量审读页查看详情并补拍。`,
-				{ stage: "review", label: "查看一致性" },
-			);
-		}
-	} catch (error) {
-		// 一致性失败不阻断出片（仅记日志+事件）
-		appendSpan(
-			run,
-			{
-				stage: "export",
-				name: "跨镜一致性预检",
-				kind: "qa",
-				status: "error",
-				output: error instanceof Error ? error.message : String(error),
-			},
-			Date.now(),
-		);
-		pushEvent(
-			run,
-			"reviewer",
-			"producer",
-			"status",
-			`跨镜一致性预检跳过 ⚠️（${error instanceof Error ? error.message : String(error)}）。可在质量审读页手动重跑。`,
-		);
-	}
-
-	setStage(run, "export", "done", 100);
-	const v = run.verdict;
-	if (v.axes.length > 0) {
-		const worst = [...v.axes].sort((a, b) => a.score - b.score)[0];
-		const fails = (v.shots ?? []).filter((s) => s.verdict === "fail");
-		const failNote =
-			fails.length > 0
-				? `不合格镜头：${fails.map((s) => `${s.id}（${s.reason}）`).join("；")}。可在质检面板逐镜重做。`
-				: "";
-		const consistencyNote =
-			consistencyIssues > 0 ? `。另有 ${consistencyIssues} 处跨镜一致性异常请关注` : "";
-		pushEvent(
-			run,
-			"reviewer",
-			"producer",
-			"qa",
-			`质检结论：${v.overall === "pass" ? "通过 ✅" : v.overall === "warn" ? "有保留通过 ⚠️" : "不通过 ❌"}（综合 ${v.score}）。最短板 ${worst.id} ${worst.score} 分${consistencyNote}。${failNote}`,
-		);
-	}
-}
+// stageExport 已迁到 ./stages/export.ts（视频合成 + 一致性预检 + QA + 旁白回灌）
+import { stageExport } from "./stages/export.ts";
+export { stageExport };
 
 /** 阶段调度：按顺序执行给定阶段；上游产物优先用调用方传入（避免重复生成/读盘不一致） */
 export async function executeStages(
@@ -2479,7 +1996,9 @@ export async function directorChat(ctx: ServerContext, run: RunRecord, text: str
 
 	if (plan.intent !== "none") {
 		if (run.status === "running") {
-			actionNote = "（管线正在运行，等这一轮结束我就安排。）";
+			// 不承诺会自动执行：当前没有 pending 队列，说"稍后安排"是食言。
+			// 诚实话术 + 让用户本轮结束后再发一次即可立即派发。
+			actionNote = "（管线正在运行，现在改不了；这一轮结束后请再发一次指令，我立即安排。）";
 		} else if (plan.intent === "reshot" && plan.shotId) {
 			const r = await reshotRun(ctx, run, plan.shotId, plan.instruction ?? "");
 			actionNote = r.ok ? `已安排补拍镜头 ${plan.shotId}。` : `（补拍暂不可行：${r.error}）`;
@@ -2624,7 +2143,8 @@ export async function generateDoc<T>(
 			images.length > 0
 				? await chatVisionJson<T>(ctx.llm, userPrompt, images, signal)
 				: await chatJson<T>(ctx.llm, userPrompt, signal);
-		trackLlmCost(run, ctx, userPrompt, JSON.stringify(doc));
+		// images 参与计费：参考图走多模态输入，按张数粗估 token（B3）
+		trackLlmCost(run, ctx, userPrompt, JSON.stringify(doc), images.length);
 		appendSpan(
 			run,
 			{
@@ -2659,116 +2179,9 @@ export async function generateDoc<T>(
 // 质检
 // ============================================================================
 
-/** 视觉质检：每镜中点帧（按实际时间轴） → 模型打 4 个视觉维度分 + 逐镜三态标注；audioSync 由 TTS 成功率算 */
-async function runQa(
-	sc: StageCtx,
-	keptShots: ScriptDoc["shots"],
-	opts: GenerationOptions,
-	finalPath: string,
-	audioFiles: (string | null)[],
-	midpoints: number[],
-): Promise<QaVerdict> {
-	const { run, ctx, signal } = sc;
-	const frames: string[] = [];
-	const t0 = Date.now();
-	try {
-		for (const [i, shot] of keptShots.entries()) {
-			throwIfAborted(signal);
-			const atSec = midpoints[i] ?? i * opts.clipDurationSec + opts.clipDurationSec / 2;
-			const framePath = path.join("assets", `qa-${shot.id}.jpg`);
-			await extractFrame({ cwd: run.dir, videoPath: finalPath, atSec, outPath: framePath, signal });
-			frames.push(await fs.promises.readFile(path.join(run.dir, framePath)).then((b) => b.toString("base64")));
-		}
-		throwIfAborted(signal);
-		const shotList = keptShots.map((s) => s.id).join("、");
-		const vision = await chatVisionJson<{
-			briefFit: number;
-			visualConsistency: number;
-			pacing: number;
-			textQuality: number;
-			shots?: { id?: string; verdict?: string; reason?: string }[];
-		}>(
-			ctx.llm,
-			[
-				"这是同一条广告片的分镜帧（按顺序）。广告需求：",
-				run.brief.creative.logline,
-				run.brief.creative.keyMessage ? `关键信息: ${run.brief.creative.keyMessage}` : "",
-				`镜头编号依次为：${shotList}。`,
-				"",
-				"请基于帧内容打分（0-100 整数）：",
-				"briefFit: 画面内容与广告需求的贴合度；",
-				"visualConsistency: 各帧风格/色调/光线的一致性；",
-				"pacing: 镜头推进的节奏感（开场-展开-收尾是否有层次）；",
-				"textQuality: 画面中是否出现乱码文字/水印/logo（完全干净=100，出现即大幅扣分）。",
-				"",
-				"同时逐镜标注：verdict 取 ok（可用）/ warn（勉强）/ fail（明显不合格，如乱码文字、画面崩坏、与需求严重不符），reason 用一句话说明（ok 可写「通过」）。",
-				"",
-				`只输出 JSON: {"briefFit": 0, "visualConsistency": 0, "pacing": 0, "textQuality": 0, "shots": [{"id": "${keptShots[0]?.id ?? "SH01"}", "verdict": "ok", "reason": "…"}]}`,
-			]
-				.filter(Boolean)
-				.join("\n"),
-			frames,
-			signal,
-		);
-		run.metrics.llmCalls += 1;
-		trackLlmCost(run, ctx, "qa-visual", JSON.stringify(vision));
-		const ttsOk = audioFiles.filter((f) => f !== null).length;
-		const audioSync = audioFiles.length > 0 ? Math.round((ttsOk / audioFiles.length) * 100) : 100;
-		const clamp = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-		const axes: QaVerdict["axes"] = [
-			{ id: "briefFit", score: clamp(vision.briefFit) },
-			{ id: "visualConsistency", score: clamp(vision.visualConsistency) },
-			{ id: "pacing", score: clamp(vision.pacing) },
-			{ id: "audioSync", score: audioSync },
-			{ id: "textQuality", score: clamp(vision.textQuality) },
-		];
-		const score = Math.round(axes.reduce((sum, a) => sum + a.score, 0) / axes.length);
-
-		// 逐镜标注（宽容解析：字段缺失/未知 id 都容忍）
-		const rawShots = Array.isArray(vision.shots) ? vision.shots : [];
-		const byId = new Map(rawShots.map((s) => [String(s?.id ?? ""), s]));
-		const shots: QaShotVerdict[] = keptShots.map((shot) => {
-			const s = byId.get(shot.id);
-			const v = s?.verdict === "ok" || s?.verdict === "warn" || s?.verdict === "fail" ? s.verdict : "ok";
-			return { id: shot.id, verdict: v, reason: String(s?.reason ?? "").slice(0, 120) || "通过" };
-		});
-
-		// 三态多数决：LLM 的 0-100 分数是伪精确（同帧复评浮动 ±10 常见），分数只保留展示用途；
-		// gate 决策以逐镜 verdict 为准——任一 fail 即 fail，warn 过半才 warn，否则 pass。
-		const failCount = shots.filter((s) => s.verdict === "fail").length;
-		const warnCount = shots.filter((s) => s.verdict === "warn").length;
-		const overall = failCount > 0 ? "fail" : warnCount > shots.length - warnCount - failCount ? "warn" : "pass";
-		appendSpan(
-			run,
-			{
-				stage: "export",
-				name: "审片质检（五轴 + 逐镜标注）",
-				kind: "qa",
-				status: failCount > 0 || overall === "fail" ? "semantic-fail" : "ok",
-				input: `${frames.length} 帧抽检`,
-				output: `综合 ${score}（${overall}）；逐镜 ${shots.filter((s) => s.verdict === "ok").length} ok / ${shots.filter((s) => s.verdict === "warn").length} warn / ${failCount} fail`,
-			},
-			t0,
-		);
-		return { overall, score, axes, shots };
-	} catch (error) {
-		if (signal.aborted) throw error;
-		appendSpan(
-			run,
-			{
-				stage: "export",
-				name: "审片质检",
-				kind: "qa",
-				status: "error",
-				output: error instanceof Error ? error.message : String(error),
-			},
-			t0,
-		);
-		// 质检失败不拖垮成片：给保守 warn 结论并记录
-		run.error = `质检阶段跳过: ${error instanceof Error ? error.message : String(error)}`;
-		return { overall: "warn", score: 0, axes: [] };
-	}
-}
+// runQa 已迁到 ./qa/review.ts（视觉质检：5 轴 + 逐镜三态 + audioSync 确定性）
+import { runQa } from "./qa/review.ts";
+export { runQa };
 
 // ============================================================================
 // LLM 输出修正（防字段缺失/越界）
@@ -2917,116 +2330,6 @@ export async function ensureVoiceDirections(sc: StageCtx, scriptDoc: ScriptDoc):
 	return map;
 }
 
-export async function stageClips(
-	sc: StageCtx,
-	script?: ScriptDoc,
-): Promise<{ script: ScriptDoc; clipFiles: (string | null)[] }> {
-	const { run, signal } = sc;
-	const opts = optionsOf(run);
-	const scriptDoc = script ?? (await readArtifact<ScriptDoc>(run, "script.json"));
-	const shotPrompts = await readArtifact<ShotPromptDoc>(run, "prompts.json");
-	const bible = await readArtifact<VisualBible>(run, "visual-bible.json").catch(
-		() => ({ styleKeywords: [], palette: [], lighting: "", grade: "" }) as VisualBible,
-	);
-	const keyframes = await readKeyframes(run);
-	setStage(run, "clips", "running", 0);
-	// 部分确认：只把用户明确放行的关键帧交给视频队列；未勾选镜头不消耗额度。
-	// 返回过滤后的 script，使 audio/export 与“实际制作集”保持同一顺序与同一长度。
-	// 关键区分：undefined 是旧 run / 未确认；空数组是显式清空（禁止），有值则严格按清单。
-	const hasRecordedSelection = Array.isArray(keyframes.confirmedShotIds);
-	const productionShots = hasRecordedSelection
-		? scriptDoc.shots.filter((shot) => keyframes.confirmedShotIds?.includes(shot.id))
-		: scriptDoc.shots;
-	const { width, height } = pixelDimensions(opts.resolution, opts.aspectRatio);
-	const clipFiles: (string | null)[] = [];
-	for (const [i, shot] of productionShots.entries()) {
-		throwIfAborted(signal);
-		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
-		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）
-		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes, shot);
-		const imageDataUrl = frame.file ? await fileDataUrl(run.dir, frame.file) : null;
-		pushEvent(
-			run,
-			"tech",
-			"producer",
-			"status",
-			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${opts.clipDurationSec}s · ${imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
-		);
-		const t0 = Date.now();
-		const submitClip = (withImage: boolean) =>
-			sc.queue.submit(
-				{
-					roleName: "video-agent",
-					kind: "video",
-					prompt,
-					// seed 不透传：未知参数可能被供应商 400 拒绝，仅在 options 中保留
-					params: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null),
-					outputName: `clip-${shot.id}`,
-				},
-				run.dir,
-			);
-		run.metrics.mediaCalls += 1;
-		let finished = await sc.queue.awaitJob(submitClip(Boolean(imageDataUrl)).id, undefined, signal);
-		// 图生视频整单失败 → 降级为文生视频再试一次
-		if (!(finished.status === "done" && finished.filePath) && imageDataUrl) {
-			pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 图生视频未成功，降级为文生视频重试。`);
-			run.metrics.mediaCalls += 1;
-			finished = await sc.queue.awaitJob(submitClip(false).id, undefined, signal);
-		}
-		const ok = finished.status === "done" && finished.filePath;
-		clipFiles.push(ok ? finished.filePath! : null);
-		// P2：视频生成成功时探测实际时长，按 perSecond 计费
-		if (ok && finished.filePath) {
-			try {
-				const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
-				const adapter = videoAdapterOf(sc.ctx);
-				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, dur ?? opts.clipDurationSec);
-			} catch {
-				const adapter = videoAdapterOf(sc.ctx);
-				if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, opts.clipDurationSec);
-			}
-		}
-		appendSpan(
-			run,
-			{
-				stage: "clips",
-				name: `镜头 ${shot.id} 生成`,
-				kind: "media",
-				status: ok ? "ok" : "error",
-				input: `${imageDataUrl ? "[keyframe+i2v] " : ""}${prompt.slice(0, 120)}`,
-				output: ok ? path.basename(finished.filePath!) : `队列状态 ${finished.status}`,
-			},
-			t0,
-		);
-		if (ok) {
-			pushEvent(
-				run,
-				"tech",
-				"editor",
-				"status",
-				`镜头 ${shot.id} 生成完成 ✅（${i + 1}/${productionShots.length}）`,
-				{ stage: "generate", focus: shot.id, label: "查看片段" },
-			);
-		} else {
-			pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 生成失败 ⚠️，已跳过并由剪辑师在时间线上补位。`, {
-				stage: "generate",
-				focus: shot.id,
-				label: "查看该镜",
-			});
-		}
-		setStage(run, "clips", "running", Math.round(((i + 1) / productionShots.length) * 100));
-	}
-	const okCount = clipFiles.filter((f) => f !== null).length;
-	if (okCount === 0) {
-		throw new Error("全部镜头生成失败（详见队列重试记录）");
-	}
-	setStage(run, "clips", "done", 100);
-	pushEvent(
-		run,
-		"tech",
-		"editor",
-		"handoff",
-		`镜头批次交付：${okCount}/${productionShots.length} 镜成功，移交剪辑师归一化与合成。`,
-	);
-	return { script: { ...scriptDoc, shots: productionShots }, clipFiles };
-}
+// stageClips 已迁到 ./stages/clips.ts
+import { stageClips } from "./stages/clips.ts";
+export { stageClips };

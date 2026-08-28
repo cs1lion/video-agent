@@ -22,7 +22,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { MediaAdapterConfig } from "../../coding-agent/examples/extensions/studio/media/adapter.ts";
-import type { ServerContext } from "./config.ts";
+import type { LlmConfig } from "./config.ts";
 import type { RunRecord } from "./pipeline.ts";
 
 export type Currency = "CNY" | "USD";
@@ -246,21 +246,35 @@ export function estimateTokenCounts(prompt: string, completion: string): {
 // 成本追踪（原 pipeline.ts 内联实现迁移至此；币种守卫为 P1 修复）
 // ============================================================================
 
+/** 成本累计目标：只需要 metrics.cost。RunRecord 天然满足，
+ *  非管线模块（如 design-review 只持有 RunDir 形状）也能直接传入。 */
+export interface CostTarget {
+	metrics?: { cost: { spent: number; currency: Currency } };
+}
+
 /** 币种守卫：条目币种与 run 累计币种不一致时跳过并告警，保证总额口径单一 */
-function accumulateCost(run: RunRecord, entry: CostEntry, source: string): void {
-	if (entry.currency !== run.metrics.cost.currency) {
+function accumulateCost(run: CostTarget, entry: CostEntry, source: string): void {
+	const cost = run.metrics?.cost;
+	if (!cost) return;
+	if (entry.currency !== cost.currency) {
 		console.warn(
-			`[pricing] 跳过 ${source} 成本条目：币种 ${entry.currency} 与 run 累计币种 ${run.metrics.cost.currency} 不一致（金额 ${entry.amount}）`,
+			`[pricing] 跳过 ${source} 成本条目：币种 ${entry.currency} 与 run 累计币种 ${cost.currency} 不一致（金额 ${entry.amount}）`,
 		);
 		return;
 	}
-	run.metrics.cost.spent = round2(run.metrics.cost.spent + entry.amount);
+	cost.spent = round2(cost.spent + entry.amount);
+}
+
+/** 成本追踪所需的最小上下文：比 ServerContext 更窄，各模块（含 consistency.ts）可直接调用 */
+export interface CostContext {
+	priceCatalog: PriceCatalog;
+	llm: LlmConfig;
 }
 
 /** 累计本次 LLM 调用的成本。images 为多模态输入图张数（每张按 IMAGE_TOKENS_ESTIMATE 粗估）。 */
 export function trackLlmCost(
-	run: RunRecord,
-	ctx: ServerContext,
+	run: CostTarget,
+	ctx: CostContext,
 	promptText: string,
 	completionText: string,
 	images = 0,
@@ -272,8 +286,8 @@ export function trackLlmCost(
 
 /** 累计本次媒体生成的成本。outputSeconds 仅视频/音频有意义；图像/TTS 走 perCall/perKChar。 */
 export function trackMediaCost(
-	run: RunRecord,
-	ctx: ServerContext,
+	run: CostTarget,
+	ctx: CostContext,
 	adapter: { id: string; kind: "video" | "image" | "tts"; model?: string },
 	params: Record<string, unknown>,
 	outputSeconds = 0,

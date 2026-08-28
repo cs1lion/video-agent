@@ -19,6 +19,7 @@ import * as path from "node:path";
 import type { LlmConfig } from "./config.ts";
 import { runFfmpeg } from "./ffmpeg.ts";
 import { chat, tryParseJson } from "./llm.ts";
+import { trackLlmCost, type CostContext } from "./pricing.ts";
 import {
 	type DesignBibleDoc,
 	type DesignEntity,
@@ -30,6 +31,8 @@ import {
 /** 结构化依赖（pipeline 的 RunRecord 满足此形状；避免循环 import） */
 interface RunDir {
 	dir: string;
+	/** 可选：传入 RunRecord 时存在，用于把审核调用计入 run 成本 */
+	metrics?: { cost: { spent: number; currency: "CNY" | "USD" } };
 }
 
 async function readArtifact<T>(run: RunDir, name: string): Promise<T> {
@@ -102,7 +105,8 @@ function parseVerdicts(raw: unknown, knownIds: Set<string>): Map<string, DesignR
 
 /** 单次多模态审核调用（全帧送审比逐帧调用快且省额度；超时放宽到 5 分钟） */
 async function visionReview(
-	ctx: { llm: LlmConfig },
+	/** 需带 priceCatalog：审核是多模态调用，成本须计入 run.metrics.cost */
+	ctx: CostContext,
 	run: RunDir,
 	items: ReviewItem[],
 	signal: AbortSignal | undefined,
@@ -124,6 +128,7 @@ async function visionReview(
 		},
 	];
 	const raw = await chat(llm, content, signal);
+	trackLlmCost(run, ctx, userPrompt, raw, images.length); // images 参与多模态计费
 	const byId = parseVerdicts(tryParseJson(raw), new Set(items.map((i) => i.id)));
 	if (byId.size === 0) throw new Error("审校模型未返回有效的审核结果");
 	return byId;
@@ -150,7 +155,8 @@ const CATEGORY_ZH: Record<DesignEntity["category"], string> = {
  * @param entityIds 可选：只复审指定卡（自动重绘后定向复审）；缺省审核全部已完成卡
  */
 export async function reviewDesignBible(
-	ctx: { llm: LlmConfig },
+	/** 需带 priceCatalog：审核是多模态调用，成本须计入 run.metrics.cost */
+	ctx: CostContext,
 	run: RunDir,
 	signal?: AbortSignal,
 	entityIds?: string[],
@@ -215,7 +221,8 @@ export interface KeyframeReviewOutcome {
  * @param shotIds 可选：只复审指定镜（自动重绘后定向复审）；缺省审核全部可审帧
  */
 export async function reviewKeyframes(
-	ctx: { llm: LlmConfig },
+	/** 需带 priceCatalog：审核是多模态调用，成本须计入 run.metrics.cost */
+	ctx: CostContext,
 	run: RunDir,
 	signal?: AbortSignal,
 	shotIds?: string[],
