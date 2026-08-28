@@ -3016,7 +3016,7 @@ export async function readTraces(run: RunRecord): Promise<TraceSpan[]> {
  * 护栏：每镜上限 MAX_RESHOT_PER_SHOT；生成失败自动回滚旧版本。
  */
 // reshotRun 已迁到 ./redo/reshot.ts 独立维护
-import { reshotRun } from "./redo/reshot.js";
+import { reshotRun } from "./redo/reshot.ts";
 export { reshotRun };
 
 /** 音色解析：label（如「清纯少女」）或 id 均可；未知音色回退适配器默认 */

@@ -16,13 +16,13 @@
  */
 
 import * as path from "node:path";
-import { GenerationQueue } from "../../../coding-agent/examples/extensions/studio/media/queue.js";
+import { GenerationQueue } from "../../../coding-agent/examples/extensions/studio/media/queue.ts";
 import { probeDuration } from "../ffmpeg.ts";
 import { withVersionedAsset, fileDataUrl } from "../asset-version.ts";
 import { videoAdapterOf, videoSubmitParams } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
-import { imageSizeFor } from "../pipeline.js";
-import { keyframePrompt } from "../prompts.js";
+import { imageSizeFor } from "../pipeline.ts";
+import { keyframePrompt } from "../prompts.ts";
 import {
 	MAX_RESHOT_PER_SHOT,
 	type RedoActive,
@@ -42,9 +42,9 @@ import {
 	snapshotShotVerdict,
 	stage,
 	writeJson,
-} from "../pipeline.js";
-import { designAnchorsOf } from "../pipeline.js";
-import type { ScriptDoc, ShotPromptDoc, VisualBible } from "../prompts.js";
+} from "../pipeline.ts";
+import { designAnchorsOf } from "../pipeline.ts";
+import type { ScriptDoc, ShotPromptDoc, VisualBible } from "../prompts.ts";
 import type { ServerContext } from "../config.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
 

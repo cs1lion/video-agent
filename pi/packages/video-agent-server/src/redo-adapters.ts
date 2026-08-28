@@ -5,7 +5,7 @@
  * 保持函数零状态：纯查询/拼装，副作用（如 pushEvent / persistRun）由调用方管。
  */
 
-import type { ServerContext } from "./config.js";
+import type { ServerContext } from "./config.ts";
 import type { GenerationOptions } from "../../video-agent/src/index.ts";
 
 export type VideoAdapterRef = { id: string; kind: "video"; model?: string };
