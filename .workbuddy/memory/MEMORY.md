@@ -15,6 +15,18 @@
   （2026-08-28：声称 "tsc clean / 44/44 pass"，实际 typecheck 红 1 处、npm test 挂死、
   reshot 主干功能自 commit `c26bb0e` 起就没跑通过）。
 
+## ⚠️ 安全：凭据泄漏（2026-08-28 发现，未完全闭环）
+
+- 仓库根目录 **`工具模型.txt` 存有 StepFun / Agnes 的明文 API key**，且自基线提交
+  `232dcce` 起就被 git 跟踪 → **旧密钥已在提交历史中**。
+- 已做：加入 `.gitignore` + `git rm --cached`（磁盘文件保留，未丢失）。
+- **未做（需人工）**：① 去平台**轮换那批密钥**（历史里的应视为已泄露）；
+  ② 若要从历史中彻底清除，需 `git filter-repo` / BFG 重写历史 —— **破坏性操作，
+  涉及 force push，未经郭煜明确确认不要执行**。
+- 教训：任何"随手记录的 key 文本"都别放仓库里；`git add -A` 前先看 `git status`。
+  本项目 `.gitignore` 已覆盖 `*.key` / `.env*` / 音视频产物。
+- **本文件及所有记忆文件严禁写入密钥原文。**
+
 ## 结构性认知
 
 - 真正的项目是 `pi/packages/video-agent-server` + `video-agent-ui`；`pi/` 其余是 vendored 上游。
