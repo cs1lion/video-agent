@@ -304,6 +304,7 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal(submits[1]!.kind, "video");
 		assert.deepEqual(submits[1]!.params, { seconds: "5", mode: "reference", audios: ["https://test-env.tcb.qcloud.la/video-agent/run-dialogue-test/tts-SH01.mp3"] });
 		assert.ok(submits[1]!.prompt.includes("<Audio 1>"), "reference 模式 prompt 必须含 <Audio 1> 占位符");
+		assert.ok(submits[1]!.prompt.includes("严格按"), "必须带严格跟读指令（08-29 E2E：缺失时模型自行配音）");
 		// 停顿插入：1 次，pausesSec [0.5]
 		assert.equal(insertPauseCalls.length, 1);
 		assert.deepEqual(insertPauseCalls[0]!.pausesSec, [0.5]);

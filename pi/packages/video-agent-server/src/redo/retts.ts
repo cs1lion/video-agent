@@ -17,7 +17,7 @@ import * as path from "node:path";
 import { GenerationQueue } from "../../../coding-agent/examples/extensions/studio/media/queue.ts";
 import { chatJson } from "../llm.ts";
 import { withVersionedAsset, fileDataUrl } from "../asset-version.ts";
-import { dialogueDerivedSec, estimateClipSeconds, ttsAdapterOf, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue } from "../redo-adapters.ts";
+import { dialogueDerivedSec, estimateClipSeconds, ttsAdapterOf, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue, withReferenceAudioInstruction } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
 import { fallbackVoiceDirection, narrationFor, rettsDialogueMessages, rettsNarrationMessages } from "../prompts.ts";
 import { prepareDialogueAudio } from "../stages/dialogue-audio.ts";
@@ -388,7 +388,7 @@ async function rettsDialogueCascade(
 	const kf = keyframes.frames.find((f) => f.shotId === shot.id);
 	// 无条件读关键帧：reference 失败降级 i2v 时需要它做首帧锚定（与 clips 先备帧后提交同思路）
 	const kfDataUrl = kf?.status === "done" && kf.file ? await fileDataUrl(run.dir, kf.file) : null;
-	const prompt = useReference ? `${basePrompt}\n<Audio 1>` : basePrompt;
+	const prompt = useReference ? withReferenceAudioInstruction(basePrompt) : basePrompt;
 
 	const estimateSec = estimateClipSeconds(ctx, opts, shot.durationSec);
 	// 幂等键命名空间隔离：管线阶段用 `${runId}:${shotId}:a{n}`，这里带 retts 轮次，

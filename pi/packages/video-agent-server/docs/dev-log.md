@@ -698,6 +698,24 @@ mock.module。**
 - 设计取舍：`ceil` 而非 round（镜长宁长勿短，音频尾部不截）；只对 reference
   成功的台词镜反推，降级旁白镜不改（J-cut 自动对齐）。
 
+**reference prompt 跟随度实验（08-29，E2E 抓出生产 bug）**：用户人工验收
+首个 E2E 成片时反馈"说的不知道是什么"。包络相关分析（`_tts_test/
+compare_all.py`，与 08-28 verify.py 同法）钉死根因——**prompt 形态决定
+2.5-flash 是否跟随参考音频**：
+| prompt 形态 | 包络相关 | 结论 |
+|---|---|---|
+| 裸放 `<Audio 1>` 占位符（当时生产代码写法） | **-0.227** | 模型自行配音，语音不可懂 |
+| 指令后置（画面在前） | 0.295 / 0.781 | 波动大 |
+| 指令后置（生产 helper 首版） | +0.701 | 跟随但偏松 |
+| **指令前置（`withReferenceAudioInstruction` 现版）** | **+0.990** | 几乎完美跟随 |
+| 08-28 基线 flash_cn.mp4 | +0.665 | 当时写法未记录（会话导出缺失） |
+修复：`redo-adapters.ts` 新增 `withReferenceAudioInstruction`——**「严格按
+<Audio 1> 的内容与节奏说话，声音响起时口型开合、静音时闭嘴」必须是 prompt
+第一句**，clips.ts / retts.ts / e2e 脚本统一走它；测试锁 `includes("严格按")`。
+另记：cn_ref.mp3 是 08-28 的 5s 中文参考台词（非"你好世界"，早前 dev-log
+表述有误）；验收素材：`_tts_test/e2e-v1.mp4`（0.990，最佳）与
+`e2e-a2-SH01.mp4`（0.701，生产链路直出）。
+
 **A7 前端全量 7 处 + 音色绑定贯通（2026-08-29，接 A2 E2E 之后）**：UI 此前
 零音频驱动痕迹（A1 只做服务端），本轮一次铺完 3.4 清单：
 - **OptionsForm**：音频驱动开关（off/dialogue，共享包 `GenerationOptions`
@@ -748,7 +766,8 @@ mock.module。**
   `mode=reference, audios=[COS URL], prompt 含 <Audio 1>` 提交（200，
   `task_uxNq0tV6xA2uTD4lOrMFsDdrSm59EKEk`）→ agnesapi 轮询 ~100s completed →
   下载 `_tts_test/e2e-a2-SH01.mp4`（407 KB）。**验收②（人眼确认口型）待用户
-  播放确认**——音频是「你好，世界。」（cn_ref.mp3）。
+  播放确认**——参考音频是 cn_ref.mp3（08-28 的 5s 中文台词；"你好世界"为
+  当时误记，见下 reference prompt 实验）。
 - 依赖注记：`cos-nodejs-sdk-v5` 仅一次性脚本用（`--no-save` 安装；重跑发现
   脚本需重装）；生产链路只依赖 `@cloudbase/node-sdk`（既有传递依赖）。
 - 测试：168/168（publicUrlFor/parseCosUploadUrl 契约更新 +1）。

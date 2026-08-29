@@ -78,12 +78,13 @@ export function videoSubmitParams(
 
 /**
  * 台词镜（音频驱动）的视频提交参数（A2）。
- * 2.5 系列：mode=reference + audios=[公开URL]——prompt 内需含 `<Audio 1>` 占位符
- * （由调用方追加，见 stageClips 台词分支；占位符缺失时供应商按无音频处理）。
- * 2.0 及其他：audios 被静默忽略（总文档 2.1 实测）——返回 null，调用方按
- * "视频模型不支持音频驱动"降级为普通生成 + QA 标记，不赌 400。
- * 首帧锚定（first_frame）与 reference 混用未经验证，不传——宁可少一个锚点，
- * 不赌一次 400（实测参数体系：2.5 禁传 width/height/frame_rate/image）。
+ * 2.5 系列：mode=reference + audios=[公开URL]——prompt 需经
+ * `withReferenceAudioInstruction` 注入 `<Audio 1>` 占位符与严格跟读指令
+ * （占位符缺失时供应商按无音频处理）。2.0 及其他：audios 被静默忽略
+ * （总文档 2.1 实测）——返回 null，调用方按"视频模型不支持音频驱动"降级为
+ * 普通生成 + QA 标记，不赌 400。首帧锚定（first_frame）与 reference 混用
+ * 未经验证，不传——宁可少一个锚点，不赌一次 400（实测参数体系：2.5 禁传
+ * width/height/frame_rate/image）。
  */
 export function videoSubmitParamsForDialogue(
 	ctx: ServerContext,
@@ -93,4 +94,15 @@ export function videoSubmitParamsForDialogue(
 	if (!isAgnesVideo25(ctx)) return null;
 	const seconds = String(Math.min(12, Math.max(4, Math.round(durationSec))));
 	return { seconds, mode: "reference", audios: [audioUrl] };
+}
+
+/**
+ * reference 模式 prompt 注入（08-29 变体实验定案，n=4）：
+ * 裸放 `<Audio 1>` 占位符 → 模型自行配音（与参考包络相关 -0.227，语音不可懂）；
+ * 指令后置（画面描述在前）→ 0.295～0.781 波动大；**指令前置 → +0.990**
+ * （同轮对照：后置 0.781 / 08-28 基线 0.665）。结论：严格跟读指令必须是
+ * prompt 第一句。占位符只出现一次。
+ */
+export function withReferenceAudioInstruction(prompt: string): string {
+	return `严格按 <Audio 1> 的内容与节奏说话，声音响起时口型开合、静音时闭嘴。${prompt}`;
 }

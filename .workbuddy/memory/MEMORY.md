@@ -120,6 +120,19 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## reference prompt 跟随度实验（2026-08-29，E2E 抓出的生产 bug）
+
+- **现象**：用户听首个 E2E 成片"说的不知道是什么"。包络相关：裸占位符
+  `-0.227`（模型自行配音）。
+- **定案（n=4 对照实验，`_tts_test/compare_all.py`）**：prompt 形态决定
+  2.5-flash 是否跟随参考音频——指令后置 0.295/0.781、生产 helper 首版
+  +0.701、**指令前置 +0.990**、08-28 基线 +0.665。
+- **修复**：`withReferenceAudioInstruction`（redo-adapters.ts）——「严格按
+  <Audio 1> 的内容与节奏说话，声音响起时口型开合、静音时闭嘴」**必须放
+  prompt 第一句**；clips.ts/retts.ts/e2e 脚本统一走它；测试锁 `严格按`。
+- 验收素材：`_tts_test/e2e-v1.mp4`（+0.990 最佳）、`e2e-a2-SH01.mp4`
+  （+0.701 生产直出）。cn_ref.mp3 = 08-28 的 5s 中文台词（**不是**"你好世界"）。
+
 ## A7 前端全量完成（2026-08-29）+ A2 全链打通 + A5/A4b/A6
 
 - **A7 七处 ✅**：OptionsForm 开关 / CoCreatePage 角色音色下拉 + 预估缓冲行 /

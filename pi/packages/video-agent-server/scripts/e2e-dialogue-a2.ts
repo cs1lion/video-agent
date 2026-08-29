@@ -9,6 +9,7 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import * as url from "node:url";
 import { hostAudioFile } from "../src/hosting/tcb.ts";
+import { withReferenceAudioInstruction } from "../src/redo-adapters.ts";
 
 const serverRoot = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "..");
 const studioRoot = path.resolve(serverRoot, "..", "..", "..");
@@ -44,7 +45,9 @@ console.log("audioUrl:", audioUrl);
 
 // --- 2. reference 提交 ---
 console.log("[2/3] submitting reference task...");
-const prompt = "一个年轻男性面向镜头说话，特写，自然口型，电影级画质。<Audio 1>";
+// prompt 与生产链路同一 helper（08-29 E2E 教训：只放占位符模型会自行配音，
+// 必须带「严格按 <Audio 1> 的内容与节奏说话」显式指令——08-28 基线 +0.665 的写法）
+const prompt = withReferenceAudioInstruction("一个年轻男性面向镜头说话，特写，自然口型，电影级画质");
 const createRes = await fetch(`${BASE}${video.path ?? "/v1/videos"}`, {
 	method: "POST",
 	headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
@@ -106,4 +109,4 @@ const out = path.join(studioRoot, "_tts_test", "e2e-a2-SH01.mp4");
 const bin = await fetch(videoUrl).then((r) => r.arrayBuffer());
 fs.writeFileSync(out, Buffer.from(bin));
 console.log(`saved: ${out} (${(bin.byteLength / 1024).toFixed(0)} KB)`);
-console.log("✅ E2E 完成 —— 请人眼确认口型与「你好，世界。」音频对上（4.2.4 验收②）");
+console.log("✅ E2E 完成 —— 请人眼确认口型与参考音频（cn_ref.mp3，5s 中文台词）对上（4.2.4 验收②）");

@@ -21,7 +21,7 @@ import {
 import { fileDataUrl } from "../asset-version.ts";
 import { trackMediaCost } from "../pricing.ts";
 import { probeDuration } from "../ffmpeg.ts";
-import { dialogueDerivedSec, estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue } from "../redo-adapters.ts";
+import { dialogueDerivedSec, estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue, withReferenceAudioInstruction } from "../redo-adapters.ts";
 import { VIDEO_QUOTA_POOL } from "../config.ts";
 import type { ReserveResult } from "../quota.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
@@ -198,9 +198,10 @@ export async function stageClips(
 				{
 					roleName: "video-agent",
 					kind: "video",
-					// reference 模式 prompt 必须含 <Audio 1> 占位符（供应商按占位符取 audios[0]）；
-					// 降级回普通模式后占位符必须移除（无 audios 参数时是噪声）
-					prompt: mode === "reference" ? `${prompt}\n<Audio 1>` : prompt,
+					// reference 模式 prompt 经 withReferenceAudioInstruction 注入 <Audio 1>
+					// 占位符 + 严格跟读指令（08-29 E2E：只放占位符模型会自行配音）；
+					// 降级回普通模式后占位符与指令必须移除（无 audios 参数时是噪声）
+					prompt: mode === "reference" ? withReferenceAudioInstruction(prompt) : prompt,
 					// seed 不透传：未知参数可能被供应商 400 拒绝，仅在 options 中保留
 					params:
 						mode === "reference" && referenceParams
