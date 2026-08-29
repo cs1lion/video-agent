@@ -309,3 +309,137 @@ describe("loadQuotaLedger 环境变量与 keyType 语义（限时免费场景）
 		assert.equal(loadQuotaLedger().snapshot(T0)[0]!.rpmTokens, 5);
 	});
 });
+
+describe("多池并发：每个 key 限流独立 → RPM 线性叠加", () => {
+	/**
+	 * 2026-08-29 事实更正（郭煜实测）：**每个 key 的限流是各自独立的**，
+	 * 早期按官方 FAQ 记录的"同类型 key 共享限流池、多 key 不扩容"已证伪。
+	 * 因此架构上「一个池 = 一个 key 的额度视图」，N 个 key 就是 N 个池，
+	 * 总提交速率 = 各池 RPM 之和 —— 这是本次并发优化的全部收益来源。
+	 */
+
+	/** 反复「选池 → 预留」直到选不到池，返回成功次数 */
+	function drain(ledger: QuotaLedger, sec: number, now: number): number {
+		let ok = 0;
+		for (let i = 0; i < 50; i += 1) {
+			const poolId = ledger.pickPool(sec, now);
+			if (poolId === null) break;
+			const r = ledger.reserve(poolId, sec, { idempotencyKey: `d-${i}`, now });
+			if (!r.ok) break;
+			ok += 1;
+		}
+		return ok;
+	}
+
+	it("核心收益：3 池 × 2RPM 可并发 6 次，单池对照只有 2 次", () => {
+		const spec = (id: string): PoolSpec => ({
+			id,
+			keyType: "enterprise",
+			rpmCap: 2,
+			dailyQuotaSec: null,
+		});
+		const multi = new QuotaLedger([spec("k1"), spec("k2"), spec("k3")], T0);
+		const single = new QuotaLedger([spec("only")], T0);
+
+		assert.equal(drain(multi, 5, T0), 6, "3 个 key 应能并发 6 次（RPM 叠加）");
+		assert.equal(drain(single, 5, T0), 2, "单 key 对照组只有 2 次");
+	});
+
+	it("选池策略：跳过令牌耗尽的池，选当前可用的", () => {
+		const busy: PoolSpec = { id: "busy", keyType: "enterprise", rpmCap: 1, dailyQuotaSec: null };
+		const free: PoolSpec = { id: "free", keyType: "enterprise", rpmCap: 1, dailyQuotaSec: null };
+		const ledger = new QuotaLedger([busy, free], T0);
+
+		// 手动吃光 busy 的令牌
+		const first = ledger.reserve("busy", 5, { idempotencyKey: "eat", now: T0 });
+		assert.ok(first.ok);
+		assert.equal(ledger.pickPool(5, T0), "free", "busy 令牌耗尽后应改选 free");
+	});
+
+	it("选池策略：都能用时取剩余令牌更多的池（给并发留余量）", () => {
+		const big: PoolSpec = { id: "big", keyType: "tokenplan", rpmCap: 5, dailyQuotaSec: null };
+		const small: PoolSpec = { id: "small", keyType: "enterprise", rpmCap: 1, dailyQuotaSec: null };
+		const ledger = new QuotaLedger([small, big], T0);
+		assert.equal(ledger.pickPool(5, T0), "big");
+	});
+
+	it("选池策略：额度不足的池被排除（哪怕它令牌充足）", () => {
+		const poor: PoolSpec = { id: "poor", keyType: "enterprise", rpmCap: 5, dailyQuotaSec: 3 };
+		const rich: PoolSpec = { id: "rich", keyType: "enterprise", rpmCap: 1, dailyQuotaSec: 100 };
+		const ledger = new QuotaLedger([poor, rich], T0);
+		assert.equal(ledger.pickPool(10, T0), "rich", "poor 只剩 3s，不够 10s 应被跳过");
+	});
+
+	it("全部池不可用时 pickPool 返回 null（调用方应等待而非违规提交）", () => {
+		const spec: PoolSpec = { id: "k1", keyType: "enterprise", rpmCap: 1, dailyQuotaSec: null };
+		const ledger = new QuotaLedger([spec], T0);
+		assert.ok(ledger.reserve("k1", 5, { idempotencyKey: "x", now: T0 }).ok);
+		assert.equal(ledger.pickPool(5, T0), null);
+	});
+});
+
+describe("多池配置解析（VIDEO_AGENT_QUOTA_POOLS）", () => {
+	const KEYS = ["VIDEO_AGENT_QUOTA_POOLS", "VIDEO_AGENT_QUOTA_DAILY_SEC"] as const;
+	const saved = new Map<string, string | undefined>(KEYS.map((k) => [k, process.env[k]]));
+	process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT = "1";
+
+	after(() => {
+		for (const [k, v] of saved) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+	});
+
+	function setPools(json: string | undefined): void {
+		if (json === undefined) delete process.env.VIDEO_AGENT_QUOTA_POOLS;
+		else process.env.VIDEO_AGENT_QUOTA_POOLS = json;
+	}
+
+	it("合法多池配置 → 每个 key 一个池，RPM 叠加", () => {
+		setPools(
+			JSON.stringify([
+				{ id: "k1", keyType: "enterprise", rpmCap: 2 },
+				{ id: "k2", keyType: "enterprise", rpmCap: 2 },
+			]),
+		);
+		const snap = loadQuotaLedger().snapshot(T0);
+		assert.deepEqual(
+			snap.map((p) => p.id),
+			["k1", "k2"],
+		);
+		assert.deepEqual(
+			snap.map((p) => p.rpmTokens),
+			[2, 2],
+			"两个 key 各自 2 RPM，合计 4",
+		);
+	});
+
+	it("未设 POOLS → 回退单池（向后兼容既有环境变量）", () => {
+		setPools(undefined);
+		process.env.VIDEO_AGENT_QUOTA_DAILY_SEC = "0";
+		const snap = loadQuotaLedger().snapshot(T0);
+		assert.equal(snap.length, 1);
+		assert.equal(snap[0]!.id, "video");
+	});
+
+	it("非法配置一律整份丢弃并回退单池（不允许带病上线）", () => {
+		for (const bad of [
+			"{not json}",
+			"[]",
+			'[{"id":"k1","keyType":"bogus","rpmCap":2}]',
+			'[{"id":"k1","keyType":"enterprise","rpmCap":0}]',
+			'[{"id":"a","keyType":"enterprise","rpmCap":2},{"id":"a","keyType":"free","rpmCap":1}]',
+		]) {
+			setPools(bad);
+			const snap = loadQuotaLedger().snapshot(T0);
+			assert.equal(snap.length, 1, `配置 ${bad} 应回退单池`);
+			assert.equal(snap[0]!.id, "video");
+		}
+	});
+
+	it("dailyQuotaSec 缺省即无每日配额（限时免费场景）", () => {
+		setPools(JSON.stringify([{ id: "k1", keyType: "enterprise", rpmCap: 2 }]));
+		const snap = loadQuotaLedger().snapshot(T0);
+		assert.equal(snap[0]!.remainingQuotaSec, Number.POSITIVE_INFINITY);
+	});
+});

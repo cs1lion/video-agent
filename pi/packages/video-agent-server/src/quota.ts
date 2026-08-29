@@ -300,6 +300,31 @@ export class QuotaLedger {
 		});
 	}
 
+	/**
+	 * 选池（确定性，供 L2 守卫层使用）：**多 key 并发提交的核心决策点**。
+	 *
+	 * 2026-08-29 事实更正：**每个 key 的限流是各自独立的**（早期按官方 FAQ 记录的
+	 * "同类型 key 共享限流池"已由郭煜实测证伪）。因此**一个池 = 一个 key 的额度视图**，
+	 * N 个 key 配成 N 个池，总提交速率 = 各池 RPM 之和（可线性叠加）。
+	 *
+	 * 这里只做"当前哪个池能立刻提交"的确定性判断，不做价值权衡——
+	 * 后者属于 L3（ReAct 代理）的职责，遵守"代理有建议权，代码有否决权"的分层。
+	 *
+	 * 策略：过滤出「有令牌 且 剩余额度够」的池，取**最早可用**（rpmWaitMs 最小）的；
+	 * 平局取剩余令牌更多的（给后续并发留余量）。全部不可用返回 null（调用方应等待而非违规提交）。
+	 */
+	pickPool(estimatedSec: number, now: number = Date.now()): string | null {
+		const ready = this.snapshot(now)
+			.filter((p) => p.rpmTokens >= 1 && p.remainingQuotaSec >= estimatedSec)
+			.sort((a, b) => a.rpmWaitMs - b.rpmWaitMs || b.rpmTokens - a.rpmTokens);
+		return ready.length > 0 ? ready[0]!.id : null;
+	}
+
+	/** 池 ID 列表（注册顺序），便于配置校验与运维展示 */
+	poolIds(): string[] {
+		return [...this.pools.keys()];
+	}
+
 	// ---------------------------------------------------------------- internal
 
 	/** 退还额度：受每日上限封顶（跨日结算不得把新一天的配额充爆） */

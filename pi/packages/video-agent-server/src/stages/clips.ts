@@ -352,14 +352,26 @@ export async function reserveShotQuota(
 	if (!quota) return { ok: true, reservationId: "", reservedSec: estimateSec, reused: false };
 	for (;;) {
 		throwIfAborted(sc.signal);
-		const r = quota.reserve(VIDEO_QUOTA_POOL, estimateSec, { idempotencyKey: `${sc.run.id}:${shotId}:a${attempt}` });
-		if (r.ok) return r;
-		if (r.reason === "rpm_exhausted") {
-			const waitMs = quota.snapshot().find((p) => p.id === VIDEO_QUOTA_POOL)?.rpmWaitMs ?? 1000;
-			await sleepAbortable(Math.min(waitMs + 100, 65_000), sc.signal);
-			continue;
+		// 多 key 并发（2026-08-29：每个 key 限流独立 → 一 key 一池）：
+		// 每轮重新选池，而不是死等固定池——别的 key 可能已经空出来了。
+		const poolId = quota.pickPool(estimateSec);
+		if (poolId !== null) {
+			const r = quota.reserve(poolId, estimateSec, {
+				idempotencyKey: `${sc.run.id}:${shotId}:a${attempt}`,
+			});
+			if (r.ok) return r;
+			// 令牌恰好被并发抢走 → 下一轮重新选池；其余原因不可重试
+			if (r.reason === "rpm_exhausted") continue;
+			return null;
 		}
-		return null; // insufficient_quota / unknown_pool / invalid → 预算告警由调用方处理
+		// 无可用池：区分「令牌暂缺（等待可恢复）」与「额度不足（等也没用）」
+		const snaps = quota.snapshot();
+		if (!snaps.some((p) => p.remainingQuotaSec >= estimateSec)) {
+			return null; // insufficient_quota → 预算告警由调用方处理
+		}
+		const soonest = snaps.reduce((min, p) => Math.min(min, p.rpmWaitMs), Number.POSITIVE_INFINITY);
+		const waitMs = Number.isFinite(soonest) && soonest > 0 ? soonest : 1000;
+		await sleepAbortable(Math.min(waitMs + 100, 65_000), sc.signal);
 	}
 }
 

@@ -11,7 +11,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { loadMediaConfig, type MediaModelsFile } from "../../coding-agent/examples/extensions/studio/media/adapter.ts";
 import { loadPriceCatalog, type PriceCatalog } from "./pricing.ts";
-import { QuotaLedger, type KeyType } from "./quota.ts";
+import { QuotaLedger, type KeyType, type PoolSpec } from "./quota.ts";
 
 /** 视频配额池 id（当前单视频适配器 = 单池；多 key 多池是 B2+ 的事） */
 export const VIDEO_QUOTA_POOL = "video";
@@ -54,7 +54,71 @@ export function loadQuotaLedger(): QuotaLedger {
 				"视频模型限时免费期推荐设 0 —— 此时账本只记 RPM 令牌桶与用量，不再有每日秒数告警）；测试环境可设 VIDEO_AGENT_SILENCE_QUOTA_HINT=1 关闭本提示。",
 		);
 	}
-	return new QuotaLedger([{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }]);
+	const pools = parsePools() ?? [{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }];
+	return new QuotaLedger(pools);
+}
+
+/** 合法的 Key 层级（与 quota.ts 的 KeyType 对齐） */
+const KEY_TYPES = ["free", "enterprise", "tokenplan"] as const;
+
+/**
+ * 解析多池配置 —— **每个 key 限流独立**（2026-08-29 郭煜实测确认），
+ * 所以 N 个 key 应配成 N 个池，总提交速率 = 各池 RPM 之和（线性叠加）。
+ *
+ *   VIDEO_AGENT_QUOTA_POOLS='[{"id":"ent-1","keyType":"enterprise","rpmCap":2},
+ *                             {"id":"ent-2","keyType":"enterprise","rpmCap":2}]'
+ *
+ * 字段：id（唯一）/ keyType / rpmCap（>0）/ dailyQuotaSec（可选，null 或省略 = 无每日配额）。
+ * 未设该变量时返回 null → 调用方回退到单池环境变量（DAILY_SEC / RPM / KEY_TYPE），保持向后兼容。
+ *
+ * 容错优先：任何一项不合法都**整份丢弃并回退单池**，避免配置写错导致产线无配额可用。
+ */
+function parsePools(): PoolSpec[] | null {
+	const raw = process.env.VIDEO_AGENT_QUOTA_POOLS;
+	if (raw === undefined || raw.trim() === "") return null;
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch {
+		warnPools("JSON 解析失败");
+		return null;
+	}
+	if (!Array.isArray(parsed) || parsed.length === 0) {
+		warnPools("应为非空数组");
+		return null;
+	}
+	const pools: PoolSpec[] = [];
+	const seen = new Set<string>();
+	for (const item of parsed) {
+		if (typeof item !== "object" || item === null) return warnPools("元素应为对象");
+		const { id, keyType, rpmCap, dailyQuotaSec } = item as Record<string, unknown>;
+		if (typeof id !== "string" || id === "") return warnPools("id 应为非空字符串");
+		if (seen.has(id)) return warnPools(`id 重复：${id}`);
+		if (typeof keyType !== "string" || !KEY_TYPES.includes(keyType as (typeof KEY_TYPES)[number])) {
+			return warnPools(`keyType 应为 ${KEY_TYPES.join(" / ")} 之一（id=${id}）`);
+		}
+		if (typeof rpmCap !== "number" || !Number.isFinite(rpmCap) || rpmCap <= 0) {
+			return warnPools(`rpmCap 应为正数（id=${id}）`);
+		}
+		const daily =
+			dailyQuotaSec === undefined || dailyQuotaSec === null
+				? null
+				: typeof dailyQuotaSec === "number" && dailyQuotaSec > 0
+					? dailyQuotaSec
+					: null;
+		seen.add(id);
+		pools.push({ id, keyType: keyType as KeyType, rpmCap, dailyQuotaSec: daily });
+	}
+	return pools;
+}
+
+function warnPools(reason: string): null {
+	if (process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT !== "1") {
+		console.warn(
+			`[video-agent] VIDEO_AGENT_QUOTA_POOLS 无效（${reason}），回退单池配置（VIDEO_AGENT_QUOTA_DAILY_SEC / _RPM / _KEY_TYPE）。`,
+		);
+	}
+	return null;
 }
 
 export interface LlmConfig {

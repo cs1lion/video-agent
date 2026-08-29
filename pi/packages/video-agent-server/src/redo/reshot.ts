@@ -22,7 +22,7 @@ import { probeDuration } from "../ffmpeg.ts";
 import { withVersionedAsset, fileDataUrl } from "../asset-version.ts";
 import { estimateClipSeconds, videoAdapterOf, videoSubmitParams } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
-import { VIDEO_QUOTA_POOL } from "../config.ts";
+import { reserveShotQuota } from "../stages/clips.ts";
 import type { ReserveResult } from "../quota.ts";
 import { imageSizeFor } from "../pipeline.ts";
 import { keyframePrompt } from "../prompts.ts";
@@ -44,7 +44,6 @@ import {
 	setStage,
 	snapshotShotVerdict,
 	stage,
-	throwIfAborted,
 	writeJson,
 } from "../pipeline.ts";
 import { designAnchorsOf } from "../pipeline.ts";
@@ -58,28 +57,14 @@ import { pixelDimensions } from "../../../video-agent/src/index.ts";
 
 type ShotReservation = Extract<ReserveResult, { ok: true }>;
 
-async function reserveShotQuota(
-	sc: StageCtx,
-	shotId: string,
-	estimateSec: number,
-	attempt: number,
-): Promise<ShotReservation | null> {
-	const quota = sc.ctx.quota;
-	if (!quota) return { ok: true, reservationId: "", reservedSec: estimateSec, reused: false };
-	for (;;) {
-		throwIfAborted(sc.signal);
-		const r = quota.reserve(VIDEO_QUOTA_POOL, estimateSec, {
-			idempotencyKey: `${sc.run.id}:${shotId}:a${attempt}`,
-		});
-		if (r.ok) return r;
-		if (r.reason === "rpm_exhausted") {
-			const waitMs = quota.snapshot().find((p) => p.id === VIDEO_QUOTA_POOL)?.rpmWaitMs ?? 1000;
-			await sleepAbortable(Math.min(waitMs + 100, 65_000), sc.signal);
-			continue;
-		}
-		return null; // insufficient_quota / unknown_pool / invalid
-	}
-}
+/**
+ * 配额预留统一走 `stages/clips.ts` 的 `reserveShotQuota`——那里是**唯一的选池决策点**
+ * （每 key 一池，`quota.pickPool()` 选当前可用池）。
+ *
+ * 此前本文件有一份硬编码 `VIDEO_QUOTA_POOL` 的复制实现，多 key 并发改造下会导致
+ * reshot 路径永远只走固定那一个池，白瞎其余 key 的额度。删掉副本改为复用，
+ * 顺带消除"预留/结算/退还散在多处"的重复隐患（见 08-29 评审报告 B1 节）。
+ */
 
 function releaseReservation(quota: ServerContext["quota"], reservation: ShotReservation | null): void {
 	if (quota && reservation?.reservationId) quota.release(reservation.reservationId);
@@ -87,24 +72,6 @@ function releaseReservation(quota: ServerContext["quota"], reservation: ShotRese
 
 function settleReservation(quota: ServerContext["quota"], reservation: ShotReservation | null, actualSec: number): void {
 	if (quota && reservation?.reservationId) quota.settle(reservation.reservationId, actualSec);
-}
-
-function sleepAbortable(ms: number, signal: AbortSignal): Promise<void> {
-	return new Promise((resolve, reject) => {
-		if (signal.aborted) {
-			reject(new Error("已中止"));
-			return;
-		}
-		const onAbort = () => {
-			clearTimeout(timer);
-			reject(new Error("已中止"));
-		};
-		const timer = setTimeout(() => {
-			signal.removeEventListener("abort", onAbort);
-			resolve();
-		}, ms);
-		signal.addEventListener("abort", onAbort, { once: true });
-	});
 }
 
 /**
