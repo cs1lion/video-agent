@@ -541,6 +541,8 @@ function createApp(ctx: ServerContext) {
 			// 共创空间会拉高设计实体推导的准确度，相应多加几轮迭代；重做缓冲：
 			withDesignSheets: true,
 			redoBuffer: coSpace ? Math.ceil(options.shotCount / 4) : 0,
+			// A5/A7：台词模式下重录台词会级联重生成口型视频，预估加缓冲行
+			audioDrive: options.audioDrive,
 		});
 		res.json({
 			total: estimate.total,

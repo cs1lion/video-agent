@@ -698,6 +698,35 @@ mock.module。**
 - 设计取舍：`ceil` 而非 round（镜长宁长勿短，音频尾部不截）；只对 reference
   成功的台词镜反推，降级旁白镜不改（J-cut 自动对齐）。
 
+**A7 前端全量 7 处 + 音色绑定贯通（2026-08-29，接 A2 E2E 之后）**：UI 此前
+零音频驱动痕迹（A1 只做服务端），本轮一次铺完 3.4 清单：
+- **OptionsForm**：音频驱动开关（off/dialogue，共享包 `GenerationOptions`
+  白名单校验，UI 不自造第二套）+ 台词模式行为提示（精简重录 / 镜长反推）。
+- **CoCreatePage**：①角色卡**台词音色下拉**（`ItemList` 泛化 + extraRow；
+  `api.fetchVoices` 失败静默隐藏；仅 dialogue 模式出现）——CoCharacter.voiceId
+  从 UI → coSpace → **服务端 `bindCharacterVoices`（audio-mode.ts 纯函数）→
+  script.json → TTS voiceId** 全线贯通。此前 LLM 拿不到音色 id、TTS 全员
+  默认音色——这个下拉是台词模式音色设计的最后一块拼图；②预估明细含
+  「台词重录缓冲」行（pricing.ts `estimateRunCost` +audioDrive 参数：
+  每次 = TTS×2 + 口型视频 1 次；off 模式不出该行）；③共创 chat 上下文
+  提示"台词每镜一句、多角色拆镜"。
+- **ScriptStage**：三态徽标（台词·角色 / 旁白 / 无声）+ 台词镜块（情绪 /
+  停顿 / 表演指导 / 双语台词）。直接字段编辑仍走 refine（LLM 重跑）——
+  独立 PATCH 端点未做，收益低（编剧产物质量已可用）。
+- **PostStage**：台词镜独立区块——口型驱动徽标 + `dialogue.audioUrl` 直接
+  `<audio>` 试听（COS 公开 URL 免代理）+ 台词重录按钮；台词镜本就不产
+  `tts-*.mp3` 产物（旁白列表按文件名匹配不到它们），此区块补上口型镜的
+  声音视图。
+- **RettsModal**：台词分支——标题"重录镜头 XX 台词（将重新生成该镜画面）"+
+  级联说明 + 配额预估（{durationSec}s 视频 + 2 次 TTS + 1 轮 LLM）+
+  音色下拉隐藏（台词重录沿用剧本角色音色，retts 的 voice 参数只作用于旁白链）。
+- **PipelineFlow**：dialogue 模式 clips 节点注记「台词驱动口型 · audio →
+  clips」反向依赖；StageRail 保持线性列表（反向依赖只在 DAG 视图表达）。
+- **TimelineBar**：台词镜 ♪ 角标 + tooltip 换台词（说话人 + 台词文本）。
+- **StudioPage**：重做横幅 retts 文案按台词镜分叉。
+- 测试：**171/171**（pricing 缓冲行 +1、bindCharacterVoices +2）；UI
+  tsc + vite build 通过。**待手测**：用户起 dev server 过一遍七处。
+
 **A2 托管打通 + 真镜端到端完成（08-29，CAM 密钥到位后）**：用户提供了 CAM
 密钥（子账号，主账号 100000465388）并开通权限。全链一步到位：
 - **桶名/区域发现**：node-sdk `app.getUploadMetadata({cloudPath})` 是公开方法

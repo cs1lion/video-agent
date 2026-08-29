@@ -16,6 +16,7 @@ import { DEFAULT_GENERATION_OPTIONS } from "../../video-agent/src/generation/opt
 import {
 	detectSpeakers,
 	enforceSingleSpeaker,
+	bindCharacterVoices,
 	hasMultipleSpeakers,
 	shouldGateAudioDrive,
 } from "../src/audio-mode.ts";
@@ -251,6 +252,40 @@ describe("enforceSingleSpeaker（剧本落盘前的前置闸门）", () => {
 		const { script: fixed, warnings } = enforceSingleSpeaker(script);
 		assert.deepEqual(fixed.shots, script.shots);
 		assert.deepEqual(warnings, []);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// bindCharacterVoices（A7：共创角色卡音色 → 台词镜 voiceId 确定性注入）
+// ---------------------------------------------------------------------------
+
+describe("bindCharacterVoices（A7 音色绑定）", () => {
+	it("按 characterId 把角色卡的 voiceId 注入台词镜（旁白/无声镜不动）", () => {
+		const script = makeScript([
+			{ audioMode: "dialogue", dialogue: { characterId: "小林", lines: { zh: "台词", en: "line" } } },
+			{ audioMode: "narration", narrationZh: "旁白" },
+		]);
+		const fixed = bindCharacterVoices(script, {
+			characters: [
+				{ name: "小林", voiceId: "funny-voice" },
+				{ name: "未出场", voiceId: "other" },
+			],
+		});
+		assert.equal(fixed.shots[0]!.dialogue!.voiceId, "funny-voice");
+		assert.equal(fixed.shots[1]!.audioMode, "narration");
+	});
+
+	it("LLM 自带 voiceId 时不覆盖；无绑定/空 voiceId 原样返回", () => {
+		const withVoice = makeScript([
+			{ audioMode: "dialogue", dialogue: { characterId: "小林", voiceId: "keep-me", lines: { zh: "a", en: "b" } } },
+		]);
+		assert.equal(
+			bindCharacterVoices(withVoice, { characters: [{ name: "小林", voiceId: "not-me" }] }).shots[0]!.dialogue!.voiceId,
+			"keep-me",
+		);
+		const plain = makeScript([{ audioMode: "dialogue", dialogue: { characterId: "小林", lines: { zh: "a", en: "b" } } }]);
+		assert.deepEqual(bindCharacterVoices(plain, undefined), plain);
+		assert.deepEqual(bindCharacterVoices(plain, { characters: [{ name: "小林" }] }), plain);
 	});
 });
 

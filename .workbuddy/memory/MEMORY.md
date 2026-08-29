@@ -120,8 +120,19 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
-## A2 全链打通（2026-08-29，CAM 密钥到位）+ A5/A4b/A6 完成现状
+## A7 前端全量完成（2026-08-29）+ A2 全链打通 + A5/A4b/A6
 
+- **A7 七处 ✅**：OptionsForm 开关 / CoCreatePage 角色音色下拉 + 预估缓冲行 /
+  ScriptStage 三态徽标+台词块 / PostStage 台词镜区块（dialogue.audioUrl 试听 +
+  重录台词按钮）/ RettsModal 台词分支（级联文案 + 配额预估）/ PipelineFlow
+  「audio → clips」反向依赖注记 / TimelineBar ♪ 角标。**余：用户起 dev server 手测七处**。
+- **音色绑定贯通（本轮关键发现）**：CoCharacter.voiceId（UI 下拉）→ coSpace →
+  服务端 `bindCharacterVoices`（audio-mode.ts 纯函数，characterId 匹配注入，
+  LLM 自带 voiceId 不覆盖）→ script.json → TTS。LLM 拿不到音色 id，此前
+  台词全员默认音色——此下拉是台词模式音色设计的最后一块拼图。
+- **pricing**：`estimateRunCost` +audioDrive → dialogue 且 redoBuffer>0 时加
+  「台词重录缓冲」行（每次 = TTS×2 + 口型视频×1）。
+- 套件 **171/171** + UI tsc/vite build ✅。
 - **A2 真镜 E2E ✅**：`scripts/e2e-dialogue-a2.ts`——COS 托管 → 2.5-flash
   reference（`task_uxNq0tV6xA2uTD4lOrMFsDdrSm59EKEk`）→ ~100s completed →
   `_tts_test/e2e-a2-SH01.mp4`（407 KB）。**待用户人眼确认口型**。
@@ -209,3 +220,27 @@
 （2.5-flash 严格按音频包络对口型，停顿=闭嘴）、每镜只一条主语音、时长须 ≤ 镜长。
 台词模式放**共创工作室**限定开放的最强理由：那里已有 characters 实体 = 音色绑定载体；
 且服务端要有兜底校验（不能只靠 UI 藏开关，符合「闸门优先于派发」）。
+
+## 意图 / 轨迹 / RLHF 资产盘点（2026-08-29 实读，相关改造前必读）
+
+**已存在**（别重复造）：15 维 `IntentKey`（clarify/types.ts:25）｜`DirectorIntent`
+none|reshot|retts|reexport（`planDirectorReply` pipeline.ts:1900/1910）｜澄清 10 固定题
++5 LLM 定制题 + `interviewLog`（clarify/）｜**执行轨迹 `TraceSpan` → traces.ndjson**
+（pipeline.ts:158/718/1840）｜**偏好信号：审议 `proposals[]` + 采纳回写 `adopted`**
+（deliberation.ts:141/890）｜`QaVerdict` 多轴分 + 逐镜裁决（pipeline.ts:149、qa/review.ts:77）。
+
+**核心诊断：有执行轨迹、无决策轨迹。** RLHF 要 `(state, action, reward)`，缺的是 action 的
+「候选集 + 选择」——只记 chosenAction 就只能做 SFT，做不了偏好学习。而审议每轮天然产出
+3-5 个 proposals，用户采纳其一 ⇒ **结构化后直接是偏好对，无需额外标注**。
+
+**增量设计**：三层轨迹 = L1 Execution（已有）+ L2 `DecisionSpan`（新增 decisions.ndjson，
+字段含 state 快照 / **candidates[] 不能省** / chosenId / rationale / confidence）
++ L3 `PreferenceEvent`（新增 preferences.ndjson），episodeId 串联成 Episode。
+埋点最小侵入：新增 `appendDecision()` 对称 `appendSpan()`，只在 4 个决策点旁路写入，不改行为。
+
+**最强信号（额外发现）**：澄清答案被后续导演指令**推翻**（选了快节奏却说"太拖"）=
+精准负样本，比"采纳哪个提案"信息量更高（见 `ClarifyOverrideEvent` 设计）。
+
+**冷启动不跳步**：①采集 →②补齐候选集 →③只读回放 UI →④**离线分析报表（不训练就有收益，
+性价比最高）** →⑤训练。门槛：报表 ≥50 episode、RM ≥300 带分样本、DPO ≥1000 偏好对。
+数据不足是最大约束，别一上来就 DPO。

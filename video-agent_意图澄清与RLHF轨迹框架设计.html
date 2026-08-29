@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>video-agent 意图识别 · 澄清提问 · 轨迹回放 · RLHF 框架设计</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#faf9f7; --line:#e6e3dd; --line2:#d3d1c7;
+  --tx:#2c2c2a; --tx2:#5f5e5a; --tx3:#888780;
+  --purple:#EEEDFE; --purple-l:#534AB7; --purple-d:#3C3489;
+  --teal:#E1F5EE; --teal-l:#0F6E56; --teal-d:#085041;
+  --amber:#FAEEDA; --amber-l:#854F0B; --amber-d:#633806;
+  --blue:#E6F1FB; --blue-l:#185FA5; --blue-d:#0C447C;
+  --red:#FCEBEB; --red-l:#A32D2D; --red-d:#791F1F;
+  --gray:#F1EFE8;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;padding:48px 24px 120px;background:var(--bg);color:var(--tx);
+  font:400 15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:940px;margin:0 auto}
+h1{font:500 29px/1.32 inherit;margin:0 0 10px;letter-spacing:-.015em}
+.sub{color:var(--tx2);font-size:16px;margin:0 0 8px}
+.meta{color:var(--tx3);font-size:13px;margin:0 0 36px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+h2{font:500 21px/1.45 inherit;margin:56px 0 14px;padding-top:26px;border-top:1px solid var(--line);scroll-margin-top:20px}
+h2:first-of-type{border-top:none;padding-top:0}
+h3{font:500 17px/1.5 inherit;margin:30px 0 10px;scroll-margin-top:20px}
+h4{font:500 15px/1.5 inherit;margin:22px 0 8px;color:var(--tx2)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 7px}
+code{font:400 13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--gray);padding:1.5px 5px;border-radius:4px;color:var(--tx)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;overflow-x:auto;margin:0 0 18px}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.7;color:var(--tx)}
+table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--tx2);font-size:13px;
+  padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--surface)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+tr:last-child td{border-bottom:none}
+.lead{background:var(--purple);border:1px solid var(--purple-l);border-radius:12px;
+  padding:22px 24px;margin:0 0 32px}
+.lead p{margin:0 0 10px;color:var(--purple-d);font-size:15px}
+.lead p:last-child{margin:0}
+.lead strong{font-weight:500}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;
+  font-weight:500;white-space:nowrap}
+.t-purple{background:var(--purple);color:var(--purple-d);border:1px solid var(--purple-l)}
+.t-teal{background:var(--teal);color:var(--teal-d);border:1px solid var(--teal-l)}
+.t-amber{background:var(--amber);color:var(--amber-d);border:1px solid var(--amber-l)}
+.t-red{background:var(--red);color:var(--red-d);border:1px solid var(--red-l)}
+.t-blue{background:var(--blue);color:var(--blue-d);border:1px solid var(--blue-l)}
+.note{border-left:3px solid var(--amber-l);background:var(--amber);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--amber-d)}
+.note p{margin:0 0 8px}
+.note p:last-child{margin:0}
+.warn{border-left:3px solid var(--red-l);background:var(--red);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--red-d)}
+.warn p{margin:0 0 8px}
+.warn p:last-child{margin:0}
+.warn strong{font-weight:500}
+.ok{border-left:3px solid var(--teal-l);background:var(--teal);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--teal-d)}
+.ok p{margin:0}
+.find{border-left:3px solid var(--purple-l);background:var(--purple);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--purple-d)}
+.find p{margin:0 0 8px}
+.find p:last-child{margin:0}
+.find strong{font-weight:500}
+.fin{background:var(--teal);border:1px solid var(--teal-l);border-radius:12px;
+  padding:24px 26px;margin:48px 0 0}
+.fin h3{margin:0 0 12px;color:var(--teal-d)}
+.fin p{margin:0 0 12px;color:var(--teal-d);font-size:15px}
+.fin p:last-child{margin:0}
+.ref{color:var(--tx3);font-size:12.5px}
+.toc{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:20px 24px;margin:0 0 44px}
+.toc h4{margin:0 0 12px;color:var(--tx2);font-size:13px}
+.toc ol{margin:0;padding-left:20px;columns:2;column-gap:36px;font-size:14px}
+@media(max-width:720px){.toc ol{columns:1}}
+.toc li{margin:0 0 6px}
+.toc a{color:var(--tx);text-decoration:none;border-bottom:1px solid var(--line2)}
+.toc a:hover{border-bottom-color:var(--tx2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>意图识别 · 澄清提问 · 轨迹回放 · RLHF</h1>
+<p class="sub">video-agent 的决策轨迹层设计</p>
+<p class="meta">2026-08-29 · 基于 video-agent / video-agent-server 源码实读 · 含家底盘点与增量设计</p>
+
+<div class="lead">
+<p><strong>核心判断：不需要从零建框架。</strong>项目里已经有了意图体系（15 维 IntentKey）、澄清器（10+5 题）、执行轨迹（<code>TraceSpan</code> → traces.ndjson）、以及最宝贵的<strong>偏好信号</strong>（审议提案的采纳 vs 未采纳）。真正缺的只有一层——<strong>决策轨迹（Decision Trace）</strong>：现有轨迹只记录「调用了什么」，不记录「在哪些候选里选了哪个、为什么」。</p>
+<p>而 RLHF 需要的三元组 <code>(state, action, reward)</code> 里，<code>state</code> 和 <code>reward</code> 都已有素材，<code>action</code> 缺的正是「候选集 + 选择」这一环。<strong>补上这一层，整条链路就通了。</strong></p>
+</div>
+
+<div class="toc">
+<h4>目录</h4>
+<ol>
+<li><a href="#s1">家底盘点：已经有什么</a></li>
+<li><a href="#s2">核心诊断：有执行轨迹，没有决策轨迹</a></li>
+<li><a href="#s3">框架总览：三层轨迹模型</a></li>
+<li><a href="#s4">DecisionSpan 数据结构（新增核心）</a></li>
+<li><a href="#s5">意图识别增强：加歧义检测</a></li>
+<li><a href="#s6">澄清策略增强：信息增益驱动</a></li>
+<li><a href="#s7">额外发现：澄清被推翻是最强信号</a></li>
+<li><a href="#s8">轨迹回放设计</a></li>
+<li><a href="#s9">RLHF 数据管线：三种信号</a></li>
+<li><a href="#s10">训练路径与冷启动</a></li>
+<li><a href="#s11">落盘与接入点</a></li>
+<li><a href="#s12">落地路径（五阶段）</a></li>
+<li><a href="#s13">风险与诚实评估</a></li>
+<li><a href="#s14">附录：面试叙事与总结</a></li>
+</ol>
+</div>
+
+<h2 id="s1">一、家底盘点：已经有什么</h2>
+
+<p>设计之前先摸清资产，避免重复建设。以下全部来自源码实读。</p>
+
+<table>
+<thead><tr><th style="width:20%">能力</th><th style="width:24%">现状</th><th style="width:56%">代码位置与要点</th></tr></thead>
+<tbody>
+<tr><td><strong>创作意图识别</strong></td><td><span class="tag t-teal">已有</span></td><td><code>IntentKey</code> 共 <strong>15 个维度</strong>：primaryEmotion / visualStyle / subjectFocus / lighting / pacing / colorPalette / music / narratorVoice / cameraLanguage / storyArc / referenceEnergy / onScreenText / ctaStrength / handModel / soundDesign　<span class="ref">clarify/types.ts:25</span></td></tr>
+<tr><td><strong>动作意图识别</strong></td><td><span class="tag t-teal">已有</span></td><td><code>DirectorIntent = "none" | "reshot" | "retts" | "reexport"</code>，由 <code>planDirectorReply()</code> 用 LLM 解析客户消息　<span class="ref">pipeline.ts:1900 / :1910</span></td></tr>
+<tr><td><strong>澄清式提问</strong></td><td><span class="tag t-teal">已有</span></td><td>10 条固定风格界限题（core/refinement 权重）+ 5 条 LLM 按需求定制题；每题 3–5 个双语选项，选项带 <code>promptTags</code> 注入下游　<span class="ref">clarify/questions.ts、clarifier.ts</span></td></tr>
+<tr><td><strong>访谈流水</strong></td><td><span class="tag t-teal">已有</span></td><td><code>interviewLog: InterviewLogEntry[]</code>（questionId / answerId / ts）——<strong>这就是澄清轨迹的雏形</strong>　<span class="ref">clarify/types.ts:98</span></td></tr>
+<tr><td><strong>执行轨迹</strong></td><td><span class="tag t-teal">已有</span></td><td><code>TraceSpan</code>（spanId / stage / kind / startAt / durationMs / status / input / output），落盘 <code>traces.ndjson</code>，注释即「Run 即 Trace」　<span class="ref">pipeline.ts:158 / :718 / :1840</span></td></tr>
+<tr><td><strong>偏好信号</strong></td><td><span class="tag t-amber">有但未结构化</span></td><td>审议每轮产出多个 <code>proposals</code>，用户采纳后回写 <code>adopted</code>。<strong>被采纳的 = chosen，其余 proposals = rejected</strong> —— 天然的偏好对　<span class="ref">deliberation.ts:141 / :890</span></td></tr>
+<tr><td><strong>质量评分</strong></td><td><span class="tag t-teal">已有</span></td><td><code>QaVerdict</code>：overall（pass/warn/fail）+ score + 多轴 <code>axes[]</code>（briefFit / visualConsistency / pacing / audioSync…）+ 逐镜 <code>shots[]</code> 三态裁决　<span class="ref">pipeline.ts:149、qa/review.ts:77</span></td></tr>
+<tr><td><strong>事件流</strong></td><td><span class="tag t-teal">已有</span></td><td><code>events.ndjson</code>（团队消息/阶段变更）+ <code>lastActions</code>（用户动作账本，上限 20）</td></tr>
+<tr><td><strong>轨迹回放</strong></td><td><span class="tag t-red">没有</span></td><td>有 <code>readTraces()</code> 只读，无按 episode 的时间线重建与重放能力</td></tr>
+<tr><td><strong>RLHF 管线</strong></td><td><span class="tag t-red">没有</span></td><td>无偏好数据结构化、无数据集导出、无训练脚本</td></tr>
+</tbody>
+</table>
+
+<div class="ok">
+<p><strong>结论：四项能力中，意图识别与澄清提问已完成度很高，轨迹回放与 RLHF 是净增量，而连接它们的「决策记录层」是唯一需要新建的核心抽象。</strong></p>
+</div>
+
+<h2 id="s2">二、核心诊断：有执行轨迹，没有决策轨迹</h2>
+
+<p>这是整个方案的关键判断，也是最容易踩的坑。</p>
+
+<p>RLHF 需要的是三元组 <code>(state, action, reward)</code>。对照现状：</p>
+
+<table>
+<thead><tr><th style="width:14%">要素</th><th style="width:26%">现状</th><th style="width:60%">缺口</th></tr></thead>
+<tbody>
+<tr><td><strong>state</strong></td><td><span class="tag t-amber">部分有</span></td><td>brief / intent / stage 状态 / QA 分都在，但<strong>没有按决策点做快照</strong>——事后无法还原「当时模型看到了什么」</td></tr>
+<tr><td><strong>action</strong></td><td><span class="tag t-red">缺口最大</span></td><td><code>TraceSpan</code> 记录的是<strong>执行结果</strong>（调了哪个 LLM、耗时多少、成功与否），<strong>不记录决策过程</strong>：面对哪些候选、选了哪个、为什么选</td></tr>
+<tr><td><strong>reward</strong></td><td><span class="tag t-teal">素材充足</span></td><td>QA 多轴分、采纳/未采纳、重做次数、是否交付——都有，只是散落</td></tr>
+</tbody>
+</table>
+
+<div class="warn">
+<p><strong>为什么「候选集」是 RLHF 的命门：</strong>偏好学习（DPO / RLHF）的本质是「在同样的状态下，A 比 B 好」。如果只记录「最终选了 A」，你只有 SFT 数据（模仿），<strong>没有偏好数据（比较）</strong>。</p>
+<p>而你的审议模块<strong>已经天然产出了候选集</strong>——每轮 3–5 个 proposals，用户挑一个采纳。这意味着：<em>只要把「那一轮的候选集 + 最终采纳项」结构化成一条记录，你就直接得到了高质量的偏好对</em>，不需要额外标注、不需要人工打分。</p>
+</div>
+
+<h2 id="s3">三、框架总览：三层轨迹模型</h2>
+
+<table>
+<thead><tr><th style="width:8%">层</th><th style="width:20%">名称</th><th style="width:30%">记录什么</th><th style="width:22%">落盘</th><th style="width:20%">状态</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-teal">L1</span></td><td><strong>Execution Trace</strong><br>执行轨迹</td><td>调了什么、耗时、成功与否、输入摘要<br><code>kind: llm | media | ffmpeg | qa</code></td><td><code>traces.ndjson</code></td><td><span class="tag t-teal">已有</span></td></tr>
+<tr><td><span class="tag t-purple">L2</span></td><td><strong>Decision Trace</strong><br>决策轨迹</td><td>在哪个状态下、面对哪些候选、选了哪个、置信度、理由</td><td><code>decisions.ndjson</code><span class="ref">（新增）</span></td><td><span class="tag t-purple">新增核心</span></td></tr>
+<tr><td><span class="tag t-amber">L3</span></td><td><strong>Preference Event</strong><br>偏好事件</td><td>采纳 / 拒绝 / 撤销 / 改写，以及关联的决策与奖赏变化</td><td><code>preferences.ndjson</code><span class="ref">（新增）</span></td><td><span class="tag t-amber">结构化已有信号</span></td></tr>
+</tbody>
+</table>
+
+<p>三者用 <code>episodeId</code>（一次完整制作）+ <code>decisionId</code> 串联，组成一个可回放、可训练的 <strong>Episode</strong>。</p>
+
+<pre><code>Episode（一次完整制作）
+├─ brief / finalIntent / interviewLog      ← 起点
+├─ decisions[]   DecisionSpan              ← 决策序列（新增）
+│    ├─ state 快照（当时看到了什么）
+│    ├─ candidates[]（候选集）
+│    └─ chosenId + rationale + confidence
+├─ spans[]       TraceSpan                 ← 执行序列（已有）
+├─ preferences[] PreferenceEvent           ← 反馈序列（新增）
+└─ outcome { qaVerdict, delivered, totalRedoCount, quotaUsedSec }</code></pre>
+
+<h2 id="s4">四、DecisionSpan 数据结构（新增核心）</h2>
+
+<pre><code>/** 决策轨迹（L2）：记录「在哪些候选中选了哪个、为什么」 */
+export interface DecisionSpan {
+  decisionId: string;
+  episodeId: string;                 // 关联一次完整制作
+  runId: string;
+  at: string;                        // ISO 时间戳
+  /** 决策类型 */
+  kind: "intent" | "clarify" | "director" | "redo" | "schedule" | "qa-gate";
+  stage: StageId | "chat";
+
+  /** 决策时的状态快照 —— 回放与训练的输入 */
+  state: {
+    briefLogline: string;
+    intent: Intent;                            // 当时的意图（可能后续被改）
+    stageStatus: Record&lt;string, string&gt;;
+    qaScore?: number;                          // 最近一次质检分
+    remainingQuotaSec?: number;                // 剩余配额（调度决策用）
+    shotId?: string;                           // 镜头级决策的上下文
+  };
+
+  /** 候选集 —— RLHF 的核心资产 */
+  candidates: DecisionCandidate[];
+  chosenId: string;
+
+  /** 选择理由（LLM 自述，或规则原因） */
+  rationale?: string;
+  /** 置信度：用于歧义检测与后续分析 */
+  confidence?: number;
+  /** 本次决策触发的执行 span（关联 L1） */
+  spanIds: string[];
+}
+
+/** 一个候选动作 */
+export interface DecisionCandidate {
+  id: string;
+  label: string;             // 如 "reshot SH02" / "pacing=fast"
+  payload: unknown;          // 具体动作参数
+  /** 预估成本（配额秒 / 时长）—— 调度与澄清的成本感知用 */
+  estimatedCostSec?: number;
+}</code></pre>
+
+<div class="note">
+<p><strong>设计要点：<code>candidates</code> 不能省。</strong>很多团队做轨迹记录只存 <code>chosenAction</code>，结果攒了几万条数据却只能做 SFT，做不了偏好学习。<strong>候选集就是偏好对的「 rejected 侧」</strong>，成本极低（只是在决策时把候选数组一起写进去），但决定了后面能不能上 DPO。</p>
+</div>
+
+<h2 id="s5">五、意图识别增强：加歧义检测</h2>
+
+<p>现有两层意图识别已经可用，缺的是「<strong>不确定时知道要问</strong>」。</p>
+
+<h3>5.1 现有能力</h3>
+
+<table>
+<thead><tr><th style="width:22%">层</th><th style="width:30%">覆盖范围</th><th style="width:48%">增强点</th></tr></thead>
+<tbody>
+<tr><td><strong>创作意图</strong><br><code>IntentKey</code></td><td>15 维，前期访谈式采集</td><td>加「从 logline 预填 + 置信度」，低置信维度才提问</td></tr>
+<tr><td><strong>动作意图</strong><br><code>DirectorIntent</code></td><td>4 类：none / reshot / retts / reexport</td><td>扩类 + 加置信度，低置信时<strong>反问而非瞎猜</strong></td></tr>
+</tbody>
+</table>
+
+<h3>5.2 增强一：置信度与歧义检测</h3>
+
+<pre><code>// planDirectorReply 的输出扩展（向后兼容：confidence 缺省视为高）
+interface DirectorPlan {
+  intent: DirectorIntent;
+  shotId?: string;
+  instruction?: string;
+  reply: string;
+  // ↓ 新增
+  confidence?: number;        // 0..1
+  ambiguity?: {               // 置信度低于阈值时填充，用于反问
+    missingSlot: "shotId" | "aspect" | "instruction" | "intent";
+    clarifyingQuestion: string;
+  };
+}</code></pre>
+
+<p>行为规则：<code>confidence &lt; 0.6</code> 或关键槽位缺失时，<strong>返回澄清问题而不是执行动作</strong>。这把「猜错导致白烧一次重做」挡在前面——尤其在台词模式下，一次误判的重做成本是一次视频生成。</p>
+
+<h3>5.3 增强二：动作意图扩类</h3>
+
+<p>现有 4 类偏「重做」，建议扩到 7 类以覆盖真实对话：</p>
+
+<pre><code>type DirectorIntent =
+  | "none"        // 闲聊/咨询
+  | "reshot"      // 重做某镜画面
+  | "retts"       // 重录旁白/台词
+  | "reexport"    // 重新导出
+  | "inquire"     // 问进度/问质量/问成本（新增）
+  | "modify"      // 改剧本/改风格/改字幕（新增，非重做）
+  | "abort";      // 中止（新增）</code></pre>
+
+<h3>5.4 增强三：意图变更历史</h3>
+
+<p>现在 <code>intent</code> 是「最终值」，改了就覆盖了。建议加 <code>intentHistory</code>：</p>
+
+<pre><code>interface IntentChange {
+  at: string;
+  from?: AnswerId;
+  to: AnswerId;
+  trigger: "interview" | "director-chat" | "script-edit";
+}</code></pre>
+
+<p>用途：① 回放时能看到意图演化；② <strong>后续被改的意图 = 前期澄清没问准</strong>（见第七节，这是最强信号）。</p>
+
+<h2 id="s6">六、澄清策略增强：信息增益驱动</h2>
+
+<p>现有 10 固定题 + 5 定制题已能工作，主要增强在「<strong>问什么、问几题、什么时候停</strong>」。</p>
+
+<h3>6.1 现状与增强对照</h3>
+
+<table>
+<thead><tr><th style="width:20%">维度</th><th style="width:34%">现状</th><th style="width:46%">增强</th></tr></thead>
+<tbody>
+<tr><td>选题</td><td>10 固定题顺序固定 + 5 题 LLM 定制</td><td><strong>信息增益驱动</strong>：按「这题答案对最终成片的影响」排序</td></tr>
+<tr><td>预填</td><td>全部从零问起</td><td>从 logline 预推意图，<strong>高置信维度只确认不追问</strong></td></tr>
+<tr><td>停止</td><td>固定 15 题</td><td><strong>收益阈值</strong>：剩余题目的预期增益低于阈值就停（减少用户疲劳）</td></tr>
+<tr><td>跳过</td><td>无显式处理</td><td>记录 <code>skipped</code>——跳过本身是信号（该维度用户不在意或没想法）</td></tr>
+<tr><td>成本</td><td>不感知</td><td>定制题生成要消耗 LLM，纳入成本；题数上限可配</td></tr>
+</tbody>
+</table>
+
+<h3>6.2 信息增益的简易实现</h3>
+
+<pre><code>// 每个维度带一个「影响权重」，与「当前不确定度」相乘得优先级
+interface DimensionPriority {
+  intentKey: IntentKey;
+  /** 影响权重：该维度对成片质量的贡献（题库静态标注，可用历史数据校准） */
+  impact: number;                  // 0..1
+  /** 当前不确定度：1 = 完全未知，0 = 已从 logline 高置信推出 */
+  uncertainty: number;             // 0..1
+  /** 优先级 = impact × uncertainty */
+  get priority(): number;
+}
+
+// 选题：按 priority 降序取前 N 题，且 priority 低于 STOP_THRESHOLD 就不再问
+function selectQuestions(dims: DimensionPriority[], max: number): Question[];</code></pre>
+
+<div class="note">
+<p><strong>先做静态权重，别一上来就学。</strong><code>impact</code> 初始由人工标注（比如 pacing / visualStyle 权重高，handModel 权重低），等积累到几百个 episode 后，用「该维度答案与最终 QA 分的相关性」自动校准。一开始就想学权重，会因为数据不足而学歪。</p>
+</div>
+
+<h2 id="s7">七、额外发现：澄清被推翻是最强信号</h2>
+
+<div class="find">
+<p><strong>这是本轮最有价值的发现，而且它不需要任何新埋点就能拿到大部分价值。</strong></p>
+<p><strong>场景：</strong>用户在访谈里选了「pacing = fast（快节奏）」，成片出来后对导演说「节奏太拖了，剪紧一点」。</p>
+<p><strong>含义：</strong>这次澄清<strong>没有真正消除不确定性</strong>——要么题目表述有歧义，要么选项粒度不对，要么 logline 本就该推出另一种节奏而模型没推出来。</p>
+<p><strong>为什么它是最强信号：</strong>相比「采纳了哪个提案」（正反馈），<strong>「澄清答案被后续行为推翻」是明确的负反馈</strong>——它精准指出<em>哪一维度的澄清失效了</em>。负样本在偏好学习里比正样本信息量更高，而且这类信号天然稀有。</p>
+<p><strong>怎么采集：</strong>比较 <code>intentHistory</code> 里同一维度的前后值，或检测导演对话里的否定式指令（"太 X 了 / 不 X / 改成 Y"）与已存意图冲突。</p>
+<p><strong>怎么用：</strong>① 短期——优化题库表述与选项粒度（人工看报表）；② 中期——训练「logline → 意图默认值」模型，让下次同类需求不用问；③ 长期——作为 DPO 的 rejected 侧。</p>
+</div>
+
+<pre><code>/** 澄清失效事件（L3 的一个子类） */
+export interface ClarifyOverrideEvent {
+  episodeId: string;
+  intentKey: IntentKey | string;
+  answeredId: AnswerId;         // 访谈时选的
+  overriddenBy: {
+    trigger: "director-chat" | "script-edit" | "reshot";
+    at: string;
+    rawText: string;            // 用户原话，用于分析表述问题
+    effectiveValue?: string;    // 实际生效的（若能解析）
+  };
+}</code></pre>
+
+<h2 id="s8">八、轨迹回放设计</h2>
+
+<h3>8.1 回放的三种形态</h3>
+
+<table>
+<thead><tr><th style="width:18%">形态</th><th style="width:34%">做什么</th><th style="width:48%">用途与难度</th></tr></thead>
+<tbody>
+<tr><td><strong>只读回放</strong><br>Replay-view</td><td>按时间线重演：意图 → 澄清 → 决策 → 执行 → 反馈</td><td>调试、给客户看"这版是怎么来的"。<strong>难度低，先做这个</strong></td></tr>
+<tr><td><strong>分支对比</strong><br>Counterfactual</td><td>展示「当时如果选 B 会怎样」（用候选集 + 预估成本推演）</td><td>人工审核、训练数据质检。中等难度</td></tr>
+<tr><td><strong>确定性重放</strong><br>Deterministic</td><td>从某个 span 真正重跑一遍，验证修复</td><td><strong>难度高</strong>：LLM 非确定性，需固定 seed + 完整输入快照；视频/图像模型是否支持 seed 需逐个确认</td></tr>
+</tbody>
+</table>
+
+<h3>8.2 时间线重建</h3>
+
+<pre><code>// 三个 ndjson 按时间归并，得到统一时间线
+async function buildTimeline(run: RunRecord): Promise&lt;TimelineItem[]&gt; {
+  const decisions   = await readNdjson(run, "decisions.ndjson");    // L2
+  const traces      = await readTraces(run);                        // L1（已有）
+  const preferences = await readNdjson(run, "preferences.ndjson");  // L3
+  return [...decisions, ...traces, ...preferences]
+    .sort((a, b) =&gt; a.at.localeCompare(b.at))
+    .map(toTimelineItem);   // 统一成 { at, kind, title, detail, status }
+}</code></pre>
+
+<div class="warn">
+<p><strong>确定性重放要诚实评估可行性。</strong>文本 LLM 可以通过固定 seed + temperature=0 提高复现性，但<strong>视频/图像生成模型是否支持 seed、seed 是否真正确定性，需要逐个验证</strong>（Agnes 文档未承诺）。建议：只承诺「输入可完整重建」，不承诺「输出逐像素一致」——回放主要用于<strong>定位问题</strong>，而不是逐帧复现。</p>
+</div>
+
+<h2 id="s9">九、RLHF 数据管线：三种信号</h2>
+
+<table>
+<thead><tr><th style="width:16%">信号</th><th style="width:24%">来源</th><th style="width:26%">产出</th><th style="width:34%">成熟度</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-teal">A · 偏好对</span></td><td>审议 proposals（3–5 个）中用户 <code>adopted</code> 的那一个 vs 其余</td><td><code>(state, chosen, rejected)</code> → DPO 直接用</td><td><span class="tag t-teal">信号已存在，只需结构化</span></td></tr>
+<tr><td><span class="tag t-teal">B · 质量分</span></td><td><code>QaVerdict.axes</code> 多轴分 + overall + 逐镜裁决</td><td> Reward Model 的训练标签（多维 → 加权总分）</td><td><span class="tag t-teal">已存在，需定义加权方式</span></td></tr>
+<tr><td><span class="tag t-amber">C · 重做成败</span></td><td>同一镜头 redo 前的 QA 结果 vs redo 后的 QA 结果</td><td>「重做前 vs 重做后」的成对样本（拒绝采样）</td><td><span class="tag t-amber">需新增配对逻辑</span></td></tr>
+<tr><td><span class="tag t-purple">D · 澄清失效</span></td><td>第七节的 <code>ClarifyOverrideEvent</code></td><td>负样本（该澄清答案应被避免）</td><td><span class="tag t-purple">新增，价值最高</span></td></tr>
+</tbody>
+</table>
+
+<h3>9.1 DPO 样本导出格式</h3>
+
+<pre><code>{
+  "id": "pref_01HX…",
+  "episodeId": "run_abc123",
+  "decisionId": "dec_0021",
+  "createdAt": "2026-08-29T15:41:02Z",
+
+  // prompt = 决策时的状态快照（对应 state）
+  "prompt": {
+    "brief": "深夜办公室，靠一口冰红茶回血翻盘",
+    "intent": { "pacing": "fast", "visualStyle": "cinematic", ... },
+    "stage": "post",
+    "qaScore": 72,
+    "shotId": "SH02",
+    "message": "第二个镜头节奏太拖了"
+  },
+
+  // chosen / rejected 来自 candidates（审议提案 / 候选动作）
+  "chosen":    { "action": "reshot", "target": "SH02", "instruction": "收紧剪辑节奏" },
+  "rejected": [
+    { "action": "retts",   "target": "SH02" },
+    { "action": "reexport","target": "" }
+  ],
+
+  // 辅助字段：用于过滤与加权
+  "signal": "adopted",
+  "rewardDelta": 9,
+  "costSec": 5
+}</code></pre>
+
+<h3>9.2 数据护栏（重要）</h3>
+
+<ul>
+<li><strong>去重</strong>：同一 <code>(decisionId, chosen)</code> 只保留一条；<code>state</code> 哈希相同的样本合并</li>
+<li><strong>去污</strong>：<code>input</code>/<code>output</code> 摘要可能含用户隐私或密钥，导出前统一脱敏（项目已有「不暴露 API Key」的教训）</li>
+<li><strong>质量过滤</strong>：<code>rewardDelta</code> 过小（如 &lt; 3 分）的偏好对丢弃——差异不显著，噪声大于信号</li>
+<li><strong>时间切分</strong>：训练集/验证集按 episode 时间切（不是随机切），避免未来信息泄漏</li>
+</ul>
+
+<h2 id="s10">十、训练路径与冷启动</h2>
+
+<div class="warn">
+<p><strong>最大的现实约束：数据量。</strong>video-agent 是新产品，episode 数量有限。一上来就想做 DPO 微调，大概率会因为样本不足而训崩或过拟合。<strong>建议按「先攒数据、再训打分器、最后才微调策略」的顺序走。</strong></p>
+</div>
+
+<table>
+<thead><tr><th style="width:10%">阶段</th><th style="width:26%">做什么</th><th style="width:32%">产出</th><th style="width:32%">门槛</th></tr></thead>
+<tbody>
+<tr><td><strong>① 采集</strong></td><td>只记录不训练：落 <code>decisions</code> + <code>preferences</code></td><td>可回放的 Episode 数据集</td><td>无门槛，<strong>立刻可做</strong></td></tr>
+<tr><td><strong>② 观测</strong></td><td>离线分析：哪些维度常被推翻、哪种提案常被采纳</td><td>题库优化、prompt 优化（<strong>不训练就有收益</strong>）</td><td>≥ 50 episode</td></tr>
+<tr><td><strong>③ 奖励模型</strong></td><td>用 B 类信号（QA 轴分）训一个打分器</td><td>可自动评估候选动作的 RM，用于<strong>线上排序</strong></td><td>≥ 300 条带分样本</td></tr>
+<tr><td><strong>④ 偏好微调</strong></td><td>用 A/C/D 类偏好对做 DPO</td><td>策略模型更新</td><td>≥ 1000 条高质量偏好对</td></tr>
+<tr><td><strong>⑤ 闭环</strong></td><td>新模型上线 → 产生新数据 → 迭代</td><td>持续学习</td><td>需 A/B 与回滚机制</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p><strong>阶段 ② 是性价比最高的一步，而且常被跳过。</strong>在没有任何训练的情况下，仅靠「哪些澄清答案常被推翻」「哪类提案常被采纳」这两张报表，就能直接优化题库表述和 director prompt——这是<strong>零成本、立竿见影</strong>的收益，也正好证明了整套管线的价值。</p>
+</div>
+
+<h2 id="s11">十一、落盘与接入点</h2>
+
+<table>
+<thead><tr><th style="width:24%">文件</th><th style="width:22%">格式</th><th style="width:54%">写入时机与接入点</th></tr></thead>
+<tbody>
+<tr><td><code>traces.ndjson</code></td><td>已有</td><td><code>appendSpan()</code>（pipeline.ts:718），无需改动</td></tr>
+<tr><td><code>decisions.ndjson</code></td><td>新增</td><td>在 4 个决策点写入：<code>planDirectorReply</code>（pipeline.ts:1910）、<code>clarifier</code> 选题、审议提案生成、调度器 <code>submit</code></td></tr>
+<tr><td><code>preferences.ndjson</code></td><td>新增</td><td><code>markAdopted()</code>（deliberation.ts:890）扩展写入偏好对；导演对话执行后写入；脚本编辑时写入</td></tr>
+<tr><td><code>episode.json</code></td><td>新增</td><td>run 完成时汇总（brief / finalIntent / outcome）</td></tr>
+</tbody>
+</table>
+
+<h3>11.1 最小侵入的接入方式</h3>
+
+<pre><code>// 在 pipeline.ts 增加一个与 appendSpan 对称的函数
+export function appendDecision(
+  sc: StageCtx,
+  d: Omit&lt;DecisionSpan, "decisionId" | "episodeId" | "runId" | "at"&gt;,
+): DecisionSpan {
+  const span: DecisionSpan = {
+    decisionId: crypto.randomUUID(),
+    episodeId: sc.run.id,          // 一期：episode 与 run 一一对应，后续支持多轮
+    runId: sc.run.id,
+    at: new Date().toISOString(),
+    ...d,
+  };
+  appendFileSync(join(run.dir, "decisions.ndjson"), JSON.stringify(span) + "\n");
+  return span;
+}</code></pre>
+
+<p>关键：<strong>只在 4 个决策点埋点，不改造现有逻辑</strong>。这样风险可控，且行为不变（纯旁路记录）。</p>
+
+<h2 id="s12">十二、落地路径（五阶段）</h2>
+
+<ol>
+<li><strong>数据结构 + 旁路埋点</strong>（1–2 天）：定义 <code>DecisionSpan</code> / <code>PreferenceEvent</code>，在 <code>planDirectorReply</code> 与 <code>markAdopted</code> 两个点先埋上，<strong>不改任何现有行为</strong>。同步补单元测试（项目当前的弱项）。</li>
+<li><strong>补齐候选集记录</strong>：审议 proposals、导演意图解析的候选、澄清题的选项——把「当时有哪些选项」写全。<strong>这一步决定后面能不能做偏好学习</strong>。</li>
+<li><strong>只读回放 UI</strong>：时间线重建 + 在 StudioPage 加一个「决策时间线」标签，能看完整的意图 → 澄清 → 决策 → 执行 → 反馈链路。</li>
+<li><strong>离线分析与报表</strong>（阶段 ②）：统计澄清被推翻率、提案采纳分布，用它优化题库与 prompt。</li>
+<li><strong>数据导出与训练</strong>：导出 DPO 格式；数据量达标后再上 RM / DPO。</li>
+</ol>
+
+<h2 id="s13">十三、风险与诚实评估</h2>
+
+<table>
+<thead><tr><th style="width:24%">风险</th><th style="width:76%">说明与应对</th></tr></thead>
+<tbody>
+<tr><td><strong>数据量不足</strong></td><td>最大现实约束。应对：严格按五阶段走，<strong>阶段 ② 不训练就有收益</strong>，别跳步；可考虑用「同一 episode 内的多次重做」扩充成对样本</td></tr>
+<tr><td><strong>候选集质量不高</strong></td><td>如果审议只产出 1 个提案，就没有 rejected 侧。应对：<strong>在提案生成 prompt 里要求产出 3–5 个差异化候选</strong>（本来就该这么做），从而保证偏好对的供给</td></tr>
+<tr><td><strong>确定性重放不可行</strong></td><td>视频/图像模型的 seed 语义未必可靠。应对：只承诺「输入可完整重建」，回放定位问题而非逐帧复现</td></tr>
+<tr><td><strong>分布漂移</strong></td><td> prompt / 模型一变，历史偏好对就过期。应对：样本带 <code>schemaVersion</code> 与 <code>modelVersion</code>，训练时按版本过滤</td></tr>
+<tr><td><strong>隐私与脱敏</strong></td><td>input 摘要可能含用户隐私或密钥（项目已有密钥入 git 的教训）。应对：导出管线内置脱敏，且<strong>导出物不进代码仓库</strong></td></tr>
+<tr><td><strong>过度工程</strong></td><td>如果只想要「回放」而不需要 RLHF，做到阶段 ③ 就够了。<strong>先明确目标再决定走多远</strong></td></tr>
+</tbody>
+</table>
+
+<h2 id="s14">十四、附录：面试叙事与总结</h2>
+
+<div class="fin">
+<h3>一句话总结</h3>
+<p>这个项目里意图识别（15 维 + 4 类动作）、澄清提问（10+5 题）、执行轨迹（TraceSpan）、偏好信号（提案采纳）都已存在，真正缺的是<strong>决策轨迹层</strong>——因为 RLHF 要的是 <code>(state, action, reward)</code>，而现有轨迹只记执行不记决策，导致攒再多数据也只能做 SFT 不能做偏好学习；补上「候选集 + 选择」这一层后，审议模块天然产出的采纳/未采纳就直接变成了高质量的偏好对，无需额外标注。</p>
+<h3 style="margin-top:20px">面试版（可直接复述）</h3>
+<p>「我在视频生成 Agent 里搭了一套从意图识别到 RLHF 的闭环。诊断时发现一个关键问题：我们已经有完整的执行轨迹——每次 LLM 调用、每次视频生成、耗时和结果都落盘了，但<strong>这些轨迹只记录了『做了什么』，没记录『当时有哪些选择、为什么选这个』</strong>。而偏好学习需要的恰恰是候选集——你得知道 rejected 侧是什么。</p>
+<p>所以我加了一层决策轨迹：在每个决策点记录状态快照、候选集、最终选择和置信度。这一层补上之后，系统里原本零散的信号就串起来了——审议模块每轮会产出 3 到 5 个提案，用户采纳其中一个，这天然就是一对偏好数据，<strong>不需要任何额外的人工标注</strong>。</p>
+<p>更有价值的是我发现了一类隐性负样本：<strong>用户访谈时选的澄清答案，被后续的导演指令推翻了</strong>——比如选了快节奏，成片出来却说太拖。这说明那次澄清没真正消除不确定性，它精准指出哪个维度失效了，是质量最高的训练信号。</p>
+<p>落地路径上我刻意没有一上来就训练：先采集、再做离线分析——光看『哪些澄清常被推翻』就能直接优化题库，零成本有收益；等数据攒够了再训奖励模型，最后才做偏好微调。」</p>
+<h3 style="margin-top:20px">可追问的深水区（准备好这些）</h3>
+<p>· 为什么 DPO 比 PPO 更适合这个场景（无需在线 rollout、数据离线可得、样本量小更稳）<br>
+· 候选集质量如何保证（提案生成要求 3–5 个差异化候选，避免全同构）<br>
+· 如何处理分布漂移（样本带 schemaVersion / modelVersion，训练按版本过滤）<br>
+· reward 怎么定义（QA 多轴分加权 + 重做次数惩罚 + 是否交付，而非单一分数）</p>
+</div>
+
+</div>
+</body>
+</html>

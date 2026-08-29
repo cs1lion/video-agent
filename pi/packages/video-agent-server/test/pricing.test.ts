@@ -118,6 +118,25 @@ describe("estimateRunCost (pre-flight)", () => {
 		const b = estimateRunCost({ catalog: CATALOG, shotCount: 15, clipDurationSec: 5 });
 		assert.ok(b.total > a.total * 2);
 	});
+
+	it("A5/A7：台词模式 + 重做缓冲 → 追加台词重录缓冲行（TTS×2 + 口型重生成）", () => {
+		const base = estimateRunCost({ catalog: CATALOG, shotCount: 5, clipDurationSec: 5, redoBuffer: 2 });
+		const dialogue = estimateRunCost({
+			catalog: CATALOG,
+			shotCount: 5,
+			clipDurationSec: 5,
+			redoBuffer: 2,
+			audioDrive: "dialogue",
+		});
+		const extra = dialogue.lines.find((l) => l.label === "台词重录缓冲");
+		assert.ok(extra, "台词模式必须有台词重录缓冲行");
+		// 2 × (5s × perSecond + 2 × perKChar)
+		const fb = CATALOG.fallback;
+		assert.ok(Math.abs(extra.amount - 2 * (5 * (fb.perSecond ?? 0) + 2 * (fb.perKChar ?? 0))) < 0.02);
+		assert.ok(dialogue.total > base.total);
+		// off 模式无该行
+		assert.ok(!base.lines.some((l) => l.label === "台词重录缓冲"));
+	});
 });
 
 describe("estimateProposalCost（审议提案）", () => {

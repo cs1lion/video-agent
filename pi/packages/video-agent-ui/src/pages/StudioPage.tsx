@@ -357,7 +357,7 @@ export function StudioPage() {
 
 		{/* 流水线实况 + 团队在场：DAG 节点即阶段状态，右侧角色灯随阶段/chat 联动 */}
 		<div className="relative z-10 flex shrink-0 items-center gap-4 border-b border-white/[0.07] px-5 py-2">
-			<PipelineFlow stages={run.stages} className="min-w-0 flex-1 pb-0" />
+			<PipelineFlow stages={run.stages} audioDrive={run.options.audioDrive} className="min-w-0 flex-1 pb-0" />
 			<div className="h-8 w-px shrink-0 bg-white/10" />
 			<TeamPresence run={run} chatBusy={chatBusy} />
 		</div>
@@ -447,7 +447,10 @@ export function StudioPage() {
 							<span className="font-medium">{redo.label} · 重做中</span>
 							<span className="min-w-0 flex-1 truncate text-amber-100/70">
 								{redo.kind === "reshot" && "旧片段已备份，按质检反馈与你的指令重新生成该镜，随后重装时间线并复审。"}
-								{redo.kind === "retts" && "旧录音已备份，新语音就位后该镜按新时长重排、重新混音并复审。"}
+								{redo.kind === "retts" &&
+									((artifacts?.script?.shots ?? []).some((s) => s.id === redo.shotId && s.audioMode === "dialogue")
+										? "台词重录中：新音频就位后将重新生成该镜口型画面（旧片段已备份），随后重排、重新混音并复审。"
+										: "旧录音已备份，新语音就位后该镜按新时长重排、重新混音并复审。")}
 								{redo.kind === "reexport" && "复用现有镜头与配音，重跑转场决策、混音与质检。"}
 							</span>
 							<span className="rounded-full border border-amber-300/30 px-2 py-0.5 font-mono text-[10px] text-amber-200/80">

@@ -16,8 +16,12 @@ export function RettsModal({
 	shot,
 	/** 已用重录次数 */
 	attempts,
-	/** 当前旁白文案（改写预览基准） */
+	/** 当前旁白文案（改写预览基准；台词镜不传） */
 	narration,
+	/** A5/A7：台词镜信息——存在时走"重录台词（将重新生成该镜画面）"分支 */
+	dialogue,
+	/** 台词镜镜长（配额预估用：口型视频重生成 ≈ durationSec 秒视频 + 2 次 TTS） */
+	durationSec,
 	busy,
 	onClose,
 	onSubmit,
@@ -25,6 +29,8 @@ export function RettsModal({
 	shot: { id: string } | null;
 	attempts: number;
 	narration?: string;
+	dialogue?: { characterId: string; lines: { zh: string; en: string } } | null;
+	durationSec?: number;
 	busy: boolean;
 	onClose: () => void;
 	onSubmit: (shotId: string, instruction: string, voice?: string) => void;
@@ -44,6 +50,7 @@ export function RettsModal({
 	}, []);
 
 	const remaining = MAX_RETTS_PER_SHOT - attempts;
+	const isDialogue = Boolean(dialogue);
 
 	return (
 		<AnimatePresence>
@@ -67,7 +74,14 @@ export function RettsModal({
 							<div>
 								<div className="font-mono text-[10px] tracking-[0.3em] text-amber-300/80">RE-TTS</div>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									重录镜头 {shot.id} 旁白
+									{isDialogue ? (
+										<>
+											重录镜头 {shot.id} 台词
+											<span className="ml-2 align-middle text-[10px] font-normal text-violet-300">将重新生成该镜画面</span>
+										</>
+									) : (
+										`重录镜头 ${shot.id} 旁白`
+									)}
 									{attempts > 0 && (
 										<span className="ml-2 text-xs font-normal text-zinc-500">
 											已重录 {attempts}/{MAX_RETTS_PER_SHOT} 次
@@ -85,14 +99,21 @@ export function RettsModal({
 							</button>
 						</div>
 
-						{narration && (
-							<div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2.5 text-xs leading-relaxed text-amber-100/85">
-								<span className="font-medium">当前旁白：</span>
-								{narration}
+						{isDialogue && dialogue ? (
+							<div className="mt-3 rounded-xl border border-violet-400/20 bg-violet-400/[0.06] px-3 py-2.5 text-xs leading-relaxed text-violet-100/85">
+								<span className="font-medium">当前台词（{dialogue.characterId}）：</span>
+								{dialogue.lines.zh}
 							</div>
+						) : (
+							narration && (
+								<div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2.5 text-xs leading-relaxed text-amber-100/85">
+									<span className="font-medium">当前旁白：</span>
+									{narration}
+								</div>
+							)
 						)}
 
-						{voices && Object.keys(voices).length > 0 && (
+						{!isDialogue && voices && Object.keys(voices).length > 0 && (
 							<div className="mt-3">
 								<label htmlFor="retts-voice" className="mb-1.5 block text-xs font-medium text-zinc-400">
 									音色（不选则沿用当前音色）
@@ -114,11 +135,21 @@ export function RettsModal({
 						)}
 
 						<p className="mt-3 text-xs leading-relaxed text-zinc-500">
-							只重录这一镜的语音（画面与其余镜头不动）：旧录音自动备份为历史版本。调整指令分两种——
-							<span className="text-zinc-300">表演指导</span>（语气 / 语速 / 情绪，例「兴奋点、语速加快」）会作为 TTS
-							导演指令直接生效，文案逐字不变；
-							<span className="text-zinc-300">文案修改</span>（换说法、加卖点）则先改写旁白（字幕同步更新）再录制。
-							随后该镜按新语音时长重排、重新混音并复审。
+							{isDialogue ? (
+								<>
+									重录台词是<span className="text-zinc-300">级联重做</span>
+									：台词是口型的驱动源，新音频就位后会自动重新生成该镜口型画面（旧画面备份为历史版本），再按新时长重排、重新混音并复审。
+									预计消耗：{durationSec ?? 5}s 视频配额 + 2 次 TTS + 1 轮 LLM。台词沿用剧本中的角色音色。
+								</>
+							) : (
+								<>
+									只重录这一镜的语音（画面与其余镜头不动）：旧录音自动备份为历史版本。调整指令分两种——
+									<span className="text-zinc-300">表演指导</span>（语气 / 语速 / 情绪，例「兴奋点、语速加快」）会作为 TTS
+									导演指令直接生效，文案逐字不变；
+									<span className="text-zinc-300">文案修改</span>（换说法、加卖点）则先改写旁白（字幕同步更新）再录制。
+									随后该镜按新语音时长重排、重新混音并复审。
+								</>
+							)}
 						</p>
 
 						<textarea
@@ -146,7 +177,7 @@ export function RettsModal({
 
 						{remaining <= 0 ? (
 							<p className="mt-3 text-xs text-rose-300">
-								该镜头旁白已达重录上限。可在「剧本」阶段微调文案后整体重跑，或接受当前版本。
+								该镜头已达重录上限。可在「剧本」阶段微调文案后整体重跑，或接受当前版本。
 							</p>
 						) : (
 							<p className="mt-3 text-xs text-zinc-600">剩余重录次数：{remaining} 次</p>

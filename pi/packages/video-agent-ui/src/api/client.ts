@@ -191,12 +191,33 @@ export interface BriefInput {
 
 // ---- 中间产物文档 ----
 
+/** 每镜声音模式（A1/A7；与服务端 ScriptShot 对齐；缺省 = narration 向后兼容） */
+export type AudioMode = "narration" | "dialogue" | "silent";
+
+/** 台词镜子结构（仅 audioMode === "dialogue"；audioDurationSec/audioUrl 由生成链路回写） */
+export interface ShotDialogue {
+	characterId: string;
+	voiceId?: string;
+	lines: { zh: string; en: string };
+	emotion?: string;
+	pace?: "slow" | "normal" | "fast";
+	/** 台词内停顿（秒）——2.5-flash 按音频包络对口型，停顿即闭嘴 */
+	pausesSec?: number[];
+	/** TTS 后 ffprobe 实测时长 */
+	audioDurationSec?: number;
+	/** COS 托管公开 URL（可 <audio> 直接预览） */
+	audioUrl?: string;
+}
+
 export interface ScriptShot {
 	id: string;
 	narrationZh: string;
 	narrationEn: string;
 	visual: string;
 	durationSec: number;
+	ttsDirection?: string;
+	audioMode?: AudioMode;
+	dialogue?: ShotDialogue;
 }
 
 export interface ScriptDoc {
@@ -487,6 +508,8 @@ export interface QuestionView {
 export interface CoCharacter {
 	name: string;
 	description: string;
+	/** 台词模式音色绑定（StepFun voice id）：角色音色跨镜头稳定，重录后不漂移 */
+	voiceId?: string;
 }
 
 export interface CoScene {

@@ -16,7 +16,7 @@ import {
 	writeJson,
 } from "../pipeline.js";
 import type { StageCtx } from "../pipeline.js";
-import { enforceSingleSpeaker } from "../audio-mode.js";
+import { enforceSingleSpeaker, bindCharacterVoices } from "../audio-mode.js";
 
 /** 剧本阶段（独立 stage，script.json 落盘） */
 export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
@@ -56,6 +56,8 @@ export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
 			pushEvent(run, "writer", "producer", "status", `⚠️ ${warning}`);
 		}
 	}
+	// A7 音色绑定：共创角色卡上的 voiceId 按 characterId 注入台词镜（LLM 拿不到音色 id）。
+	script = bindCharacterVoices(script, run.brief.coSpace);
 	await writeJson(run, "script.json", script);
 	setStage(run, "script", "done", 100);
 	pushEvent(

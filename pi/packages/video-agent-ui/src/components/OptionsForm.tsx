@@ -159,6 +159,21 @@ export function OptionsForm({
 								]}
 							/>
 						</Field>
+						<Field label="音频驱动">
+							<Segmented<"off" | "dialogue">
+								value={options.audioDrive ?? "off"}
+								onChange={(v) => onChange({ audioDrive: v })}
+								options={[
+									{ value: "off", label: "关闭" },
+									{ value: "dialogue", label: "台词驱动口型" },
+								]}
+							/>
+							{(options.audioDrive ?? "off") === "dialogue" && (
+								<p className="text-[10px] leading-relaxed text-amber-200/80">
+									台词镜先录台词（角色音色）再以参考音频生成口型；台词超长自动精简重录一次，镜长按音频反推（4–12s）。仅共创来源可用。
+								</p>
+							)}
+						</Field>
 						<Field label="内容语言">
 							<Segmented<"zh" | "en">
 								value={options.promptLanguage}

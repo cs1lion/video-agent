@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { AudioLines, LoaderCircle, Music, RotateCcw, Trash2, Upload } from "lucide-react";
+import { AudioLines, LoaderCircle, Mic, Music, RotateCcw, Trash2, Upload } from "lucide-react";
 import type { AssetFile, BgmInfo, RunView, ScriptDoc } from "@/api/client";
 import { api } from "@/api/client";
 import { GlowButton } from "@/components/ui/primitives";
@@ -157,9 +157,20 @@ export function PostStage({
 	};
 
 	const redoingShot = run.redoActive?.kind === "retts" ? run.redoActive.shotId : undefined;
+	const rettsShotInfo = rettsTarget ? script?.shots.find((s) => s.id === rettsTarget) : undefined;
 	const rettsShot = rettsTarget
-		? { id: rettsTarget, narration: script?.shots.find((s) => s.id === rettsTarget)?.narrationZh }
+		? {
+				id: rettsTarget,
+				narration: rettsShotInfo?.narrationZh,
+				dialogue:
+					rettsShotInfo?.audioMode === "dialogue" && rettsShotInfo.dialogue
+						? { characterId: rettsShotInfo.dialogue.characterId, lines: rettsShotInfo.dialogue.lines }
+						: null,
+				durationSec: rettsShotInfo?.durationSec,
+			}
 		: null;
+	/** A7：台词镜（audio 阶段不产 tts 产物，音轨在成片/口型里——单独区块展示） */
+	const dialogueShots = (script?.shots ?? []).filter((s) => s.audioMode === "dialogue" && s.dialogue);
 
 	return (
 		<StageShell kicker="STAGE 05 · SOUND" title="声音设计">
@@ -234,6 +245,74 @@ export function PostStage({
 							);
 						})}
 					</div>
+					{/* A7：台词镜区块——口型由台词音频驱动，音轨直接烧在口型画面里 */}
+					{dialogueShots.length > 0 && (
+						<div className="space-y-3">
+							<div className="flex items-center gap-2 pt-1">
+								<Mic className="size-4 text-violet-300" />
+								<span className="text-sm font-medium text-zinc-200">台词镜（口型驱动）</span>
+								<span className="text-[10px] text-zinc-600">音频已烧入画面 · 重录台词将级联重生成该镜画面</span>
+							</div>
+							<div className="grid gap-3 sm:grid-cols-2">
+								{dialogueShots.map((shot) => {
+									const d = shot.dialogue!;
+									const redoing = redoingShot === shot.id;
+									return (
+										<div
+											key={shot.id}
+											className={cn(
+												"relative overflow-hidden rounded-xl border bg-white/[0.03] p-3 transition-colors",
+												redoing ? "border-violet-300/50 bg-violet-400/[0.07]" : "border-violet-300/20",
+											)}
+										>
+											<div className="mb-2 flex items-center gap-2">
+												<span className="font-mono text-xs text-violet-300">{shot.id}</span>
+												<span className="rounded-full border border-violet-300/30 bg-violet-400/10 px-1.5 py-px text-[9px] text-violet-200">
+													口型驱动 · {d.characterId}
+												</span>
+												{typeof d.audioDurationSec === "number" && (
+													<span className="font-mono text-[9px] text-zinc-600">{d.audioDurationSec.toFixed(1)}s</span>
+												)}
+												<span className="ml-auto text-[11px] text-zinc-500">{shot.durationSec}s</span>
+											</div>
+											<p className="mb-2 truncate text-[11px] text-zinc-400">
+												<span className="mr-1 text-violet-300/80">{d.characterId}：</span>
+												{d.lines.zh}
+											</p>
+											{d.audioUrl ? (
+												<audio src={d.audioUrl} controls preload="metadata" className="w-full" />
+											) : (
+												<p className="rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-[10px] text-zinc-600">
+													台词音频尚未就绪（运行中或托管不可用已降旁白）
+												</p>
+											)}
+											<div className="mt-2 flex items-center justify-between gap-2">
+												{redoing ? (
+													<span className="flex items-center gap-1.5 text-[11px] text-violet-200">
+														<LoaderCircle className="size-3 animate-spin" />
+														台词重录中 · 口型画面将重新生成
+													</span>
+												) : (
+													<span className="text-[10px] text-zinc-600">
+														{(run.ttsAttempts[shot.id] ?? 0) > 0 ? `已重录 ${run.ttsAttempts[shot.id]} 次` : "对台词/口型不满意？"}
+													</span>
+												)}
+												<button
+													type="button"
+													disabled={run.status === "running" || rettsBusy}
+													onClick={() => setRettsTarget(shot.id)}
+													className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-violet-300/30 px-2.5 py-1 text-[11px] text-violet-200 transition-colors hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+												>
+													<AudioLines className="size-3" />
+													重录台词
+												</button>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					)}
 					{subs && (
 						<a
 							href={subs.url}
@@ -270,10 +349,13 @@ export function PostStage({
 				</div>
 			)}
 
-			{/* 旁白重录弹窗 */}
+			{/* 重录弹窗（旁白 / 台词双分支） */}
 			<RettsModal
 				shot={rettsShot}
 				attempts={rettsTarget ? (run.ttsAttempts[rettsTarget] ?? 0) : 0}
+				narration={rettsShot?.narration}
+				dialogue={rettsShot?.dialogue}
+				durationSec={rettsShot?.durationSec}
 				busy={rettsBusy}
 				onClose={() => setRettsTarget(null)}
 				onSubmit={(shotId, instruction) => {

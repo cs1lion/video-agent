@@ -117,8 +117,10 @@ export function estimateRunCost(args: {
 	withDesignSheets?: boolean;
 	/** 重做预算（镜头/旁白各算 N 次上限内的额外开销） */
 	redoBuffer?: number;
+	/** 音频驱动模式（A5/A7）：dialogue 时台词重录会级联重生成口型视频，追加缓冲行 */
+	audioDrive?: "off" | "dialogue";
 }): CostEstimate {
-	const { catalog, shotCount, clipDurationSec, withDesignSheets = true, redoBuffer = 0 } = args;
+	const { catalog, shotCount, clipDurationSec, withDesignSheets = true, redoBuffer = 0, audioDrive = "off" } = args;
 	const fb = catalog.fallback;
 	const lines: CostEstimate["lines"] = [];
 	const push = (label: string, amount: number, note?: string): void => {
@@ -143,6 +145,11 @@ export function estimateRunCost(args: {
 	if (redoBuffer > 0) {
 		const redo = redoBuffer * (clipDurationSec * (fb.perSecond ?? 0) + (fb.perCall ?? 0));
 		push("重做缓冲", redo, `约 ${redoBuffer} 次镜头补拍`);
+	}
+	if (audioDrive === "dialogue" && redoBuffer > 0) {
+		// A5 台词重录级联：每次 = TTS（首录 + 精简重录各 1）+ 口型视频重生成 1 次
+		const dialogueRedo = redoBuffer * (clipDurationSec * (fb.perSecond ?? 0) + 2 * (fb.perKChar ?? 0));
+		push("台词重录缓冲", dialogueRedo, `约 ${redoBuffer} 次台词重录（TTS×2 + 口型重生成）`);
 	}
 	const total = lines.reduce((sum, l) => sum + l.amount, 0);
 	return { total: round2(total), currency: fb.currency, lines };

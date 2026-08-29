@@ -20,7 +20,7 @@ import {
 	WandSparkles,
 } from "lucide-react";
 import { DEFAULT_GENERATION_OPTIONS, type GenerationOptions } from "@earendil-works/pi-video-agent";
-import { api, type CoSpaceDraft, type CostEstimateView, type UploadedImage } from "@/api/client";
+import { api, type CoCharacter, type CoSpaceDraft, type CostEstimateView, type UploadedImage } from "@/api/client";
 import { ImageUploader } from "@/components/ImageUploader";
 import { OptionsForm } from "@/components/OptionsForm";
 import { Backdrop } from "@/components/fx/Backdrop";
@@ -48,16 +48,19 @@ const PROMPT_HINTS = [
 	"推荐两个适合的场景",
 ];
 
-function ItemList({
+function ItemList<T extends { name: string; description: string }>({
 	items,
 	onChange,
 	namePlaceholder,
 	descPlaceholder,
+	extraRow,
 }: {
-	items: { name: string; description: string }[];
-	onChange: (items: { name: string; description: string }[]) => void;
+	items: T[];
+	onChange: (items: T[]) => void;
 	namePlaceholder: string;
 	descPlaceholder: string;
+	/** A7：条目附加行（角色卡的台词音色下拉）；update 打补丁回写该条 */
+	extraRow?: (item: T, update: (patch: Partial<T>) => void) => React.ReactNode;
 }) {
 	return (
 		<div className="space-y-2">
@@ -88,11 +91,12 @@ function ItemList({
 						className="field-input mt-1 resize-y !px-1 !py-0.5 !text-xs"
 						onChange={(e) => onChange(items.map((it, j) => (j === i ? { ...it, description: e.target.value } : it)))}
 					/>
+					{extraRow?.(item, (patch) => onChange(items.map((it, j) => (j === i ? { ...it, ...patch } : it))))}
 				</div>
 			))}
 			<button
 				type="button"
-				onClick={() => onChange([...items, { name: "", description: "" }])}
+				onClick={() => onChange([...items, { name: "", description: "" } as T])}
 				className="w-full cursor-pointer rounded-xl border border-dashed border-white/15 py-2 text-xs text-zinc-500 transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
 			>
 				+ 添加一条
@@ -119,7 +123,13 @@ export function CoCreatePage() {
 	const [options, setOptions] = useState<GenerationOptions>(incoming?.options ?? { ...DEFAULT_GENERATION_OPTIONS });
 	/** P2：启动前预估成本。依赖 space + options，共创调整后实时变。 */
 	const [estimate, setEstimate] = useState<CostEstimateView | null>(null);
+	/** A7：TTS 音色表（角色卡台词音色绑定；拉取失败静默隐藏下拉） */
+	const [voices, setVoices] = useState<Record<string, string> | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		api.fetchVoices().then(setVoices).catch(() => setVoices(null));
+	}, []);
 
 	// P2：参数/共创空间变化时拉预估（debounce 200ms）
 	useEffect(() => {
@@ -146,6 +156,7 @@ export function CoCreatePage() {
 		if (logline.trim()) parts.push(`一句话创意：「${logline.trim()}」`);
 		if (keyMessage.trim()) parts.push(`关键信息：「${keyMessage.trim()}」`);
 		parts.push(`生成选项：${options.resolution} / ${options.aspectRatio} / 单镜约 ${options.clipDurationSec}s`);
+		if (options.audioDrive === "dialogue") parts.push("已开台词驱动口型：建议角色台词每镜一句、多角色对白拆镜");
 		if (images.length > 0) parts.push(`参考图 ${images.length} 张（${images.map((i) => i.name).join("、")}）`);
 		return parts.length > 0 ? `用户从首页带入了创作基底——${parts.join("；")}。请主动贴合这些信息给建议。` : null;
 	})();
@@ -350,11 +361,28 @@ export function CoCreatePage() {
 									<UserRound className="size-3.5 text-cyan-300/80" />
 									人物形象 <span className="text-zinc-600">外貌 / 性格 / 与产品的关系</span>
 								</div>
-								<ItemList
+								<ItemList<CoCharacter>
 									items={space.characters}
 									onChange={(characters) => setSpace((s) => ({ ...s, characters }))}
 									namePlaceholder="例：加班的年轻上班族小林"
 									descPlaceholder="一句中文：外貌特征 + 性格气质 + 与产品的关系"
+									extraRow={(item, update) =>
+										options.audioDrive === "dialogue" && voices && Object.keys(voices).length > 0 ? (
+											<select
+												value={item.voiceId ?? ""}
+												onChange={(e) => update({ voiceId: e.target.value || undefined })}
+												className="field-input mt-1 !py-1 !text-[11px]"
+												aria-label="台词音色"
+											>
+												<option value="">台词音色：默认</option>
+												{Object.entries(voices).map(([label, id]) => (
+													<option key={id} value={id}>
+														{label}
+													</option>
+												))}
+											</select>
+										) : null
+									}
 								/>
 							</section>
 							<section>
@@ -450,12 +478,14 @@ export function CoCreatePage() {
 									</div>
 									<div className="mt-1 text-[10px] leading-relaxed text-zinc-500">
 										{estimate.lines
-											.slice(0, 4)
+											.filter((l) => (options.audioDrive === "dialogue" ? true : l.label !== "台词重录缓冲"))
+											.slice(0, 5)
 											.map((l) => `${l.label} ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`)
 											.join(" · ")}
 									</div>
 									<p className="mt-1 text-[10px] text-zinc-600">
 										{`含共创 ${space.characters.length + space.scenes.length} 项资产迭代`}
+										{options.audioDrive === "dialogue" && " · 台词镜：台词先录、口型后生成，超长自动精简重录（已含重录缓冲）"}
 									</p>
 								</div>
 							)}

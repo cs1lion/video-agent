@@ -51,11 +51,14 @@ export function TimelineBar({
 					const frame = frameOf(shot.id);
 					const thumb = status !== "pending" ? frame?.url : undefined;
 					const target: UiStageId = status === "clip" ? "generate" : status === "frame" ? "keyframes" : "storyboard";
+					const isDialogue = shot.audioMode === "dialogue";
 					return (
 						<button
 							key={shot.id}
 							type="button"
-							title={`${shot.id} · ${shot.durationSec}s · ${STATUS_LABEL[status]}\n${shot.narrationZh}`}
+							title={`${shot.id} · ${shot.durationSec}s · ${isDialogue ? "台词镜（口型驱动）" : STATUS_LABEL[status]}\n${
+								isDialogue ? `${shot.dialogue?.characterId}：${shot.dialogue?.lines.zh ?? ""}` : shot.narrationZh
+							}`}
 							onClick={() => onJump(target, shot.id)}
 							style={{ flexGrow: Math.max(1, shot.durationSec), minWidth: 40 }}
 							className={cn(
@@ -79,6 +82,15 @@ export function TimelineBar({
 									status === "pending" && "bg-zinc-600/60",
 								)}
 							/>
+							{/* A7：台词镜口型驱动标记（右上角声波角标） */}
+							{isDialogue && (
+								<span
+									title="台词镜：口型由台词音频驱动"
+									className="absolute right-0.5 top-0.5 rounded bg-violet-500/70 px-1 py-px text-[8px] leading-none text-white"
+								>
+									♪
+								</span>
+							)}
 							{/* 镜头号 + 时长 */}
 							<span className="absolute bottom-0.5 left-1 rounded bg-black/60 px-1 font-mono text-[9px] text-zinc-200">
 								{shot.id}

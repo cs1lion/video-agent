@@ -71,3 +71,30 @@ export function enforceSingleSpeaker(script: ScriptDoc): { script: ScriptDoc; wa
 	});
 	return { script: { ...script, shots }, warnings };
 }
+
+/**
+ * A7 音色绑定：把共创角色卡上绑定的 voiceId 写进台词镜。
+ * LLM 拿不到 StepFun voice id——音色绑定只能来自 UI（CoCharacter.voiceId），
+ * 由剧本落盘前按 characterId 确定性注入；LLM 自带的 voiceId（若有）优先不覆盖。
+ * 纯函数：无绑定/无台词镜时原样返回，幂等可重入。
+ */
+export function bindCharacterVoices(
+	script: ScriptDoc,
+	coSpace?: { characters?: { name: string; voiceId?: string }[] },
+): ScriptDoc {
+	const byName = new Map(
+		(coSpace?.characters ?? [])
+			.filter((c) => typeof c.voiceId === "string" && c.voiceId.trim())
+			.map((c) => [c.name, (c.voiceId as string).trim()]),
+	);
+	if (byName.size === 0) return script;
+	return {
+		...script,
+		shots: script.shots.map((shot) => {
+			if (shot.audioMode !== "dialogue" || !shot.dialogue) return shot;
+			if (shot.dialogue.voiceId) return shot;
+			const bound = byName.get(shot.dialogue.characterId);
+			return bound ? { ...shot, dialogue: { ...shot.dialogue, voiceId: bound } } : shot;
+		}),
+	};
+}

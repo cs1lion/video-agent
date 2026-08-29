@@ -43,12 +43,15 @@ export function PipelineFlow({
 	stages,
 	demo = false,
 	className,
+	audioDrive,
 }: {
 	/** 实时阶段状态（RunView.stages）；缺省且 demo=false 时全部 pending */
 	stages?: RunStage[];
 	/** 演示模式：阶段循环点亮（首页展示用） */
 	demo?: boolean;
 	className?: string;
+	/** A7：台词驱动模式——clips 节点标注 audio→clips 反向依赖（台词先录、口型后生成） */
+	audioDrive?: "off" | "dialogue";
 }) {
 	// demo 游标：0..len 依次 running，len+1 时全部 done，随后归零重来
 	const [cursor, setCursor] = useState(0);
@@ -134,7 +137,13 @@ export function PipelineFlow({
 										<StatusDot tone="pending" />
 									)}
 								</div>
-								<div className="mt-0.5 pl-[22px] text-[10px] text-zinc-600">{node.role}</div>
+								<div className="mt-0.5 pl-[22px] text-[10px] text-zinc-600">
+									{audioDrive === "dialogue" && node.id === "clips" ? (
+										<span className="text-violet-300/80">台词驱动口型 · audio → clips</span>
+									) : (
+										node.role
+									)}
+								</div>
 							</motion.div>
 						</div>
 					);
