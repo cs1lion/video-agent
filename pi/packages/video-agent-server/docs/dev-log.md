@@ -668,10 +668,33 @@ export 的"源音轨缺失响亮失败"。
 reshot-quota-wiring）。**以后给 ffmpeg/queue/llm 加导入，先 grep test/ 的
 mock.module。**
 
-**待办（A2 收尾，等外部输入）**：
-- CloudBase 凭据（`TCB_ENV_ID/SECRET_ID/SECRET_KEY`）就绪后：真镜端到端
-  （验收 = 人眼确认口型）；确认云存储「所有用户可读」权限与 `resultPath`
-  响应形状；2 RPM 节奏下逐镜验证。
+**A4a 台词镜时长对齐（08-29 晚，`e2a5f81`）**：设计 3.3 的可独立开工部分落地
+（"以音频反推镜长"仍与 A6 同批）。`prepareDialogueAudio` 重构成
+`synthesizeToPaced` 助手（TTS→实测→插停顿）后追加两步：
+- **超长**（> 镜长+0.2s 容差）：LLM 精简（`dialogueCondenseMessages`，
+  floor(镜长×4字/秒)、保持口吻）→ 同音色重录一次（配额计 2 次 TTS）；
+  失败/仍超长 → 接受留痕。**不硬裁**——切在词中间比尾段轻微越界更伤。
+- **过短**（< 镜长-0.05s）：`padTailToSec`（apad）补到镜长，口型结尾自然闭合。
+- `audioDurationSec` 回写最终值（export 锚点 + 配额结算依据）。
+- 容差 0.2s 的取舍：LLM 重录成本 > 0.2s 尾段越界的观感损失。
+测试 152 → 158；2 次变异验证（砍精简 → ⑧⑪ 红、砍补静音 → ⑨ 红，精确命中）。
+配套：`loadQuotaLedger` 无 `VIDEO_AGENT_QUOTA_DAILY_SEC` 时一次性运营提示。
+**坑（测试基建）**：FakeQueue 原异步写产物文件，mock insertPauses 的 copyFile
+偶发 ENOENT 走"停顿插入失败"分支——改同步写后消失。生产无此问题。
+
+**CloudBase 凭据新情报（用户提供的 `cloudbase_tts_upload_report.md`）**：
+另一 agent 的 MCP 方案证实三件事：① API Key 登录 = `apiKey` + `apiKeyEnvId`
+**两个字段**——JWT 的 aud（`myagent-d0glujkt6c330cbe8a`）疑似项目 ID/别名而
+非规范 EnvId（与我们实测的 INVALID_ENV 吻合），真实 EnvId 在控制台 tcb 首页；
+② 默认私有桶 publicUrl 403，**桶 ACL 须设 READONLY**（等价我们的
+"所有用户可读"前置）；③ `temporaryUrl` 是 1h 签名链接，**不能**当持久
+audioUrl 复用（重做路径会失效）——公开 URL 仍是唯一正解。下一步：拿到真实
+EnvId 后先试 API Key + OpenAPI 网关上传，走不通再要 CAM 密钥。
+
+**待办（A2/A4 收尾，等外部输入）**：
+- CloudBase 真实 EnvId + 桶 ACL 公有读就绪后：真镜端到端
+  （验收 = 人眼确认口型）；托管 URL 匿名 Range 206；2 RPM 节奏下逐镜验证
+  （`resultPath` 形状已实测钉死，见上）。
 - 台词镜的 i2v 锚定缺位（reference 不传 first_frame）是否影响一致性，留
   真实出片后评估。
 

@@ -120,6 +120,15 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## A4a 台词镜对齐现状（2026-08-29 晚，`e2a5f81`）
+
+- **已完成**：超镜长 → LLM 精简重录一次（`dialogueCondenseMessages` + 同音色，
+  容差 +0.2s，不硬裁）；短于镜长 → `padTailToSec`（apad）补到镜长；
+  `audioDurationSec` 回写最终值。套件 158/158，2 次变异验证精确命中。
+- **仍开放**：「以音频反推镜长 ceil(audioDur)」必须与 A6 白名单放开同批。
+- **测试基建坑**：测试 FakeQueue 必须**同步写**产物文件——异步写在微任务竞态下
+  会让下游 mock 的 copyFile ENOENT 走错分支（生产代码无此问题）。
+
 ## A2 台词链路现状（2026-08-29，接手必读）
 
 - **服务端核心已完成**（commit `f1c6eea`，套件 152/152）：`src/hosting/tcb.ts`
@@ -134,13 +143,14 @@
   keyframe/reference 必须带 model_name；总文档 2.1 旧说法"agnesapi 会 404"已实测证伪；
   2.5 创建响应 id=task_id=video_id 同值，task_ 前缀）。
 - **用户决策（08-29）**：agnes 视频**无特殊情况一律 2.5-flash**（v2.0 仅兜底）。
-- **CloudBase 凭据现状（08-29）**：用户给的是 **API Key JWT**（aud=`myagent-d0glujkt6c330cbe8a`，
-  service_role，来自 AI+ 平台）。**node-sdk 不认它**（init 接受但 uploadFile 时报
-  "missing secretId or secretKey"）；OpenAPI 网关 `{aud}.api.tcloudbasegateway.com`
-  返回 INVALID_ENV（aud 可能是 project id 而非 envId）。tcb.ts 已支持 apiKey/secret
-  双模式；`.env.cloudbase` 已配 apiKey 待解；探针脚本 `scripts/probe-tcb.ts`。
-  **待用户**：给 CAM SecretId/SecretKey（子账号登录 → console.cloud.tencent.com/cam/capi）
-  或 CloudBase 控制台的真实环境 ID。08-28 总文档里"上传 206 验证"的凭据来源无记录。
+- **CloudBase 凭据现状（08-29，含用户报告情报）**：用户给的是 **API Key JWT**
+  （aud=`myagent-d0glujkt6c330cbe8a`，service_role）。node-sdk 不认它；网关报
+  INVALID_ENV。`cloudbase_tts_upload_report.md`（另一 agent 的 MCP 方案）证实：
+  API Key 登录需 `apiKey` + **规范 EnvId** 两字段（aud 疑似项目 ID）；**桶 ACL
+  须 READONLY** 否则 publicUrl 403；`temporaryUrl` 是 1h 签名链接**不能**当持久
+  audioUrl。tcb.ts 已支持 apiKey/secret 双模式；`.env.cloudbase` 已配 apiKey 待解；
+  探针脚本 `scripts/probe-tcb.ts`。**待用户**：控制台 tcb 首页的真实环境 ID
+  → 先试 API Key + OpenAPI 网关，走不通再要 CAM SecretId/SecretKey。
 - **`@cloudbase/manager-node` 在 tsx 下 import 即炸**（依赖 `del` 的 CJS 互操作），
   勿用；用 `@cloudbase/node-sdk`（`default.init(...).uploadFile({cloudPath, fileContent:Buffer})`
   ——注意签名是 fileContent 不是 localPath）。
