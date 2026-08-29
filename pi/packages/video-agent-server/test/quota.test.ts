@@ -12,7 +12,8 @@
  */
 
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { after, describe, it } from "node:test";
+import { loadQuotaLedger } from "../src/config.ts";
 import { QuotaLedger, TokenBucket, type PoolSpec } from "../src/quota.ts";
 
 /** 固定基准时钟，跨日用例在其上加偏移 */
@@ -241,5 +242,70 @@ describe("配额账本（QuotaLedger）· 跨日", () => {
 		// 新的一天已重置为 500，若无封顶释放 300 会变成 800
 		ledger.release(id, { now: nextDay });
 		close(ledger.remainingSec("tp-1")!, 500, 0);
+	});
+});
+
+describe("loadQuotaLedger 环境变量与 keyType 语义（限时免费场景）", () => {
+	const KEYS = [
+		"VIDEO_AGENT_QUOTA_DAILY_SEC",
+		"VIDEO_AGENT_QUOTA_RPM",
+		"VIDEO_AGENT_QUOTA_KEY_TYPE",
+	] as const;
+	type Key = (typeof KEYS)[number];
+	const HINT = "VIDEO_AGENT_SILENCE_QUOTA_HINT";
+	const saved = new Map<string, string | undefined>(
+		[...KEYS, HINT].map((k) => [k, process.env[k]]),
+	);
+	// 静音运营提示，避免"未设环境变量"用例的 console.warn 污染测试输出
+	process.env[HINT] = "1";
+
+	after(() => {
+		for (const [k, v] of saved) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+	});
+
+	function setEnv(vars: Partial<Record<Key, string>>): void {
+		for (const k of KEYS) {
+			if (vars[k] === undefined) delete process.env[k];
+			else process.env[k] = vars[k];
+		}
+	}
+
+	/**
+	 * 核心回归锁：**「有无每日时长配额」与「Key 层级」是两个正交维度**。
+	 * 早期实现 `dailyQuotaSec === null ? "free" : "tokenplan"` 把两者混为一谈——
+	 * 视频模型限时免费（设 DAILY_SEC=0）时，会把企业版池（RPM 2）误标成
+	 * free（官方 RPM 1），让 ReAct 代理低估该池能力、做出次优调度。
+	 */
+	it("DAILY_SEC=0（无每日配额）→ keyType 仍按企业版，不得误判为 free", () => {
+		setEnv({ VIDEO_AGENT_QUOTA_DAILY_SEC: "0" });
+		const pool = loadQuotaLedger().snapshot(T0)[0]!;
+		assert.equal(pool.remainingQuotaSec, Number.POSITIVE_INFINITY, "0 应表示无每日秒数上限");
+		assert.equal(pool.keyType, "enterprise", "无时长配额 ≠ free：企业版 RPM=2，误标会让代理低估该池");
+		assert.equal(pool.rpmTokens, 2, "RPM 令牌桶仍按企业版 2/分钟");
+	});
+
+	it("不设环境变量 → 保守默认 500s/天 + tokenplan + 2RPM", () => {
+		setEnv({});
+		const pool = loadQuotaLedger().snapshot(T0)[0]!;
+		assert.equal(pool.remainingQuotaSec, 500);
+		assert.equal(pool.keyType, "tokenplan");
+	});
+
+	it("显式 KEY_TYPE 优先于按配额推断", () => {
+		setEnv({ VIDEO_AGENT_QUOTA_DAILY_SEC: "0", VIDEO_AGENT_QUOTA_KEY_TYPE: "free" });
+		assert.equal(loadQuotaLedger().snapshot(T0)[0]!.keyType, "free");
+	});
+
+	it("非法 KEY_TYPE 回落推断逻辑，不崩溃", () => {
+		setEnv({ VIDEO_AGENT_QUOTA_DAILY_SEC: "0", VIDEO_AGENT_QUOTA_KEY_TYPE: "bogus" });
+		assert.equal(loadQuotaLedger().snapshot(T0)[0]!.keyType, "enterprise");
+	});
+
+	it("RPM 可覆盖（限时免费下 RPM 才是真实瓶颈）", () => {
+		setEnv({ VIDEO_AGENT_QUOTA_DAILY_SEC: "0", VIDEO_AGENT_QUOTA_RPM: "5" });
+		assert.equal(loadQuotaLedger().snapshot(T0)[0]!.rpmTokens, 5);
 	});
 });

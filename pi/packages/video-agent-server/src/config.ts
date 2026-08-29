@@ -21,6 +21,16 @@ export const VIDEO_QUOTA_POOL = "video";
  * 缺省按 TokenPlan 实测（总文档 2.1/3.5）：500s/天、2 RPM；环境变量覆盖：
  *   VIDEO_AGENT_QUOTA_DAILY_SEC  每日秒数（"0" = 无明确配额，只受 RPM 约束）
  *   VIDEO_AGENT_QUOTA_RPM        每分钟提交上限
+ *   VIDEO_AGENT_QUOTA_KEY_TYPE   池类型标注（free/enterprise/tokenplan），缺省按配额推断
+ *
+ * ⚠️ **「有无每日时长配额」与「Key 层级」是两个正交维度，不能互相推导**：
+ * 企业版与 free 都可能没有明确的每日时长配额（`dailyQuotaSec: null`），
+ * 但 RPM 分别是 2 与 1（Agnes 官方表）。早期实现把 null 直接推导为 "free"，
+ * 会让厨房快照把企业版池误标成 free（官方 1 RPM），进而让 ReAct 代理低估该池能力。
+ * keyType 只用于快照展示与代理决策语义，**不参与** RPM / 配额的实际计算。
+ *
+ * 2026-08-29：视频模型处于**限时免费**状态（无每日秒数配额，但 RPM 限流依然存在）→
+ * 生产设 `VIDEO_AGENT_QUOTA_DAILY_SEC=0` 即可，账本退化为「只记 RPM 令牌桶 + 用量统计」。
  */
 export function loadQuotaLedger(): QuotaLedger {
 	const dailyRaw = process.env.VIDEO_AGENT_QUOTA_DAILY_SEC;
@@ -28,13 +38,20 @@ export function loadQuotaLedger(): QuotaLedger {
 	const dailyQuotaSec = Number.isFinite(parsedDaily) ? (parsedDaily > 0 ? parsedDaily : null) : 500;
 	const parsedRpm = Number(process.env.VIDEO_AGENT_QUOTA_RPM);
 	const rpmCap = Number.isFinite(parsedRpm) && parsedRpm > 0 ? parsedRpm : 2;
-	const keyType: KeyType = dailyQuotaSec === null ? "free" : "tokenplan";
+	const kt = process.env.VIDEO_AGENT_QUOTA_KEY_TYPE;
+	const keyType: KeyType =
+		kt === "free" || kt === "enterprise" || kt === "tokenplan"
+			? kt
+			: dailyQuotaSec === null
+				? "enterprise" // 无每日时长配额（限时免费/企业版）：按真实 Key 层级标注，勿误判为 free
+				: "tokenplan";
 	if (dailyRaw === undefined && process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT !== "1") {
 		// 运营提示（一次性，进程级 console）：默认值按 TokenPlan 保守估计；实际 Key 为
 		// 企业版时真实额度更高，不覆盖会让账本"精确地记一笔错误的预算"。
 		console.warn(
 			"[video-agent] 未设置 VIDEO_AGENT_QUOTA_DAILY_SEC，按保守默认 500s/天记账（当前 Agnes Key 为企业版，真实额度更高）。" +
-				"要放开请设 VIDEO_AGENT_QUOTA_DAILY_SEC=<秒数>（\"0\" = 不限每日量，只受 RPM 约束）；测试环境可设 VIDEO_AGENT_SILENCE_QUOTA_HINT=1 关闭本提示。",
+				"要放开请设 VIDEO_AGENT_QUOTA_DAILY_SEC=<秒数>（\"0\" = 不限每日量，只受 RPM 约束；" +
+				"视频模型限时免费期推荐设 0 —— 此时账本只记 RPM 令牌桶与用量，不再有每日秒数告警）；测试环境可设 VIDEO_AGENT_SILENCE_QUOTA_HINT=1 关闭本提示。",
 		);
 	}
 	return new QuotaLedger([{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }]);
