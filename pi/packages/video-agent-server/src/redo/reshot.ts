@@ -10,6 +10,7 @@
  * 5. run.metrics.mediaCalls：每次视频调用都计费，无论成功失败
  * 6. 自动 reshot 后调 executeStages(["export"]) 重装配 + 复审 + 拉新 verdict 快照
  * 7. P2+派发后回灌：动作前快照 verdict，重做后比评分变化（仅退步/裁决变化时推）
+ * 8. B1 redo 路径接账本：提交前预留，出片后按实测结算，失败/降级退还（D5）
  *
  * 调用方：POST /api/runs/:id/reshot
  * 依赖：pipeline.ts 的 stageXxx / runQa / executeStages + asset-version.ts + redo-adapters.ts
@@ -19,8 +20,10 @@ import * as path from "node:path";
 import { GenerationQueue } from "../../../coding-agent/examples/extensions/studio/media/queue.ts";
 import { probeDuration } from "../ffmpeg.ts";
 import { withVersionedAsset, fileDataUrl } from "../asset-version.ts";
-import { videoAdapterOf, videoSubmitParams } from "../redo-adapters.ts";
+import { estimateClipSeconds, videoAdapterOf, videoSubmitParams } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
+import { VIDEO_QUOTA_POOL } from "../config.ts";
+import type { ReserveResult } from "../quota.ts";
 import { imageSizeFor } from "../pipeline.ts";
 import { keyframePrompt } from "../prompts.ts";
 import {
@@ -41,12 +44,68 @@ import {
 	setStage,
 	snapshotShotVerdict,
 	stage,
+	throwIfAborted,
 	writeJson,
 } from "../pipeline.ts";
 import { designAnchorsOf } from "../pipeline.ts";
 import type { ServerContext } from "../config.ts";
 import type { ScriptDoc, ShotPromptDoc, VisualBible } from "../prompts.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
+
+// ---------------------------------------------------------------------------
+// B1 redo 路径配额接线（本地定义，避免与 stages/clips.ts 形成循环依赖）
+// ---------------------------------------------------------------------------
+
+type ShotReservation = Extract<ReserveResult, { ok: true }>;
+
+async function reserveShotQuota(
+	sc: StageCtx,
+	shotId: string,
+	estimateSec: number,
+	attempt: number,
+): Promise<ShotReservation | null> {
+	const quota = sc.ctx.quota;
+	if (!quota) return { ok: true, reservationId: "", reservedSec: estimateSec, reused: false };
+	for (;;) {
+		throwIfAborted(sc.signal);
+		const r = quota.reserve(VIDEO_QUOTA_POOL, estimateSec, {
+			idempotencyKey: `${sc.run.id}:${shotId}:a${attempt}`,
+		});
+		if (r.ok) return r;
+		if (r.reason === "rpm_exhausted") {
+			const waitMs = quota.snapshot().find((p) => p.id === VIDEO_QUOTA_POOL)?.rpmWaitMs ?? 1000;
+			await sleepAbortable(Math.min(waitMs + 100, 65_000), sc.signal);
+			continue;
+		}
+		return null; // insufficient_quota / unknown_pool / invalid
+	}
+}
+
+function releaseReservation(quota: ServerContext["quota"], reservation: ShotReservation | null): void {
+	if (quota && reservation?.reservationId) quota.release(reservation.reservationId);
+}
+
+function settleReservation(quota: ServerContext["quota"], reservation: ShotReservation | null, actualSec: number): void {
+	if (quota && reservation?.reservationId) quota.settle(reservation.reservationId, actualSec);
+}
+
+function sleepAbortable(ms: number, signal: AbortSignal): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (signal.aborted) {
+			reject(new Error("已中止"));
+			return;
+		}
+		const onAbort = () => {
+			clearTimeout(timer);
+			reject(new Error("已中止"));
+		};
+		const timer = setTimeout(() => {
+			signal.removeEventListener("abort", onAbort);
+			resolve();
+		}, ms);
+		signal.addEventListener("abort", onAbort, { once: true });
+	});
+}
 
 /**
  * 镜头级重做（POST /api/runs/:id/reshot 入口）
@@ -129,6 +188,25 @@ export async function reshotRun(
 		const queue = new GenerationQueue(ctx.mediaConfig);
 		const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
 		const opts = optionsOf(run);
+		const estimateSec = estimateClipSeconds(sc.ctx, opts);
+
+		// B1 redo 路径接账本：提交前先预留；RPM 暂缺可等，配额不足直接 bail
+		let reservation = await reserveShotQuota(sc, shotId, estimateSec, 0);
+		if (!reservation) {
+			run.status = "failed";
+			run.error = "视频配额不足，无法补拍。建议缩短镜长或等待配额恢复。";
+			run.redoActive = null;
+			pushEvent(
+				run,
+				"producer",
+				"client",
+				"status",
+				`镜头 ${shotId} 补拍配额不足 ⚠️，未派发。建议缩短镜长或等待配额恢复。`,
+			);
+			persistRun(run);
+			return;
+		}
+
 		try {
 			// 1. 外观类反馈（客户指令/质检/一致性）→ 先重绘关键帧再图生视频：
 			//    视频以首帧锚定时，旧关键帧的外观（如发色年龄）会压过文本指令，
@@ -219,6 +297,19 @@ export async function reshotRun(
 					if (i2v.status === "done" && i2v.filePath) {
 						return path.relative(run.dir, i2v.filePath);
 					}
+					// 图生视频失败：退还本次预留，降级文生视频重新预留（新 attempt = 新幂等键）
+					releaseReservation(sc.ctx.quota, reservation);
+					reservation = await reserveShotQuota(sc, shotId, estimateSec, 1);
+					if (!reservation) {
+						pushEvent(
+							run,
+							"tech",
+							"producer",
+							"status",
+							`镜头 ${shotId} 文生视频配额不足，已退还图生视频预留。`,
+						);
+						return null;
+					}
 					// 图生视频退化为文生视频（同一份输出名，会覆盖主文件）
 					const t2vJob = queue.submit(
 						{
@@ -238,16 +329,20 @@ export async function reshotRun(
 			const ok = Boolean(okRel);
 			const finished = okRel ? { status: "done" as const, filePath: path.join(run.dir, okRel) } : null;
 			const t0 = Date.now();
-			// P2：重做镜头成功后按实际时长计费
+			// P2：重做镜头成功后按实际时长计费 + B1 配额结算
 			if (ok && finished) {
 				try {
 					const dur = await probeDuration(path.relative(run.dir, finished.filePath), run.dir);
 					const adapter = videoAdapterOf(sc.ctx);
 					if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, dur ?? opts.clipDurationSec);
+					settleReservation(sc.ctx.quota, reservation, dur ?? estimateSec);
 				} catch {
 					const adapter = videoAdapterOf(sc.ctx);
 					if (adapter) trackMediaCost(run, sc.ctx, adapter, {}, opts.clipDurationSec);
+					settleReservation(sc.ctx.quota, reservation, estimateSec);
 				}
+			} else {
+				releaseReservation(sc.ctx.quota, reservation);
 			}
 			appendSpan(
 				run,
@@ -293,6 +388,7 @@ export async function reshotRun(
 				pushEvent(run, "producer", "client", "redo", deltaText, { stage: "review", focus: shotId });
 			}
 		} catch (error) {
+			releaseReservation(sc.ctx.quota, reservation);
 			if (sc.signal.aborted) {
 				run.status = "cancelled";
 				run.redoActive = null;
