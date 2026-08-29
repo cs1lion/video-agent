@@ -29,6 +29,14 @@ export function loadQuotaLedger(): QuotaLedger {
 	const parsedRpm = Number(process.env.VIDEO_AGENT_QUOTA_RPM);
 	const rpmCap = Number.isFinite(parsedRpm) && parsedRpm > 0 ? parsedRpm : 2;
 	const keyType: KeyType = dailyQuotaSec === null ? "free" : "tokenplan";
+	if (dailyRaw === undefined && process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT !== "1") {
+		// 运营提示（一次性，进程级 console）：默认值按 TokenPlan 保守估计；实际 Key 为
+		// 企业版时真实额度更高，不覆盖会让账本"精确地记一笔错误的预算"。
+		console.warn(
+			"[video-agent] 未设置 VIDEO_AGENT_QUOTA_DAILY_SEC，按保守默认 500s/天记账（当前 Agnes Key 为企业版，真实额度更高）。" +
+				"要放开请设 VIDEO_AGENT_QUOTA_DAILY_SEC=<秒数>（\"0\" = 不限每日量，只受 RPM 约束）；测试环境可设 VIDEO_AGENT_SILENCE_QUOTA_HINT=1 关闭本提示。",
+		);
+	}
 	return new QuotaLedger([{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }]);
 }
 

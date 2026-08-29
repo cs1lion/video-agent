@@ -12,6 +12,7 @@
 
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, describe, it, mock } from "node:test";
@@ -27,12 +28,16 @@ const PNG_1PX = Buffer.from(
 );
 
 // ---- 场景拨杆（用例间重置）----
-let probeSec: number | null = 4.2;
+let probeSeq: (number | null)[] = [4.2];
 let hostCalls = 0;
 let hostShouldFail = false;
 let urlAlive = false;
 let insertPauseCalls: { inPath: string; outPath: string; pausesSec: number[] }[] = [];
+let padCalls: { inPath: string; outPath: string; targetSec: number; inputSec: number }[] = [];
+let padResult: "padded" | "skipped" = "skipped";
+let condenseReply: unknown = { zh: "短句", en: "Short." };
 let failTts = false;
+let failTtsSecondOnly = false;
 let failReferenceOnly = false;
 let failVideoAll = false;
 /** 队列提交记录（kind/prompt/params 按序追加） */
@@ -42,13 +47,17 @@ class FakeQueue {
 	private seq = 0;
 	private readonly jobs = new Map<string, unknown>();
 	private videoSeq = 0;
+	private ttsSeq = 0;
 	submit(input: { kind: string; prompt: string; params: Record<string, unknown>; outputName: string }, projectDir: string) {
 		const id = `J${this.seq++}`;
 		submits.push({ kind: input.kind, prompt: input.prompt, params: input.params });
 		const ext = input.kind === "video" ? ".mp4" : ".mp3";
 		const relative = path.posix.join("assets", `${input.outputName}${ext}`);
 		let status: "done" | "failed" = "done";
-		if (input.kind === "tts" && failTts) status = "failed";
+		if (input.kind === "tts") {
+			this.ttsSeq += 1;
+			if (failTts || (failTtsSecondOnly && this.ttsSeq === 2)) status = "failed";
+		}
 		if (input.kind === "video") {
 			this.videoSeq += 1;
 			if (failVideoAll || (failReferenceOnly && this.videoSeq === 1)) status = "failed";
@@ -57,10 +66,9 @@ class FakeQueue {
 		const job = { id, status, filePath: status === "done" ? absolute : undefined, relativePath: relative, attemptLog: [] };
 		this.jobs.set(id, job);
 		if (status === "done") {
-			void (async () => {
-				await mkdir(path.dirname(absolute), { recursive: true });
-				await writeFile(absolute, Buffer.from([0x00, 0x01]), "utf-8");
-			})();
+			// 同步写：下游 mock 的 copyFile/probe 依赖文件存在（异步写有微任务竞态）
+			mkdirSync(path.dirname(absolute), { recursive: true });
+			writeFileSync(absolute, Buffer.from([0x00, 0x01]));
 		}
 		return job;
 	}
@@ -78,7 +86,10 @@ function installMocks(): void {
 			LlmError: class extends Error {},
 			chat: async () => "ok",
 			chatVisionJson: async () => ({}),
-			chatJson: async () => ({}),
+			chatJson: async (_llm: unknown, _prompt: string) => {
+				if (condenseReply === null) throw new Error("llm unavailable");
+				return condenseReply;
+			},
 			tryParseJson: <T>(raw: string) => JSON.parse(raw) as T,
 		},
 	});
@@ -97,7 +108,7 @@ function installMocks(): void {
 				wipeleft: "左划",
 				slideup: "上滑",
 			} as Record<string, string>,
-			probeDuration: async (): Promise<number | null> => probeSec,
+			probeDuration: async (): Promise<number | null> => (probeSeq.length > 1 ? (probeSeq.shift() as number | null) : probeSeq[0]!),
 			runFfmpeg: async (): Promise<string> => "",
 			runFfmpegCapture: async (): Promise<{ stdout: string; stderr: string }> => ({ stdout: "", stderr: "" }),
 			buildAssSubtitles: (_e: unknown[], width: number, height: number): string => `stub-ass-${width}x${height}`,
@@ -123,6 +134,13 @@ function installMocks(): void {
 				insertPauseCalls.push({ inPath: o.inPath, outPath: o.outPath, pausesSec: [...o.pausesSec] });
 				await mkdir(path.dirname(path.join(o.cwd, o.outPath)), { recursive: true });
 				await fsCopy(o.cwd, o.inPath, o.outPath);
+			},
+			padTailToSec: async (o: { cwd: string; inPath: string; outPath: string; targetSec: number; inputSec: number }) => {
+				padCalls.push({ inPath: o.inPath, outPath: o.outPath, targetSec: o.targetSec, inputSec: o.inputSec });
+				if (padResult === "skipped") return "skipped" as const;
+				await mkdir(path.dirname(path.join(o.cwd, o.outPath)), { recursive: true });
+				await fsCopy(o.cwd, o.inPath, o.outPath);
+				return "padded" as const;
 			},
 		},
 	});
@@ -157,12 +175,16 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 	});
 
 	function reset(): void {
-		probeSec = 4.2;
+		probeSeq = [4.2];
 		hostCalls = 0;
 		hostShouldFail = false;
 		urlAlive = false;
 		insertPauseCalls = [];
+		padCalls = [];
+		padResult = "skipped";
+		condenseReply = { zh: "短句", en: "Short." };
 		failTts = false;
+		failTtsSecondOnly = false;
 		failReferenceOnly = false;
 		failVideoAll = false;
 		submits = [];
@@ -404,5 +426,70 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal(quota.snapshot()[0]!.inFlight, 0);
 		// metrics：1 TTS + 3 video
 		assert.equal(run.metrics.mediaCalls, 4);
+	});
+
+	it("A4 超长对齐：台词实测超镜长 → LLM 精简重录（第二次 TTS 用精简文本，配额计 2 次 TTS）", async () => {
+		reset();
+		probeSeq = [6.5, 7.0, 4.4, 4.97]; // 首版 TTS 6.5 → 插停顿 7.0（> 5.2 触发精简）→ 重录 4.4 → 插停顿 4.97
+		const ctx = makeCtx();
+		const { run, script } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		const ttsSubmits = submits.filter((s) => s.kind === "tts");
+		assert.equal(ttsSubmits.length, 2, "首版 + 精简重录各一次 TTS");
+		assert.equal(ttsSubmits[0]!.prompt, "你好，世界。");
+		assert.equal(ttsSubmits[1]!.prompt, "短句", "第二次 TTS 必须用精简后的文本");
+		assert.deepEqual(ttsSubmits[1]!.params, { instruction: "兴奋", voice: "v_test" }, "重录保持同一音色与指导（跨镜一致性）");
+		const video = submits.find((s) => s.kind === "video")!;
+		assert.deepEqual((video.params as { audios: string[] }).audios.length, 1, "精简重录后仍走 reference");
+		assert.equal(result.script.shots[0]!.audioMode, "dialogue");
+		assert.ok(Math.abs(result.script.shots[0]!.dialogue!.audioDurationSec! - 4.97) < 1e-6);
+		assert.equal(run.metrics.mediaCalls, 3, "2 TTS + 1 video");
+		assert.ok(run.events.some((e) => e.text.includes("已 LLM 精简重录")));
+		assert.equal(insertPauseCalls.length, 2, "两次合成各自走停顿插入");
+	});
+
+	it("A4 过短对齐：台词短于镜长 → 尾部补静音到镜长，最终时长落盘", async () => {
+		reset();
+		probeSeq = [4.0, 4.5, 5.0]; // TTS 4.0 → 插停顿 4.5 → 补静音后 5.0
+		padResult = "padded";
+		const ctx = makeCtx();
+		const { run, script } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		assert.equal(padCalls.length, 1, "恰好一次尾部补静音");
+		assert.ok(Math.abs(padCalls[0]!.targetSec - 5) < 1e-6);
+		assert.ok(Math.abs(padCalls[0]!.inputSec - 4.5) < 1e-6, "补静音输入是插停顿后的实测时长");
+		assert.ok(padCalls[0]!.outPath.endsWith("tts-dialogue-SH01-pad.mp3"));
+		assert.equal(result.script.shots[0]!.audioMode, "dialogue");
+		assert.ok(Math.abs(result.script.shots[0]!.dialogue!.audioDurationSec! - 5) < 1e-6, "回写补齐后的时长（export 节奏锚点用）");
+		assert.ok(run.events.some((e) => e.text.includes("尾部补静音")));
+		assert.equal(submits.filter((s) => s.kind === "tts").length, 1, "过短不需要重录");
+	});
+
+	it("A4 超长且精简不可用（LLM 失败）→ 接受原时长并留痕，链路不阻断", async () => {
+		reset();
+		condenseReply = null; // chatJson 抛错 → condenseLine 返回 null
+		probeSeq = [6.5, 7.0];
+		const ctx = makeCtx();
+		const { run, script } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		assert.equal(submits.filter((s) => s.kind === "tts").length, 1, "精简不可用不重录");
+		const video = submits.find((s) => s.kind === "video")!;
+		assert.equal((video.params as { mode: string }).mode, "reference", "照常 reference 提交");
+		assert.ok(Math.abs(result.script.shots[0]!.dialogue!.audioDurationSec! - 7) < 1e-6, "接受实测时长");
+		assert.ok(run.events.some((e) => e.text.includes("精简不可用")));
+	});
+
+	it("A4 精简重录的 TTS 失败 → 回退首版台词音频，链路不阻断", async () => {
+		reset();
+		failTtsSecondOnly = true;
+		probeSeq = [6.5, 7.0];
+		const ctx = makeCtx();
+		const { run, script } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		assert.equal(submits.filter((s) => s.kind === "tts").length, 2);
+		const video = submits.find((s) => s.kind === "video")!;
+		assert.equal((video.params as { mode: string }).mode, "reference");
+		assert.ok(Math.abs(result.script.shots[0]!.dialogue!.audioDurationSec! - 7) < 1e-6, "回退后用首版实测时长");
+		assert.ok(run.events.some((e) => e.text.includes("精简重录失败，使用首版")));
 	});
 });

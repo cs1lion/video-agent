@@ -267,6 +267,31 @@ export function sanitizeDialogue(raw: unknown): ShotDialogue | null {
 }
 
 /**
+ * 台词精简重写（A4 时长对齐·超长分支）：台词是驱动源，必须 ≤ 镜长（否则尾段嘴瓢）。
+ * 目标字数按中文 ~4 字/秒 折算；保持人物口吻与关键信息，禁止舞台指示。
+ * 只输出 JSON {"zh": "…", "en": "…"}。
+ */
+export function dialogueCondenseMessages(shotId: string, lineZh: string, lineEn: string, targetChars: number): string {
+	const user = [
+		`镜头 ${shotId} 的台词音频实测超过镜长，需要精简台词后重新配音。`,
+		"",
+		`当前台词:`,
+		`- 中文: ${lineZh}`,
+		`- 英文: ${lineEn}`,
+		"",
+		"要求:",
+		`1. 中文压缩到不超过 ${targetChars} 字（${targetChars} 字约对应镜长内可自然说完的量），英文同步精简；`,
+		"2. 保留人物口吻、情绪与关键信息，优先删修饰词和重复语义，不改变事实内容；",
+		"3. 仍是一句口语台词，适合 TTS 朗读，不含舞台指示、旁白腔或省略号；",
+		"4. 两句都直接可读，不要引号包裹。",
+		"",
+		"只输出如下 JSON（不要围栏）:",
+		'{"zh": "…", "en": "…"}',
+	].join("\n");
+	return user;
+}
+
+/**
  * 旁白重录·指令解析：按客户指令判断是「改文案」还是「纯表演指导」。
  * - copy-edit：改写旁白（语气/口语化/内容调整），输出新文案（中英双语，±20%）；
  * - voice-only：文案不动，只给 TTS 表演指导（instruction，中文 ≤80 字），

@@ -7,8 +7,25 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildPauseFilters } from "../src/ffmpeg.ts";
 import { cloudPathFor, parseEnvFile, publicUrlFor } from "../src/hosting/tcb.ts";
+import { dialogueCondenseMessages } from "../src/prompts.ts";
 import { isAgnesVideo25, videoSubmitParamsForDialogue } from "../src/redo-adapters.ts";
 import type { ServerContext } from "../src/config.ts";
+
+describe("dialogueCondenseMessages（A4 精简重写 prompt 契约）", () => {
+	it("包含目标字数、双语原文与 JSON 输出约定", () => {
+		const prompt = dialogueCondenseMessages("SH07", "非常长的一句台词", "a very long line", 20);
+		assert.ok(prompt.includes("SH07"));
+		assert.ok(prompt.includes("20 字"), "目标字数必须显式出现（中文 ~4 字/秒 折算）");
+		assert.ok(prompt.includes("非常长的一句台词"));
+		assert.ok(prompt.includes("a very long line"));
+		assert.ok(prompt.includes('{"zh"'), "必须约定只输出 {zh,en} JSON");
+	});
+
+	it("下限保护：极短镜长的目标字数不低于 8（max(8, floor(sec*4))）", () => {
+		const prompt = dialogueCondenseMessages("SH01", "台词", "line", 8);
+		assert.ok(prompt.includes("8 字"));
+	});
+});
 
 describe("buildPauseFilters（A2 台词停顿插入）", () => {
 	it("无停顿 → null（调用方直接用原音频，不跑 ffmpeg）", () => {

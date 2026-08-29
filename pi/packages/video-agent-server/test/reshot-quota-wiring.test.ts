@@ -137,6 +137,7 @@ function installMocks(): void {
 			}),
 			buildPauseFilters: (_totalSec: number, pausesSec: number[]): string | null => (pausesSec.length ? "stub" : null),
 			insertPauses: async (): Promise<void> => {},
+			padTailToSec: async (): Promise<"padded" | "skipped"> => "skipped",
 		},
 	});
 }

@@ -126,6 +126,42 @@ export async function insertPauses(o: {
 	);
 }
 
+/**
+ * A4 时长对齐·尾部补静音：台词音频短于镜长时补齐到 targetSec（留白比硬拉好看，
+ * 也让 2.5-flash 的口型在结尾自然闭合）。inputSec ≥ targetSec 时跳过（返回
+ * "skipped"，outPath 不产出，调用方继续用 inPath）。统一 44100/mono。
+ */
+export async function padTailToSec(o: {
+	cwd: string;
+	inPath: string;
+	outPath: string;
+	targetSec: number;
+	inputSec: number;
+	signal?: AbortSignal;
+}): Promise<"padded" | "skipped"> {
+	const target = Number.isFinite(o.targetSec) && o.targetSec > 0 ? o.targetSec : 0;
+	if (!(target > 0) || o.inputSec >= target - 0.05) return "skipped";
+	await runFfmpeg(
+		[
+			"-y",
+			"-i",
+			o.inPath,
+			"-af",
+			`apad=whole_dur=${target.toFixed(3)}`,
+			"-t",
+			target.toFixed(3),
+			"-ar",
+			"44100",
+			"-ac",
+			"1",
+			o.outPath,
+		],
+		o.cwd,
+		o.signal,
+	);
+	return "padded";
+}
+
 // ============================================================================
 // ASS 字幕
 // ============================================================================

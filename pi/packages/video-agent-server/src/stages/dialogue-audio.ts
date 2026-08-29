@@ -18,7 +18,9 @@ import * as path from "node:path";
 import { appendSpan, optionsOf, pushEvent, type StageCtx } from "../pipeline.ts";
 import { ttsAdapterOf } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
-import { insertPauses, probeDuration } from "../ffmpeg.ts";
+import { chatJson } from "../llm.ts";
+import { insertPauses, padTailToSec, probeDuration } from "../ffmpeg.ts";
+import { dialogueCondenseMessages } from "../prompts.ts";
 import { hostAudioFile, isAudioUrlAlive } from "../hosting/tcb.ts";
 import type { ScriptShot } from "../prompts.ts";
 
@@ -26,6 +28,9 @@ export type DialogueAudioOutcome =
 	| { kind: "ready"; audioUrl: string; audioDurationSec?: number }
 	| { kind: "silent"; reason: string }
 	| { kind: "narration"; reason: string };
+
+/** 超长判定容差（秒）：镜长 +0.2s 以内不折腾（LLM 精简成本 > 0.2s 尾段轻微越界的观感损失） */
+const OVERSHOOT_TOLERANCE_SEC = 0.2;
 
 /** 台词镜的音频驱动链入口。调用方保证 shot 是 dialogue 镜（含 dialogue 子结构）。 */
 export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Promise<DialogueAudioOutcome> {
@@ -50,45 +55,139 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 	const paceText = dialogue.pace && dialogue.pace !== "normal" ? `，语速${dialogue.pace === "slow" ? "放慢" : "加快"}` : "";
 	const instruction = [dialogue.emotion ?? "", paceText].filter(Boolean).join("");
 	const voiceParams = dialogue.voiceId ? { voice: dialogue.voiceId } : {};
-	const ttsJob = sc.queue.submit(
-		{
-			roleName: "video-agent",
-			kind: "tts",
-			prompt: text,
-			params: { instruction, ...voiceParams },
-			outputName: `tts-dialogue-${shot.id}`,
-		},
-		run.dir,
-	);
-	run.metrics.mediaCalls += 1;
-	const ttsDone = await sc.queue.awaitJob(ttsJob.id, undefined, signal).catch(() => null);
-	const ttsOk = ttsDone?.status === "done" && ttsDone.filePath;
-	if (!ttsOk) {
-		appendSpan(run, { stage, name: `镜头 ${shot.id} 台词 TTS`, kind: "media", status: "error", output: `队列状态 ${ttsDone?.status ?? "unknown"}` }, t0);
-		return { kind: "silent", reason: "TTS 合成失败" };
-	}
-	const adapter = ttsAdapterOf(sc.ctx);
-	if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: text });
-	const ttsRel = path.relative(run.dir, ttsDone.filePath!);
-
-	// 2. ffprobe 实测 + 3. pausesSec 插停顿（探测失败 → 跳过停顿直接用原音频）
-	let srcRel = ttsRel;
-	let durationSec = await probeDuration(ttsRel, run.dir);
-	if (durationSec === null) durationSec = opts.clipDurationSec;
 	const pauses = (dialogue.pausesSec ?? []).filter((p) => Number.isFinite(p) && p > 0);
-	if (pauses.length > 0) {
-		const pacedRel = `assets/tts-dialogue-${shot.id}-paced.mp3`;
-		try {
-			await insertPauses({ cwd: run.dir, inPath: ttsRel, outPath: pacedRel, totalSec: durationSec, pausesSec: pauses, signal });
-			const pacedDur = await probeDuration(pacedRel, run.dir);
-			if (pacedDur !== null) {
-				srcRel = pacedRel;
-				durationSec = pacedDur;
+	const targetSec = opts.clipDurationSec;
+	const adapter = ttsAdapterOf(sc.ctx);
+
+	/** TTS → 实测 → 插停顿。返回 null = TTS 失败（调用方降 silent）。tag 用于重试产物命名。 */
+	const synthesizeToPaced = async (
+		speechText: string,
+		tag: string,
+	): Promise<{ srcRel: string; durationSec: number; speechText: string } | null> => {
+		const job = sc.queue.submit(
+			{
+				roleName: "video-agent",
+				kind: "tts",
+				prompt: speechText,
+				params: { instruction, ...voiceParams },
+				outputName: `tts-dialogue-${shot.id}${tag}`,
+			},
+			run.dir,
+		);
+		run.metrics.mediaCalls += 1;
+		const done = await sc.queue.awaitJob(job.id, undefined, signal).catch(() => null);
+		if (!(done?.status === "done" && done.filePath)) {
+			appendSpan(
+				run,
+				{ stage, name: `镜头 ${shot.id} 台词 TTS${tag ? "（精简重录）" : ""}`, kind: "media", status: "error", output: `队列状态 ${done?.status ?? "unknown"}` },
+				t0,
+			);
+			return null;
+		}
+		if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: speechText });
+		let srcRel = path.relative(run.dir, done.filePath);
+		let durationSec = await probeDuration(srcRel, run.dir);
+		if (durationSec === null) durationSec = targetSec;
+		if (pauses.length > 0) {
+			const pacedRel = `assets/tts-dialogue-${shot.id}${tag}-paced.mp3`;
+			try {
+				await insertPauses({ cwd: run.dir, inPath: srcRel, outPath: pacedRel, totalSec: durationSec, pausesSec: pauses, signal });
+				const pacedDur = await probeDuration(pacedRel, run.dir);
+				if (pacedDur !== null) {
+					srcRel = pacedRel;
+					durationSec = pacedDur;
+				}
+			} catch {
+				pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 停顿插入失败，使用原台词音频继续。`);
 			}
+		}
+		return { srcRel, durationSec, speechText };
+	};
+
+	/** LLM 精简台词（A4 超长分支）。任何失败 → null（调用方接受原时长）。 */
+	const condenseLine = async (speechText: string): Promise<string | null> => {
+		const targetChars = Math.max(8, Math.floor(targetSec * 4));
+		try {
+			const parsed = await chatJson<{ zh?: unknown; en?: unknown }>(
+				sc.ctx.llm,
+				dialogueCondenseMessages(shot.id, dialogue.lines.zh, dialogue.lines.en, targetChars),
+				signal,
+			);
+			const zh = typeof parsed.zh === "string" ? parsed.zh.trim() : "";
+			const en = typeof parsed.en === "string" ? parsed.en.trim() : "";
+			const condensed = lang === "en" ? en || zh : zh || en;
+			if (!condensed || condensed === speechText) return null;
+			return condensed;
 		} catch {
-			pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 停顿插入失败，使用原台词音频继续。`);
+			return null;
+		}
+	};
+
+	let synth = await synthesizeToPaced(text, "");
+	if (!synth) return { kind: "silent", reason: "TTS 合成失败" };
+
+	// 3.5 A4 时长对齐·超长分支：台词 > 镜长 → LLM 精简重写 + 重录（一次机会；
+	// 精简不可用/仍超长 → 接受并留痕——不硬裁，切在词中间比轻微越界更伤）。
+	if (synth.durationSec > targetSec + OVERSHOOT_TOLERANCE_SEC) {
+		const condensed = await condenseLine(synth.speechText);
+		if (condensed) {
+			pushEvent(
+				run,
+				"sound",
+				"producer",
+				"status",
+				`镜头 ${shot.id} 台词实测 ${synth.durationSec.toFixed(1)}s 超镜长 ${targetSec}s，已 LLM 精简重录。`,
+			);
+			const retry = await synthesizeToPaced(condensed, "-r2");
+			if (retry) {
+				synth = retry;
+				if (synth.durationSec > targetSec + OVERSHOOT_TOLERANCE_SEC) {
+					pushEvent(
+						run,
+						"sound",
+						"producer",
+						"status",
+						`镜头 ${shot.id} 精简重录后仍 ${synth.durationSec.toFixed(1)}s（> 镜长 ${targetSec}s），接受现有时长（尾段口型可能轻微越界）。`,
+					);
+				}
+			} else {
+				pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 精简重录失败，使用首版台词音频继续。`);
+			}
+		} else {
+			pushEvent(
+				run,
+				"sound",
+				"producer",
+				"status",
+				`镜头 ${shot.id} 台词超镜长且精简不可用，接受 ${synth.durationSec.toFixed(1)}s（尾段口型可能轻微越界）。`,
+			);
 		}
 	}
+
+	// 3.6 A4 时长对齐·过短分支：尾部补静音到镜长（留白让口型自然闭合）
+	if (synth.durationSec < targetSec - 0.05) {
+		const paddedRel = `assets/tts-dialogue-${shot.id}-pad.mp3`;
+		try {
+			const padded = await padTailToSec({
+				cwd: run.dir,
+				inPath: synth.srcRel,
+				outPath: paddedRel,
+				targetSec,
+				inputSec: synth.durationSec,
+				signal,
+			});
+			if (padded === "padded") {
+				const paddedDur = await probeDuration(paddedRel, run.dir);
+				synth = { ...synth, srcRel: paddedRel, durationSec: paddedDur ?? targetSec };
+				pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 台词 ${synth.durationSec.toFixed(1)}s 短于镜长，尾部补静音到 ${targetSec}s。`);
+			}
+		} catch {
+			pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 尾部补静音失败，使用原台词音频继续。`);
+		}
+	}
+	const srcRel = synth.srcRel;
+	const durationSec = synth.durationSec;
+	const speechText = synth.speechText;
 	dialogue.audioDurationSec = durationSec;
 
 	// 4. CloudBase 托管 → 公开 URL（未配置凭据/上传失败 → 降级 narration）
@@ -111,7 +210,7 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 			name: `镜头 ${shot.id} 台词音频`,
 			kind: "media",
 			status: "ok",
-			input: `[voice=${dialogue.voiceId ?? "默认"}] ${text.slice(0, 60)}`,
+			input: `[voice=${dialogue.voiceId ?? "默认"}] ${speechText.slice(0, 60)}`,
 			output: `${path.basename(srcRel)}（${durationSec.toFixed(1)}s → 托管）`,
 		},
 		t0,
