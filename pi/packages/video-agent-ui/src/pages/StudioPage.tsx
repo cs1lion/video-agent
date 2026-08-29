@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import type { StageId } from "@/api/client";
 import { BriefStage } from "./stages/BriefStage";
 import { ScriptStage } from "./stages/ScriptStage";
+import { KitchenPanel } from "@/components/KitchenPanel";
 import { BibleStage } from "./stages/BibleStage";
 import { StoryboardStage } from "./stages/StoryboardStage";
 import { KeyframeStage } from "./stages/KeyframeStage";
@@ -361,6 +362,9 @@ export function StudioPage() {
 			<div className="h-8 w-px shrink-0 bg-white/10" />
 			<TeamPresence run={run} chatBusy={chatBusy} />
 		</div>
+
+		{/* B2 只读制片主任：observe_kitchen 建议 + 采纳率（B2 不自动执行） */}
+		<KitchenPanel runId={run.id} running={run.status === "running"} />
 
 		{/* awaiting 确认条：闸门 / refine 重塑共用 */}
 			<AnimatePresence>

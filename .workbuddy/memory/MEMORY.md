@@ -120,6 +120,21 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## B2 只读制片主任完成（2026-08-29）
+
+- **kitchen.ts**：`buildKitchenSnapshot(pools, jobs, now)` 纯函数（烤炉/排队/
+  在途/失败/预算投影；Infinity→null = 无配额池；预算不带 totalSec——剩余/
+  预留/超支够用）；活跃队列注册表（GenerationQueue 是 run 级瞬态，executeStages
+  注册/finally 注销）。
+- **producer.ts**：observe → chat（系统提示钉死只建议不执行）→
+  sanitizeSuggestions（白名单清洗，守卫前置）→ kitchen.ndjson + pushEvent
+  producer→client（D4 走 ev 通道）→ LLM 挂了降级不抛错。反馈留痕 + 采纳率
+  （B2 验收）。**B2 的采纳只记录不执行，动作执行在 B3 接 L2 守卫**。
+- 路由：POST /kitchen/observe、GET /kitchen、POST /kitchen/feedback；
+  UI KitchenPanel（PipelineFlow 下方折叠条，观察按钮仅运行中可用）。
+- 套件 **180/180**。observe 是手动触发（B1② 事件驱动触发归 B3）——B2 的
+  目的就是用真实 run 校准提示词与观察信息充分性。
+
 ## reference prompt 跟随度实验（2026-08-29，E2E 抓出的生产 bug）
 
 - **现象**：用户听首个 E2E 成片"说的不知道是什么"。包络相关：裸占位符

@@ -60,6 +60,7 @@ import {
 } from "./deliberation.ts";
 import { chat, chatJson } from "./llm.ts";
 import { estimateRunCost as pricingEstimateRun } from "./pricing.ts";
+import { kitchenFeedback, kitchenSummary, producerObserve } from "./producer.ts";
 import {
 	availableVoices,
 	composeCut,
@@ -1125,6 +1126,51 @@ function createApp(ctx: ServerContext) {
 
 	app.get("/api/voices", (_req, res) => {
 		res.json({ voices: availableVoices(ctx) });
+	});
+
+	// ---- B2 只读制片主任：observe_kitchen → 建议（绝不自动执行） ----
+
+	app.post("/api/runs/:id/kitchen/observe", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		try {
+			res.json({ observation: await producerObserve(run, ctx) });
+		} catch (error) {
+			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+		}
+	});
+
+	app.get("/api/runs/:id/kitchen", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		res.json(await kitchenSummary(run));
+	});
+
+	app.post("/api/runs/:id/kitchen/feedback", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		const obsId = typeof req.body?.obsId === "string" ? req.body.obsId : "";
+		const suggestionId = typeof req.body?.suggestionId === "string" ? req.body.suggestionId : "";
+		const decision = req.body?.decision === "adopted" || req.body?.decision === "dismissed" ? req.body.decision : null;
+		if (!obsId || !suggestionId || !decision) {
+			res.status(400).json({ error: "需要 obsId / suggestionId / decision(adopted|dismissed)" });
+			return;
+		}
+		const obs = await kitchenFeedback(run, obsId, suggestionId, decision);
+		if (!obs) {
+			res.status(404).json({ error: "观察记录不存在" });
+			return;
+		}
+		res.json({ ok: true });
 	});
 
 	app.get("/api/runs/:id/traces", async (req, res) => {

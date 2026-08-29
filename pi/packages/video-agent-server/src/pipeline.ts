@@ -27,6 +27,7 @@ import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { GenerationQueue } from "../../coding-agent/examples/extensions/studio/media/queue.ts";
+import { registerActiveQueue, unregisterActiveQueue } from "./kitchen.ts";
 import {
 	type AspectRatio,
 	type CoCreationSpace,
@@ -1552,6 +1553,8 @@ export async function executeStages(
 	_o: { fromResume: boolean },
 ): Promise<void> {
 	const queue = new GenerationQueue(ctx.mediaConfig);
+	// B2 观察层：活跃队列注册（制片主任 observe_kitchen 要看到炉内/排队任务）
+	registerActiveQueue(run.id, queue);
 	const stageCtx: StageCtx = { run, ctx, queue, signal: run.abort.signal };
 	try {
 		let script: ScriptDoc | undefined;
@@ -1621,6 +1624,9 @@ export async function executeStages(
 		run.error = error instanceof Error ? error.message : String(error);
 		pushEvent(run, "producer", "client", "status", `管线受阻 ⚠️：${run.error}。可在对应阶段微调后重试。`);
 		persistRun(run);
+	} finally {
+		// B2 观察层：run 结束（含失败/取消）后注销活跃队列
+		unregisterActiveQueue(run.id);
 	}
 }
 

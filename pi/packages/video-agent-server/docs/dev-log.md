@@ -716,6 +716,39 @@ compare_all.py`，与 08-28 verify.py 同法）钉死根因——**prompt 形态
 表述有误）；验收素材：`_tts_test/e2e-v1.mp4`（0.990，最佳）与
 `e2e-a2-SH01.mp4`（0.701，生产链路直出）。
 
+**B2 只读制片主任（2026-08-29，接 A2 关闭之后）**：`observe_kitchen()` →
+结构化建议 → 采纳率可度量，**全程不执行任何动作**（B3 才接 L2 守卫）：
+- **kitchen.ts**：`buildKitchenSnapshot(pools, jobs, now)` 纯函数——账本
+  PoolSnapshot + 队列 jobs 折叠成烤炉/排队/在途/近期失败/预算五块投影。
+  只给决策相关信息（不塞 400 条事件——观察信息是推理质量的根基，契约测试
+  锁 schema）。`remainingQuotaSec: Infinity → null`（无配额池的观察语义）；
+  readyTasks = queued（管线只在依赖就绪后提交，depsMet 恒真）按 priority 排序；
+  失败封顶 5 条。**预算不带 totalSec**——PoolSnapshot 不含日配额总量，
+  剩余/预留/超支三值已够推理（"还剩多少"比"用了多少"更贴决策）。
+- **活跃队列注册表**：GenerationQueue 是 executeStages 每轮新建的瞬态对象，
+  注册/注销挂在 run 生命周期（finally 兜底取消路径）；run 间观察 readyTasks
+  为空是合法态。
+- **producer.ts**：`producerObserve` = 快照 → chat（系统提示钉死角色契约：
+  只管资源与进度、只输出建议、禁止发明快照里不存在的 id）→
+  `sanitizeSuggestions`（白名单外类型/缺 message 丢弃，守卫前置到观察层）
+  → kitchen.ndjson 追加 → `pushEvent(producer→client)`（**D4：走 ev 通道**，
+  复用团队频道 UI，不另建推送）。**降级路径**：LLM 挂了不抛错——落一条
+  "观察降级"说明，确定性队列完全不受影响（设计 §八）。
+- **采纳率（B2 验收）**：`kitchenFeedback`（采纳/忽略留痕，ndjson 全量重写）
+  + `kitchenSummary`（adoptionRate）。**B2 的"采纳"只记录不执行**——它是给
+  B3 的偏好信号，动作执行在 B3 接 L2 守卫后才有意义。
+- **路由**：POST /kitchen/observe、GET /kitchen、POST /kitchen/feedback。
+- **KitchenPanel**（指挥台）：折叠条挂在 PipelineFlow 下方——建议列表
+  （类型徽标 + message + reason）+ 采纳/忽略按钮 + 采纳率 chip + "观察厨房"
+  按钮（仅 run 运行中可用）。老 run 无 kitchen.ndjson 拉取失败静默。
+- 测试：**180/180**（kitchen 契约 5 + producer 行为 4）；UI tsc + build ✅。
+  **待真实 run 手测**：观察建议质量（提示词校准正是 B2 阶段的目的）。
+
+**B2 只读制片主任路由前的关键取舍**：`observe` 是同步 LLM 调用（数秒），
+挂在运行中 run 的 REST 端点上而非管线内自动触发——事件驱动触发（任务就绪/
+炉空出/跨阈值）需要 B1② 的队列事件流，按设计推到 B3 接自动执行时一起做；
+B2 先用手动触发校准提示词与观察信息充分性（这正是 B2 阶段存在的理由）。
+
 **A7 前端全量 7 处 + 音色绑定贯通（2026-08-29，接 A2 E2E 之后）**：UI 此前
 零音频驱动痕迹（A1 只做服务端），本轮一次铺完 3.4 清单：
 - **OptionsForm**：音频驱动开关（off/dialogue，共享包 `GenerationOptions`

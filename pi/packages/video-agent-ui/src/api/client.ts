@@ -525,6 +525,40 @@ export interface CoSpaceDraft {
 	musicBrief?: string;
 }
 
+// ---- B2 只读制片主任（observe_kitchen → 建议；B2 阶段绝不自动执行） ----
+
+export type SuggestionType = "submit" | "defer" | "downgrade" | "escalate" | "signal" | "wait";
+
+export interface ProducerSuggestion {
+	id: string;
+	type: SuggestionType;
+	taskId?: string;
+	ovenId?: string;
+	message: string;
+	reason: string;
+}
+
+export interface KitchenObservation {
+	id: string;
+	runId: string;
+	at: string;
+	snapshot: {
+		generatedAt: number;
+		readyTasks: { id: string; outputName: string; seconds: number | null; retryCount: number }[];
+		inFlightTasks: { id: string; outputName: string }[];
+		recentFailures: { id: string; outputName: string; reason: string }[];
+		budget: { remainingSec: number | null; reservedSec: number; overrunSec: number; day: string };
+	};
+	suggestions: ProducerSuggestion[];
+	reasoning: string;
+	feedback?: Array<{ id: string; decision: "adopted" | "dismissed"; at: string }>;
+}
+
+export interface KitchenSummary {
+	observations: KitchenObservation[];
+	stats: { total: number; adopted: number; dismissed: number; adoptionRate: number | null };
+}
+
 // ---- HTTP 助手 ----
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
@@ -756,6 +790,19 @@ export const api = {
 	async fetchVoices(): Promise<Record<string, string>> {
 		const data = await getJson<{ voices: Record<string, string> }>("/api/voices");
 		return data.voices;
+	},
+	/** B2：制片主任观察一轮厨房（observe → 建议，不自动执行） */
+	async kitchenObserve(runId: string): Promise<KitchenObservation> {
+		const data = await postJson<{ observation: KitchenObservation }>(`/api/runs/${encodeURIComponent(runId)}/kitchen/observe`, {});
+		return data.observation;
+	},
+	/** B2：厨房观察列表 + 采纳率 */
+	async kitchenFetch(runId: string): Promise<KitchenSummary> {
+		return getJson<KitchenSummary>(`/api/runs/${encodeURIComponent(runId)}/kitchen`);
+	},
+	/** B2：对建议表态（B2 只记录，不触发执行） */
+	async kitchenFeedback(runId: string, obsId: string, suggestionId: string, decision: "adopted" | "dismissed"): Promise<void> {
+		await postJson(`/api/runs/${encodeURIComponent(runId)}/kitchen/feedback`, { obsId, suggestionId, decision });
 	},
 	/** 共创模式：创意合伙人一轮对话（context 为从首页带入的创作基底，并入 system prompt） */
 	async cocreateChat(messages: { role: "user" | "assistant"; content: string }[], context?: string): Promise<string> {
