@@ -70,6 +70,63 @@ export function runFfmpegCapture(
 }
 
 // ============================================================================
+// 台词停顿插入（A2 · 静音段是表演的一部分）
+// ============================================================================
+
+/**
+ * 台词 mp3 的停顿插入 filter 串（纯函数，可测——与 buildDmeFilters 同款模式）。
+ *
+ * v1 近似语义：把 [0, totalSec] 均分为 n+1 段语音，段间依次插入 pausesSec 的
+ * 各段静音（每项 = 一处句间停顿的秒数）。近似假设"台词均匀朗读"；
+ * 未来升级路径：TTS 时间戳精确落点（等真实链路听感反馈后再做）。
+ * 返回 null 表示无需处理（无停顿/非法输入），调用方直接用原音频。
+ */
+export function buildPauseFilters(totalSec: number, pausesSec: number[]): string | null {
+	const pauses = (pausesSec ?? []).filter((p) => Number.isFinite(p) && p > 0);
+	if (pauses.length === 0 || !Number.isFinite(totalSec) || totalSec <= 0) return null;
+	const seg = totalSec / (pauses.length + 1);
+	const fmt = (n: number): string => n.toFixed(3);
+	const parts: string[] = [];
+	const labels: string[] = [];
+	for (let i = 0; i <= pauses.length; i += 1) {
+		const start = fmt(i * seg);
+		const end = fmt((i + 1) * seg);
+		parts.push(`[0:a]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS,aformat=sample_rates=44100:channel_layouts=mono[a${i}]`);
+		labels.push(`[a${i}]`);
+		if (i < pauses.length) {
+			parts.push(`aevalsrc=0:d=${fmt(pauses[i]!)}:s=44100[s${i}]`);
+			labels.push(`[s${i}]`);
+		}
+	}
+	parts.push(`${labels.join("")}concat=n=${labels.length}:v=0:a=1[out]`);
+	return parts.join(";");
+}
+
+/**
+ * 生成带停顿的台词音频（in/out 均为相对 cwd 的路径）。
+ * 输出采样率统一 44100/mono，规避 concat 的规格不一致响亮失败。
+ */
+export async function insertPauses(o: {
+	cwd: string;
+	inPath: string;
+	outPath: string;
+	totalSec: number;
+	pausesSec: number[];
+	signal?: AbortSignal;
+}): Promise<void> {
+	const filter = buildPauseFilters(o.totalSec, o.pausesSec);
+	if (!filter) {
+		await fs.promises.copyFile(path.join(o.cwd, o.inPath), path.join(o.cwd, o.outPath));
+		return;
+	}
+	await runFfmpeg(
+		["-y", "-i", o.inPath, "-filter_complex", filter, "-map", "[out]", "-ar", "44100", "-ac", "1", o.outPath],
+		o.cwd,
+		o.signal,
+	);
+}
+
+// ============================================================================
 // ASS 字幕
 // ============================================================================
 

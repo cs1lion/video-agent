@@ -64,3 +64,22 @@ export function videoSubmitParams(
 		...(imageDataUrl ? { image: imageDataUrl } : {}),
 	};
 }
+
+/**
+ * 台词镜（音频驱动）的视频提交参数（A2）。
+ * 2.5 系列：mode=reference + audios=[公开URL]——prompt 内需含 `<Audio 1>` 占位符
+ * （由调用方追加，见 stageClips 台词分支；占位符缺失时供应商按无音频处理）。
+ * 2.0 及其他：audios 被静默忽略（总文档 2.1 实测）——返回 null，调用方按
+ * "视频模型不支持音频驱动"降级为普通生成 + QA 标记，不赌 400。
+ * 首帧锚定（first_frame）与 reference 混用未经验证，不传——宁可少一个锚点，
+ * 不赌一次 400（实测参数体系：2.5 禁传 width/height/frame_rate/image）。
+ */
+export function videoSubmitParamsForDialogue(
+	ctx: ServerContext,
+	opts: GenerationOptions,
+	audioUrl: string,
+): Record<string, unknown> | null {
+	if (!isAgnesVideo25(ctx)) return null;
+	const seconds = String(Math.min(12, Math.max(4, Math.round(opts.clipDurationSec))));
+	return { seconds, mode: "reference", audios: [audioUrl] };
+}

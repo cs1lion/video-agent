@@ -11,6 +11,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@cloudbase/node-sdk": "3.18.3",
 		"@earendil-works/pi-agent-core": "^0.84.2",
 		"@earendil-works/pi-ai": "^0.84.2",
 		"express": "5.2.1"

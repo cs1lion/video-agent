@@ -1,0 +1,85 @@
+/**
+ * A2 台词链路纯函数契约：停顿 filter 构造 / 托管 URL 与落点 / env 解析 /
+ * 台词 reference 提交参数分支。行为链路见 dialogue-clips.test.ts。
+ */
+
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { buildPauseFilters } from "../src/ffmpeg.ts";
+import { cloudPathFor, parseEnvFile, publicUrlFor } from "../src/hosting/tcb.ts";
+import { isAgnesVideo25, videoSubmitParamsForDialogue } from "../src/redo-adapters.ts";
+import type { ServerContext } from "../src/config.ts";
+
+describe("buildPauseFilters（A2 台词停顿插入）", () => {
+	it("无停顿 → null（调用方直接用原音频，不跑 ffmpeg）", () => {
+		assert.equal(buildPauseFilters(4.2, []), null);
+		assert.equal(buildPauseFilters(4.2, [0, -1, Number.NaN]), null, "非正数停顿项全部过滤后 = 无停顿");
+	});
+
+	it("单停顿：2 段语音 + 1 段静音，等分切点与 concat 数量正确", () => {
+		const f = buildPauseFilters(6, [0.5])!;
+		assert.match(f, /atrim=start=0\.000:end=3\.000/);
+		assert.match(f, /atrim=start=3\.000:end=6\.000/);
+		assert.match(f, /aevalsrc=0:d=0\.500:s=44100/);
+		assert.match(f, /concat=n=3:v=0:a=1\[out\]/);
+		assert.match(f, /aformat=sample_rates=44100:channel_layouts=mono/, "语音段规格统一，规避 concat 响亮失败");
+	});
+
+	it("多停顿：n 项 → n+1 段语音、2n+1 路 concat，段宽 = total/(n+1)", () => {
+		const f = buildPauseFilters(8, [0.3, 0.6])!;
+		assert.match(f, /atrim=start=0\.000:end=2\.667/);
+		assert.match(f, /atrim=start=2\.667:end=5\.333/);
+		assert.match(f, /atrim=start=5\.333:end=8\.000/);
+		assert.match(f, /aevalsrc=0:d=0\.300:s=44100/);
+		assert.match(f, /aevalsrc=0:d=0\.600:s=44100/);
+		assert.match(f, /concat=n=5:v=0:a=1\[out\]/);
+	});
+
+	it("非法输入：totalSec 非正 → null", () => {
+		assert.equal(buildPauseFilters(0, [0.5]), null);
+		assert.equal(buildPauseFilters(-1, [0.5]), null);
+	});
+});
+
+describe("CloudBase 托管纯函数（A2）", () => {
+	it("publicUrlFor：云存储公开下载域，容忍前导斜杠", () => {
+		assert.equal(publicUrlFor("env-1", "video-agent/run1/tts-SH01.mp3"), "https://env-1.tcb.qcloud.la/video-agent/run1/tts-SH01.mp3");
+		assert.equal(publicUrlFor("env-1", "/x.mp3"), "https://env-1.tcb.qcloud.la/x.mp3");
+	});
+
+	it("cloudPathFor：按 run/shot 归位（同路径重传即覆盖，幂等）", () => {
+		assert.equal(cloudPathFor("run-7", "SH01"), "video-agent/run-7/tts-SH01.mp3");
+	});
+
+	it("parseEnvFile：KEY=VALUE / 注释 / 引号值 / 空行容错", () => {
+		const parsed = parseEnvFile(
+			["# 注释", "", "TCB_ENV_ID=my-env", 'TCB_SECRET_ID="id-with-quotes"', "TCB_SECRET_KEY='sk'", "BROKEN_LINE", "=NOKEY"].join("\n"),
+		);
+		assert.deepEqual(parsed, { TCB_ENV_ID: "my-env", TCB_SECRET_ID: "id-with-quotes", TCB_SECRET_KEY: "sk" });
+	});
+});
+
+describe("videoSubmitParamsForDialogue（A2 台词 reference 分支）", () => {
+	function makeCtx(model: string): ServerContext {
+		return {
+			mediaConfig: { media: [{ id: "v", kind: "video", model }], defaults: { concurrency: 1, maxAttempts: 3, priority: 0 } },
+		} as unknown as ServerContext;
+	}
+	const opts = { clipDurationSec: 5 } as Parameters<typeof videoSubmitParamsForDialogue>[1];
+
+	it("2.5 系列：mode=reference + audios=[URL]，seconds 字符串（4 钳位）", () => {
+		assert.ok(isAgnesVideo25(makeCtx("agnes-video-2.5-flash")));
+		const params = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), opts, "https://x/a.mp3");
+		assert.deepEqual(params, { seconds: "5", mode: "reference", audios: ["https://x/a.mp3"] });
+	});
+
+	it("2.5 系列：不足 4s 按 4s 预留生成（与 estimateClipSeconds 同一钳位）", () => {
+		const params = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), { clipDurationSec: 2 } as typeof opts, "https://x/a.mp3");
+		assert.equal((params as { seconds: string }).seconds, "4");
+	});
+
+	it("2.0 及其他：audios 被静默忽略（实测）→ 返回 null，调用方降旁白，不赌 400", () => {
+		assert.ok(!isAgnesVideo25(makeCtx("agnes-video-v2.0")));
+		assert.equal(videoSubmitParamsForDialogue(makeCtx("agnes-video-v2.0"), opts, "https://x/a.mp3"), null);
+	});
+});

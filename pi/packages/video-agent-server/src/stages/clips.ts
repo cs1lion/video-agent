@@ -15,15 +15,17 @@ import {
 	readKeyframes,
 	setStage,
 	throwIfAborted,
+	writeJson,
 	type StageCtx,
 } from "../pipeline.ts";
 import { fileDataUrl } from "../asset-version.ts";
 import { trackMediaCost } from "../pricing.ts";
 import { probeDuration } from "../ffmpeg.ts";
-import { estimateClipSeconds, videoAdapterOf, videoSubmitParams } from "../redo-adapters.ts";
+import { estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue } from "../redo-adapters.ts";
 import { VIDEO_QUOTA_POOL } from "../config.ts";
 import type { ReserveResult } from "../quota.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
+import { prepareDialogueAudio } from "./dialogue-audio.ts";
 
 /** 镜头生成阶段：图生视频（含 i2v→t2v 退降） */
 export async function stageClips(
@@ -48,6 +50,9 @@ export async function stageClips(
 		: scriptDoc.shots;
 	const { width, height } = pixelDimensions(opts.resolution, opts.aspectRatio);
 	const clipFiles: (string | null)[] = [];
+	// A2：台词镜回写 dialogue（audioDurationSec/audioUrl）或降级改写 audioMode 后需落盘，
+	// 让 audio/export 阶段、retts 与重启恢复看到同一份脚本。
+	let scriptDirty = false;
 	// ---- 配额闸门（D5）：派发前先预留，挡住并发超发冲 429 ----
 	const quota = sc.ctx.quota;
 	const estimateSec = estimateClipSeconds(sc.ctx, opts);
@@ -87,7 +92,72 @@ export async function stageClips(
 			budgetAlert(i);
 			break;
 		}
-		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）
+		// A2 台词分支：台词是驱动源——视频提交前先备好公开音频 URL（TTS→实测→停顿→托管）。
+		// 降级只改意向，脚本改写（audioMode/narration 回填）统一在这里落，保持单一写者。
+		let dialogueReadyUrl: string | null = null;
+		if (opts.audioDrive === "dialogue" && shot.audioMode === "dialogue" && shot.dialogue) {
+			scriptDirty = true;
+			const outcome = await prepareDialogueAudio(sc, shot);
+			if (outcome.kind === "silent") {
+				shot.audioMode = "silent";
+				pushEvent(
+					run,
+					"sound",
+					"producer",
+					"status",
+					`镜头 ${shot.id} 台词 TTS 失败 ⚠️（${outcome.reason}），该镜降级为无声画面继续（不阻断管线）。`,
+					{ stage: "generate", focus: shot.id },
+				);
+			} else if (outcome.kind === "narration") {
+				shot.audioMode = "narration";
+				if (!shot.narrationZh) shot.narrationZh = shot.dialogue.lines.zh;
+				if (!shot.narrationEn) shot.narrationEn = shot.dialogue.lines.en;
+				pushEvent(
+					run,
+					"sound",
+					"producer",
+					"status",
+					`镜头 ${shot.id} 台词托管失败 ⚠️（${outcome.reason}），降级为旁白：先出视频，台词按画外音贴上。`,
+					{ stage: "generate", focus: shot.id },
+				);
+			} else {
+				dialogueReadyUrl = outcome.audioUrl;
+			}
+		} else if (shot.audioMode === "dialogue" && shot.dialogue && opts.audioDrive !== "dialogue") {
+			// 防御：台词镜但运行选项未开音频驱动（旧 run 恢复 / 手改脚本 / 闸门回落）。
+			// 音频链不会跑，保留 dialogue 态会让 export 期待源音轨而响亮失败——
+			// 主动降旁白（降级优于阻断），留痕让用户知道为什么口型没驱动。
+			scriptDirty = true;
+			shot.audioMode = "narration";
+			if (!shot.narrationZh) shot.narrationZh = shot.dialogue.lines.zh;
+			if (!shot.narrationEn) shot.narrationEn = shot.dialogue.lines.en;
+			pushEvent(
+				run,
+				"sound",
+				"producer",
+				"status",
+				`镜头 ${shot.id} 声明台词模式但本次运行未开启音频驱动，已降级为旁白（台词文本保留）。`,
+				{ stage: "generate", focus: shot.id },
+			);
+		}
+		// 台词镜的 reference 参数：非 2.5 适配器 audios 被静默忽略（实测）——降旁白，不赌
+		const referenceParams = dialogueReadyUrl ? videoSubmitParamsForDialogue(sc.ctx, opts, dialogueReadyUrl) : null;
+		if (dialogueReadyUrl && !referenceParams) {
+			shot.audioMode = "narration";
+			if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
+			if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
+			pushEvent(
+				run,
+				"tech",
+				"producer",
+				"status",
+				`镜头 ${shot.id} 当前视频适配器不支持音频驱动（audios 被忽略），台词改走旁白轨。`,
+				{ stage: "generate", focus: shot.id },
+			);
+		}
+		let useReference = Boolean(referenceParams);
+		// 关键帧先行：组图预览 + 图生视频首帧锚定（失败自动退回纯文生视频）；
+		// 台词 reference 模式不传 first_frame（与 audios 混用未验证，不赌 400）
 		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes, shot);
 		const imageDataUrl = frame.file ? await fileDataUrl(run.dir, frame.file) : null;
 		// 配额预留：提交前同步扣减；RPM 令牌暂缺会等待补充后重试（可中止）
@@ -101,36 +171,60 @@ export async function stageClips(
 			"tech",
 			"producer",
 			"status",
-			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${opts.clipDurationSec}s · ${imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
+			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${opts.clipDurationSec}s · ${useReference ? "台词音频驱动口型" : imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
 		);
 		const t0 = Date.now();
-		const submitClip = (withImage: boolean) =>
+		const submitClip = (mode: "reference" | "normal", withImage: boolean) =>
 			sc.queue.submit(
 				{
 					roleName: "video-agent",
 					kind: "video",
-					prompt,
+					// reference 模式 prompt 必须含 <Audio 1> 占位符（供应商按占位符取 audios[0]）；
+					// 降级回普通模式后占位符必须移除（无 audios 参数时是噪声）
+					prompt: mode === "reference" ? `${prompt}\n<Audio 1>` : prompt,
 					// seed 不透传：未知参数可能被供应商 400 拒绝，仅在 options 中保留
-					params: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null),
+					params:
+						mode === "reference" && referenceParams
+							? referenceParams
+							: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null),
 					outputName: `clip-${shot.id}`,
 				},
 				run.dir,
 			);
 		run.metrics.mediaCalls += 1;
+		let attemptSeq = 0;
 		let finished: { status: string; filePath?: string };
 		try {
-			finished = await sc.queue.awaitJob(submitClip(Boolean(imageDataUrl)).id, undefined, signal);
-			// 图生视频整单失败 → 退还本次预留，降级文生视频重新预留（新 attempt = 新幂等键）
-			if (!(finished.status === "done" && finished.filePath) && imageDataUrl) {
+			finished = await sc.queue.awaitJob(submitClip(useReference ? "reference" : "normal", Boolean(imageDataUrl)).id, undefined, signal);
+			// 台词镜：音频驱动提交失败 → 降级普通图生视频（新 attempt 新预留），台词转旁白
+			if (!(finished.status === "done" && finished.filePath) && useReference) {
 				releaseReservation(sc, reservation);
-				pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 图生视频未成功，降级为文生视频重试。`);
+				pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 音频驱动提交未成功，降级为普通图生视频，台词转旁白轨。`);
+				useReference = false;
+				shot.audioMode = "narration";
+				if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
+				if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
 				run.metrics.mediaCalls += 1;
-				reservation = await reserveShotQuota(sc, shot.id, estimateSec, 1);
+				attemptSeq += 1;
+				reservation = await reserveShotQuota(sc, shot.id, estimateSec, attemptSeq);
 				if (!reservation) {
 					budgetAlert(i);
 					break;
 				}
-				finished = await sc.queue.awaitJob(submitClip(false).id, undefined, signal);
+				finished = await sc.queue.awaitJob(submitClip("normal", Boolean(imageDataUrl)).id, undefined, signal);
+			}
+			// 通用：图生视频整单失败 → 退还本次预留，降级文生视频重新预留（新 attempt = 新幂等键）
+			if (!(finished.status === "done" && finished.filePath) && imageDataUrl) {
+				releaseReservation(sc, reservation);
+				pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 图生视频未成功，降级为文生视频重试。`);
+				run.metrics.mediaCalls += 1;
+				attemptSeq += 1;
+				reservation = await reserveShotQuota(sc, shot.id, estimateSec, attemptSeq);
+				if (!reservation) {
+					budgetAlert(i);
+					break;
+				}
+				finished = await sc.queue.awaitJob(submitClip("normal", false).id, undefined, signal);
 			}
 		} catch (error) {
 			// 中止/异常：未出片不消耗配额，归还预留
@@ -162,7 +256,7 @@ export async function stageClips(
 				name: `镜头 ${shot.id} 生成`,
 				kind: "media",
 				status: ok ? "ok" : "error",
-				input: `${imageDataUrl ? "[keyframe+i2v] " : ""}${prompt.slice(0, 120)}`,
+				input: `${useReference ? "[台词驱动+reference] " : ""}${imageDataUrl ? "[keyframe+i2v] " : ""}${prompt.slice(0, 120)}`,
 				output: ok ? path.basename(finished.filePath!) : `队列状态 ${finished.status}`,
 			},
 			t0,
@@ -190,6 +284,10 @@ export async function stageClips(
 		throw new Error(quotaShortfall ? "视频配额不足，未派发任何镜头（详见预算告警事件）" : "全部镜头生成失败（详见队列重试记录）");
 	}
 	setStage(run, "clips", "done", 100);
+	// A2：台词回写/降级改写落盘（audio 阶段读 narrationZh、export 读 audioMode/audioDurationSec）
+	if (scriptDirty) {
+		await writeJson(run, "script.json", scriptDoc);
+	}
 	pushEvent(
 		run,
 		"tech",
