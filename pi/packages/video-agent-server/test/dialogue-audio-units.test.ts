@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildPauseFilters } from "../src/ffmpeg.ts";
-import { cloudPathFor, parseEnvFile, publicUrlFor } from "../src/hosting/tcb.ts";
+import { cloudPathFor, parseCosUploadUrl, parseEnvFile, publicUrlFor } from "../src/hosting/tcb.ts";
 import { dialogueCondenseMessages } from "../src/prompts.ts";
 import { dialogueDerivedSec, isAgnesVideo25, videoSubmitParamsForDialogue } from "../src/redo-adapters.ts";
 import type { ServerContext } from "../src/config.ts";
@@ -59,9 +59,20 @@ describe("buildPauseFilters（A2 台词停顿插入）", () => {
 });
 
 describe("CloudBase 托管纯函数（A2）", () => {
-	it("publicUrlFor：云存储公开下载域，容忍前导斜杠", () => {
-		assert.equal(publicUrlFor("env-1", "video-agent/run1/tts-SH01.mp3"), "https://env-1.tcb.qcloud.la/video-agent/run1/tts-SH01.mp3");
-		assert.equal(publicUrlFor("env-1", "/x.mp3"), "https://env-1.tcb.qcloud.la/x.mp3");
+	it("publicUrlFor：COS 直连公开域（08-29 实测定案：tcb.qcloud.la 前置层 418，不走它），容忍前导斜杠", () => {
+		assert.equal(
+			publicUrlFor("6d79-myagent-x-1253451683", "ap-shanghai", "video-agent/run1/tts-SH01.mp3"),
+			"https://6d79-myagent-x-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run1/tts-SH01.mp3",
+		);
+		assert.equal(publicUrlFor("b", "ap-shanghai", "/x.mp3"), "https://b.cos.ap-shanghai.myqcloud.com/x.mp3");
+	});
+
+	it("parseCosUploadUrl：从上传元数据 URL 解析桶/区域；非 COS 域返回 null", () => {
+		const parsed = parseCosUploadUrl(
+			"https://6d79-myagent-x-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/acl-probe/discover.txt",
+		);
+		assert.deepEqual(parsed, { bucket: "6d79-myagent-x-1253451683", region: "ap-shanghai" });
+		assert.equal(parseCosUploadUrl("https://env-1.tcb.qcloud.la/x.mp3"), null);
 	});
 
 	it("cloudPathFor：按 run/shot 归位（同路径重传即覆盖，幂等）", () => {

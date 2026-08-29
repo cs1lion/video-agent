@@ -698,6 +698,32 @@ mock.module。**
 - 设计取舍：`ceil` 而非 round（镜长宁长勿短，音频尾部不截）；只对 reference
   成功的台词镜反推，降级旁白镜不改（J-cut 自动对齐）。
 
+**A2 托管打通 + 真镜端到端完成（08-29，CAM 密钥到位后）**：用户提供了 CAM
+密钥（子账号，主账号 100000465388）并开通权限。全链一步到位：
+- **桶名/区域发现**：node-sdk `app.getUploadMetadata({cloudPath})` 是公开方法
+  （storage.uploadFile 内部就是它），返回 `{requestId, data:{url, authorization,
+  token, cosFileId}}`——`data.url` 即 COS PUT 地址，内含桶名与区域
+  （`6d79-{envId}-1253451683` · `ap-shanghai`）。
+- **公有读定案**：`tcb.qcloud.la` 前置层有自己的权限规则（匿名 418，与 COS ACL
+  无关）；正确做法 = **COS 桶级 ACL `public-read`**（`cos-nodejs-sdk-v5`
+  `putBucketAcl`，CAM 密钥一次设置即成，一次性脚本
+  `scripts/discover-and-open-bucket.ts`）。**公开 URL 弃用 tcb.qcloud.la，
+  改用 COS 直连域** `https://{bucket}.cos.{region}.myqcloud.com/{key}`——
+  实测匿名 Range **206 audio/mpeg**、HEAD 200，Agnes 可直接拉取。
+- **tcb.ts 重构**：`hostAudioFile` = getUploadMetadata → PUT 直传（与 node-sdk
+  同一套头）→ 从元数据 URL 解析桶/区域（进程内缓存，亦可
+  `TCB_COS_BUCKET/TCB_COS_REGION` 显式指定）→ COS 公开 URL；`publicUrlFor`
+  签名变为 `(bucket, region, cloudPath)`；appOf CAM 密钥优先。
+- **probe**（`scripts/probe-tcb.ts`）：上传 7.9s → 匿名 206/HEAD 200 全绿。
+- **真镜端到端**（`scripts/e2e-dialogue-a2.ts`）：托管 → 2.5-flash
+  `mode=reference, audios=[COS URL], prompt 含 <Audio 1>` 提交（200，
+  `task_uxNq0tV6xA2uTD4lOrMFsDdrSm59EKEk`）→ agnesapi 轮询 ~100s completed →
+  下载 `_tts_test/e2e-a2-SH01.mp4`（407 KB）。**验收②（人眼确认口型）待用户
+  播放确认**——音频是「你好，世界。」（cn_ref.mp3）。
+- 依赖注记：`cos-nodejs-sdk-v5` 仅一次性脚本用（`--no-save` 安装；重跑发现
+  脚本需重装）；生产链路只依赖 `@cloudbase/node-sdk`（既有传递依赖）。
+- 测试：168/168（publicUrlFor/parseCosUploadUrl 契约更新 +1）。
+
 **A5 台词镜级联重做（08-29 深夜，接在 A4b+A6 之后）**：台词是口型驱动源——
 重录台词必须级联重生成口型视频，否则新音频配旧口型（灾难性错位）。
 `rettsRun` 重构为三段：入口分支（台词镜 guard：`audioDrive` 未开 → 同步 bail）
