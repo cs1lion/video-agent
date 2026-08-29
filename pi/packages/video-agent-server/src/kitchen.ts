@@ -141,6 +141,9 @@ const activeQueues = new Map<string, QueueJobSource>();
 export interface QueueJobSource {
 	list(): QueueJob[];
 	stats(): { queued: number; running: number; failed: number; rateLimited: number };
+	/** B3 执行口（L2 守卫通过后由 producer 调用；桩可不实现） */
+	defer?(jobId: string, ms: number): boolean;
+	amend?(jobId: string, params: Record<string, unknown>): boolean;
 }
 
 export function registerActiveQueue(runId: string, queue: QueueJobSource): void {

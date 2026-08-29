@@ -60,7 +60,7 @@ import {
 } from "./deliberation.ts";
 import { chat, chatJson } from "./llm.ts";
 import { estimateRunCost as pricingEstimateRun } from "./pricing.ts";
-import { kitchenFeedback, kitchenSummary, producerObserve } from "./producer.ts";
+import { kitchenFeedback, kitchenSummary, producerObserve, applySuggestion } from "./producer.ts";
 import {
 	availableVoices,
 	composeCut,
@@ -1171,6 +1171,31 @@ function createApp(ctx: ServerContext) {
 			return;
 		}
 		res.json({ ok: true });
+	});
+
+	// B3：采纳建议 → L2 守卫校验 → 执行（defer/downgrade 真改队列；被拒率留痕）
+	app.post("/api/runs/:id/kitchen/apply", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		const obsId = typeof req.body?.obsId === "string" ? req.body.obsId : "";
+		const suggestionId = typeof req.body?.suggestionId === "string" ? req.body.suggestionId : "";
+		if (!obsId || !suggestionId) {
+			res.status(400).json({ error: "需要 obsId / suggestionId" });
+			return;
+		}
+		try {
+			const result = await applySuggestion(run, ctx, obsId, suggestionId);
+			if (!result) {
+				res.status(404).json({ error: "观察记录或建议不存在" });
+				return;
+			}
+			res.json({ ok: true, verdict: result.verdict });
+		} catch (error) {
+			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+		}
 	});
 
 	app.get("/api/runs/:id/traces", async (req, res) => {

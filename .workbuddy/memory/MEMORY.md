@@ -120,6 +120,25 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## B3 自动执行 + L2 守卫完成（2026-08-29）
+
+- **guard.ts（L2，纯函数）**：设计红线落地——绝不让 LLM 直接碰硬约束。
+  校验存在性/在途不可 defer/配额/RPM 令牌/冷却期（同任务同类 60s）；
+  安全默认 = 不动作。apply 用**实时快照**非观察时旧快照。
+- **执行原语**：GenerationQueue 增量加 `defer(jobId, ms)`（排队任务推迟 +
+  到点重泵）+ `amend(jobId, params)`（排队任务参数修订，降 seconds）；
+  running/done 拒绝。submit 单池 = 确认放行。
+- **applySuggestion**：实时守卫 → 执行 → executions 留痕 → 频道播报；
+  **被拒也是留痕**，rejectionRate 进 summary（偏高 = 校准信号非故障）。
+- **B1② 最小事件触发**：executeStages 注册 onJobUpdate，首次任务失败自动
+  producerObserve 一次（fire-and-forget，同 run 一次防费用失控）。
+  **onJobUpdate 必须可选调用**（`queue.onJobUpdate?.(...)`）——测试桩队列
+  接口面不齐，这曾致 5 文件 18 用例红。
+- **测试教训**：B3 用例独立 run（冷却期跨观察生效是产品语义）；独立 run 的
+  被拒率期望值不能抄共享 run 时代（1 次执行被拒 = 100%）。
+- 路由 POST /kitchen/apply；KitchenPanel 应用按钮 + 执行结果徽标 + 被拒率。
+  套件 **193/193**。
+
 ## B2 只读制片主任完成（2026-08-29）
 
 - **kitchen.ts**：`buildKitchenSnapshot(pools, jobs, now)` 纯函数（烤炉/排队/

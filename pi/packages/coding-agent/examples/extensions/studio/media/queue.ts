@@ -164,6 +164,10 @@ export class GenerationQueue {
 	private nextFireAt = new Map<string, number>();
 	/** Safety pump: guarantees queued jobs are reconsidered periodically. */
 	private watchdogTimer: ReturnType<typeof setTimeout> | undefined;
+	/** B3 defer：排队任务的"不早于"时间戳（到点后 pump 正常放行） */
+	private deferredUntil = new Map<string, number>();
+	/** B3 defer 重泵需要 projectDir；pump/submit 时记录最近一次 */
+	private lastProjectDir?: string;
 
 	constructor(config?: MediaModelsFile) {
 		this.config = config;
@@ -183,6 +187,33 @@ export class GenerationQueue {
 
 	getJob(id: string): QueueJob | undefined {
 		return this.jobs.get(id);
+	}
+
+	/**
+	 * B3 执行口（L3 建议 → L2 守卫通过后调用）：把排队任务推迟到 notBefore。
+	 * 只对 queued 任务生效（running/done 不可延）；到期后自动重泵。
+	 * 返回是否生效。这是"让出高价值池给更紧急任务"的执行原语。
+	 */
+	defer(jobId: string, ms: number): boolean {
+		const job = this.jobs.get(jobId);
+		if (!job || job.status !== "queued" || !(ms > 0)) return false;
+		this.deferredUntil.set(jobId, Date.now() + Math.min(ms, 15 * 60_000));
+		if (this.lastProjectDir) {
+			const dir = this.lastProjectDir;
+			setTimeout(() => this.pump(dir), Math.min(ms, 15 * 60_000) + 50);
+		}
+		return true;
+	}
+
+	/**
+	 * B3 执行口：修订排队任务参数（降级：如 seconds "10"→"5"，直接降低配额消耗）。
+	 * 只对 queued 任务生效；running/done 返回 false。与既有重试机制正交。
+	 */
+	amend(jobId: string, params: Record<string, unknown>): boolean {
+		const job = this.jobs.get(jobId);
+		if (!job || job.status !== "queued") return false;
+		job.params = { ...job.params, ...params };
+		return true;
 	}
 
 	/**
@@ -358,11 +389,18 @@ export class GenerationQueue {
 	}
 
 	private pump(projectDir: string): void {
+		this.lastProjectDir = projectDir;
 		let waiting = 0;
 		for (const job of this.queuedJobs()) {
 			// Global cap keeps total request pressure bounded even with many
 			// adapters in play.
 			if (this.running.size >= this.globalLimit()) break;
+			// B3 defer：未到点的任务本轮跳过（不阻塞其他任务，watchdog 会回来）
+			const notBefore = this.deferredUntil.get(job.id);
+			if (notBefore !== undefined) {
+				if (Date.now() < notBefore) continue;
+				this.deferredUntil.delete(job.id);
+			}
 			const inFlight = [...this.running]
 				.map((id) => this.jobs.get(id))
 				.filter((running) => running?.adapterId === job.adapterId).length;

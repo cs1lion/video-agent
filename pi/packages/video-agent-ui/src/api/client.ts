@@ -534,6 +534,10 @@ export interface ProducerSuggestion {
 	type: SuggestionType;
 	taskId?: string;
 	ovenId?: string;
+	/** downgrade 目标秒数 */
+	targetSeconds?: number;
+	/** defer 推迟毫秒 */
+	deferMs?: number;
 	message: string;
 	reason: string;
 }
@@ -552,11 +556,21 @@ export interface KitchenObservation {
 	suggestions: ProducerSuggestion[];
 	reasoning: string;
 	feedback?: Array<{ id: string; decision: "adopted" | "dismissed"; at: string }>;
+	/** B3：经 L2 守卫的执行留痕 */
+	executions?: Array<{ id: string; type: SuggestionType; taskId?: string; status: "applied" | "rejected"; detail: string; at: string }>;
 }
 
 export interface KitchenSummary {
 	observations: KitchenObservation[];
-	stats: { total: number; adopted: number; dismissed: number; adoptionRate: number | null };
+	stats: {
+		total: number;
+		adopted: number;
+		dismissed: number;
+		adoptionRate: number | null;
+		applied: number;
+		rejected: number;
+		rejectionRate: number | null;
+	};
 }
 
 // ---- HTTP 助手 ----
@@ -803,6 +817,10 @@ export const api = {
 	/** B2：对建议表态（B2 只记录，不触发执行） */
 	async kitchenFeedback(runId: string, obsId: string, suggestionId: string, decision: "adopted" | "dismissed"): Promise<void> {
 		await postJson(`/api/runs/${encodeURIComponent(runId)}/kitchen/feedback`, { obsId, suggestionId, decision });
+	},
+	/** B3：应用建议（L2 守卫校验后执行 defer/downgrade/播报；被拒也留痕） */
+	async kitchenApply(runId: string, obsId: string, suggestionId: string): Promise<{ ok: true; verdict: { ok: boolean; reason?: string; detail?: string } }> {
+		return postJson(`/api/runs/${encodeURIComponent(runId)}/kitchen/apply`, { obsId, suggestionId });
 	},
 	/** 共创模式：创意合伙人一轮对话（context 为从首页带入的创作基底，并入 system prompt） */
 	async cocreateChat(messages: { role: "user" | "assistant"; content: string }[], context?: string): Promise<string> {

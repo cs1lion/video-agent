@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { ChefHat, LoaderCircle, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ChefHat, LoaderCircle, Play, ThumbsDown, ThumbsUp } from "lucide-react";
 import type { KitchenObservation, KitchenSummary, SuggestionType } from "@/api/client";
 import { api } from "@/api/client";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,10 @@ const TYPE_TONE: Record<SuggestionType, string> = {
 
 function decisionOf(obs: KitchenObservation, suggestionId: string): "adopted" | "dismissed" | undefined {
 	return obs.feedback?.find((f) => f.id === suggestionId)?.decision;
+}
+
+function executionOf(obs: KitchenObservation, suggestionId: string) {
+	return obs.executions?.find((e) => e.id === suggestionId);
 }
 
 export function KitchenPanel({ runId, running }: { runId: string; running: boolean }) {
@@ -78,6 +82,22 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 		}
 	};
 
+	/** B3：应用建议（L2 守卫校验 → 执行 defer/downgrade/播报；被拒也留痕） */
+	const apply = async (obsId: string, suggestionId: string) => {
+		if (busy) return;
+		setBusy(true);
+		setError(null);
+		try {
+			const r = await api.kitchenApply(runId, obsId, suggestionId);
+			if (!r.verdict.ok && r.verdict.detail) setError(`守卫否决：${r.verdict.detail}`);
+			await load();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e));
+		} finally {
+			setBusy(false);
+		}
+	};
+
 	const stats = summary?.stats;
 	const observations = [...(summary?.observations ?? [])].reverse().slice(0, 5);
 	const suggestionCount = observations.reduce((n, o) => n + o.suggestions.length, 0);
@@ -98,7 +118,10 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 						</span>
 					)}
 					{stats && stats.total > 0 && (
-						<span className="text-[10px] text-zinc-600">采纳率 {Math.round((stats.adoptionRate ?? 0) * 100)}%</span>
+						<span className="text-[10px] text-zinc-600">
+							采纳率 {Math.round((stats.adoptionRate ?? 0) * 100)}%
+							{stats.applied + stats.rejected > 0 && ` · 被拒率 ${Math.round((stats.rejectionRate ?? 0) * 100)}%`}
+						</span>
 					)}
 				</button>
 				<button
@@ -136,6 +159,7 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 									<div className="space-y-1.5">
 										{obs.suggestions.map((s) => {
 											const decided = decisionOf(obs, s.id);
+											const execution = executionOf(obs, s.id);
 											return (
 												<div key={s.id} className="flex items-start gap-2 rounded-lg bg-black/20 px-2.5 py-1.5">
 													<span
@@ -152,8 +176,34 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 															{s.taskId && <span className="ml-1 font-mono text-[9px] text-zinc-600">{s.taskId}</span>}
 														</p>
 														{s.reason && <p className="mt-0.5 text-[10px] leading-relaxed text-zinc-600">{s.reason}</p>}
+														{execution && (
+															<p
+																className={cn(
+																	"mt-0.5 text-[10px] leading-relaxed",
+																	execution.status === "applied" ? "text-emerald-300/80" : "text-rose-300/80",
+																)}
+															>
+																{execution.status === "applied" ? "✓ 已执行" : "✕ 被守卫否决"} · {execution.detail}
+															</p>
+														)}
 													</div>
 													<div className="flex shrink-0 items-center gap-1">
+														<button
+															type="button"
+															disabled={busy || !running || Boolean(execution)}
+															onClick={() => void apply(obs.id, s.id)}
+															title={execution ? "已执行过" : running ? "经 L2 守卫校验后执行（defer/downgrade/播报）" : "仅在 run 运行中可应用"}
+															className={cn(
+																"cursor-pointer rounded-md border px-1.5 py-0.5 text-[10px] transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+																execution?.status === "applied"
+																	? "border-emerald-300/50 bg-emerald-400/15 text-emerald-200"
+																	: execution?.status === "rejected"
+																		? "border-rose-300/50 bg-rose-400/15 text-rose-200"
+																		: "border-violet-300/40 text-violet-200 hover:bg-violet-400/10",
+															)}
+														>
+															<Play className="size-3" />
+														</button>
 														<button
 															type="button"
 															disabled={busy || Boolean(decided)}

@@ -18,11 +18,15 @@ import type { RunRecord } from "./pipeline.ts";
 import { pushEvent } from "./pipeline.ts";
 import type { ServerContext } from "./config.ts";
 import { buildKitchenSnapshot, activeQueueOf, type KitchenSnapshot } from "./kitchen.ts";
+import { guardSuggestion, rejectionRate, type GuardSuggestion, type GuardVerdict } from "./guard.ts";
 
 const KITCHEN_NDJSON = "kitchen.ndjson";
-/** 建议类型白名单（ReAct 设计 §六；B2 只读阶段全部为"建议"，B3 才接执行） */
+/** 建议类型白名单（ReAct 设计 §六；B3 起经 L2 守卫后可执行） */
 export const SUGGESTION_TYPES = ["submit", "defer", "downgrade", "escalate", "signal", "wait"] as const;
 export type SuggestionType = (typeof SUGGESTION_TYPES)[number];
+
+/** 决策冷却期（设计 §七：同一任务 N 秒内不改变分配，防代理抖动） */
+export const DECISION_COOLDOWN_MS = 60_000;
 
 export interface ProducerSuggestion {
 	id: string;
@@ -31,10 +35,24 @@ export interface ProducerSuggestion {
 	taskId?: string;
 	/** 建议投递的池（烤炉 id，如 video） */
 	ovenId?: string;
+	/** downgrade 目标秒数（降到几秒） */
+	targetSeconds?: number;
+	/** defer 推迟毫秒 */
+	deferMs?: number;
 	/** 一句话建议（给用户看） */
 	message: string;
 	/** 推理理由（审计/回放） */
 	reason: string;
+}
+
+/** 一次执行尝试（B3：采纳后经 L2 守卫的落点；被拒也算决策留痕） */
+export interface SuggestionExecution {
+	id: string;
+	type: SuggestionType;
+	taskId?: string;
+	status: "applied" | "rejected";
+	detail: string;
+	at: string;
 }
 
 export interface KitchenObservation {
@@ -44,13 +62,23 @@ export interface KitchenObservation {
 	snapshot: KitchenSnapshot;
 	suggestions: ProducerSuggestion[];
 	reasoning: string;
-	/** 用户反馈（B2 度量采纳率；B3 之前采纳不触发执行） */
+	/** 用户反馈（B2 度量采纳率） */
 	feedback?: Array<{ id: string; decision: "adopted" | "dismissed"; at: string }>;
+	/** B3：经 L2 守卫的执行留痕（被拒率常驻监控，设计 §九） */
+	executions?: SuggestionExecution[];
 }
 
 export interface KitchenSummary {
 	observations: KitchenObservation[];
-	stats: { total: number; adopted: number; dismissed: number; adoptionRate: number | null };
+	stats: {
+		total: number;
+		adopted: number;
+		dismissed: number;
+		adoptionRate: number | null;
+		applied: number;
+		rejected: number;
+		rejectionRate: number | null;
+	};
 }
 
 /** 制片主任的系统提示（角色契约：只管资源与进度，不碰创作判断） */
@@ -82,7 +110,7 @@ export function producerMessages(snapshot: KitchenSnapshot, context: { logline: 
 
 /** LLM 原始回复形状（宽松解析；非法输出走降级路径） */
 interface ProducerReply {
-	suggestions?: Array<{ type?: unknown; taskId?: unknown; ovenId?: unknown; message?: unknown; reason?: unknown }>;
+	suggestions?: Array<{ type?: unknown; taskId?: unknown; ovenId?: unknown; targetSeconds?: unknown; deferMs?: unknown; message?: unknown; reason?: unknown }>;
 	reasoning?: unknown;
 }
 
@@ -99,6 +127,8 @@ export function sanitizeSuggestions(raw: ProducerReply, obsId: string): { sugges
 			type,
 			taskId: typeof item.taskId === "string" ? item.taskId.slice(0, 80) : undefined,
 			ovenId: typeof item.ovenId === "string" ? item.ovenId.slice(0, 40) : undefined,
+			targetSeconds: typeof item.targetSeconds === "number" && Number.isFinite(item.targetSeconds) ? item.targetSeconds : undefined,
+			deferMs: typeof item.deferMs === "number" && Number.isFinite(item.deferMs) ? item.deferMs : undefined,
 			message,
 			reason: typeof item.reason === "string" ? item.reason.slice(0, 600) : "",
 		});
@@ -131,8 +161,12 @@ export async function readObservations(run: RunRecord): Promise<KitchenObservati
 	}
 }
 
-/** 观察一轮：快照 → LLM → 建议 → 落盘 + 团队频道（D4）。绝不改队列/账本状态。 */
-export async function producerObserve(run: RunRecord, ctx: ServerContext): Promise<KitchenObservation> {
+/**
+ * 观察一轮：快照 → LLM → 建议 → 落盘 + 团队频道（D4）。绝不改队列/账本状态。
+ * trigger：触发来源标注（"手动" / "auto:任务失败" / "auto:配额阈值"）——
+ * B1② 事件驱动触发用（首次 429 / 配额阈值越线各一次，防 LLM 费用失控）。
+ */
+export async function producerObserve(run: RunRecord, ctx: ServerContext, opts?: { trigger?: string }): Promise<KitchenObservation> {
 	const pools = ctx.quota?.snapshot() ?? [];
 	const queue = activeQueueOf(run.id);
 	const jobs = queue?.list() ?? [];
@@ -159,7 +193,8 @@ export async function producerObserve(run: RunRecord, ctx: ServerContext): Promi
 
 	// D4：制片主任决策走团队频道（ev 通道），用户在频道里直接看到调度理由
 	const head = suggestions.length > 0 ? suggestions.map((s) => s.message).join("；") : "厨房正常，无需调整。";
-	pushEvent(run, "producer", "client", "status", `制片主任观察：${head}${reasoning ? `（${reasoning.slice(0, 120)}）` : ""}`);
+	const tag = opts?.trigger ? `（${opts.trigger}）` : "";
+	pushEvent(run, "producer", "client", "status", `制片主任观察${tag}：${head}${reasoning ? `（${reasoning.slice(0, 120)}）` : ""}`);
 	return obs;
 }
 
@@ -174,20 +209,111 @@ export async function kitchenFeedback(run: RunRecord, obsId: string, suggestionI
 	return obs;
 }
 
-/** 汇总：观察列表 + 采纳率 */
+/** 汇总：观察列表 + 采纳率 + 执行/被拒率（B3：决策被拒率常驻监控） */
 export async function kitchenSummary(run: RunRecord): Promise<KitchenSummary> {
 	const observations = await readObservations(run);
 	let adopted = 0;
 	let dismissed = 0;
+	let applied = 0;
+	let rejected = 0;
 	for (const o of observations) {
 		for (const f of o.feedback ?? []) {
 			if (f.decision === "adopted") adopted += 1;
 			else dismissed += 1;
 		}
+		for (const e of o.executions ?? []) {
+			if (e.status === "applied") applied += 1;
+			else rejected += 1;
+		}
 	}
 	const total = adopted + dismissed;
 	return {
 		observations,
-		stats: { total, adopted, dismissed, adoptionRate: total > 0 ? Math.round((adopted / total) * 1000) / 1000 : null },
+		stats: {
+			total,
+			adopted,
+			dismissed,
+			adoptionRate: total > 0 ? Math.round((adopted / total) * 1000) / 1000 : null,
+			applied,
+			rejected,
+			rejectionRate: rejectionRate(applied, rejected),
+		},
 	};
+}
+
+/**
+ * B3：采纳一条建议 → **L2 守卫校验 → 执行 → 留痕**。
+ * 守卫用**实时状态**（当前账本快照 + 活跃队列），不是观察时的旧快照——
+ * 配额与队列瞬息万变，旧数据会做出违规决策。被拒也是有效留痕（被拒率监控）。
+ * 单池现状下的 submit 语义：队列自动泵已覆盖提交本身，执行 = 确认放行；
+ * defer/downgrade 直接改队列；escalate/signal/wait = 频道播报。
+ */
+export async function applySuggestion(
+	run: RunRecord,
+	ctx: ServerContext,
+	obsId: string,
+	suggestionId: string,
+): Promise<{ observation: KitchenObservation; verdict: GuardVerdict } | null> {
+	const observations = await readObservations(run);
+	const obs = observations.find((o) => o.id === obsId);
+	if (!obs) return null;
+	const s = obs.suggestions.find((x) => x.id === suggestionId);
+	if (!s) return null;
+
+	// 实时厨房状态
+	const pools = ctx.quota?.snapshot() ?? [];
+	const queue = activeQueueOf(run.id);
+	const snapshot = buildKitchenSnapshot(pools, queue?.list() ?? []);
+	const recentDecisions = observations.flatMap((o) =>
+		(o.executions ?? []).map((e) => ({ type: e.type, taskId: e.taskId, at: Date.parse(e.at) })),
+	);
+	const spec: GuardSuggestion = {
+		type: s.type,
+		taskId: s.taskId,
+		ovenId: s.ovenId,
+		targetSeconds: s.targetSeconds,
+		deferMs: s.deferMs,
+	};
+	const verdict = guardSuggestion(spec, {
+		snapshot,
+		recentDecisions,
+		cooldownMs: DECISION_COOLDOWN_MS,
+		now: Date.now(),
+	});
+
+	let execution: SuggestionExecution;
+	if (verdict.ok) {
+		const at = new Date().toISOString();
+		if (s.type === "escalate" || s.type === "signal" || s.type === "wait") {
+			execution = { id: s.id, type: s.type, taskId: s.taskId, status: "applied", detail: "频道播报", at };
+			pushEvent(run, "producer", "client", "status", `制片主任${s.type === "escalate" ? "上报" : s.type === "signal" ? "催办" : "提醒"}：${s.message}`);
+		} else if (s.type === "submit") {
+			// 单池自动调度：队列本就按优先级泵任务，L2 通过 = 确认放行（多池手动投递是 B3+ 多烤炉的事）
+			execution = { id: s.id, type: s.type, taskId: s.taskId, status: "applied", detail: "队列自动调度已覆盖（单池）", at };
+		} else if (s.type === "defer") {
+			const ok = queue?.defer?.(s.taskId!, s.deferMs ?? 60_000) ?? false;
+			execution = ok
+				? { id: s.id, type: s.type, taskId: s.taskId, status: "applied", detail: `已推迟 ${Math.round((s.deferMs ?? 0) / 1000)}s`, at }
+				: { id: s.id, type: s.type, taskId: s.taskId, status: "rejected", detail: "队列不可达或任务不在排队态", at };
+		} else {
+			// downgrade
+			const ok = queue?.amend?.(s.taskId!, { seconds: String(s.targetSeconds) }) ?? false;
+			execution = ok
+				? { id: s.id, type: s.type, taskId: s.taskId, status: "applied", detail: `已降级为 ${s.targetSeconds}s`, at }
+				: { id: s.id, type: s.type, taskId: s.taskId, status: "rejected", detail: "队列不可达或任务不在排队态", at };
+		}
+	} else {
+		execution = { id: s.id, type: s.type, taskId: s.taskId, status: "rejected", detail: `L2 守卫拒绝（${verdict.reason}）：${verdict.detail}`, at: new Date().toISOString() };
+	}
+
+	obs.executions = [...(obs.executions ?? []).filter((e) => e.id !== s.id), execution];
+	await fs.promises.writeFile(path.join(run.dir, KITCHEN_NDJSON), `${observations.map((o) => JSON.stringify(o)).join("\n")}\n`, "utf-8");
+	pushEvent(
+		run,
+		"producer",
+		"client",
+		"redo",
+		execution.status === "applied" ? `建议已执行：${s.message}（${execution.detail}）` : `建议被守卫否决：${s.message}（${execution.detail}）`,
+	);
+	return { observation: obs, verdict };
 }

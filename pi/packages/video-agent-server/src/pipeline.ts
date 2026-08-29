@@ -28,6 +28,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { GenerationQueue } from "../../coding-agent/examples/extensions/studio/media/queue.ts";
 import { registerActiveQueue, unregisterActiveQueue } from "./kitchen.ts";
+import { producerObserve } from "./producer.ts";
+import type { QueueJob } from "../../coding-agent/examples/extensions/studio/media/queue.ts";
 import {
 	type AspectRatio,
 	type CoCreationSpace,
@@ -1555,6 +1557,19 @@ export async function executeStages(
 	const queue = new GenerationQueue(ctx.mediaConfig);
 	// B2 观察层：活跃队列注册（制片主任 observe_kitchen 要看到炉内/排队任务）
 	registerActiveQueue(run.id, queue);
+	// B1② 事件驱动触发（最小集）：首次任务失败自动唤起制片主任观察一次
+	// （LLM 调用 fire-and-forget，不阻塞管线；同 run 只触发一次，防费用失控）。
+	// onJobUpdate 用可选调用：测试桩队列 / 旧队列实例没有该方法时静默跳过。
+	// 配额阈值越线触发需要配额结算事件流，随 L2 执行闭环一起补。
+	let autoObservedFailure = false;
+	const offJobUpdate =
+		queue.onJobUpdate?.((job: QueueJob) => {
+			if (autoObservedFailure || job.status !== "failed" || run.abort.signal.aborted) return;
+			autoObservedFailure = true;
+			void producerObserve(run, ctx, { trigger: "auto:任务失败" }).catch(() => {
+				// 自动观察失败不影响管线
+			});
+		}) ?? (() => {});
 	const stageCtx: StageCtx = { run, ctx, queue, signal: run.abort.signal };
 	try {
 		let script: ScriptDoc | undefined;
@@ -1626,6 +1641,7 @@ export async function executeStages(
 		persistRun(run);
 	} finally {
 		// B2 观察层：run 结束（含失败/取消）后注销活跃队列
+		offJobUpdate();
 		unregisterActiveQueue(run.id);
 	}
 }

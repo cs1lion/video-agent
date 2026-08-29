@@ -171,3 +171,141 @@ describe("B2 制片主任（只读观察者）", () => {
 		assert.equal(await producer.kitchenFeedback(run, "obs-nope", "x", "adopted"), null);
 	});
 });
+
+describe("B3 建议执行（L2 守卫 → 执行 → 留痕）", () => {
+	let producer: typeof import("../src/producer.ts");
+	let kitchen: typeof import("../src/kitchen.ts");
+	let root: string;
+	let runSeq = 0;
+	/** 队列桩执行记录（defer/amend 调用序列） */
+	let execLog: Array<{ op: string; jobId: string; arg: unknown }>;
+
+	before(async () => {
+		producer = await import("../src/producer.ts");
+		kitchen = await import("../src/kitchen.ts");
+		root = await mkdtemp(path.join(tmpdir(), "pi-apply-"));
+	});
+
+	after(async () => {
+		await rm(root, { recursive: true, force: true }).catch(() => {});
+	});
+
+	/** 每个用例独立 run：冷却期跨观察生效（产品语义），测试不能互相污染 */
+	async function freshRun(): Promise<RunRecord> {
+		runSeq += 1;
+		const dir = path.join(root, `run-apply-${runSeq}`);
+		await mkdir(path.join(dir, "assets"), { recursive: true });
+		return {
+			id: `run-apply-${runSeq}`,
+			dir,
+			status: "running",
+			brief: { creative: { logline: "测试片", keyMessage: "" }, language: "zh", generationOptions: {} },
+			stages: [{ id: "clips", status: "running", progress: 40 }],
+			events: [],
+			abort: new AbortController(),
+		} as unknown as RunRecord;
+	}
+
+	function makeCtx(): ServerContext {
+		return {
+			studioRoot: root,
+			mediaConfig: {},
+			llm: { url: "http://mock", model: "mock", timeoutMs: 1000 },
+			port: 0,
+			priceCatalog: {} as ServerContext["priceCatalog"],
+			quota: new QuotaLedger([{ id: "video", keyType: "tokenplan", rpmCap: 2, dailyQuotaSec: 500 }], Date.now()),
+		} as ServerContext;
+	}
+
+	function installQueue(run: RunRecord, queuedJobIds: string[]): void {
+		execLog = [];
+		kitchen.registerActiveQueue(run.id, {
+			list: () =>
+				queuedJobIds.map((id) => ({
+					id,
+					adapterId: "agnes-video",
+					kind: "video",
+					prompt: "p",
+					params: { seconds: "10" },
+					relativePath: `assets/clip-${id}.mp4`,
+					priority: 100,
+					status: "queued",
+					attempts: 1,
+					maxAttempts: 3,
+					createdAt: Date.now() - 1000,
+					attemptLog: [],
+				})) as QueueJob[],
+			stats: () => ({ queued: queuedJobIds.length, running: 0, failed: 0, rateLimited: 0 }),
+			defer: (jobId: string, ms: number) => {
+				if (!queuedJobIds.includes(jobId)) return false;
+				execLog.push({ op: "defer", jobId, arg: ms });
+				return true;
+			},
+			amend: (jobId: string, params: Record<string, unknown>) => {
+				if (!queuedJobIds.includes(jobId)) return false;
+				execLog.push({ op: "amend", jobId, arg: params });
+				return true;
+			},
+		});
+	}
+
+	it("downgrade 合规 → 守卫放行 → 队列 amend 执行 + 事件留痕", async () => {
+		const run = await freshRun();
+		chatReply = JSON.stringify({
+			suggestions: [{ type: "downgrade", taskId: "J1", targetSeconds: 5, message: "J1 降到 5s", reason: "预算吃紧" }],
+			reasoning: "预算吃紧",
+		});
+		installQueue(run, ["J1"]);
+		const ctx = makeCtx();
+		const obs = await producer.producerObserve(run, ctx);
+		const r = await producer.applySuggestion(run, ctx, obs.id, obs.suggestions[0]!.id);
+		assert.ok(r);
+		assert.deepEqual(r!.verdict, { ok: true });
+		assert.deepEqual(execLog, [{ op: "amend", jobId: "J1", arg: { seconds: "5" } }]);
+		assert.equal(r!.observation.executions![0]!.status, "applied");
+		assert.ok(run.events.some((e) => e.text.includes("建议已执行")));
+		const summary = await producer.kitchenSummary(run);
+		assert.equal(summary.stats.applied, 1);
+		assert.equal(summary.stats.rejectionRate, 0);
+	});
+
+	it("L2 守卫拒绝：任务不存在 → 不碰队列 + 被拒留痕（被拒率监控）", async () => {
+		const run = await freshRun();
+		chatReply = JSON.stringify({
+			suggestions: [{ type: "defer", taskId: "J99", deferMs: 5000, message: "x", reason: "y" }],
+			reasoning: "",
+		});
+		installQueue(run, ["J1"]);
+		const ctx = makeCtx();
+		const obs = await producer.producerObserve(run, ctx);
+		const r = await producer.applySuggestion(run, ctx, obs.id, obs.suggestions[0]!.id);
+		assert.ok(r);
+		assert.equal(r!.verdict.ok, false);
+		assert.equal(r!.verdict.ok ? "" : r!.verdict.reason, "unknown_task");
+		assert.deepEqual(execLog, [], "被拒的决策绝不能碰队列");
+		assert.equal(r!.observation.executions![0]!.status, "rejected");
+		const summary = await producer.kitchenSummary(run);
+		assert.equal(summary.stats.rejected, 1);
+		assert.equal(summary.stats.rejectionRate, 1, "独立 run 内只有这一次执行 → 被拒率 100%");
+	});
+
+	it("冷却期：同任务同类决策 60s 内重复执行被拒（防抖动）", async () => {
+		const run = await freshRun();
+		chatReply = JSON.stringify({
+			suggestions: [
+				{ type: "downgrade", taskId: "J1", targetSeconds: 5, message: "a", reason: "" },
+				{ type: "downgrade", taskId: "J1", targetSeconds: 4, message: "b", reason: "" },
+			],
+			reasoning: "",
+		});
+		installQueue(run, ["J1", "J2"]);
+		const ctx = makeCtx();
+		const obs = await producer.producerObserve(run, ctx);
+		const r1 = await producer.applySuggestion(run, ctx, obs.id, obs.suggestions[0]!.id);
+		assert.ok(r1!.verdict.ok);
+		const r2 = await producer.applySuggestion(run, ctx, obs.id, obs.suggestions[1]!.id);
+		assert.equal(r2!.verdict.ok, false);
+		assert.equal(r2!.verdict.ok ? "" : r2!.verdict.reason, "cooldown");
+		assert.equal(execLog.length, 1, "冷却期内第二次执行不得触达队列");
+	});
+});
