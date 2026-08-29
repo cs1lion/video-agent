@@ -8,7 +8,7 @@ import { describe, it } from "node:test";
 import { buildPauseFilters } from "../src/ffmpeg.ts";
 import { cloudPathFor, parseEnvFile, publicUrlFor } from "../src/hosting/tcb.ts";
 import { dialogueCondenseMessages } from "../src/prompts.ts";
-import { isAgnesVideo25, videoSubmitParamsForDialogue } from "../src/redo-adapters.ts";
+import { dialogueDerivedSec, isAgnesVideo25, videoSubmitParamsForDialogue } from "../src/redo-adapters.ts";
 import type { ServerContext } from "../src/config.ts";
 
 describe("dialogueCondenseMessages（A4 精简重写 prompt 契约）", () => {
@@ -82,21 +82,32 @@ describe("videoSubmitParamsForDialogue（A2 台词 reference 分支）", () => {
 			mediaConfig: { media: [{ id: "v", kind: "video", model }], defaults: { concurrency: 1, maxAttempts: 3, priority: 0 } },
 		} as unknown as ServerContext;
 	}
-	const opts = { clipDurationSec: 5 } as Parameters<typeof videoSubmitParamsForDialogue>[1];
 
-	it("2.5 系列：mode=reference + audios=[URL]，seconds 字符串（4 钳位）", () => {
+	it("2.5 系列：mode=reference + audios=[URL]，seconds 字符串（A4b 后读镜长实参）", () => {
 		assert.ok(isAgnesVideo25(makeCtx("agnes-video-2.5-flash")));
-		const params = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), opts, "https://x/a.mp3");
+		const params = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), "https://x/a.mp3", 5);
 		assert.deepEqual(params, { seconds: "5", mode: "reference", audios: ["https://x/a.mp3"] });
 	});
 
-	it("2.5 系列：不足 4s 按 4s 预留生成（与 estimateClipSeconds 同一钳位）", () => {
-		const params = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), { clipDurationSec: 2 } as typeof opts, "https://x/a.mp3");
-		assert.equal((params as { seconds: string }).seconds, "4");
+	it("2.5 系列：不足 4s 按 4s、超 12s 按 12s（与 estimateClipSeconds 同一钳位）", () => {
+		const low = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), "https://x/a.mp3", 2);
+		assert.equal((low as { seconds: string }).seconds, "4");
+		const high = videoSubmitParamsForDialogue(makeCtx("agnes-video-2.5-flash"), "https://x/a.mp3", 15);
+		assert.equal((high as { seconds: string }).seconds, "12");
 	});
 
 	it("2.0 及其他：audios 被静默忽略（实测）→ 返回 null，调用方降旁白，不赌 400", () => {
 		assert.ok(!isAgnesVideo25(makeCtx("agnes-video-v2.0")));
-		assert.equal(videoSubmitParamsForDialogue(makeCtx("agnes-video-v2.0"), opts, "https://x/a.mp3"), null);
+		assert.equal(videoSubmitParamsForDialogue(makeCtx("agnes-video-v2.0"), "https://x/a.mp3", 5), null);
+	});
+});
+
+describe("dialogueDerivedSec（A4b 以音频反推镜长）", () => {
+	it("ceil 后钳进 [4,12]（设计 3.3：ceil(audioDur)）", () => {
+		assert.equal(dialogueDerivedSec(4.2), 5);
+		assert.equal(dialogueDerivedSec(6.3), 7);
+		assert.equal(dialogueDerivedSec(5.0), 5);
+		assert.equal(dialogueDerivedSec(3.5), 4, "3.5 → ceil 4（2.5 下限 4）");
+		assert.equal(dialogueDerivedSec(12.6), 12, "超上限钳 12");
 	});
 });

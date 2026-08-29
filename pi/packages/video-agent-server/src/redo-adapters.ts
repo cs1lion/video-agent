@@ -34,9 +34,18 @@ export function isAgnesVideo25(ctx: ServerContext): boolean {
  * 配额预留用的镜头秒数预估：必须与 videoSubmitParams 实际请求的秒数一致，
  * 否则账本按错误的量纲预留（2.5 系列不足 4s 也按 4s 生成、上限 12s）。
  */
-export function estimateClipSeconds(ctx: ServerContext, opts: GenerationOptions): number {
-	if (isAgnesVideo25(ctx)) return Math.min(12, Math.max(4, Math.round(opts.clipDurationSec)));
-	return opts.clipDurationSec;
+export function estimateClipSeconds(ctx: ServerContext, opts: GenerationOptions, durationSecOverride?: number): number {
+	const base = durationSecOverride ?? opts.clipDurationSec;
+	if (isAgnesVideo25(ctx)) return Math.min(12, Math.max(4, Math.round(base)));
+	return base;
+}
+
+/**
+ * A4b：以音频时长反推台词镜镜长（设计 3.3）——ceil(audioDur) 后钳进 2.5-flash
+ * 的 seconds 合法区间 [4,12]。需要在 A6 白名单放开（3–12 整数）之后才可行。
+ */
+export function dialogueDerivedSec(audioDurationSec: number): number {
+	return Math.min(12, Math.max(4, Math.ceil(audioDurationSec)));
 }
 
 /**
@@ -51,16 +60,18 @@ export function videoSubmitParams(
 	width: number,
 	height: number,
 	imageDataUrl: string | null,
+	durationSecOverride?: number,
 ): Record<string, unknown> {
+	const base = durationSecOverride ?? opts.clipDurationSec;
 	if (isAgnesVideo25(ctx)) {
-		const seconds = String(Math.min(12, Math.max(4, Math.round(opts.clipDurationSec))));
+		const seconds = String(Math.min(12, Math.max(4, Math.round(base))));
 		return imageDataUrl ? { seconds, mode: "keyframe", first_frame: imageDataUrl } : { seconds, mode: "text" };
 	}
 	return {
 		width,
 		height,
 		frame_rate: opts.fps,
-		seconds: opts.clipDurationSec,
+		seconds: base,
 		...(imageDataUrl ? { image: imageDataUrl } : {}),
 	};
 }
@@ -76,10 +87,10 @@ export function videoSubmitParams(
  */
 export function videoSubmitParamsForDialogue(
 	ctx: ServerContext,
-	opts: GenerationOptions,
 	audioUrl: string,
+	durationSec: number,
 ): Record<string, unknown> | null {
 	if (!isAgnesVideo25(ctx)) return null;
-	const seconds = String(Math.min(12, Math.max(4, Math.round(opts.clipDurationSec))));
+	const seconds = String(Math.min(12, Math.max(4, Math.round(durationSec))));
 	return { seconds, mode: "reference", audios: [audioUrl] };
 }

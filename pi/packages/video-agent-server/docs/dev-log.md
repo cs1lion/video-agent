@@ -682,18 +682,46 @@ mock.module。**
 **坑（测试基建）**：FakeQueue 原异步写产物文件，mock insertPauses 的 copyFile
 偶发 ENOENT 走"停顿插入失败"分支——改同步写后消失。生产无此问题。
 
+**A4b 以音频反推镜长 + A6 白名单放开（08-29 深夜，同批落地）**：设计 4.7 明确
+两者必须同批——白名单不放开，反推动态值会被静默钳回。
+- **A6（兄弟包 `video-agent`）**：`ClipDurationSec` 从 `[3,5,8,10]` 白名单放开为
+  **3–12 整数区间**（上界对齐 2.5-flash seconds 上限）；UI 快捷档不变。既有测试
+  "7 回退默认"改为"7 合法、13/2/7.5 回退"。
+- **A4b（服务端）**：台词 ready 后 `dialogueDerivedSec(ceil(audioDur) 钳 4–12)`
+  回写 `shot.durationSec`（reference 提交在音频之后，改镜长**零重生成成本**）；
+  `estimateClipSeconds/videoSubmitParams` 加可选 `durationSecOverride`——预留量纲
+  与提交 seconds 一致（账实相符不变量扩展到动态镜长）；台词镜的预留/降级重预留/
+  提交全部读反推后的镜长。
+- 测试 158 → **160**（+ dialogueDerivedSec 契约 1、A4b 行为 1：6.8s → 镜长 7 →
+  seconds "7" → 配额 7 预留/实测 6.8 结算 = 493.2）；变异验证：禁用反推 → 2 红
+  （⑩⑪）精确命中。
+- 设计取舍：`ceil` 而非 round（镜长宁长勿短，音频尾部不截）；只对 reference
+  成功的台词镜反推，降级旁白镜不改（J-cut 自动对齐）。
+
+**CloudBase 网关探测结论（08-29 深夜，探到根因边缘）**：真实 EnvId
+（`myagent-d0glujkt6c30cbe8a`，与 JWT aud 差一位字符！）已从用户提供的信息确认；
+OpenAPI 规格在 `.cloudbase-mcp/openapi/storage.openapi.yaml`（本机另一 agent 的
+MCP 数据目录）——**路由 `/v1/storages/get-objects-upload-info`（复数 storages）+
+两步上传（拿签名 → PUT 直传 COS）**，请求体是数组、条目需 `signedHeader.content-length`。
+实测：JWT 鉴权**通过**、路由**可达**，但报 `STORAGE_BUCKET_NOT_FOUND`；
+同时 `tcb.qcloud.la` 匿名访问返回 **418**（桶存在、默认私有读）。
+两个现象合起来的判断：**API Key 的项目绑定（aud `…330cbe8a`）与真实环境
+（`…30cbe8a`）在存储桶解析上对不上**，或该环境存储为 PG 模式（传统 API 不适用，
+规格第 9 行明说此接口只适用传统模式）。**下一步（二选一）**：① 用户在控制台
+确认存储桶形态/在环境设置里创建 API Key（而非 AI+ 项目页）；② 直接给 CAM
+SecretId/SecretKey（子账号可自助创建），node-sdk 路径已就绪。
+
 **CloudBase 凭据新情报（用户提供的 `cloudbase_tts_upload_report.md`）**：
 另一 agent 的 MCP 方案证实三件事：① API Key 登录 = `apiKey` + `apiKeyEnvId`
 **两个字段**——JWT 的 aud（`myagent-d0glujkt6c330cbe8a`）疑似项目 ID/别名而
 非规范 EnvId（与我们实测的 INVALID_ENV 吻合），真实 EnvId 在控制台 tcb 首页；
 ② 默认私有桶 publicUrl 403，**桶 ACL 须设 READONLY**（等价我们的
 "所有用户可读"前置）；③ `temporaryUrl` 是 1h 签名链接，**不能**当持久
-audioUrl 复用（重做路径会失效）——公开 URL 仍是唯一正解。下一步：拿到真实
-EnvId 后先试 API Key + OpenAPI 网关上传，走不通再要 CAM 密钥。
+audioUrl 复用（重做路径会失效）——公开 URL 仍是唯一正解。
 
-**待办（A2/A4 收尾，等外部输入）**：
-- CloudBase 真实 EnvId + 桶 ACL 公有读就绪后：真镜端到端
-  （验收 = 人眼确认口型）；托管 URL 匿名 Range 206；2 RPM 节奏下逐镜验证
+**待办（A2 收尾，等外部输入）**：
+- CloudBase 存储桶形态确认（控制台）或 CAM 密钥 + 桶 ACL 公有读就绪后：真镜
+  端到端（验收 = 人眼确认口型）；托管 URL 匿名 Range 206；2 RPM 节奏下逐镜验证
   （`resultPath` 形状已实测钉死，见上）。
 - 台词镜的 i2v 锚定缺位（reference 不传 first_frame）是否影响一致性，留
   真实出片后评估。

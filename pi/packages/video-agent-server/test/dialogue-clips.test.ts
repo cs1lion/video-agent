@@ -470,13 +470,35 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		condenseReply = null; // chatJson 抛错 → condenseLine 返回 null
 		probeSeq = [6.5, 7.0];
 		const ctx = makeCtx();
-		const { run, script } = await freshRun();
+		const { run, script, dir } = await freshRun();
 		const result = await runClips(ctx, run, script);
 		assert.equal(submits.filter((s) => s.kind === "tts").length, 1, "精简不可用不重录");
 		const video = submits.find((s) => s.kind === "video")!;
-		assert.equal((video.params as { mode: string }).mode, "reference", "照常 reference 提交");
+		assert.deepEqual(video.params, { seconds: "7", mode: "reference", audios: ["https://test-env.tcb.qcloud.la/video-agent/run-dialogue-test/tts-SH01.mp3"] }, "A4b：接受 7.0s 后镜长反推为 7，reference seconds=7");
+		assert.equal(result.script.shots[0]!.durationSec, 7, "镜长回写 7");
 		assert.ok(Math.abs(result.script.shots[0]!.dialogue!.audioDurationSec! - 7) < 1e-6, "接受实测时长");
+		const onDisk = JSON.parse(await readFile(path.join(dir, "script.json"), "utf-8")) as ScriptDoc;
+		assert.equal(onDisk.shots[0]!.durationSec, 7, "镜长落盘（export/重放读同一份）");
 		assert.ok(run.events.some((e) => e.text.includes("精简不可用")));
+	});
+
+	it("A4b 以音频反推镜长：6.8s 台词 → 镜长 7 → reference seconds=7，配额按 7 预留按实测结算", async () => {
+		reset();
+		probeSeq = [6.3, 6.8]; // TTS 实测 6.3 → 插停顿 6.8（≤ 7.2 容差内不触发精简）
+		const quota = makeLedger(500);
+		const ctx = makeCtx(quota);
+		const { run, script, dir } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		assert.equal(result.script.shots[0]!.audioMode, "dialogue");
+		const video = submits.find((s) => s.kind === "video")!;
+		assert.deepEqual(video.params, { seconds: "7", mode: "reference", audios: ["https://test-env.tcb.qcloud.la/video-agent/run-dialogue-test/tts-SH01.mp3"] }, "seconds 必须等于反推镜长");
+		assert.equal(result.script.shots[0]!.durationSec, 7);
+		const onDisk = JSON.parse(await readFile(path.join(dir, "script.json"), "utf-8")) as ScriptDoc;
+		assert.equal(onDisk.shots[0]!.durationSec, 7);
+		assert.ok(run.events.some((e) => e.text.includes("镜长按台词音频反推为 7s")));
+		// 账实相符：预留 round(7)=7，出片实测 = probeSeq 末值 6.8 → 500 - 6.8
+		assert.ok(Math.abs(quota.remainingSec(VIDEO_QUOTA_POOL)! - 493.2) < 1e-6, `剩余应为 493.2，实际 ${quota.remainingSec(VIDEO_QUOTA_POOL)}`);
+		assert.equal(quota.snapshot()[0]!.inFlight, 0);
 	});
 
 	it("A4 精简重录的 TTS 失败 → 回退首版台词音频，链路不阻断", async () => {

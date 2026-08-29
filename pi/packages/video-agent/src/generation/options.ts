@@ -10,7 +10,7 @@ import type { Locale } from "../clarify/types.ts";
 
 export type Resolution = "480p" | "720p" | "1080p";
 export type AspectRatio = "16:9" | "9:16" | "1:1" | "4:3";
-export type ClipDurationSec = 3 | 5 | 8 | 10;
+export type ClipDurationSec = 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 export type Fps = 24 | 30 | 60;
 export type MotionIntensity = "low" | "medium" | "high";
 /** 音频驱动模式：
@@ -99,7 +99,8 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
 
 const RESOLUTIONS: readonly Resolution[] = ["480p", "720p", "1080p"];
 const ASPECT_RATIOS: readonly AspectRatio[] = ["16:9", "9:16", "1:1", "4:3"];
-const CLIP_DURATIONS: readonly ClipDurationSec[] = [3, 5, 8, 10];
+const CLIP_DURATION_MIN = 3;
+const CLIP_DURATION_MAX = 12;
 const FPS_VALUES: readonly Fps[] = [24, 30, 60];
 const MOTION_INTENSITIES: readonly MotionIntensity[] = ["low", "medium", "high"];
 const AUDIO_DRIVES: readonly AudioDrive[] = ["off", "dialogue"];
@@ -129,9 +130,15 @@ export function resolveGenerationOptions(partial?: Partial<GenerationOptions>): 
 			? (partial.aspectRatio as AspectRatio)
 			: DEFAULT_GENERATION_OPTIONS.aspectRatio,
 		shotCount: clampShotCount(partial.shotCount),
-		clipDurationSec: CLIP_DURATIONS.includes(partial.clipDurationSec as ClipDurationSec)
-			? (partial.clipDurationSec as ClipDurationSec)
-			: DEFAULT_GENERATION_OPTIONS.clipDurationSec,
+		clipDurationSec: (() => {
+			// A6：白名单 [3,5,8,10] 放开为 3–12 整数区间——台词镜的"以音频反推镜长"
+			// （A4b，ceil(audioDur) 钳 4–12）需要任意整数镜长；UI 快捷档不变。
+			// 上界 12 对齐 2.5-flash 的 seconds 上限。
+			const v = partial.clipDurationSec as unknown as number;
+			return Number.isInteger(v) && v >= CLIP_DURATION_MIN && v <= CLIP_DURATION_MAX
+				? (v as ClipDurationSec)
+				: DEFAULT_GENERATION_OPTIONS.clipDurationSec;
+		})(),
 		fps: FPS_VALUES.includes(partial.fps as Fps) ? (partial.fps as Fps) : DEFAULT_GENERATION_OPTIONS.fps,
 		motionIntensity: MOTION_INTENSITIES.includes(partial.motionIntensity as MotionIntensity)
 			? (partial.motionIntensity as MotionIntensity)

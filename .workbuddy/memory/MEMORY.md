@@ -120,6 +120,20 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## A4b+A6 完成现状（2026-08-29 深夜，`e2a5f81` 之后）
+
+- **A4b**：台词 ready 后 `dialogueDerivedSec(ceil(audioDur) 钳 4–12)` 回写
+  `shot.durationSec`；`estimateClipSeconds/videoSubmitParams` 加可选 override，
+  预留/提交/回写同一份（账实相符扩展到动态镜长）。套件 160/160。
+- **A6**：`ClipDurationSec` 白名单 [3,5,8,10] → **3–12 整数区间**
+  （`video-agent/src/generation/options.ts`）；UI 快捷档不变。
+- **CloudBase 根因边缘**：真实 EnvId `myagent-d0glujkt6c30cbe8a`（与 JWT aud
+  差一位字符）；网关路由 `/v1/storages/get-objects-upload-info`（复数！）+
+  两步上传（签名 → PUT 直传），规格在本机 `.cloudbase-mcp/openapi/storage.openapi.yaml`。
+  JWT 鉴权通过但 `STORAGE_BUCKET_NOT_FOUND` + `tcb.qcloud.la` 418（桶在、私有）
+  → 判断：API Key 项目绑定与环境的桶解析对不上，或环境是 PG 模式。
+  **待用户**：控制台确认存储桶形态，或直接给 CAM SecretId/SecretKey。
+
 ## A4a 台词镜对齐现状（2026-08-29 晚，`e2a5f81`）
 
 - **已完成**：超镜长 → LLM 精简重录一次（`dialogueCondenseMessages` + 同音色，

@@ -21,7 +21,7 @@ import {
 import { fileDataUrl } from "../asset-version.ts";
 import { trackMediaCost } from "../pricing.ts";
 import { probeDuration } from "../ffmpeg.ts";
-import { estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue } from "../redo-adapters.ts";
+import { dialogueDerivedSec, estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue } from "../redo-adapters.ts";
 import { VIDEO_QUOTA_POOL } from "../config.ts";
 import type { ReserveResult } from "../quota.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
@@ -122,6 +122,22 @@ export async function stageClips(
 				);
 			} else {
 				dialogueReadyUrl = outcome.audioUrl;
+				// A4b：以音频时长反推镜长 ceil(audioDur)（钳 4–12，dialogueDerivedSec）。
+				// reference 提交在音频之后，改镜长零重生成成本；export/配额/回放读同一份。
+				if (typeof outcome.audioDurationSec === "number" && outcome.audioDurationSec > 0) {
+					const derived = dialogueDerivedSec(outcome.audioDurationSec);
+					if (derived !== shot.durationSec) {
+						shot.durationSec = derived;
+						pushEvent(
+							run,
+							"sound",
+							"producer",
+							"status",
+							`镜头 ${shot.id} 镜长按台词音频反推为 ${derived}s（实测 ${outcome.audioDurationSec.toFixed(1)}s）。`,
+							{ stage: "generate", focus: shot.id },
+						);
+					}
+				}
 			}
 		} else if (shot.audioMode === "dialogue" && shot.dialogue && opts.audioDrive !== "dialogue") {
 			// 防御：台词镜但运行选项未开音频驱动（旧 run 恢复 / 手改脚本 / 闸门回落）。
@@ -141,7 +157,7 @@ export async function stageClips(
 			);
 		}
 		// 台词镜的 reference 参数：非 2.5 适配器 audios 被静默忽略（实测）——降旁白，不赌
-		const referenceParams = dialogueReadyUrl ? videoSubmitParamsForDialogue(sc.ctx, opts, dialogueReadyUrl) : null;
+		const referenceParams = dialogueReadyUrl ? videoSubmitParamsForDialogue(sc.ctx, dialogueReadyUrl, shot.durationSec) : null;
 		if (dialogueReadyUrl && !referenceParams) {
 			shot.audioMode = "narration";
 			if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
@@ -160,8 +176,11 @@ export async function stageClips(
 		// 台词 reference 模式不传 first_frame（与 audios 混用未验证，不赌 400）
 		const frame = await ensureKeyframe(sc, shot.id, prompt, bible, keyframes, shot);
 		const imageDataUrl = frame.file ? await fileDataUrl(run.dir, frame.file) : null;
-		// 配额预留：提交前同步扣减；RPM 令牌暂缺会等待补充后重试（可中止）
-		let reservation = await reserveShotQuota(sc, shot.id, estimateSec, 0);
+		// 配额预留：提交前同步扣减；RPM 令牌暂缺会等待补充后重试（可中止）。
+		// 每镜预估读 shot.durationSec（台词镜已被 A4b 反推改写；普通镜 = 全局档位）——
+		// 预留量纲与提交 seconds 一致（账实相符不变量）。
+		const shotEstimate = estimateClipSeconds(sc.ctx, opts, shot.durationSec);
+		let reservation = await reserveShotQuota(sc, shot.id, shotEstimate, 0);
 		if (!reservation) {
 			budgetAlert(i);
 			break;
@@ -171,7 +190,7 @@ export async function stageClips(
 			"tech",
 			"producer",
 			"status",
-			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${opts.clipDurationSec}s · ${useReference ? "台词音频驱动口型" : imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
+			`镜头 ${shot.id} 提交生成（${opts.resolution} · ${shot.durationSec}s · ${useReference ? "台词音频驱动口型" : imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`,
 		);
 		const t0 = Date.now();
 		const submitClip = (mode: "reference" | "normal", withImage: boolean) =>
@@ -186,7 +205,7 @@ export async function stageClips(
 					params:
 						mode === "reference" && referenceParams
 							? referenceParams
-							: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null),
+							: videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null, shot.durationSec),
 					outputName: `clip-${shot.id}`,
 				},
 				run.dir,
@@ -206,7 +225,7 @@ export async function stageClips(
 				if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
 				run.metrics.mediaCalls += 1;
 				attemptSeq += 1;
-				reservation = await reserveShotQuota(sc, shot.id, estimateSec, attemptSeq);
+				reservation = await reserveShotQuota(sc, shot.id, shotEstimate, attemptSeq);
 				if (!reservation) {
 					budgetAlert(i);
 					break;
@@ -219,7 +238,7 @@ export async function stageClips(
 				pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 图生视频未成功，降级为文生视频重试。`);
 				run.metrics.mediaCalls += 1;
 				attemptSeq += 1;
-				reservation = await reserveShotQuota(sc, shot.id, estimateSec, attemptSeq);
+				reservation = await reserveShotQuota(sc, shot.id, shotEstimate, attemptSeq);
 				if (!reservation) {
 					budgetAlert(i);
 					break;

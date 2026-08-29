@@ -56,13 +56,26 @@ describe("生成质量选项", () => {
 		});
 	});
 
+	test("A6：镜长白名单放开为 3–12 整数区间（台词镜以音频反推镜长的前提）", () => {
+		// 原白名单 [3,5,8,10] 会把 7 静默钳回 5；现在 7、4、12 都是合法档位
+		expect(resolveGenerationOptions({ clipDurationSec: 7 }).clipDurationSec).toBe(7);
+		expect(resolveGenerationOptions({ clipDurationSec: 4 }).clipDurationSec).toBe(4);
+		expect(resolveGenerationOptions({ clipDurationSec: 12 }).clipDurationSec).toBe(12);
+		expect(resolveGenerationOptions({ clipDurationSec: 3 }).clipDurationSec).toBe(3);
+		// 非整数 / 越界仍回退默认
+		expect(resolveGenerationOptions({ clipDurationSec: 7.5 as never }).clipDurationSec).toBe(5);
+		expect(resolveGenerationOptions({ clipDurationSec: 2 as never }).clipDurationSec).toBe(5);
+		expect(resolveGenerationOptions({ clipDurationSec: 13 as never }).clipDurationSec).toBe(5);
+	});
+
 	test("非法值回退默认（白名单校验）", () => {
 		const resolved = resolveGenerationOptions({
 			resolution: "8k" as never,
 			aspectRatio: "21:9" as never,
 			// 50 超出 MAX_SHOTS=30，按范围校验回退默认；中间值（如 9、20）现在合法不再回退
 			shotCount: 50 as never,
-			clipDurationSec: 7 as never,
+			// A6：3–12 整数合法化（台词镜"以音频反推镜长"需要任意整数）；13 越界回退
+			clipDurationSec: 13 as never,
 			fps: 48 as never,
 			motionIntensity: "extreme" as never,
 			detailBoost: "yes" as never,
