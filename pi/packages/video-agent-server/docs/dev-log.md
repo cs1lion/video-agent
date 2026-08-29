@@ -604,14 +604,20 @@ audio-gate 同构）：
 **主线 commit**：
 - `f1c6eea` feat(video-agent-server): A2 台词链路服务端核心
 
-**先记一个设计修正（推翻总文档 1.3 的旧判断）**：2.5-flash 的"新轮询端点
-`GET /v1/videos/{id}`"**纯配置即可表达，不需要改适配器代码**。vendored
-`openai-compatible` 适配器的 `poll.statusUrl` 本就支持 `{{taskId}}` 模板、
-`requestTemplate`/params 支持数组透传（`audios: [url]`），且字符串 `seconds`
-的 2.5 兼容修复早已落过（`openai-compatible.ts` 注释可查）。只改了
-`.pi-studio/models.json`：`taskIdPath: "video_id" → "id"`、
-`statusUrl: agnesapi → /v1/videos/{{taskId}}`。`resultPath: "url"` 未经 2.5
-真实验证（验证产物 `_tts_test/task_*.json` 全是 v2.0 响应），首测时确认。
+**先记一个被实测推翻又还原的结论（两轮折腾的教训）**：2.5-flash 轮询端点
+**双端点均可用但响应形状不同**（用 08-28 已完成任务 `task_wIbp…` 零成本双探测）：
+`GET /agnesapi?video_id=<video_id>&model_name=agnes-video-2.5-flash` → 200，
+**扁平响应、顶层 `url`**；`GET /v1/videos/{task_id}` → 200，**嵌套 `metadata.url`**。
+原 models.json 的 agnesapi 配置（`taskIdPath:"video_id"` + `resultPath:"url"`）
+**本来就自洽正确**；总文档 2.1「2.5 走 agnesapi 会 404」的旧说法是错的
+（08-28 当晚大概率是用错 id 或漏了 `model_name` 参数）。我一度依据该说法把
+statusUrl 改成 `/v1/videos/{id}` 而保留 `resultPath:"url"`——形状错配会取到
+undefined。最终配置**还原 agnesapi 端点**（官方文档也是这个推荐：keyframe/
+reference 模式必须带 `model_name`）。另确认：2.5 创建响应里 `id`=`task_id`=
+`video_id` 三字段同值（`task_` 前缀，与 v2.0 的 `video_` 前缀不同）；
+vendored `pollUntilDone` 轮询请求带 `authHeaders`（adapter.ts:491），鉴权无虞。
+**教训入 1.5 坑 6 的又一实例：连"文档里的修正"也要实测，形状配对
+（statusUrl 端点 ↔ resultPath 路径）必须一起动。**
 
 **新模块**：
 
@@ -668,5 +674,21 @@ mock.module。**
   响应形状；2 RPM 节奏下逐镜验证。
 - 台词镜的 i2v 锚定缺位（reference 不传 first_frame）是否影响一致性，留
   真实出片后评估。
+
+**CloudBase 凭据波折（08-29 下午，记录实况）**：
+- 用户先给了 **API Key JWT**（aud=`myagent-d0glujkt6c330cbe8a`，role=service_role，
+  AI+ 平台颁发）。实测：node-sdk `init({apiKey})` 构造不报错，但 `uploadFile`
+  运行时报 `missing secretId or secretKey`——**node-sdk 的存储上传不支持 API Key**；
+  OpenAPI 网关 `{aud}.api.tcloudbasegateway.com/v1/storage/buckets` 返回
+  `INVALID_ENV`（aud 疑似 AI+ project id 而非 CloudBase envId）。
+- `tcb.ts` 相应改造：`HostingConfig` 支持 `apiKey` 与 `secretId/secretKey` 双模式
+  （env 与 .env.cloudbase 均认 `TCB_API_KEY`），uploadFile 签名修正为
+  `{cloudPath, fileContent: Buffer}`（node-sdk 无 localPath 参数，那界 manager-node）。
+- 探针脚本 `scripts/probe-tcb.ts`（上传 + 匿名 Range 206 验证），凭据就绪后即验。
+- `.env.cloudbase` 已配 apiKey 模式；**待用户给 CAM SecretId/SecretKey 或控制台
+  真实环境 ID**。08-28 总文档"上传 206"验证的凭据来源无记录，无法复用。
+- 另：2.5-flash 轮询端点双探测（已完成任务 id 零成本）钉死"agnesapi（扁平顶层
+  url）/v1/videos（嵌套 metadata.url）形状配对"真相，总文档 2.1 旧说法证伪，
+  models.json 定稿 agnesapi 形态；用户决策**agnes 视频无特殊情况一律 2.5-flash**。
 
 验证：tsc clean，`npm test` **152/152**（约 46s）。

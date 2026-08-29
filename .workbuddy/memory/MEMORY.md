@@ -127,11 +127,23 @@
   插停顿→托管，URL 复用）+ stageClips 台词分支（reference 提交 + 三级降级
   reference→i2v→t2v）。真镜端到端验收**等 CloudBase 凭据**（`.env.cloudbase`：
   TCB_ENV_ID/SECRET_ID/SECRET_KEY + 控制台存储权限「所有用户可读」）。
-- **2.5-flash 轮询端点纯配置即支持**（总文档 1.3 旧判断"要改 adapter 代码"已证伪）：
-  `poll.statusUrl` 支持 `{{taskId}}` 模板。models.json 已修正为 `/v1/videos/{{taskId}}`
-  + `taskIdPath: "id"`；`resultPath: "url"` 对 2.5 待真测确认。
+- **2.5-flash 轮询端点纯配置即支持**（无需改 adapter 代码），但**双端点响应形状不同**：
+  `agnesapi?video_id=&model_name=agnes-video-2.5-flash` → 扁平、顶层 `url`；
+  `/v1/videos/{task_id}` → 嵌套 `metadata.url`。**statusUrl 与 resultPath 必须配对**。
+  models.json 定稿：agnesapi + `taskIdPath:"video_id"` + `resultPath:"url"`（官方推荐，
+  keyframe/reference 必须带 model_name；总文档 2.1 旧说法"agnesapi 会 404"已实测证伪；
+  2.5 创建响应 id=task_id=video_id 同值，task_ 前缀）。
+- **用户决策（08-29）**：agnes 视频**无特殊情况一律 2.5-flash**（v2.0 仅兜底）。
+- **CloudBase 凭据现状（08-29）**：用户给的是 **API Key JWT**（aud=`myagent-d0glujkt6c330cbe8a`，
+  service_role，来自 AI+ 平台）。**node-sdk 不认它**（init 接受但 uploadFile 时报
+  "missing secretId or secretKey"）；OpenAPI 网关 `{aud}.api.tcloudbasegateway.com`
+  返回 INVALID_ENV（aud 可能是 project id 而非 envId）。tcb.ts 已支持 apiKey/secret
+  双模式；`.env.cloudbase` 已配 apiKey 待解；探针脚本 `scripts/probe-tcb.ts`。
+  **待用户**：给 CAM SecretId/SecretKey（子账号登录 → console.cloud.tencent.com/cam/capi）
+  或 CloudBase 控制台的真实环境 ID。08-28 总文档里"上传 206 验证"的凭据来源无记录。
 - **`@cloudbase/manager-node` 在 tsx 下 import 即炸**（依赖 `del` 的 CJS 互操作），
-  勿用；用 `@cloudbase/node-sdk`（`default.init({secretId,secretKey,env}).uploadFile`）。
+  勿用；用 `@cloudbase/node-sdk`（`default.init(...).uploadFile({cloudPath, fileContent:Buffer})`
+  ——注意签名是 fileContent 不是 localPath）。
 - **新坑**：给被 mock 的模块（ffmpeg/queue/llm）新增静态导入消费者，会让所有旧
   测试文件的 `mock.module` namedExports **链接断裂**（不是 undefined）——加导入前
   先 `grep -l "ffmpeg.ts" test/` 补齐所有 mock。

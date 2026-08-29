@@ -27,8 +27,10 @@ export class HostingError extends Error {}
 
 export interface HostingConfig {
 	envId: string;
-	secretId: string;
-	secretKey: string;
+	/** CloudBase API Key（JWT 形态，service_role；新式鉴权）与 secretId/secretKey 二选一 */
+	apiKey?: string;
+	secretId?: string;
+	secretKey?: string;
 }
 
 /** 解析 .env 风格文本（纯函数，可测） */
@@ -69,7 +71,7 @@ function readEnvFileCandidates(studioRoot: string): Record<string, string> {
 		try {
 			const text = fs.readFileSync(file, "utf-8");
 			const parsed = parseEnvFile(text);
-			if (parsed.TCB_ENV_ID && parsed.TCB_SECRET_ID && parsed.TCB_SECRET_KEY) return parsed;
+			if (parsed.TCB_ENV_ID && (parsed.TCB_API_KEY || (parsed.TCB_SECRET_ID && parsed.TCB_SECRET_KEY))) return parsed;
 		} catch {
 			// 文件不存在/不可读 → 试下一个候选
 		}
@@ -83,16 +85,23 @@ let cachedConfig: HostingConfig | null | undefined;
 export function loadHostingConfig(studioRoot: string): HostingConfig | null {
 	if (cachedConfig !== undefined) return cachedConfig;
 	const envId = process.env.TCB_ENV_ID;
+	const apiKey = process.env.TCB_API_KEY;
 	const secretId = process.env.TCB_SECRET_ID;
 	const secretKey = process.env.TCB_SECRET_KEY;
-	if (envId && secretId && secretKey) {
-		cachedConfig = { envId, secretId, secretKey };
+	if (envId && (apiKey || (secretId && secretKey))) {
+		cachedConfig = { envId, ...(apiKey ? { apiKey } : {}), ...(secretId && secretKey ? { secretId, secretKey } : {}) };
 		return cachedConfig;
 	}
 	const fromFile = readEnvFileCandidates(studioRoot);
 	cachedConfig =
-		fromFile.TCB_ENV_ID && fromFile.TCB_SECRET_ID && fromFile.TCB_SECRET_KEY
-			? { envId: fromFile.TCB_ENV_ID, secretId: fromFile.TCB_SECRET_ID, secretKey: fromFile.TCB_SECRET_KEY }
+		fromFile.TCB_ENV_ID && (fromFile.TCB_API_KEY || (fromFile.TCB_SECRET_ID && fromFile.TCB_SECRET_KEY))
+			? {
+					envId: fromFile.TCB_ENV_ID,
+					...(fromFile.TCB_API_KEY ? { apiKey: fromFile.TCB_API_KEY } : {}),
+					...(fromFile.TCB_SECRET_ID && fromFile.TCB_SECRET_KEY
+						? { secretId: fromFile.TCB_SECRET_ID, secretKey: fromFile.TCB_SECRET_KEY }
+						: {}),
+				}
 			: null;
 	return cachedConfig;
 }
@@ -107,16 +116,24 @@ export function resetHostingConfigCache(): void {
 // ---------------------------------------------------------------------------
 
 interface TcbUploadApp {
-	uploadFile(args: { cloudPath: string; localPath: string }): Promise<{ fileID?: string }>;
+	/** node-sdk 签名：fileContent（Buffer/ReadStream），非 localPath（那是 manager-node 的） */
+	uploadFile(args: { cloudPath: string; fileContent: Buffer }): Promise<{ fileID?: string }>;
 }
 interface TcbSdkModule {
-	default: { init(cfg: { secretId: string; secretKey: string; env: string }): TcbUploadApp };
+	default: {
+		init(cfg: {
+			env: string;
+			apiKey?: string;
+			secretId?: string;
+			secretKey?: string;
+		}): TcbUploadApp;
+	};
 }
 
 let cachedApp: { key: string; app: TcbUploadApp } | null = null;
 
 async function appOf(config: HostingConfig): Promise<TcbUploadApp> {
-	const key = `${config.envId}:${config.secretId}`;
+	const key = `${config.envId}:${config.apiKey ?? config.secretId ?? ""}`;
 	if (cachedApp?.key === key) return cachedApp.app;
 	let mod: TcbSdkModule;
 	try {
@@ -124,7 +141,11 @@ async function appOf(config: HostingConfig): Promise<TcbUploadApp> {
 	} catch (error) {
 		throw new HostingError(`CloudBase SDK 加载失败（依赖未安装？）: ${String(error)}`);
 	}
-	const app = mod.default.init({ secretId: config.secretId, secretKey: config.secretKey, env: config.envId });
+	const app = mod.default.init({
+		env: config.envId,
+		...(config.apiKey ? { apiKey: config.apiKey } : {}),
+		...(config.secretId && config.secretKey ? { secretId: config.secretId, secretKey: config.secretKey } : {}),
+	});
 	cachedApp = { key, app };
 	return app;
 }
@@ -162,7 +183,8 @@ export async function hostAudioFile(
 	const cloudPath = cloudPathFor(runId, shotId);
 	const app = await appOf(config);
 	try {
-		await app.uploadFile({ cloudPath, localPath: localAbsPath });
+		const fileContent = await fs.promises.readFile(localAbsPath);
+		await app.uploadFile({ cloudPath, fileContent });
 	} catch (error) {
 		throw new HostingError(`CloudBase 上传失败（${cloudPath}）: ${String(error)}`);
 	}
