@@ -364,3 +364,218 @@ keepSourceAudio），该用例立刻变红 —— `成片应静音，实测 mean
 素材生成用 lavfi（testsrc + sine）免外部素材，codec 用 libx264 + aac。
 
 验证：server tsc clean，`npm test` **74/74**（约 70s）。
+
+## 2026-08-28 续：A1 —— 数据模型 + 闸门（音频驱动台词模式的跑道）
+
+对应总文档 §4.2.1。A1 是纯兼容层：**只铺数据模型与闸门，不接任何生成功能**，
+所以验收标准是"既有行为零变化 + 契约测试锁住新规则"，而不是跑通链路。
+
+**产出**（跨两包六文件 + 两测试文件）：
+
+- `prompts.ts`：`AudioMode` 三态（narration/dialogue/silent）+ `ShotDialogue` 子结构
+  （`characterId`/`voiceId`/双语台词/`pausesSec`/仅 https 的 `audioUrl`）；
+  `sanitizeDialogue`（宽容清洗）与 `dialogueFor`（按语言取台词）。
+  `scriptMessages` 新增台词分支（规则 6-8 + 台词镜 JSON 示例），
+  **仅当 `audioDrive === "dialogue"` 启用**——其余路径提示词一字不变。
+- `video-agent` 包：`GenerationOptions.audioDrive`（`off|dialogue`，白名单，缺省 `off`）；
+  `CoCharacter.voiceId`（角色音色绑定，跨镜头稳定的载体）。
+- 新文件 `src/audio-mode.ts`：`shouldGateAudioDrive` / `detectSpeakers` /
+  `hasMultipleSpeakers` / `enforceSingleSpeaker` 四个纯函数。
+- `pipeline.ts`：`startRun` 三行闸门接线（判定→强制回落→审计事件）；
+  `normalizeScript` 增加 audioMode 白名单与 dialogue 清洗。
+- `stages/script.ts`：剧本落盘前调 `enforceSingleSpeaker`（D1）。
+
+**关键决策与替代方案**：
+
+1. **闸门判定抽成纯函数、独立成文件**。替代方案是直接写在 `startRun` 里——
+   但那样契约测试必须起整条管线才能锁"非共创来源被强制回落"这条验收。
+   抽出来后决策本身可直接测，`startRun` 只留三行接线；独立文件还避免了
+   测试引 `pipeline.ts` 时的循环依赖顾虑（只依赖 prompts 的类型）。
+2. **回落必须可审计**：强制回落发生在 `persistRun` 之后、同步推 `pushEvent`，
+   用户在指挥台能看到"为什么我的台词模式没了"。闸门的沉默执行比放行更危险。
+3. **D1 落剧本阶段、降级而非阻断**。多说话人是 2.5-flash 的运行时约束
+   （每镜一条主语音），到片段阶段才发现就得整段返工且已烧配额；
+   但剧本阶段同样已烧配额，所以违规镜**降级为旁白形态**（台词并进旁白字段，
+   TTS 照常可念）+ 警告事件，而不是让 run 失败。用户可在剧本页拆镜后重跑。
+4. **`normalizeScript` 的悬空状态不变量**：声明了 dialogue 但清洗失败
+   （缺 characterId / 台词全空）→ 整镜回落 narration。"台词态却无台词"
+   会让下游每个消费点都得防御，不如在入口一次掐死。
+5. **接线测试复用闸门状态机的全桩脚手架**（`test/audio-gate.test.ts`）：
+   `startRun` 会异步点火 `beginRun`，裸跑会打网络，必须全桩；两条用例
+   断言同步状态（选项已回落 + 审计事件已入列）后，等 run 稳到
+   `gate=design` 再收尾，避免测试结束时后台管线还在飞。
+
+**测试**：`test/audio-mode.test.ts`（21 条：闸门判定四分支 / 清洗必要性与逐项过滤 /
+白名单与悬空兜底 / 说话人识别中英冒号 / 降级行为）+ `test/audio-gate.test.ts`
+（2 条 startRun 接线）+ `video-agent` 选项层 `audioDrive` 用例（含新增白名单专项）。
+
+验证：server tsc clean，`npm test` **97/97**（74 → 97，约 65s）；
+`video-agent` vitest 12/12。注：全仓 `tsc --noEmit`（根 tsconfig）本就有
+ai/tui/pricing 测试的历史错误噪声，与本次改动无关（已过滤确认本次文件零错误）。
+
+## 2026-08-29 续：A3 —— export 混音链改造（台词源音轨进成片）
+
+对应总文档 §4.2.2，修冲突②：`assembleTimeline` 视频链只取 `[i:v]`，
+台词模式的对白（就在生成视频音轨里）会被静默丢弃。Phase 0 的回归锁
+正是为这次改动准备的——本轮按它的预告"变红即设计意图"完成拆分与翻转。
+
+**改动落点**：
+
+- `ffmpeg.ts`：
+  - `TimelineShot.keepSourceAudio`（台词镜开关，缺省维持旧行为）；
+  - `assembleTimeline` 先算视频链拿到各镜时间轴起点（转场重叠折算后），
+    再按 镜头视频 → 旁白 → **台词源音轨** → BGM 挂输入；源音轨就是
+    归一化镜头文件再挂一次输入单取 `[i:a]`；
+  - `buildDmeFilters` 引入**对白总线**：旁白 `[narr]` 与源音轨 `[srcN]`
+    合并为 `[voice]`（单路时直接复用标签），BGM 闪避与总混只认总线；
+  - `measureLoudness` 同步：测量遍输入序 旁白 → 源音轨 → BGM，索引换算
+    `narrations.length + j`——漏了这步，响度补偿会按错误读数算；
+  - `normalizeShot` 增加保源音轨分支（无 audioPath 时 `[0:a]aresample,apad`）。
+- `stages/export.ts`：台词镜 `keepSourceAudio: true` + `narrationPath: null`
+  （再挂旁白会叠两次声）；节奏锚点在无 TTS 文件时改用 `dialogue.audioDurationSec`。
+  `redo/compose.ts` 未动——合成剪辑暂不涉台词镜，缺省行为零变化。
+
+**关键决策**：
+
+1. **对白不做 J-cut**。旁白提前 0.35s 入是听感优化；对白是口型驱动源，
+   提前/延后都是穿帮，`adelay` 严格按镜头起点（先 `atrim` 裁齐镜长防越界）。
+2. **默认仍丢弃源音轨**。2.5-flash 的普通镜头也带原生音轨（音画同生），
+   无差别接入会让既有成片的旁白底下混入不可控噪声。所以只认
+   `keepSourceAudio` 显式开关，且用"兼容不变量"测试锁死默认静音行为。
+3. **降级路径也要有声音**：xfade 失败降级 concat 硬拼时不走 DME 链，
+   靠 `normalizeShot` 保源音轨让各镜自带对白——与旁白镜"归一化时嵌入
+   TTS 供降级路径"的既有设计同构（export.ts 注释有载）。
+4. **源音轨缺失 = 响亮失败**。`[0:a]`/`[i:a]` 遇无音轨文件会让 ffmpeg 报错，
+   没做静默兜底：台词镜必出自音频驱动生成，走到这里还没音轨说明管线有 bug，
+   炸出来比吞掉安全（符合"空状态必须有产物，但错误必须可见"）。
+
+**测试**（10 → 16，套件 97 → 103）：
+
+- 纯函数 +3：源音轨 `adelay`/`atrim` 构造、`[narr][src0]amix→[voice]` 总线、
+  仅台词也让 BGM 挂 sidechain；
+- 集成 +4：兼容不变量（默认仍静音）、keepSourceAudio 可闻、
+  分段定位（前 1.5s 静音 / 2.3s 后可闻，`loudness` 加 `-ss/-t` 段探测）、
+  归一化保源音轨；
+- **变异验证**：把源音轨过滤改成恒假（断接线），恰好"可闻"与"定位"两条变红，
+  兼容不变量保持绿——三把锁各司其职，已还原。
+
+遗留（记入 A7/后续）：台词镜字幕目前仍取旁白字段（台词镜旁白为空 → 无字幕），
+对白上字幕需要新的时间轴来源（`pausesSec`/台词分段），留给 UI 全量阶段。
+
+验证：server tsc clean，`npm test` **103/103**（约 75s）。
+
+## 2026-08-29 续：B1 起步 —— 配额账本 + 多池令牌桶（确定性底座·账本层）
+
+B1 五项（多池令牌桶 + 事件驱动队列 + 幂等键 + 结果回收 + 配额账本）中先落
+**账本层**——它是其余四项的正确性前提（D5：异步生成 40–90s 才出片，只在提交时
+扣配额必被并发冲垮）。产出 `src/quota.ts`（新，纯内存 / 无 I/O / 无定时器）
++ `test/quota.test.ts`（21 例，注入时钟全确定性）。
+
+**产出**：
+
+- `TokenBucket`：容量封顶、按分钟速率惰性补充（访问时按传入 `now` 补发），
+  `tryTake` / `available` / `msUntil` —— RPM 闸门（Free 1 / Ent 2 / TP 5 RPM）。
+- `QuotaLedger`：多池账本，每池两道独立闸门（RPM 令牌桶 + 每日时长配额；
+  `dailyQuotaSec: null` = 无明确配额，只受 RPM 约束）。四个操作：
+  - `reserve(poolId, estimatedSec, {idempotencyKey, now})` —— 校验后扣减，
+    同步完成"提交前先预留"；
+  - `settle(id, actualSec)` —— 出片结算：多退差额、少补超支（扣到 0 为止，
+    缺口记 `overrunSec` 供预算告警）；
+  - `release(id)` —— 取消/作废全额退还（供应商已消耗时应走 settle 而非 release）；
+  - `snapshot(now)` —— 全池观察快照（B2 observe_kitchen 的原料）。
+
+**关键决策**：
+
+1. **时钟注入、无定时器**：所有时间相关方法接受 `now`。账本是异步模型的
+   正确性部件，测试必须不靠 fake timer 就能精确断言。
+2. **校验顺序：配额先于 RPM**。配额不足的拒绝不吃 RPM 令牌（供应商没收到请求）；
+   顺序反了会在配额耗尽时白白烧光令牌，恢复后一次都提交不了。
+3. **幂等键只保护在途预留**：在途同键 → 返回原预留不重复扣减（挡并发重复提交）；
+   终态后键即释放，允许 retts 重做复用键名。防的是"在途重复"，不是"历史重放"。
+4. **终态重入 no-op**：结果回收可能双份送达（轮询 + 未来 webhook），对已终态
+   预留再 settle/release 返回 `already_finalized`、无副作用——不许重复退钱。
+5. **跨日语义**：换日重置每池剩余；在途预留存活、其结算计入新的一天；
+   退还受日上限封顶（跨日释放不得把新的一天充爆）。
+6. **非法实际时长（探测失败 → NaN）按预留全额消耗保守结算**——宁可少退不可多退。
+
+**测试**（21 例，套件 103 → 124，纯单元、亚秒跑完）：令牌桶 3；预留与闸门 7
+（含 **D5 竞态回归锁**：两个并发预留不许都"看到"配额充足；RPM 闸门与恢复；
+拒绝不吃令牌；幂等键 ×2）；结算与释放 9（含双份结果回收、超支封顶、
+守恒不变量"终态后剩余 = 日配额 − 实际消耗"）；跨日 2。
+**变异验证 ×2**：① 删掉 reserve 的扣减行 → 10 例变红；② 反转 settle 终态守卫
+→ 8 例变红；均已还原、复跑全绿——锁真的在咬。
+
+**接线方案（B1 下一步，本次未动管线）**：
+
+- 池配置：服务启动时从密钥层级建 `PoolSpec[]`（tokenplan → 500s/天 + 5 RPM；
+  其余档 → `dailyQuotaSec: null` + 各自 RPM），注入 `StageCtx`；
+- `stages/clips.ts` 提交循环改"先预留后提交"：`insufficient_quota` →
+  阶段级预算告警事件（D5/B4 耦合点）而不是硬塞队列撞 429；
+  `rpm_exhausted` → 按 `rpmWaitMs` 等待；
+- 幂等键 = `${runId}:${shotId}:${attempt}`：i2v→t2v 降级重试是**新** attempt
+  （新键、新 RPM 令牌），同一 attempt 的重复提交被去重；
+- 结算时机 = `awaitJob` 返回后：done → `settle(id, probeDuration 实测)`
+  （复用现有 P2 时长探测）；失败/中止 → `release`；
+- 事件驱动队列与结果回收 webhook 仍待建：vendored `GenerationQueue` 现有的是
+  "并发槽位 + 429 节流"，没有配额语义——账本是它们的前置，不是替代。
+
+验证：tsc clean，`npm test` **124/124**（约 61s）。
+
+## 2026-08-29 续：B1 接线 —— 配额账本接入 clips 提交循环
+
+上一节的账本（`src/quota.ts`）接进了主生成链：`stages/clips.ts` 现在是
+「预检 → 关键帧 → 预留 → 提交 → 结算/退还」的闭环（套件 124 → 130）。
+
+**改动落点**：
+
+- `config.ts`：`VIDEO_QUOTA_POOL`（"video"，单视频适配器 = 单池）+
+  `loadQuotaLedger()`（缺省按 TokenPlan 实测：500s/天、2 RPM；
+  `VIDEO_AGENT_QUOTA_DAILY_SEC` / `_RPM` 覆盖，"0" = 无时长配额只受 RPM）。
+  `ServerContext.quota` 设为**可选字段**：`loadServerContext` 恒提供；
+  手搓 ctx 的测试桩省略 = 不设闸门（旧行为）——降级优于阻断。
+- `redo-adapters.ts`：`estimateClipSeconds` —— 预留量纲必须与
+  `videoSubmitParams` 实际请求秒数一致（2.5 系列 [4,12] 钳制）。
+- `stages/clips.ts`：
+  - **预检**（关键帧前）：剩余配额明确不足 → 预算告警 + 剩余镜头记空位 +
+    `break`，连关键帧成本都不烧（escalate 而非硬撞）；
+  - **预留**：`reserveShotQuota`（导出，供行为测试）——时长不足返回 null；
+    RPM 暂缺按 `snapshot().rpmWaitMs` 可中止等待后重试；
+    幂等键 `${runId}:${shotId}:a${attempt}`；
+  - **i2v→t2v 降级**：旧预留先退还，重试是**新 attempt**（新键、新令牌）；
+  - **结算**：出片后 `probeDuration` 实测结算（探测失败按预估兜底，宁可少退不可漏结）；
+  - **退还**：生成失败 / 中止异常 → 全额退还（未出片不消耗时长配额；
+    RPM 令牌已在预留时消耗，如实反映提交行为）；
+  - 零派发时抛配额专属错误（与"全部生成失败"区分，前端可读）。
+
+**关键决策**：
+
+1. **账本是进程级共享**（挂 `ServerContext`，不是 per-run）——每日配额是
+   跨 run 的全局资源，per-run 账本会让并发 run 重新陷入 D5 竞态。
+2. **预算告警走既有 `kind:"status"` 通道**：`TeamEvent.kind` 是前端硬契约
+   （AGENTS.md：类型不要改），不新增类型；文案含剩余量 / 单镜预估 / 裁剪建议，
+   B4 的结构化 `budget_alert` 契约等 UI 配合时再上。
+3. **一份预留对应一次提交尝试**（而非一个镜头）：降级重试、失败重发各自
+   独立预留/退还，账本才能如实反映"向供应商发了几次请求"。
+4. **预检 + 实闸两层**：预检只读不扣（省成本），实闸（reserve）才是权威扣减；
+   两者不一致时（并发 run 抢走配额）预算告警兜底，行为仍正确。
+
+**测试**（新增 `test/quota-wiring.test.ts` 6 例，全桩环境、脚手架与
+audio-gate 同构）：
+
+- 足额链路：两镜实测 3.6s 结算 → 剩余 492.8、inFlight 0、恰好 2 次提交；
+- 探测失败 → 按预估兜底结算（剩余 490）；
+- **零违规锁**：配额 2s < 单镜 5s → `submitCalls === 0`（一个请求都不进队列）
+  + 预算告警事件 + 配额分毫不动；
+- **失败退还**：i2v + t2v 全失败 → 4 次提交、剩余精确回到 500（无幻影消耗）；
+- RPM 等待回路：1200-RPM 快池抽干后 ~150ms 内等到令牌（锁等待而非整分钟阻塞）；
+- `estimateClipSeconds`：2.5 钳 4 / 2.0 透传。
+
+**变异验证 ×3**：① 删结算行 → 足额链路变红；② 删失败退还 → 失败退还用例变红；
+③ 废掉预留闸门（恒返回占位预留）→ 零违规锁 + 足额链路 2 条变红。均已还原、
+复跑 6/6。
+
+遗留（B1 剩余）：**redo 路径未接账本**——`pipeline.ts` 的 reshot 补拍提交
+仍直连队列，A5 级联重做是它的第一个消费者，届时一并接（含成本提示）；
+事件驱动队列与结果回收 webhook 待建。
+
+验证：tsc clean，`npm test` **130/130**（约 78s）。

@@ -19,6 +19,7 @@ describe("生成质量选项", () => {
 		expect(defaults.promptLanguage).toBe("zh");
 		expect(defaults.negativePrompt).toContain("watermark");
 		expect(defaults.seed).toBeUndefined();
+		expect(defaults.audioDrive).toBe("off");
 	});
 
 	test("空/undefined 输入返回默认副本", () => {
@@ -38,6 +39,7 @@ describe("生成质量选项", () => {
 			promptLanguage: "en",
 			negativePrompt: "custom",
 			seed: 7,
+			audioDrive: "dialogue",
 		});
 		expect(resolved).toMatchObject({
 			resolution: "1080p",
@@ -50,6 +52,7 @@ describe("生成质量选项", () => {
 			promptLanguage: "en",
 			negativePrompt: "custom",
 			seed: 7,
+			audioDrive: "dialogue",
 		});
 	});
 
@@ -65,6 +68,7 @@ describe("生成质量选项", () => {
 			detailBoost: "yes" as never,
 			promptLanguage: "fr" as never,
 			seed: -3,
+			audioDrive: "lip-sync" as never,
 		});
 		expect(resolved.resolution).toBe("720p");
 		expect(resolved.aspectRatio).toBe("16:9");
@@ -75,6 +79,16 @@ describe("生成质量选项", () => {
 		expect(resolved.detailBoost).toBe(true);
 		expect(resolved.promptLanguage).toBe("zh");
 		expect(resolved.seed).toBeUndefined();
+		expect(resolved.audioDrive).toBe("off");
+	});
+
+	test("audioDrive 白名单：dialogue 透传，缺省与非法值一律 off", () => {
+		// 台词模式是闸门管控能力（服务端只对共创来源放行），选项层只做白名单校验
+		expect(resolveGenerationOptions({ audioDrive: "dialogue" }).audioDrive).toBe("dialogue");
+		expect(resolveGenerationOptions({ audioDrive: "off" }).audioDrive).toBe("off");
+		expect(resolveGenerationOptions().audioDrive).toBe("off");
+		expect(resolveGenerationOptions({ audioDrive: "" as never }).audioDrive).toBe("off");
+		expect(resolveGenerationOptions({ audioDrive: true as never }).audioDrive).toBe("off");
 	});
 
 	test("范围内任意分镜数（包上下限）合法通过", () => {

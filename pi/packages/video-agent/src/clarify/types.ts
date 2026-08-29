@@ -131,6 +131,8 @@ export interface GenerationDirectives {
 export interface CoCharacter {
 	name: string;
 	description: string;
+	/** 台词模式音色绑定（如 StepFun voice id）：角色音色跨镜头稳定的载体，重录后不漂移 */
+	voiceId?: string;
 }
 
 /** 共创空间沉淀的场景设定 */

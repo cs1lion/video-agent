@@ -83,7 +83,8 @@ export async function stageExport(
 	for (const shot of keptShots) {
 		const i = scriptDoc.shots.indexOf(shot);
 		const audioRel = audios![i] ? path.relative(run.dir, audios![i]!) : null;
-		const dur = audioRel ? await probeDuration(audioRel, run.dir) : null;
+		// 台词镜无旁白 TTS 文件，用回写的实测台词时长做节奏锚点（A2 落盘 audioDurationSec）
+		const dur = audioRel ? await probeDuration(audioRel, run.dir) : (shot.dialogue?.audioDurationSec ?? null);
 		narrDur.push(dur);
 		shotDur.push(
 			dur === null
@@ -103,6 +104,8 @@ export async function stageExport(
 				cwd: run.dir,
 				clipPath: path.relative(run.dir, clips![i]!),
 				audioPath: audios![i] ? path.relative(run.dir, audios![i]!) : null,
+				// 台词镜的对白在镜头自带音轨里：归一化时保留，降级 concat 路径才不丢声音（A3）
+				keepSourceAudio: shot.audioMode === "dialogue",
 				outPath: path.join("assets", out),
 				width,
 				height,
@@ -240,17 +243,24 @@ export async function stageExport(
 	const BGM_EXTS = [".mp3", ".wav", ".m4a", ".ogg", ".flac"];
 	const bgmPath =
 		BGM_EXTS.map((e) => path.join("assets", `bgm${e}`)).find((p) => fs.existsSync(path.join(run.dir, p))) ?? null;
-	const timelineShots: TimelineShot[] = keptShots.map((s, k) => ({
-		path: normalized[k]!,
-		durationSec: shotDur[k]!,
-		narrationPath:
-			audios![scriptDoc.shots.indexOf(s)] != null && narrDur[k] !== null
-				? path.relative(run.dir, audios![scriptDoc.shots.indexOf(s)]!)
-				: null,
-		narrationStartSec: narrStart[k]!,
-		narrationDurationSec: narrDur[k] ?? 0,
-		subtitle: narrationTexts[k] || null,
-	}));
+	const timelineShots: TimelineShot[] = keptShots.map((s, k) => {
+		const isDialogue = s.audioMode === "dialogue";
+		return {
+			path: normalized[k]!,
+			durationSec: shotDur[k]!,
+			// 台词镜（A3）：对白随音频驱动生成就在镜头音轨里，走 keepSourceAudio 进对白层；
+			// 不再挂旁白输入，否则同一句台词会叠两次声。
+			narrationPath: isDialogue
+				? null
+				: audios![scriptDoc.shots.indexOf(s)] != null && narrDur[k] !== null
+					? path.relative(run.dir, audios![scriptDoc.shots.indexOf(s)]!)
+					: null,
+			narrationStartSec: narrStart[k]!,
+			narrationDurationSec: narrDur[k] ?? 0,
+			subtitle: narrationTexts[k] || null,
+			keepSourceAudio: isDialogue,
+		};
+	});
 	const tConcat = Date.now();
 	let totalSec = cursor;
 	let usedTransitions = 0;

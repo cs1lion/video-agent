@@ -31,6 +31,15 @@ export function isAgnesVideo25(ctx: ServerContext): boolean {
 }
 
 /**
+ * 配额预留用的镜头秒数预估：必须与 videoSubmitParams 实际请求的秒数一致，
+ * 否则账本按错误的量纲预留（2.5 系列不足 4s 也按 4s 生成、上限 12s）。
+ */
+export function estimateClipSeconds(ctx: ServerContext, opts: GenerationOptions): number {
+	if (isAgnesVideo25(ctx)) return Math.min(12, Math.max(4, Math.round(opts.clipDurationSec)));
+	return opts.clipDurationSec;
+}
+
+/**
  * 视频生成请求参数（按适配器代际分支）：
  * - Agnes 2.5：seconds 为字符串 "4"-"12"（不足 4s 按 4s 生成，剪辑阶段裁切）；
  *   width/height/frame_rate/image 均禁传（400）；首帧锚定走 mode=keyframe + first_frame（data URI 已实测可用）。

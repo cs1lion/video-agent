@@ -135,6 +135,8 @@ export async function normalizeShot(options: {
 	cwd: string;
 	clipPath: string;
 	audioPath: string | null;
+	/** 无 audioPath 时保留镜头自带音轨（台词镜，A3）；audioPath 存在时本字段无效 */
+	keepSourceAudio?: boolean;
 	outPath: string;
 	width: number;
 	height: number;
@@ -152,6 +154,11 @@ export async function normalizeShot(options: {
 	if (audioPath) {
 		args.push("-i", audioPath);
 		args.push("-filter_complex", `[0:v]${videoFilter}[v];[1:a]aresample=48000,apad[a]`, "-map", "[v]", "-map", "[a]");
+	} else if (options.keepSourceAudio) {
+		// 台词镜：对白在镜头自带音轨里（A3）。主链在 assembleTimeline 按时间轴定位混音，
+		// 这里保留源音轨是为降级 concat 路径——硬拼时各镜自带声音，对白不丢。
+		// 不变量：调用方保证该镜头确有音轨（台词镜来自音频驱动生成）；违背时 ffmpeg 会响亮失败。
+		args.push("-filter_complex", `[0:v]${videoFilter}[v];[0:a]aresample=48000,apad[a]`, "-map", "[v]", "-map", "[a]");
 	} else {
 		args.push(
 			"-f",
@@ -291,6 +298,9 @@ export interface TimelineShot {
 	narrationDurationSec: number;
 	/** 字幕文本（null = 无字幕） */
 	subtitle: string | null;
+	/** 保留镜头自带音轨进混音（台词镜：对白由音频驱动生成，声音就在视频里）。
+	 *  缺省 false = 维持现状（源音轨不参与混音，A3 之前的行为）。 */
+	keepSourceAudio?: boolean;
 }
 
 export interface TimelineTransition {
@@ -318,7 +328,8 @@ export interface TimelineSfx {
 	durationSec: number;
 }
 
-/** DME 混音链构建参数（输入索引由调用方决定：测量遍不含镜头视频） */
+/** DME 混音链构建参数（输入索引由调用方决定：主遍 = 镜头视频 → 旁白 → 台词源音轨 → BGM；
+ *  测量遍不含镜头视频，索引需调用方换算——镜头视频只被 `[i:v]` 消费，不占音频输入） */
 export interface DmeInput {
 	/** 旁白输入起始索引 */
 	narrBase: number;
@@ -326,6 +337,9 @@ export interface DmeInput {
 	bgmIdx: number;
 	/** 旁白轨（路径相对 cwd + 时间轴起点） */
 	narrations: { narrationPath: string; narrationStartSec: number }[];
+	/** 台词镜源音轨（A3）：对白在镜头自带音轨里，按镜头起点定位进对白层。
+	 *  inputIdx 是该音轨在输入列表里的绝对索引；路径供测量遍单独 -i。 */
+	sourceAudios?: { inputIdx: number; path: string; startSec: number; durationSec: number }[];
 	/** SFX 时间轴 */
 	sfx: TimelineSfx[];
 	/** 成片总时长（秒），BGM 按 atrim 裁齐 */
@@ -334,8 +348,8 @@ export interface DmeInput {
 
 /**
  * 构建 DME 三层混音 filter_complex 片段：
- * D（对白）旁白 adelay 定位 → amix；
- * M（音乐）BGM 裁长 + 淡入淡出 → sidechaincompress 被旁白闪避；
+ * D（对白）旁白 adelay 定位 → amix；台词镜源音轨按镜头起点定位后并入对白总线（A3）；
+ * M（音乐）BGM 裁长 + 淡入淡出 → sidechaincompress 被对白闪避；
  * E（音效）lavfi 合成 → adelay 定位。
  * 返回滤镜数组与混音输出标签（供 loudnorm 接续）。
  */
@@ -343,11 +357,22 @@ export interface DmeInput {
  *  纯函数、无 I/O：混音链是台词模式改造的胜负手（源音轨当前被丢弃），必须可精确断言。 */
 export function buildDmeFilters(input: DmeInput): { filters: string[]; preLoud: string; silent: boolean } {
 	const { narrBase, bgmIdx, narrations, sfx, totalSec } = input;
+	const sources = input.sourceAudios ?? [];
 	const filters: string[] = [];
 	const narrParts: string[] = [];
 	narrations.forEach((n, k) => {
 		const ms = Math.max(0, Math.round(n.narrationStartSec * 1000));
 		narrParts.push(`[${narrBase + k}:a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=${ms}:all=1[nd${k}]`);
+	});
+	// 台词源音轨（A3）：对白随镜头自带音轨而来，按镜头在时间轴上的起点精确定位
+	// （无 J-cut 提前——口型对齐容不得偏移），先裁到镜长防越界再 adelay。
+	const srcParts: string[] = [];
+	sources.forEach((s, j) => {
+		const ms = Math.max(0, Math.round(s.startSec * 1000));
+		srcParts.push(
+			`[${s.inputIdx}:a]aformat=sample_rates=48000:channel_layouts=stereo,` +
+				`atrim=0:${s.durationSec.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${ms}:all=1[src${j}]`,
+		);
 	});
 	const hasNarr = narrParts.length > 0;
 	const hasBgm = bgmIdx >= 0;
@@ -357,6 +382,21 @@ export function buildDmeFilters(input: DmeInput): { filters: string[]; preLoud: 
 		filters.push(
 			`${narrations.map((_, k) => `[nd${k}]`).join("")}amix=inputs=${narrations.length}:duration=longest:normalize=0[narr]`,
 		);
+	}
+	if (srcParts.length > 0) filters.push(...srcParts);
+	// 对白总线（voice）：旁白与台词源音轨同属 D 层——BGM 闪避与总混只认这条总线，
+	// 保证"有人说话就压低 BGM"对旁白与对白一视同仁。
+	const voiceParts: string[] = [];
+	if (hasNarr) voiceParts.push("narr");
+	sources.forEach((_, j) => voiceParts.push(`src${j}`));
+	let voice: string | null = null;
+	if (voiceParts.length === 1) {
+		voice = voiceParts[0]!;
+	} else if (voiceParts.length > 1) {
+		filters.push(
+			`${voiceParts.map((p) => `[${p}]`).join("")}amix=inputs=${voiceParts.length}:duration=longest:normalize=0[voice]`,
+		);
+		voice = "voice";
 	}
 	if (hasBgm) {
 		filters.push(
@@ -369,18 +409,18 @@ export function buildDmeFilters(input: DmeInput): { filters: string[]; preLoud: 
 			filters.push(sfxSource(k, s));
 		});
 	}
-	// 组合三层：BGM 闪避后的轨 + 旁白 + SFX
+	// 组合三层：BGM 闪避后的轨 + 对白总线 + SFX
 	const mixParts: string[] = [];
 	if (hasBgm) {
-		if (hasNarr) {
-			// 旁白作 sidechain 压 BGM：说话时自动闪避
-			filters.push(`[bgm][narr]sidechaincompress=threshold=0.02:ratio=8:attack=25:release=600[duck]`);
+		if (voice) {
+			// 对白作 sidechain 压 BGM：说话时自动闪避
+			filters.push(`[bgm][${voice}]sidechaincompress=threshold=0.02:ratio=8:attack=25:release=600[duck]`);
 			mixParts.push("duck");
 		} else {
 			mixParts.push("bgm");
 		}
 	}
-	if (hasNarr) mixParts.push("narr");
+	if (voice) mixParts.push(voice);
 	if (hasSfx) {
 		mixParts.push(sfx.length > 1 ? "sfxmix" : "sfx0");
 		if (sfx.length > 1) {
@@ -417,6 +457,7 @@ async function measureLoudness(input: {
 	const { cwd, bgmPath, dme, signal } = input;
 	const args: string[] = ["-y", "-hide_banner", "-nostats", "-loglevel", "info"];
 	for (const n of dme.narrations) args.push("-i", n.narrationPath);
+	for (const s of dme.sourceAudios ?? []) args.push("-i", s.path);
 	if (bgmPath) args.push("-stream_loop", "-1", "-i", bgmPath);
 	const { filters, preLoud } = buildDmeFilters(dme);
 	filters.push(`[${preLoud}]loudnorm=I=-14:TP=-1.5:LRA=11,ebur128=peak=true[meas]`);
@@ -453,6 +494,7 @@ function sfxSource(k: number, s: TimelineSfx): string {
 
 /**
  * 合成成片：视频链（cut→concat / 其他→xfade）+ 旁白 adelay 定位（J-cut）+
+ * 台词镜源音轨按镜头起点进对白层（A3，keepSourceAudio）+
  * BGM 循环铺底 + sidechaincompress 闪避 + SFX 音效层（DME 三层混音）+
  * 响度标准化（EBU R128 / 流媒体 -14 LUFS）+ ASS 字幕烧录，一条 filter_complex 完成。
  * 路径均相对 cwd。
@@ -472,19 +514,7 @@ export async function assembleTimeline(options: {
 	const { cwd, shots, transitions, sfx, bgmPath, assPath, outPath, signal } = options;
 	if (shots.length === 0) throw new FfmpegError("时间线为空");
 
-	// ---- 输入列表：镜头视频 → 旁白 → BGM（stream_loop） ----
-	const args: string[] = ["-y", "-loglevel", "error"];
-	for (const s of shots) args.push("-i", s.path);
-	const narrations = shots.filter((s) => s.narrationPath !== null);
-	const narrBase = shots.length; // 旁白输入起始索引
-	for (const n of narrations) args.push("-i", n.narrationPath!);
-	let bgmIdx = -1;
-	if (bgmPath) {
-		bgmIdx = narrBase + narrations.length;
-		args.push("-stream_loop", "-1", "-i", bgmPath);
-	}
-
-	// ---- 视频链：offset 累进（转场重叠吃掉时长） ----
+	// ---- 视频链：offset 累进（转场重叠吃掉时长）；同时记录各镜的时间轴起点（台词源音轨定位用） ----
 	const transitionOf = (afterIdx: number): TimelineTransition | undefined =>
 		transitions.find((t) => t.afterShotIndex === afterIdx);
 	const filters: string[] = [];
@@ -493,6 +523,7 @@ export async function assembleTimeline(options: {
 	for (let i = 0; i < shots.length; i += 1) {
 		filters.push(`[${i}:v]settb=AVTB[st${i}]`);
 	}
+	const shotStartSec: number[] = [0];
 	let prev = "st0";
 	let cum = shots[0]!.durationSec;
 	let used = 0;
@@ -512,16 +543,42 @@ export async function assembleTimeline(options: {
 			filters.push(
 				`[${prev}][st${i}]xfade=transition=${XFADE_OF[t!.type as Exclude<TransitionType, "cut">]}:duration=${dur.toFixed(3)}:offset=${offset.toFixed(3)}[${out}]`,
 			);
-			cum = cum - dur + shots[i]!.durationSec;
+			shotStartSec.push(offset);
+			cum = offset + shots[i]!.durationSec;
 			used += 1;
 		} else {
 			// cut：concat filter 无缝续接（也是转场决策缺省/非法值的兜底）
 			filters.push(`[${prev}][st${i}]concat=n=2:v=1:a=0[${out}]`);
+			shotStartSec.push(cum);
 			cum += shots[i]!.durationSec;
 		}
 		prev = out;
 	}
 	const totalSec = cum;
+
+	// ---- 输入列表：镜头视频 → 旁白 → 台词源音轨（A3）→ BGM（stream_loop） ----
+	const args: string[] = ["-y", "-loglevel", "error"];
+	for (const s of shots) args.push("-i", s.path);
+	const narrations = shots.filter((s) => s.narrationPath !== null);
+	const narrBase = shots.length; // 旁白输入起始索引
+	for (const n of narrations) args.push("-i", n.narrationPath!);
+	// 台词源音轨：归一化镜头文件再挂一次输入（视频已被 [i:v] 消费，这里单取 [i:a]）
+	const sourceShots = shots
+		.map((s, shotIdx) => ({ shot: s, shotIdx }))
+		.filter((x) => x.shot.keepSourceAudio);
+	const srcBase = narrBase + narrations.length;
+	for (const x of sourceShots) args.push("-i", x.shot.path);
+	let bgmIdx = -1;
+	if (bgmPath) {
+		bgmIdx = srcBase + sourceShots.length;
+		args.push("-stream_loop", "-1", "-i", bgmPath);
+	}
+	const sourceAudios = sourceShots.map((x, j) => ({
+		inputIdx: srcBase + j,
+		path: x.shot.path,
+		startSec: shotStartSec[x.shotIdx]!,
+		durationSec: x.shot.durationSec,
+	}));
 
 	// ---- 字幕烧录 ----
 	let vOut = prev;
@@ -538,6 +595,7 @@ export async function assembleTimeline(options: {
 			narrationPath: n.narrationPath!,
 			narrationStartSec: n.narrationStartSec,
 		})),
+		sourceAudios,
 		sfx,
 		totalSec,
 	});
@@ -556,11 +614,12 @@ export async function assembleTimeline(options: {
 			bgmPath,
 			dme: {
 				narrBase: 0,
-				bgmIdx: bgmIdx >= 0 ? narrations.length : -1,
+				bgmIdx: bgmIdx >= 0 ? narrations.length + sourceAudios.length : -1,
 				narrations: narrations.map((n) => ({
 					narrationPath: n.narrationPath!,
 					narrationStartSec: n.narrationStartSec,
 				})),
+				sourceAudios: sourceAudios.map((s, j) => ({ ...s, inputIdx: narrations.length + j })),
 				sfx,
 				totalSec,
 			},

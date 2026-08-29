@@ -13,6 +13,12 @@ export type AspectRatio = "16:9" | "9:16" | "1:1" | "4:3";
 export type ClipDurationSec = 3 | 5 | 8 | 10;
 export type Fps = 24 | 30 | 60;
 export type MotionIntensity = "low" | "medium" | "high";
+/** 音频驱动模式：
+ *  - "off"（缺省）：现状旁白方案（先视频后 TTS 贴片）；
+ *  - "dialogue"：台词镜走「先 TTS → 托管 → 2.5-flash 参考出片」链路。
+ *  注意：服务端对来源另有一道闸门——非共创来源强制回落 off（video-agent-server startRun），
+ *  白名单校验只防"非法值"，不防"来源不符"。 */
+export type AudioDrive = "off" | "dialogue";
 /** 镜头数：3..30。共创实验室与高级选项均可自由填，不再限定字面量联合。
  *  下限 3 保留叙事完整度，上限 30 防意外输入超大数烧光管线预算。 */
 export type ShotCount = number;
@@ -40,6 +46,9 @@ export interface GenerationOptions {
 	promptLanguage: Locale;
 	/** 负向提示词：排除项（逗号分隔），见预设 */
 	negativePrompt: string;
+	/** 音频驱动（台词驱动口型）；缺省 "off" = 现状旁白方案。
+	 *  可选字段：旧简报缺该字段时按 "off" 处理，向后兼容。 */
+	audioDrive?: AudioDrive;
 	/** 随机种子（可选）：固定后同参数可复现 */
 	seed?: number;
 }
@@ -85,6 +94,7 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
 	detailBoost: true,
 	promptLanguage: "zh",
 	negativePrompt: NEGATIVE_PROMPT_PRESETS.cleanProduct.value,
+	audioDrive: "off",
 };
 
 const RESOLUTIONS: readonly Resolution[] = ["480p", "720p", "1080p"];
@@ -92,6 +102,7 @@ const ASPECT_RATIOS: readonly AspectRatio[] = ["16:9", "9:16", "1:1", "4:3"];
 const CLIP_DURATIONS: readonly ClipDurationSec[] = [3, 5, 8, 10];
 const FPS_VALUES: readonly Fps[] = [24, 30, 60];
 const MOTION_INTENSITIES: readonly MotionIntensity[] = ["low", "medium", "high"];
+const AUDIO_DRIVES: readonly AudioDrive[] = ["off", "dialogue"];
 
 /** 镜头数范围校验（替代原白名单）
  *  越界或小数 →默认，与其他字段一致（程序性异常而非用户选择）。
@@ -132,6 +143,11 @@ export function resolveGenerationOptions(partial?: Partial<GenerationOptions>): 
 				? partial.negativePrompt
 				: DEFAULT_GENERATION_OPTIONS.negativePrompt,
 	};
+	if (AUDIO_DRIVES.includes(partial.audioDrive as AudioDrive)) {
+		merged.audioDrive = partial.audioDrive as AudioDrive;
+	} else {
+		merged.audioDrive = "off";
+	}
 	if (typeof partial.seed === "number" && Number.isInteger(partial.seed) && partial.seed >= 0) {
 		merged.seed = partial.seed;
 	}

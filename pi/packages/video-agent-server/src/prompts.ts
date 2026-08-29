@@ -17,6 +17,31 @@ import type { ChatMessage } from "./llm.ts";
  */
 export const PROMPT_VERSION = 5;
 
+/** 每镜声音模式（音频驱动改造 A1）：narration = 画外音解说（现状，缺省）；
+ *  dialogue = 角色对白驱动口型（先 TTS → 托管 → 视频参考生成）；
+ *  silent = 纯画面（只有 BGM/SFX）。三态共存而非替代——一部片子天然混用。 */
+export type AudioMode = "narration" | "dialogue" | "silent";
+
+/** 台词镜子结构（仅 audioMode === "dialogue"）。
+ *  台词是"驱动源"而非贴片：audioDurationSec / audioUrl 由生成链路回写。 */
+export interface ShotDialogue {
+	/** 绑定共创空间的角色实体（CoCharacter.name） */
+	characterId: string;
+	/** TTS 音色（如 StepFun voice id；来自角色卡片绑定） */
+	voiceId?: string;
+	/** 台词文本——每镜一条主语音，多角色对白必须拆镜（audios 多条会互相干扰） */
+	lines: { zh: string; en: string };
+	/** 情绪/表演指导 */
+	emotion?: string;
+	pace?: "slow" | "normal" | "fast";
+	/** 台词内停顿（秒）。静音段是表演的一部分：2.5-flash 严格按音频包络对口型，停顿即闭嘴 */
+	pausesSec?: number[];
+	/** TTS 后 ffprobe 实测时长（生成链路回写） */
+	audioDurationSec?: number;
+	/** CloudBase 托管公开 URL（生成链路回写，可复用避免重复上传） */
+	audioUrl?: string;
+}
+
 export interface ScriptShot {
 	id: string;
 	/** 中文旁白（一句，时长内可念完） */
@@ -28,6 +53,10 @@ export interface ScriptShot {
 	durationSec: number;
 	/** TTS 表演指导（中文一句；voice-directions.json 回写，重录时可被指令更新） */
 	ttsDirection?: string;
+	/** 声音模式；缺省（undefined）= narration，向后兼容既有作品 */
+	audioMode?: AudioMode;
+	/** 台词（仅 audioMode === "dialogue"） */
+	dialogue?: ShotDialogue;
 }
 
 export interface ScriptDoc {
@@ -85,6 +114,17 @@ export function coSpaceBlock(coSpace: CoCreationSpace | undefined): string {
 /** 阶段一：剧本（镜头列表 + 双语旁白 + 画面描述） */
 export function scriptMessages(brief: EnrichedBrief, opts: GenerationOptions): ChatMessage[] {
 	const zhChars = Math.max(6, opts.clipDurationSec * 4);
+	const audioDriveOn = opts.audioDrive === "dialogue";
+	const audioModeRule = audioDriveOn
+		? [
+				"6. 每镜给出 audioMode 声音模式：dialogue（角色对白，角色自己开口说话）/ narration（画外音旁白）/ silent（纯画面）；叙事性镜头优先 dialogue；",
+				"7. dialogue 镜头只能有一个说话人——两人及以上对话必须拆成多个镜头；",
+				"8. dialogue 镜头附 dialogue 对象：characterId 写说话角色名（必须来自人物设定），lines.zh / lines.en 是该镜台词（各一句话，长度与旁白同约束），emotion 写情绪（两三个字）；该镜 narrationZh / narrationEn 留空；",
+			]
+		: [];
+	const shotExample = audioDriveOn
+		? `{"id": "SH01", "audioMode": "dialogue", "dialogue": {"characterId": "角色名", "lines": {"zh": "…", "en": "…"}, "emotion": "…"}, "narrationZh": "", "narrationEn": "", "visual": "…", "durationSec": ${opts.clipDurationSec}}`
+		: `{"id": "SH01", "narrationZh": "…", "narrationEn": "…", "visual": "…", "durationSec": ${opts.clipDurationSec}}`;
 	const user = [
 		`为下面这支广告撰写剧本。`,
 		briefBlock(brief),
@@ -99,9 +139,10 @@ export function scriptMessages(brief: EnrichedBrief, opts: GenerationOptions): C
 		`3. narrationZh / narrationEn 是该镜头的旁白，各一句话，中文不超过 ${zhChars} 字（${opts.clipDurationSec} 秒内从容念完），英文意思一致；`,
 		"4. visual 是该镜头的画面描述，用英文一句话，写清主体、环境、动作；",
 		"5. 整体有起承转合，最后一镜落到产品/CTA；",
+		...audioModeRule,
 		"",
 		"只输出如下 JSON（不要围栏）:",
-		`{"title": "广告标题", "logline": "一句话概述", "shots": [{"id": "SH01", "narrationZh": "…", "narrationEn": "…", "visual": "…", "durationSec": ${opts.clipDurationSec}}]}`,
+		`{"title": "广告标题", "logline": "一句话概述", "shots": [${shotExample}]}`,
 	]
 		.filter(Boolean)
 		.join("\n");
@@ -189,6 +230,40 @@ export function shotPromptMessages(
 /** 按内容语言取旁白 */
 export function narrationFor(shot: ScriptShot, locale: GenerationOptions["promptLanguage"]): string {
 	return locale === "en" ? shot.narrationEn : shot.narrationZh;
+}
+
+/** 按内容语言取台词（仅台词镜有意义；非台词镜返回空串） */
+export function dialogueFor(shot: ScriptShot, locale: GenerationOptions["promptLanguage"]): string {
+	if (shot.audioMode !== "dialogue" || !shot.dialogue) return "";
+	return locale === "en" ? shot.dialogue.lines.en : shot.dialogue.lines.zh;
+}
+
+/**
+ * 台词子结构宽容清洗（A1 闸门的一部分）：
+ * characterId 与至少一条台词文本是必要条件，缺一即整体丢弃（回退旁白语义）。
+ * 数值/数组字段只保留合法项——LLM 产物永远不可信，入库前先洗。
+ */
+export function sanitizeDialogue(raw: unknown): ShotDialogue | null {
+	if (!raw || typeof raw !== "object") return null;
+	const d = raw as Partial<ShotDialogue> & { lines?: unknown };
+	const characterId = typeof d.characterId === "string" ? d.characterId.trim() : "";
+	const linesRaw = (d.lines ?? {}) as { zh?: unknown; en?: unknown };
+	const zh = typeof linesRaw.zh === "string" ? linesRaw.zh.trim() : "";
+	const en = typeof linesRaw.en === "string" ? linesRaw.en.trim() : "";
+	if (!characterId || (!zh && !en)) return null;
+	const out: ShotDialogue = { characterId, lines: { zh, en } };
+	if (typeof d.voiceId === "string" && d.voiceId.trim()) out.voiceId = d.voiceId.trim();
+	if (typeof d.emotion === "string" && d.emotion.trim()) out.emotion = d.emotion.trim().slice(0, 200);
+	if (d.pace === "slow" || d.pace === "normal" || d.pace === "fast") out.pace = d.pace;
+	if (Array.isArray(d.pausesSec)) {
+		const pauses = d.pausesSec.filter((p): p is number => typeof p === "number" && Number.isFinite(p) && p >= 0 && p <= 30);
+		if (pauses.length > 0) out.pausesSec = pauses.slice(0, 20);
+	}
+	if (typeof d.audioDurationSec === "number" && Number.isFinite(d.audioDurationSec) && d.audioDurationSec > 0) {
+		out.audioDurationSec = d.audioDurationSec;
+	}
+	if (typeof d.audioUrl === "string" && /^https:\/\//.test(d.audioUrl)) out.audioUrl = d.audioUrl;
+	return out;
 }
 
 /**

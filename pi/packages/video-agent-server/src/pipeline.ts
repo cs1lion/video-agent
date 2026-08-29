@@ -61,8 +61,10 @@ import {
 } from "./ffmpeg.ts";
 import { chat, chatJson, chatVisionJson } from "./llm.ts";
 import { checkConsistency } from "./consistency.ts";
+import { shouldGateAudioDrive } from "./audio-mode.ts";
 import { reviewDesignBible, reviewKeyframes } from "./design-review.ts";
 import {
+	type AudioMode,
 	type DesignBibleDoc,
 	type DesignEntity,
 	designBibleMessages,
@@ -78,6 +80,7 @@ import {
 	PROMPT_VERSION,
 	pickKeyframeReferences,
 	rettsNarrationMessages,
+	sanitizeDialogue,
 	type ScriptDoc,
 	type ShotPromptDoc,
 	scriptMessages,
@@ -893,6 +896,10 @@ export function startRun(
 	},
 ): RunRecord {
 	const options = resolveGenerationOptions(input.generationOptions);
+	// A1 闸门（服务端兜底）：台词模式只对共创来源开放——UI 藏开关不够，直接打 API
+	// 仍能传 dialogue；这里是"闸门优先于派发"的落点。触发必须可审计（见下方事件）。
+	const audioDriveGated = shouldGateAudioDrive(options.audioDrive, input.coSpace);
+	if (audioDriveGated) options.audioDrive = "off";
 	const enriched: EnrichedBrief =
 		input.enriched ??
 		({
@@ -919,6 +926,15 @@ export function startRun(
 	});
 	run.costEstimate = { total: pre.total, currency: pre.currency, lines: pre.lines };
 	persistRun(run);
+	if (audioDriveGated) {
+		pushEvent(
+			run,
+			"producer",
+			"all",
+			"status",
+			"音频驱动（台词模式）当前只对共创空间开放，本条需求非共创来源，已自动回落为旁白方案。",
+		);
+	}
 	// 参考图复制进 run 目录（uploads 目录可能被清理，run 内自持副本）
 	const copyJobs: Promise<unknown>[] = [];
 	for (const img of run.images) {
@@ -2194,13 +2210,24 @@ export function normalizeScript(script: ScriptDoc, opts: GenerationOptions): Scr
 		logline: typeof script.logline === "string" ? script.logline : "",
 		shots: shots
 			.filter((s) => s && typeof s.visual === "string" && s.visual)
-			.map((s, i) => ({
-				id: typeof s.id === "string" && s.id ? s.id : `SH${String(i + 1).padStart(2, "0")}`,
-				narrationZh: typeof s.narrationZh === "string" ? s.narrationZh : "",
-				narrationEn: typeof s.narrationEn === "string" ? s.narrationEn : "",
-				visual: s.visual,
-				durationSec: opts.clipDurationSec,
-			}))
+			.map((s, i) => {
+				// audioMode 清洗：白名单外一律回落 narration（既有作品无此字段，语义不变）
+				const rawMode = (s as { audioMode?: unknown }).audioMode;
+				const baseMode: AudioMode =
+					rawMode === "dialogue" ? "dialogue" : rawMode === "silent" ? "silent" : "narration";
+				// 台词子结构清洗失败 → 整镜回落旁白语义，不留"台词态却无台词"的悬空状态
+				const dialogue = baseMode === "dialogue" ? sanitizeDialogue(s.dialogue) : null;
+				const audioMode: AudioMode = baseMode === "dialogue" && dialogue === null ? "narration" : baseMode;
+				return {
+					id: typeof s.id === "string" && s.id ? s.id : `SH${String(i + 1).padStart(2, "0")}`,
+					narrationZh: typeof s.narrationZh === "string" ? s.narrationZh : "",
+					narrationEn: typeof s.narrationEn === "string" ? s.narrationEn : "",
+					visual: s.visual,
+					durationSec: opts.clipDurationSec,
+					audioMode,
+					...(dialogue ? { dialogue } : {}),
+				};
+			})
 			.slice(0, opts.shotCount + 2),
 	};
 }

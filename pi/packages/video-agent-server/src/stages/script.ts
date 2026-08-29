@@ -16,6 +16,7 @@ import {
 	writeJson,
 } from "../pipeline.js";
 import type { StageCtx } from "../pipeline.js";
+import { enforceSingleSpeaker } from "../audio-mode.js";
 
 /** 剧本阶段（独立 stage，script.json 落盘） */
 export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
@@ -44,6 +45,15 @@ export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
 				"status",
 				`⚠️ 编剧两轮均未给出设定的 ${opts.shotCount} 镜（实际 ${script.shots.length} 镜），已按实际镜头数继续。可在「剧本」阶段微调后重跑。`,
 			);
+		}
+	}
+	// D1 闸门前置：台词模式下多角色对白必须拆镜。落盘前拦截——用户写完才发现
+	// 要拆镜的返工成本太高（且已烧 script 阶段配额）。违规镜降级为旁白，不阻断。
+	if (opts.audioDrive === "dialogue") {
+		const enforced = enforceSingleSpeaker(script);
+		script = enforced.script;
+		for (const warning of enforced.warnings) {
+			pushEvent(run, "writer", "producer", "status", `⚠️ ${warning}`);
 		}
 	}
 	await writeJson(run, "script.json", script);

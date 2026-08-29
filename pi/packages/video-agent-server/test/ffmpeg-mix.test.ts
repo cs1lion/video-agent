@@ -10,11 +10,11 @@
  *   A. `buildDmeFilters` 纯函数 —— 滤镜串构造的精确断言（快，不需要 ffmpeg）
  *   B. `assembleTimeline` 集成 —— 真跑 ffmpeg 验证产物（慢，但能抓住真正的 bug）
  *
- * 关键设计（冲突②的回归锁，见用例「镜头自带响亮音轨，但成片静音」）：
- *   给镜头塞一条**很响**的音轨，但不给旁白 / BGM / SFX —— 若源音轨被丢弃，成片必然静音。
- *   该用例带**前置自检**：先断言素材本身确实可闻，否则"输出静音"会退化成假通过。
- *   等 A3 打开 keepSourceAudio 后这条会立刻变红 —— 那正是我们要的：改动必须被验证，
- *   而不是静默生效。
+ * 关键设计（冲突②的回归锁，A3 落地后拆为两条）：
+ *   给镜头塞一条**很响**的音轨，但不给旁白 / BGM / SFX——
+ *   ① 兼容不变量：不开 keepSourceAudio 时源音轨**仍**不进混音（既有作品零惊扰）；
+ *   ② 正向断言：开了 keepSourceAudio（台词镜）后源音轨必须可闻、且按镜头起点定位。
+ *   两条都带**前置自检**：先断言素材本身确实可闻，否则"输出静音"会退化成假通过。
  */
 
 import assert from "node:assert/strict";
@@ -29,6 +29,7 @@ import {
 	assembleTimeline,
 	buildDmeFilters,
 	type DmeInput,
+	normalizeShot,
 	type TimelineShot,
 } from "../src/ffmpeg.ts";
 
@@ -93,12 +94,26 @@ async function makeTone(dir: string, name: string, sec: number, freq = 880): Pro
 	await ff(["-f", "lavfi", "-i", `sine=frequency=${freq}:duration=${sec}`, name], dir);
 }
 
-/** volumedetect 读回音量（dB）；解析失败返回极小值（视为静音） */
-async function loudness(file: string, cwd: string): Promise<{ mean: number; max: number }> {
-	const stderr = await ffCapture(["-i", file, "-af", "volumedetect", "-f", "null", "-"], cwd);
+/** volumedetect 读回音量（dB）；可选只测 [startSec, startSec+durSec] 段（定位断言用）。
+ *  解析失败返回极小值（视为静音） */
+async function loudness(
+	file: string,
+	cwd: string,
+	range?: { startSec: number; durSec: number },
+): Promise<{ mean: number; max: number }> {
+	const rangeArgs = range ? ["-ss", String(range.startSec), "-t", String(range.durSec)] : [];
+	const stderr = await ffCapture([...rangeArgs, "-i", file, "-af", "volumedetect", "-f", "null", "-"], cwd);
 	const mean = /mean_volume:\s*(-?[\d.]+)\s*dB/.exec(stderr)?.[1];
 	const max = /max_volume:\s*(-?[\d.]+)\s*dB/.exec(stderr)?.[1];
 	return { mean: mean ? Number(mean) : -999, max: max ? Number(max) : -999 };
+}
+
+/** 生成纯画面片段（无音轨）：时间轴定位用例里"前段应静音"的载体 */
+async function makeSilentClip(dir: string, name: string, sec: number): Promise<void> {
+	await ff(
+		["-f", "lavfi", "-i", `testsrc=duration=${sec}:size=320x240:rate=25`, "-c:v", "libx264", "-pix_fmt", "yuv420p", name],
+		dir,
+	);
 }
 
 async function audioStreamCount(file: string, cwd: string): Promise<number> {
@@ -109,7 +124,7 @@ async function audioStreamCount(file: string, cwd: string): Promise<number> {
 	return out ? out.split("\n").filter(Boolean).length : 0;
 }
 
-function shot(p: string, sec: number, narration: string | null = null): TimelineShot {
+function shot(p: string, sec: number, narration: string | null = null, keepSourceAudio = false): TimelineShot {
 	return {
 		path: p,
 		durationSec: sec,
@@ -117,6 +132,7 @@ function shot(p: string, sec: number, narration: string | null = null): Timeline
 		narrationStartSec: 0,
 		narrationDurationSec: narration ? sec : 0,
 		subtitle: null,
+		...(keepSourceAudio ? { keepSourceAudio: true } : {}),
 	};
 }
 
@@ -218,6 +234,43 @@ describe("混音链（DME 三层）", () => {
 		);
 	});
 
+	it("台词源音轨（A3）：按镜头起点 adelay 定位，先裁齐镜长防越界", () => {
+		const r = buildDmeFilters({
+			...DME_BASE,
+			sourceAudios: [{ inputIdx: 2, path: "shot-A.mp4", startSec: 2.5, durationSec: 3 }],
+		});
+		const f = r.filters.find((x) => x.includes("[src0]"));
+		assert.ok(f, `应生成源音轨定位滤镜，实际：${r.filters.join(" | ")}`);
+		assert.match(f, /\[2:a\]/, "应引用源音轨输入索引");
+		assert.match(f, /atrim=0:3\.000/, "应裁到镜长");
+		assert.match(f, /adelay=2500:all=1/, "2.5s 起点应换算为 2500ms");
+		assert.equal(r.silent, false);
+	});
+
+	it("旁白 + 台词源音轨 → 合并进对白总线 voice", () => {
+		const r = buildDmeFilters({
+			...DME_BASE,
+			narrations: [{ narrationPath: "n0.wav", narrationStartSec: 0 }],
+			sourceAudios: [{ inputIdx: 3, path: "shot-B.mp4", startSec: 4, durationSec: 5 }],
+		});
+		assert.ok(
+			r.filters.some((f) => f.includes("[narr][src0]amix") && f.includes("[voice]")),
+			`旁白与台词应并入对白总线，实际：${r.filters.join(" | ")}`,
+		);
+	});
+
+	it("只有台词源音轨 + BGM → 对白同样压 BGM（闪避对旁白/对白一视同仁）", () => {
+		const r = buildDmeFilters({
+			...DME_BASE,
+			bgmIdx: 3,
+			sourceAudios: [{ inputIdx: 2, path: "shot-A.mp4", startSec: 0, durationSec: 3 }],
+		});
+		assert.ok(
+			r.filters.some((f) => f.includes("[bgm][src0]sidechaincompress")),
+			`台词说话时 BGM 应闪避，实际：${r.filters.join(" | ")}`,
+		);
+	});
+
 	// ---- B. 集成：真跑 ffmpeg 验证产物 ----
 
 	it("基础装配：两镜硬切 → 成片时长≈各镜之和，且含音轨", async (t) => {
@@ -242,7 +295,7 @@ describe("混音链（DME 三层）", () => {
 		assert.equal(await audioStreamCount("out.mp4", dir), 1, "成片应恰好一条音轨");
 	});
 
-	it("回归锁：镜头自带响亮音轨，但成片静音（源音轨被丢弃的铁证）", async (t) => {
+	it("兼容不变量：未开 keepSourceAudio，源音轨仍不进混音（既有作品零惊扰）", async (t) => {
 		if (!hasFfmpeg) return t.skip("环境无 ffmpeg，跳过集成用例");
 		const dir = await freshDir();
 		await makeClip(dir, "loud.mp4", 3);
@@ -265,9 +318,78 @@ describe("混音链（DME 三层）", () => {
 		const out = await loudness("out.mp4", dir);
 		assert.ok(
 			out.mean < SILENCE_DB,
-			`成片应静音（源音轨被丢弃），实测 mean=${out.mean}dB。` +
-				`若 A3 已打开 keepSourceAudio，请同步更新本用例——它变红正是设计意图。`,
+			`默认（无台词镜）必须维持 A3 之前的静音行为，实测 mean=${out.mean}dB。` +
+				`若这里变红，说明源音轨被无差别接入——既有作品的成声音量会意外变化。`,
 		);
+	});
+
+	it("A3 修复：台词镜 keepSourceAudio → 源音轨进混音且可闻", async (t) => {
+		if (!hasFfmpeg) return t.skip("环境无 ffmpeg，跳过集成用例");
+		const dir = await freshDir();
+		await makeClip(dir, "loud.mp4", 3);
+		const src = await loudness("loud.mp4", dir);
+		assert.ok(src.mean > -30, `素材音轨应可闻（mean=${src.mean}dB），否则本用例无意义`);
+
+		await assembleTimeline({
+			cwd: dir,
+			shots: [shot("loud.mp4", 3, null, true)],
+			transitions: [],
+			sfx: [],
+			bgmPath: null,
+			assPath: null,
+			outPath: "out.mp4",
+		});
+
+		const out = await loudness("out.mp4", dir);
+		assert.ok(
+			out.mean > -35,
+			`台词镜的源音轨必须进混音（冲突②修复点），实测 mean=${out.mean}dB。` +
+				`若变红，检查 assembleTimeline 的源音轨输入挂接与 buildDmeFilters 的 sourceAudios。`,
+		);
+	});
+
+	it("源音轨按镜头时间轴起点定位：台词镜进入前静音，进入后可闻", async (t) => {
+		if (!hasFfmpeg) return t.skip("环境无 ffmpeg，跳过集成用例");
+		const dir = await freshDir();
+		await makeSilentClip(dir, "silent.mp4", 2);
+		await makeClip(dir, "loud.mp4", 3);
+
+		await assembleTimeline({
+			cwd: dir,
+			shots: [shot("silent.mp4", 2), shot("loud.mp4", 3, null, true)],
+			transitions: [],
+			sfx: [],
+			bgmPath: null,
+			assPath: null,
+			outPath: "out.mp4",
+		});
+
+		// 前 1.5s 只有纯画面镜，对白（2s 起）不应提前漏进来（口型对齐容不得偏移）
+		const head = await loudness("out.mp4", dir, { startSec: 0, durSec: 1.5 });
+		assert.ok(head.mean < -45, `台词镜进入前（0-1.5s）应静音，实测 mean=${head.mean}dB`);
+		const tail = await loudness("out.mp4", dir, { startSec: 2.3, durSec: 2.2 });
+		assert.ok(tail.mean > -35, `台词镜进入后（2.3-4.5s）应可闻，实测 mean=${tail.mean}dB`);
+	});
+
+	it("归一化保留源音轨：台词镜走降级 concat 路径也不丢对白", async (t) => {
+		if (!hasFfmpeg) return t.skip("环境无 ffmpeg，跳过集成用例");
+		const dir = await freshDir();
+		await makeClip(dir, "loud.mp4", 3);
+
+		await normalizeShot({
+			cwd: dir,
+			clipPath: "loud.mp4",
+			audioPath: null,
+			keepSourceAudio: true,
+			outPath: "norm.mp4",
+			width: 320,
+			height: 240,
+			fps: 25,
+			durationSec: 3,
+		});
+
+		const out = await loudness("norm.mp4", dir);
+		assert.ok(out.mean > -30, `keepSourceAudio 归一化应保留源音轨，实测 mean=${out.mean}dB`);
 	});
 
 	it("旁白进入混音：成片可闻", async (t) => {

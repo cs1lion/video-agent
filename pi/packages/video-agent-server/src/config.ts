@@ -11,6 +11,26 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { loadMediaConfig, type MediaModelsFile } from "../../coding-agent/examples/extensions/studio/media/adapter.ts";
 import { loadPriceCatalog, type PriceCatalog } from "./pricing.ts";
+import { QuotaLedger, type KeyType } from "./quota.ts";
+
+/** 视频配额池 id（当前单视频适配器 = 单池；多 key 多池是 B2+ 的事） */
+export const VIDEO_QUOTA_POOL = "video";
+
+/**
+ * 视频配额账本（进程级共享，跨 run 累计——每日配额是全局的）。
+ * 缺省按 TokenPlan 实测（总文档 2.1/3.5）：500s/天、2 RPM；环境变量覆盖：
+ *   VIDEO_AGENT_QUOTA_DAILY_SEC  每日秒数（"0" = 无明确配额，只受 RPM 约束）
+ *   VIDEO_AGENT_QUOTA_RPM        每分钟提交上限
+ */
+export function loadQuotaLedger(): QuotaLedger {
+	const dailyRaw = process.env.VIDEO_AGENT_QUOTA_DAILY_SEC;
+	const parsedDaily = dailyRaw === undefined ? Number.NaN : Number(dailyRaw);
+	const dailyQuotaSec = Number.isFinite(parsedDaily) ? (parsedDaily > 0 ? parsedDaily : null) : 500;
+	const parsedRpm = Number(process.env.VIDEO_AGENT_QUOTA_RPM);
+	const rpmCap = Number.isFinite(parsedRpm) && parsedRpm > 0 ? parsedRpm : 2;
+	const keyType: KeyType = dailyQuotaSec === null ? "free" : "tokenplan";
+	return new QuotaLedger([{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }]);
+}
 
 export interface LlmConfig {
 	/** chat/completions 完整端点 */
@@ -52,6 +72,8 @@ export interface ServerContext {
 	port: number;
 	/** 价格目录（P2：运行时成本跟踪 + pre-flight 预估） */
 	priceCatalog: PriceCatalog;
+	/** 视频配额账本（B1）。loadServerContext 恒提供；测试桩可省略 = 不启用配额闸门（旧行为） */
+	quota?: QuotaLedger;
 }
 
 export function loadServerContext(): ServerContext {
@@ -74,6 +96,7 @@ export function loadServerContext(): ServerContext {
 		llm: loadLlmConfig(mediaConfig),
 		port: Number(process.env.PORT ?? 8787),
 		priceCatalog,
+		quota: loadQuotaLedger(),
 	};
 }
 
