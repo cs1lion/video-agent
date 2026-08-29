@@ -5,6 +5,7 @@
  */
 
 import * as path from "node:path";
+import * as fs from "node:fs";
 import { type ScriptDoc, type ShotPromptDoc, type VisualBible } from "../prompts.ts";
 import {
 	appendSpan,
@@ -26,6 +27,7 @@ import { VIDEO_QUOTA_POOL } from "../config.ts";
 import type { ReserveResult } from "../quota.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
 import { prepareDialogueAudio } from "./dialogue-audio.ts";
+import { buildBudgetAlert } from "../director-contract.ts";
 
 /** 镜头生成阶段：图生视频（含 i2v→t2v 退降） */
 export async function stageClips(
@@ -75,6 +77,19 @@ export async function stageClips(
 			},
 			Date.now(),
 		);
+		// B4 导演契约：结构化预算告警持久化（导演读取后决定裁剪/降级/放弃）
+		const alert = buildBudgetAlert({
+			remainingSec: remaining,
+			estimateSec,
+			productionShotIds: productionShots.map((s) => s.id),
+			fromIndex,
+		});
+		try {
+			fs.mkdirSync(run.dir, { recursive: true });
+			fs.appendFileSync(path.join(run.dir, "budget-alerts.ndjson"), `${JSON.stringify(alert)}\n`, "utf-8");
+		} catch {
+			// 告警持久化失败不影响管线
+		}
 		pushEvent(
 			run,
 			"producer",

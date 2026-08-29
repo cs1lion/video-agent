@@ -144,6 +144,8 @@ export interface QueueJobSource {
 	/** B3 执行口（L2 守卫通过后由 producer 调用；桩可不实现） */
 	defer?(jobId: string, ms: number): boolean;
 	amend?(jobId: string, params: Record<string, unknown>): boolean;
+	/** B4 导演契约：导演下优先级指令 → 修改排队任务优先级 */
+	setPriority?(jobId: string, priority: number): boolean;
 }
 
 export function registerActiveQueue(runId: string, queue: QueueJobSource): void {

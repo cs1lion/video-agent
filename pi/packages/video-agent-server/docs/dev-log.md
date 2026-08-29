@@ -716,6 +716,46 @@ compare_all.py`，与 08-28 verify.py 同法）钉死根因——**prompt 形态
 表述有误）；验收素材：`_tts_test/e2e-v1.mp4`（0.990，最佳）与
 `e2e-a2-SH01.mp4`（0.701，生产链路直出）。
 
+**B4 导演契约 + B5 A/B 度量（2026-08-29，接 B3 之后）**：创意决策与资源
+决策的解耦闭环落位——导演只管创作质量（下优先级指令），制片主任只管资源
+（出预算告警），两者用**结构化契约**通信：
+- **director-contract.ts（纯契约层）**：
+  - 方向 1（导演→制片主任）：`PriorityInstruction{shotId, priority:P0/P1/P2,
+    qualityBar:must_keep/nice_to_have/sacrificable, maxRetries}`；`validatePriorityInstruction`
+    宽松输入→严格输出（maxRetries 缺省按优先级给默认值：P0=2/P1=1/P2=0）；
+    `PRIORITY_QUEUE_VALUES` 映射到队列数值（P0=1 最优先，P2=100 最低，
+    与 kitchen 的 `a.priority - b.priority` 排序一致）。
+  - 方向 2（制片主任→导演）：`BudgetAlert{type,message,suggestion,remainingSec,
+    requiredSec,shortfallSec,affectedShots,at}`；`buildBudgetAlert` 从 clips 的配额
+    参数构建（缺口=required-remaining，受影响镜头=fromIndex 起）；`validateBudgetAlert`
+    防御半行损坏。
+  - `CONTRACT_SCHEMA` 快照锁定枚举不漂移（契约的根基——枚举值漂移=前端崩）。
+- **接线**：
+  - clips.ts `budgetAlert` 增量加结构化告警持久化（budget-alerts.ndjson），
+    既有文本事件保留给 UI（D4 走 ev 通道不另建 UI）。
+  - queue.ts 加 `setPriority(jobId, priority)`（仅 queued 任务，running/done 拒绝）。
+  - producer.ts 加 `applyPriorityInstruction`（校验→按 shotId 找排队任务→
+    relativePath 匹配→改优先级→持久化 priority-instructions.ndjson→推双事件：
+    director→producer + producer→client）+ `readBudgetAlerts`/`readPriorityInstructions`
+    （坏行容忍读取）。
+  - server.ts 三条路由：GET /budget-alerts、POST /director/priority、GET /metrics。
+- **B5 度量（metrics.ts，纯函数）**：`computeRunMetrics(input)` 计算五项指标——
+  配额利用率（effectiveSec/consumedSec，**核心指标**）、有效吞吐（clips/min）、
+  P0 延迟 P95（线性插值百分位）、浪费率（wastedSec/consumedSec）、被拒率（透传
+  kitchenSummary）。数据不全的字段返回 null（降级不阻断——B5 是辅助度量不是产线依赖）。
+  - quota.ts 加 `consumedSec(poolId)` = dailyQuota - remaining（null=无配额池）。
+  - server.ts GET /metrics 端点从各数据源组装输入：账本（consumed）、kitchen
+    汇总（rejectionRate）、priority-instructions + clip 文件 mtime（P0 延迟）、
+    assets 目录计数（完成/失败 clip）、events 时间戳（运行时长）。秒数近似 5s/clip
+    （精确值需读 script.json，A/B 比较用相对值即可）。
+- **UI**：client.ts 加 BudgetAlert/PriorityInstruction/RunMetrics 类型 +
+  fetchBudgetAlerts/submitPriorityInstruction/fetchRunMetrics API 方法。
+- **测试教训**：validateBudgetAlert 里 `r.at` 是 `unknown`（Record<string,unknown> 的
+  属性），`Number.isFinite(unknown)` 编译报 TS18046——先 `typeof === "number"` 收窄
+  再 `Number.isFinite`。套件 **229/229**（director-contract 22 + metrics 14）；UI build ✅。
+- **B4 验收 = 契约测试**（双向闭环的 schema 锁定）；**B5 验收 = 对比静态队列基线**
+  （computeRunMetrics 纯函数 + A/B 对比语义测试：代理利用率>基线、浪费率<基线）。
+
 **B3 自动执行 + L2 守卫（2026-08-29，接 B2 之后）**：建议从"只记录"升级为
 "守卫通过即可执行"，三层分工落位：
 - **L2 守卫（guard.ts，纯函数）**：整个设计最不能妥协的红线落地——**绝不让

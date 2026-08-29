@@ -120,6 +120,24 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## B4 导演契约 + B5 A/B 度量完成（2026-08-29）
+
+- **director-contract.ts（纯契约层）**：双向——方向 1 导演→制片主任
+  `PriorityInstruction{shotId,priority:P0/P1/P2,qualityBar:must_keep/...,
+  maxRetries}`（maxRetries 缺省 P0=2/P1=1/P2=0）；方向 2 制片主任→导演
+  `BudgetAlert{type,message,suggestion,shortfallSec,affectedShots,at}`。
+  `CONTRACT_SCHEMA` 快照锁定枚举不漂移（契约根基）。
+- **接线**：clips budgetAlert 加结构化告警持久化（budget-alerts.ndjson）；
+  queue.setPriority（仅 queued）；applyPriorityInstruction（shotId→
+  relativePath 匹配→改优先级→持久化→双事件推 D4）；三条路由。
+- **B5 metrics.ts（纯函数）**：computeRunMetrics 五项指标——配额利用率
+  （核心）、有效吞吐、P0延迟P95（线性插值百分位）、浪费率、被拒率（透传
+  kitchenSummary）。数据不全→null 降级。quota.consumedSec=daily-remaining。
+  GET /metrics 从账本/kitchen/assets/events 组装输入（秒数近似 5s/clip）。
+- 套件 **229/229**（director-contract 22 + metrics 14）+ A/B 对比语义测试。
+  **B4 验收=契约测试；B5 验收=对比静态队列基线（computeRunMetrics 纯函数
+  + 对比语义测试：代理利用率>基线、浪费率<基线）**。
+
 ## B3 自动执行 + L2 守卫完成（2026-08-29）
 
 - **guard.ts（L2，纯函数）**：设计红线落地——绝不让 LLM 直接碰硬约束。

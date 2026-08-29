@@ -573,6 +573,41 @@ export interface KitchenSummary {
 	};
 }
 
+// ---- B4 导演契约：优先级指令 ↔ 预算告警双向闭环 ----
+
+export interface BudgetAlert {
+	type: "budget_alert";
+	message: string;
+	suggestion: string;
+	remainingSec: number;
+	requiredSec: number;
+	shortfallSec: number;
+	affectedShots: string[];
+	at: number;
+}
+
+export interface PriorityInstruction {
+	shotId: string;
+	priority: "P0" | "P1" | "P2";
+	qualityBar: "must_keep" | "nice_to_have" | "sacrificable";
+	maxRetries: number;
+}
+
+// ---- B5 A/B 度量 ----
+
+export interface RunMetrics {
+	quotaUtilization: number | null;
+	effectiveThroughput: number | null;
+	p0LatencyP95: number | null;
+	wasteRate: number | null;
+	rejectionRate: number | null;
+	consumedSec: number;
+	effectiveSec: number;
+	wastedSec: number;
+	completedClips: number;
+	failedClips: number;
+}
+
 // ---- HTTP 助手 ----
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
@@ -821,6 +856,21 @@ export const api = {
 	/** B3：应用建议（L2 守卫校验后执行 defer/downgrade/播报；被拒也留痕） */
 	async kitchenApply(runId: string, obsId: string, suggestionId: string): Promise<{ ok: true; verdict: { ok: boolean; reason?: string; detail?: string } }> {
 		return postJson(`/api/runs/${encodeURIComponent(runId)}/kitchen/apply`, { obsId, suggestionId });
+	},
+	// ---- B4 导演契约 ----
+	/** B4：制片主任 → 导演的预算告警列表 */
+	async fetchBudgetAlerts(runId: string): Promise<BudgetAlert[]> {
+		const data = await getJson<{ alerts: BudgetAlert[] }>(`/api/runs/${encodeURIComponent(runId)}/budget-alerts`);
+		return data.alerts;
+	},
+	/** B4：导演 → 制片主任的优先级指令（P0/P1/P2 + 质量底线） */
+	async submitPriorityInstruction(runId: string, instruction: { shotId: string; priority: string; qualityBar: string; maxRetries?: number }): Promise<{ ok: boolean; detail: string }> {
+		return postJson(`/api/runs/${encodeURIComponent(runId)}/director/priority`, instruction);
+	},
+	// ---- B5 A/B 度量 ----
+	/** B5：运行度量（配额利用率/有效吞吐/P0延迟P95/浪费率/被拒率） */
+	async fetchRunMetrics(runId: string): Promise<RunMetrics> {
+		return getJson<RunMetrics>(`/api/runs/${encodeURIComponent(runId)}/metrics`);
 	},
 	/** 共创模式：创意合伙人一轮对话（context 为从首页带入的创作基底，并入 system prompt） */
 	async cocreateChat(messages: { role: "user" | "assistant"; content: string }[], context?: string): Promise<string> {

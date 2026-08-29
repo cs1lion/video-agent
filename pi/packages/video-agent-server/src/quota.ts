@@ -177,6 +177,16 @@ export class QuotaLedger {
 		return pool ? pool.remainingQuotaSec : null;
 	}
 
+	/** B5 度量：已消耗配额秒数 = dailyQuota - remaining（null = 无配额池/Infinity 池） */
+	consumedSec(poolId: string, now: number = Date.now()): number | null {
+		this.rollToDay(now);
+		const pool = this.pools.get(poolId);
+		if (!pool) return null;
+		const daily = pool.spec.dailyQuotaSec;
+		if (daily === null || !Number.isFinite(daily)) return null;
+		return Math.max(0, Math.round(daily - pool.remainingQuotaSec));
+	}
+
 	/**
 	 * 提交前预留（D5）。同步完成两闸校验 + 扣减：
 	 * 1. 幂等键命中在途预留 → 原样返回（重复提交不再扣减）；

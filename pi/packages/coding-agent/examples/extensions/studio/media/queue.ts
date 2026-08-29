@@ -217,6 +217,17 @@ export class GenerationQueue {
 	}
 
 	/**
+	 * B4 导演契约：导演下优先级指令 → 修改排队任务优先级。
+	 * 只对 queued 任务生效（running 已发出，改不动）。数值越低越优先（与 pump 排序一致）。
+	 */
+	setPriority(jobId: string, priority: number): boolean {
+		const job = this.jobs.get(jobId);
+		if (!job || job.status !== "queued" || !Number.isFinite(priority)) return false;
+		job.priority = priority;
+		return true;
+	}
+
+	/**
 	 * Subscribe to every job update (any status transition). The session
 	 * runner uses this as an activity heartbeat so long media generations
 	 * don't trip its inactivity watchdog.

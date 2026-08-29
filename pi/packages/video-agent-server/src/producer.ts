@@ -19,6 +19,14 @@ import { pushEvent } from "./pipeline.ts";
 import type { ServerContext } from "./config.ts";
 import { buildKitchenSnapshot, activeQueueOf, type KitchenSnapshot } from "./kitchen.ts";
 import { guardSuggestion, rejectionRate, type GuardSuggestion, type GuardVerdict } from "./guard.ts";
+import {
+	validatePriorityInstruction,
+	validateBudgetAlert,
+	PRIORITY_QUEUE_VALUES,
+	PRIORITY_LABELS,
+	type PriorityInstruction,
+	type BudgetAlert,
+} from "./director-contract.ts";
 
 const KITCHEN_NDJSON = "kitchen.ndjson";
 /** 建议类型白名单（ReAct 设计 §六；B3 起经 L2 守卫后可执行） */
@@ -316,4 +324,110 @@ export async function applySuggestion(
 		execution.status === "applied" ? `建议已执行：${s.message}（${execution.detail}）` : `建议被守卫否决：${s.message}（${execution.detail}）`,
 	);
 	return { observation: obs, verdict };
+}
+
+// ============================================================================
+// B4 导演契约：预算告警读取 + 优先级指令应用
+// ============================================================================
+
+const BUDGET_ALERTS_NDJSON = "budget-alerts.ndjson";
+
+/** 读 budget-alerts.ndjson（坏行跳过，与 readObservations 同策略；文件缺失 = 无告警） */
+export async function readBudgetAlerts(run: RunRecord): Promise<BudgetAlert[]> {
+	try {
+		const raw = await fs.promises.readFile(path.join(run.dir, BUDGET_ALERTS_NDJSON), "utf-8");
+		return raw
+			.split("\n")
+			.filter((line) => line.trim())
+			.map((line) => {
+				try {
+					return JSON.parse(line);
+				} catch {
+					return null;
+				}
+			})
+			.map((raw) => validateBudgetAlert(raw))
+			.filter((r): r is { ok: true; alert: BudgetAlert } => r?.ok === true)
+			.map((r) => r.alert);
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * B4 导演契约（方向 1）：导演下优先级指令 → 校验 → 按镜头 id 找排队任务 → 改优先级。
+ * 镜头 id（SH01）映射到队列 job：relativePath 含 shotId（"assets/clip-SH01.mp4"）。
+ * 只改 queued 任务（running 已发出）；找不到匹配任务也不抛错——可能是已派发或已完成。
+ */
+export async function applyPriorityInstruction(
+	run: RunRecord,
+	ctx: ServerContext,
+	rawInstruction: unknown,
+): Promise<{ ok: boolean; detail: string; instruction?: PriorityInstruction }> {
+	const v = validatePriorityInstruction(rawInstruction);
+	if (!v.ok) return { ok: false, detail: v.reason };
+	const instruction = v.instruction;
+
+	const queue = activeQueueOf(run.id);
+	const jobs = queue?.list() ?? [];
+	const match = jobs.find((j) => j.relativePath.includes(instruction.shotId));
+	if (!match) {
+		pushEvent(
+			run,
+			"director",
+			"client",
+			"status",
+			`优先级指令：镜头 ${instruction.shotId} 标记为 ${PRIORITY_LABELS[instruction.priority]}，但当前无对应排队任务（已派发或已完成）`,
+		);
+		return { ok: false, detail: `未找到镜头 ${instruction.shotId} 的排队任务`, instruction };
+	}
+	const ok = queue?.setPriority?.(match.id, PRIORITY_QUEUE_VALUES[instruction.priority]) ?? false;
+	if (!ok) {
+		return { ok: false, detail: `镜头 ${instruction.shotId} 对应任务不在排队态（可能正在执行）`, instruction };
+	}
+	// B5：持久化优先级指令（P0 延迟 P95 度量的输入：指令时间 → 完成时间）
+	try {
+		fs.promises.appendFile(
+			path.join(run.dir, "priority-instructions.ndjson"),
+			`${JSON.stringify({ ...instruction, jobId: match.id, at: Date.now() })}\n`,
+			"utf-8",
+		);
+	} catch {
+		// 持久化失败不影响管线
+	}
+	pushEvent(
+		run,
+		"director",
+		"producer",
+		"status",
+		`优先级指令：镜头 ${instruction.shotId} → ${PRIORITY_LABELS[instruction.priority]}（质量底线 ${instruction.qualityBar}，上限重试 ${instruction.maxRetries} 次）`,
+	);
+	pushEvent(
+		run,
+		"producer",
+		"client",
+		"status",
+		`制片主任已收到导演优先级指令：${instruction.shotId} 调整为 ${PRIORITY_LABELS[instruction.priority]}`,
+	);
+	return { ok: true, detail: `已将 ${instruction.shotId} 优先级设为 ${instruction.priority}`, instruction };
+}
+
+/** 读 priority-instructions.ndjson（B5 P0 延迟度量的输入） */
+export async function readPriorityInstructions(run: RunRecord): Promise<Array<{ shotId: string; priority: string; qualityBar: string; maxRetries: number; jobId: string; at: number }>> {
+	try {
+		const raw = await fs.promises.readFile(path.join(run.dir, "priority-instructions.ndjson"), "utf-8");
+		return raw
+			.split("\n")
+			.filter((line) => line.trim())
+			.map((line) => {
+				try {
+					return JSON.parse(line);
+				} catch {
+					return null;
+				}
+			})
+			.filter((v): v is NonNullable<typeof v> => v !== null);
+	} catch {
+		return [];
+	}
 }

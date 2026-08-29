@@ -47,7 +47,7 @@ import {
 	type Question,
 	resolveGenerationOptions,
 } from "../../video-agent/src/index.ts";
-import { loadServerContext, type ServerContext } from "./config.ts";
+import { loadServerContext, type ServerContext, VIDEO_QUOTA_POOL } from "./config.ts";
 import { checkConsistency, getConsistency } from "./consistency.ts";
 import { reviewDesignBible, reviewKeyframes } from "./design-review.ts";
 import {
@@ -60,7 +60,8 @@ import {
 } from "./deliberation.ts";
 import { chat, chatJson } from "./llm.ts";
 import { estimateRunCost as pricingEstimateRun } from "./pricing.ts";
-import { kitchenFeedback, kitchenSummary, producerObserve, applySuggestion } from "./producer.ts";
+import { kitchenFeedback, kitchenSummary, producerObserve, applySuggestion, readBudgetAlerts, applyPriorityInstruction, readPriorityInstructions } from "./producer.ts";
+import { computeRunMetrics, type MetricsInput } from "./metrics.ts";
 import {
 	availableVoices,
 	composeCut,
@@ -1193,6 +1194,93 @@ function createApp(ctx: ServerContext) {
 				return;
 			}
 			res.json({ ok: true, verdict: result.verdict });
+		} catch (error) {
+			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+		}
+	});
+
+	// B4 导演契约（方向 2）：制片主任 → 导演的预算告警
+	app.get("/api/runs/:id/budget-alerts", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		const alerts = await readBudgetAlerts(run);
+		res.json({ alerts });
+	});
+
+	// B4 导演契约（方向 1）：导演 → 制片主任的优先级指令
+	app.post("/api/runs/:id/director/priority", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		try {
+			const result = await applyPriorityInstruction(run, ctx, req.body);
+			res.json(result);
+		} catch (error) {
+			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+		}
+	});
+
+	// B5 A/B 度量：配额利用率 / 有效吞吐 / P0 延迟 P95 / 浪费率 / 被拒率
+	app.get("/api/runs/:id/metrics", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		try {
+			// 配额消耗
+			const consumedSec = ctx.quota?.consumedSec(VIDEO_QUOTA_POOL) ?? 0;
+			// 被拒率（来自 kitchen 汇总）
+			const summary = await kitchenSummary(run);
+			// P0 指令 + clip 完成时间（从 assets 文件 mtime 推断）
+			const p0Instructions = await readPriorityInstructions(run);
+			const assetsDir = path.join(run.dir, "assets");
+			const p0Latencies: number[] = [];
+			for (const inst of p0Instructions.filter((i) => i.priority === "P0")) {
+				try {
+					const stat = await fs.promises.stat(path.join(assetsDir, `clip-${inst.shotId}.mp4`));
+					p0Latencies.push(stat.mtimeMs - inst.at);
+				} catch {
+					// clip 未完成，跳过
+				}
+			}
+			// clip 完成数（文件存在 = 完成）
+			let completedCount = 0;
+			try {
+				const files = await fs.promises.readdir(assetsDir);
+				completedCount = files.filter((f) => f.startsWith("clip-") && f.endsWith(".mp4")).length;
+			} catch {
+				// assets 目录不存在
+			}
+			// 尝试从 shotAttempts 推断尝试总数
+			const attemptedCount = Object.keys(run.shotAttempts ?? {}).length;
+			const failedCount = Math.max(0, attemptedCount - completedCount);
+			// 秒数估算：每镜默认 5s（精确值需读 script.json，此处近似）
+			const estimateSec = 5;
+			const effectiveSec = completedCount * estimateSec;
+			const wastedSec = failedCount * estimateSec;
+			// 运行时长（从事件首末时间戳推断）
+			const events = run.events ?? [];
+			const firstAt = events.length > 0 ? Date.parse(events[0]!.at) : 0;
+			const lastAt = events.length > 0 ? Date.parse(events[events.length - 1]!.at) : Date.now();
+			const runDurationMs = Math.max(0, lastAt - firstAt);
+
+			const metrics = computeRunMetrics({
+				consumedSec,
+				effectiveSec,
+				wastedSec,
+				completedCount,
+				failedCount,
+				rejectionRate: summary.stats.rejectionRate,
+				p0Latencies,
+				runDurationMs,
+			} satisfies MetricsInput);
+			res.json(metrics);
 		} catch (error) {
 			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
 		}
