@@ -120,6 +120,24 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
+## A2 台词链路现状（2026-08-29，接手必读）
+
+- **服务端核心已完成**（commit `f1c6eea`，套件 152/152）：`src/hosting/tcb.ts`
+  （CloudBase 云存储托管）+ `src/stages/dialogue-audio.ts`（TTS→实测→pausesSec
+  插停顿→托管，URL 复用）+ stageClips 台词分支（reference 提交 + 三级降级
+  reference→i2v→t2v）。真镜端到端验收**等 CloudBase 凭据**（`.env.cloudbase`：
+  TCB_ENV_ID/SECRET_ID/SECRET_KEY + 控制台存储权限「所有用户可读」）。
+- **2.5-flash 轮询端点纯配置即支持**（总文档 1.3 旧判断"要改 adapter 代码"已证伪）：
+  `poll.statusUrl` 支持 `{{taskId}}` 模板。models.json 已修正为 `/v1/videos/{{taskId}}`
+  + `taskIdPath: "id"`；`resultPath: "url"` 对 2.5 待真测确认。
+- **`@cloudbase/manager-node` 在 tsx 下 import 即炸**（依赖 `del` 的 CJS 互操作），
+  勿用；用 `@cloudbase/node-sdk`（`default.init({secretId,secretKey,env}).uploadFile`）。
+- **新坑**：给被 mock 的模块（ffmpeg/queue/llm）新增静态导入消费者，会让所有旧
+  测试文件的 `mock.module` namedExports **链接断裂**（不是 undefined）——加导入前
+  先 `grep -l "ffmpeg.ts" test/` 补齐所有 mock。
+- **pausesSec v1 语义**：等分插入静音（近似均匀朗读）；升级路径（TTS 时间戳
+  精确落点）等真实听感反馈再定。
+
 ## 音频链路代码事实（2026-08-28 源码实读，改造前必读）
 
 > **验证状态：单镜验证已通过，郭煜亲耳确认声音 + 口型 OK，方向已锁定。**

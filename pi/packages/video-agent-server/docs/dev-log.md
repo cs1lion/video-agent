@@ -598,3 +598,75 @@ audio-gate 同构）：
 - 事件驱动队列 + 结果回收 webhook 待建。
 
 验证：tsc clean，`npm test` **135/135**（约 41s）。
+
+### 2026-08-29 A2 单镜台词链路 · 服务端核心（TTS→停顿→托管→reference 生成）
+
+**主线 commit**：
+- `f1c6eea` feat(video-agent-server): A2 台词链路服务端核心
+
+**先记一个设计修正（推翻总文档 1.3 的旧判断）**：2.5-flash 的"新轮询端点
+`GET /v1/videos/{id}`"**纯配置即可表达，不需要改适配器代码**。vendored
+`openai-compatible` 适配器的 `poll.statusUrl` 本就支持 `{{taskId}}` 模板、
+`requestTemplate`/params 支持数组透传（`audios: [url]`），且字符串 `seconds`
+的 2.5 兼容修复早已落过（`openai-compatible.ts` 注释可查）。只改了
+`.pi-studio/models.json`：`taskIdPath: "video_id" → "id"`、
+`statusUrl: agnesapi → /v1/videos/{{taskId}}`。`resultPath: "url"` 未经 2.5
+真实验证（验证产物 `_tts_test/task_*.json` 全是 v2.0 响应），首测时确认。
+
+**新模块**：
+
+1. `src/hosting/tcb.ts`（CloudBase 托管，A2 六步链的第 3 步）：
+   - 选型：`@cloudbase/node-sdk`（`app.uploadFile` 云存储 → 公开下载域
+     `https://{envId}.tcb.qcloud.la/{path}`，匿名可读 + Range + 长期有效）。
+     **`@cloudbase/manager-node` 在 tsx 下 import 即炸**（其依赖 `del` 的 CJS
+     互操作问题，`promisify` 收到对象），已弃用卸载。
+   - 凭据三路：env `TCB_*` → `<studioRoot>/.pi-studio/.env.cloudbase` →
+     `<包根>/.env.cloudbase`（`.gitignore` 的 `.env*` 已覆盖，防 1.7 重演）。
+   - 未配置 → `loadHostingConfig` 返回 null，台词镜降旁白（降级优于阻断）。
+   - **前置条件（人工）**：CloudBase 控制台把环境存储权限设为「所有用户可读」；
+     首测 403 则切静态网站托管（模块边界不变只换实现）。
+2. `src/stages/dialogue-audio.ts`（`prepareDialogueAudio`，六步链的 1–3 步）：
+   - TTS 按 `dialogue.voiceId`（params.voice 透传，适配器 buildBody 已支持）；
+   - ffprobe 实测 → `pausesSec` 插停顿 → 托管；`audioUrl` 存活（HEAD 200/206）
+     即复用免重传——重做路径的核心省钱点；
+   - 回写 `dialogue.audioDurationSec/audioUrl`，但**脚本状态归调用方所有**
+     （单一写者）：降级只返回意向（silent/narration），audioMode 与旁白回填
+     由 stageClips 统一改写落盘。
+3. `src/ffmpeg.ts`：`buildPauseFilters` 纯函数 + `insertPauses`。**pausesSec
+   的 v1 语义**：把 [0, 实测时长] 均分为 n+1 段语音、段间依次插入各停顿——
+   "均匀朗读"近似；升级路径（TTS 时间戳精确落点）等真实听感反馈再定。
+   aformat 统一 44100/mono，规避 concat 规格不一致的响亮失败。
+
+**stageClips 台词分支**：`audioDrive === "dialogue"` 且镜为 dialogue →
+提交前备好公开音频 → `videoSubmitParamsForDialogue`（2.5：`mode:"reference"`
++ `audios:[url]`，prompt 追加 `<Audio 1>` 占位符；2.0：audios 被静默忽略——
+返回 null 降旁白，不赌 400）→ **三级降级链 reference→i2v→t2v**，每级
+新 attempt 新预留、失败全额退还（B1 语义直接复用）；回写后 `writeJson`
+script.json（audio/export/retts/重启恢复读同一份）。防御分支：`audioDrive`
+未开但镜声明 dialogue（旧 run 恢复/手改脚本）→ 主动降旁白留痕，不留给
+export 的"源音轨缺失响亮失败"。
+
+**测试**（套件 135 → 152，3 次变异验证：删 `<Audio 1>` 占位符 / 删 URL
+复用 / 删 reference 失败退还，各自精确变红后还原）：
+- `test/dialogue-audio-units.test.ts` 10 例：buildPauseFilters 切点/concat 数、
+  托管 URL/落点/env 解析、reference 参数分支（2.5 reference / 4s 钳位 / 2.0 null）；
+- `test/dialogue-clips.test.ts` 7 例：全链就绪（提交参数逐字段断言 + 回写落盘）、
+  TTS 失败降 silent、托管失败降 narration、reference 失败降级（配额账实相符
+  495.8）、URL 复用零重传、audioDrive 未开防御降级、全失败退还（三级链 + 
+  stageClips 契约性抛错）。
+
+**新坑（1.5 补充）**：给被多处 mock 的模块（`ffmpeg.ts`）新增**静态导出的
+消费者**（dialogue-audio 导入 insertPauses），会让所有旧 mock 的
+`namedExports` 链接断裂——mock.module 缺导出不是 undefined 而是整文件挂。
+已同步补齐 4 个测试文件（audio-gate / gate-state-machine / quota-wiring /
+reshot-quota-wiring）。**以后给 ffmpeg/queue/llm 加导入，先 grep test/ 的
+mock.module。**
+
+**待办（A2 收尾，等外部输入）**：
+- CloudBase 凭据（`TCB_ENV_ID/SECRET_ID/SECRET_KEY`）就绪后：真镜端到端
+  （验收 = 人眼确认口型）；确认云存储「所有用户可读」权限与 `resultPath`
+  响应形状；2 RPM 节奏下逐镜验证。
+- 台词镜的 i2v 锚定缺位（reference 不传 first_frame）是否影响一致性，留
+  真实出片后评估。
+
+验证：tsc clean，`npm test` **152/152**（约 46s）。
