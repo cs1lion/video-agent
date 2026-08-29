@@ -2,18 +2,23 @@
 
 ## 验证方式（必读，别踩坑）
 
-- **`npm test` 已修复（2026-08-28）**：挂死根因是 pricing.test.ts 六个 after 的裸 `fs.rm`
-  无 catch（Windows EBUSY → after 抛错拖死进程），已加 `.catch` + `--test-concurrency=1`。
-  三轮 50/50 稳定（约 15s）。若未来再挂死，优先排查各 test 文件 after 钩子的清理代码。
-  行为测试两个：`asset-version.test.ts`（重做抽象三条不变量，6 用例）+
-  `event-ndjson.test.ts`（事件落盘 append-only / 半行容错 / 迁移回落，5 用例）。当前 **55/55**。
-
+- **三个包三套测试，别跑错**：
+  - `video-agent-server`：**node:test**（`npm test`）。2026-08-29 实测 **229/229**，52 suite，
+    约 **115s**（含真跑 ffmpeg 的混音链集成用例，环境无 ffmpeg 时自动 skip）。
+    挂死老根因：after 钩子裸 `fs.rm` 无 catch（Windows EBUSY 拖死进程）→
+    已加 `.catch` + `--test-concurrency=1`。**再挂死优先排查各 test 文件的 after 钩子**。
+  - `packages/video-agent`（共享包）：**vitest**（不是 node:test）。2026-08-29 实测
+    **39/39**，2 文件，约 1s。`ClipDurationSec` / `GenerationOptions` 的契约测试在这。
+  - `video-agent-ui`：无测试脚本，只跑 `npx tsc --noEmit -p tsconfig.json`。
 - **`npx tsc --noEmit` 要用包自身的 tsconfig**（`packages/video-agent-server/tsconfig.json`，
   `include: ["src"]`），根目录 tsconfig 会混入 pi 上游包（ai/tui）的既有报错，噪声大。
 
-- **不要采信 `docs/dev-log.md` 的"验证"章节**。实测已两次发现与声称不符
+- **不要采信任何文档的"验证通过"（含 dev-log 与总文档）**。已多次发现声称与实际不符
   （2026-08-28：声称 "tsc clean / 44/44 pass"，实际 typecheck 红 1 处、npm test 挂死、
-  reshot 主干功能自 commit `c26bb0e` 起就没跑通过）。
+  reshot 主干功能自 commit `c26bb0e` 起就没跑通过；2026-08-29：总文档写共享包 13 用例，
+  实测 39）。
+  **规矩：任何写进文档的数字，必须有自己刚跑出的输出为依据。** 本轮审查时我自己就曾
+  把旧数字从文档抄进新写的命令块而未验证，属于同一错误的复现。
 
 ## ⚠️ 安全：凭据泄漏（2026-08-28 发现，未完全闭环）
 
