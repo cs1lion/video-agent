@@ -16,10 +16,13 @@
 import * as path from "node:path";
 import { GenerationQueue } from "../../../coding-agent/examples/extensions/studio/media/queue.ts";
 import { chatJson } from "../llm.ts";
-import { withVersionedAsset } from "../asset-version.ts";
-import { ttsAdapterOf } from "../redo-adapters.ts";
+import { withVersionedAsset, fileDataUrl } from "../asset-version.ts";
+import { dialogueDerivedSec, estimateClipSeconds, ttsAdapterOf, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
-import { fallbackVoiceDirection, narrationFor, rettsNarrationMessages } from "../prompts.ts";
+import { fallbackVoiceDirection, narrationFor, rettsDialogueMessages, rettsNarrationMessages } from "../prompts.ts";
+import { prepareDialogueAudio } from "../stages/dialogue-audio.ts";
+import { reserveShotQuota } from "../stages/clips.ts";
+import { probeDuration } from "../ffmpeg.ts";
 import {
 	MAX_RETTS_PER_SHOT,
 	type RunRecord,
@@ -39,13 +42,15 @@ import {
 	type StageCtx,
 	writeJson,
 } from "../pipeline.ts";
-import type { ScriptDoc } from "../prompts.ts";
+import type { ScriptDoc, ScriptShot } from "../prompts.ts";
 import type { ServerContext } from "../config.ts";
 import type { ServerContext as _ServerContext } from "../config.ts";
 
 /**
  * 旁白重录（语音级重做）
  * 护栏：每镜上限 MAX_RETTS_PER_SHOT；生成失败自动回滚旧录音。
+ * A5：台词镜（audioMode=dialogue）走级联重做——台词音频链 + 口型视频重生成，
+ * 复用 withVersionedAsset（D2）与 reserveShotQuota（配额护栏），见 rettsDialogueCascade。
  */
 export async function rettsRun(
 	ctx: ServerContext,
@@ -73,8 +78,16 @@ export async function rettsRun(
 	}
 	const shot = script.shots.find((s) => s.id === shotId);
 	if (!shot) return bail(`镜头 ${shotId} 不存在`);
-	const narration = narrationFor(shot, optionsOf(run).promptLanguage).trim();
-	if (!narration) return bail(`镜头 ${shotId} 无旁白，无需重录`);
+	const isDialogueShot = shot.audioMode === "dialogue" && Boolean(shot.dialogue);
+	if (isDialogueShot && optionsOf(run).audioDrive !== "dialogue") {
+		return bail(
+			`镜头 ${shotId} 是台词镜，但本次运行未开启音频驱动，无法重录台词。请改用补拍（reshot），或开启音频驱动后整体重跑。`,
+		);
+	}
+	if (!isDialogueShot) {
+		const narration = narrationFor(shot, optionsOf(run).promptLanguage).trim();
+		if (!narration) return bail(`镜头 ${shotId} 无旁白，无需重录`);
+	}
 
 	const attempts = (run.ttsAttempts[shotId] ?? 0) + 1;
 	if (attempts > MAX_RETTS_PER_SHOT) {
@@ -91,29 +104,56 @@ export async function rettsRun(
 	if (instruction.trim()) {
 		const t0 = Date.now();
 		try {
-			const parsed = await chatJson<{
-				mode?: string;
-				narrationZh?: string;
-				narrationEn?: string;
-				instruction?: string;
-			}>(ctx.llm, rettsNarrationMessages(shot, instruction.trim(), optionsOf(run)));
-			const mode = parsed.mode === "copy-edit" ? "copy-edit" : "voice-only";
-			const newInstruction = typeof parsed.instruction === "string" ? parsed.instruction.trim().slice(0, 200) : "";
-			if (mode === "copy-edit") {
-				const zh = typeof parsed.narrationZh === "string" ? parsed.narrationZh.trim() : "";
-				const en = typeof parsed.narrationEn === "string" ? parsed.narrationEn.trim() : "";
-				if (zh && zh !== shot.narrationZh) {
-					shot.narrationZh = zh.slice(0, 400);
+			if (isDialogueShot) {
+				const parsed = await chatJson<{
+					mode?: string;
+					linesZh?: string;
+					linesEn?: string;
+					instruction?: string;
+				}>(ctx.llm, rettsDialogueMessages(shot, instruction.trim(), optionsOf(run)));
+				const mode = parsed.mode === "copy-edit" ? "copy-edit" : "voice-only";
+				const newInstruction = typeof parsed.instruction === "string" ? parsed.instruction.trim().slice(0, 200) : "";
+				if (mode === "copy-edit" && shot.dialogue) {
+					const zh = typeof parsed.linesZh === "string" ? parsed.linesZh.trim() : "";
+					const en = typeof parsed.linesEn === "string" ? parsed.linesEn.trim() : "";
+					if (zh && zh !== shot.dialogue.lines.zh) {
+						shot.dialogue.lines.zh = zh.slice(0, 400);
+						scriptUpdated = true;
+					}
+					if (en && en !== shot.dialogue.lines.en) {
+						shot.dialogue.lines.en = en.slice(0, 400);
+						scriptUpdated = true;
+					}
+				}
+				if (newInstruction && newInstruction !== shot.ttsDirection) {
+					shot.ttsDirection = newInstruction;
 					scriptUpdated = true;
 				}
-				if (en && en !== shot.narrationEn) {
-					shot.narrationEn = en.slice(0, 400);
+			} else {
+				const parsed = await chatJson<{
+					mode?: string;
+					narrationZh?: string;
+					narrationEn?: string;
+					instruction?: string;
+				}>(ctx.llm, rettsNarrationMessages(shot, instruction.trim(), optionsOf(run)));
+				const mode = parsed.mode === "copy-edit" ? "copy-edit" : "voice-only";
+				const newInstruction = typeof parsed.instruction === "string" ? parsed.instruction.trim().slice(0, 200) : "";
+				if (mode === "copy-edit") {
+					const zh = typeof parsed.narrationZh === "string" ? parsed.narrationZh.trim() : "";
+					const en = typeof parsed.narrationEn === "string" ? parsed.narrationEn.trim() : "";
+					if (zh && zh !== shot.narrationZh) {
+						shot.narrationZh = zh.slice(0, 400);
+						scriptUpdated = true;
+					}
+					if (en && en !== shot.narrationEn) {
+						shot.narrationEn = en.slice(0, 400);
+						scriptUpdated = true;
+					}
+				}
+				if (newInstruction && newInstruction !== shot.ttsDirection) {
+					shot.ttsDirection = newInstruction;
 					scriptUpdated = true;
 				}
-			}
-			if (newInstruction && newInstruction !== shot.ttsDirection) {
-				shot.ttsDirection = newInstruction;
-				scriptUpdated = true;
 			}
 		} catch {
 			// 解析失败：忽略，沿用原文案与指导
@@ -125,14 +165,16 @@ export async function rettsRun(
 		"producer",
 		"sound",
 		"user",
-		`请求重录镜头 ${shotId} 旁白${instruction ? `：${instruction}` : "（原文重录）"}`,
+		`请求重录镜头 ${shotId}${isDialogueShot ? "台词（含口型重生成）" : "旁白"}${instruction ? `：${instruction}` : "（原文重录）"}`,
 	);
 	pushEvent(
 		run,
 		"director",
 		"sound",
 		"redo",
-		`安排重录镜头 ${shotId} 旁白（第 ${attempts}/${MAX_RETTS_PER_SHOT} 轮）${scriptUpdated ? "，文案已按指令调整" : ""}。旧录音备份为历史版本，新语音就位后该镜按新时长重排、重新混音并复审。`,
+		isDialogueShot
+			? `安排重录镜头 ${shotId} 台词（第 ${attempts}/${MAX_RETTS_PER_SHOT} 轮）${scriptUpdated ? "，台词已按指令调整" : ""}。台词是口型驱动源：新音频就位后将重新托管并重生成该镜口型视频（配额内），再重排混音复审。`
+			: `安排重录镜头 ${shotId} 旁白（第 ${attempts}/${MAX_RETTS_PER_SHOT} 轮）${scriptUpdated ? "，文案已按指令调整" : ""}。旧录音备份为历史版本，新语音就位后该镜按新时长重排、重新混音并复审。`,
 	);
 
 	// 回退导出态，进入运行
@@ -140,81 +182,47 @@ export async function rettsRun(
 	run.verdict = undefined;
 	run.videoUrl = undefined;
 	run.status = "running";
-	run.redoActive = { kind: "retts", shotId, label: `重录 ${shotId} 旁白` };
+	run.redoActive = { kind: "retts", shotId, label: isDialogueShot ? `重录 ${shotId} 台词` : `重录 ${shotId} 旁白` };
 	persistRun(run);
 
 	void (async () => {
 		const queue = new GenerationQueue(ctx.mediaConfig);
 		const sc: StageCtx = { run, ctx, queue, signal: run.abort.signal };
+		// 台词镜级联前的脚本快照：片段重生成失败时回滚台词回写，保持脚本与旧片段一致
+		const prevDialogue = isDialogueShot && shot.dialogue
+			? {
+					audioMode: shot.audioMode,
+					durationSec: shot.durationSec,
+					audioUrl: shot.dialogue.audioUrl,
+					audioDurationSec: shot.dialogue.audioDurationSec,
+					narrationZh: shot.narrationZh,
+					narrationEn: shot.narrationEn,
+				}
+			: null;
 		try {
-			// 1. 备份现有 TTS（版本化：tts-SHxx_v{n}.mp3）
-			run.ttsVersions[shotId] = run.ttsVersions[shotId] ?? [];
-			const versions = run.ttsVersions[shotId];
-			const voiceDirection =
-				shot.ttsDirection ?? fallbackVoiceDirection(run.brief);
-			const { file: okRel } = await withVersionedAsset({
-				run,
-				mainRelPath: `assets/tts-${shotId}.mp3`,
-				versions,
-				backupRelPath: `assets/tts-${shotId}_v${versions.length + 1}.mp3`,
-				generate: async () => {
-					const job = queue.submit(
-						{
-							roleName: "video-agent",
-							kind: "tts",
-							prompt: narration,
-							params: { instruction: voiceDirection, ...(resolvedVoice ? { voice: resolvedVoice } : {}) },
-							outputName: `tts-${shotId}`,
-						},
-						run.dir,
-					);
-					run.metrics.mediaCalls += 1;
-					const finished = await queue.awaitJob(job.id, undefined, sc.signal);
-					return finished.status === "done" && finished.filePath
-						? path.relative(run.dir, finished.filePath)
-						: null;
-				},
-			});
-			const ok = Boolean(okRel);
-
-			// P2：旁白重录成功后按 prompt 字符数计费
-			if (ok) {
-				const adapter = ttsAdapterOf(sc.ctx);
-				if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: narration });
-			}
-			appendSpan(
-				run,
-				{
-					stage: "reshot",
-					name: `镜头 ${shotId} 旁白重录（第 ${attempts} 轮）`,
-					kind: "media",
-					status: ok ? "ok" : "error",
-					input: narration.slice(0, 120),
-					output: ok ? path.basename(okRel!) : `队列状态 error`,
-				},
-				Date.now(),
-			);
-			if (!ok) {
-				// withVersionedAsset 已自动回滚（还有可重试机会、版本数 PUSH/POP 原子）。
-				pushEvent(run, "sound", "producer", "redo", `镜头 ${shotId} 旁白重录失败 ⚠️，已恢复旧录音。可稍后重试。`);
-				throw new Error(`镜头 ${shotId} 旁白重录失败（旧版本已回滚）`);
+			if (isDialogueShot && shot.dialogue) {
+				await rettsDialogueCascade(sc, script, shot, attempts);
+			} else {
+				await rettsNarration(sc, shot, resolvedVoice);
 			}
 
-			// 3. 新语音就位：重跑 export（重新归一化该镜 → 时长随旁白重排 → 装配 → 复审）
+			// 3. 新音频就位：重跑 export（重新归一化该镜 → 时长随旁白重排 → 装配 → 复审）
 			pushEvent(
 				run,
 				"sound",
 				"editor",
 				"handoff",
-				`镜头 ${shotId} 新旁白就位 ✅（旧录音备份为 ${versions[versions.length - 1] ?? "无"}）。剪辑师按新时长重排该镜、重装时间线并重新混音，随后复审。`,
-				{ stage: "post", focus: shotId, label: "试听新配音" },
+				isDialogueShot
+					? `镜头 ${shotId} 新台词就位 ✅，口型视频已按新音频重生成。剪辑师重排该镜、重装时间线并重新混音，随后复审。`
+					: `镜头 ${shotId} 新旁白就位 ✅（旧录音备份为 ${run.ttsVersions[shotId]?.[run.ttsVersions[shotId]!.length - 1] ?? "无"}）。剪辑师按新时长重排该镜、重装时间线并重新混音，随后复审。`,
+				{ stage: "post", focus: shotId, label: isDialogueShot ? "查看新口型" : "试听新配音" },
 			);
 			await executeStages(ctx, run, ["export"], { fromResume: true });
 			run.redoActive = null;
 			pushLastAction(run, {
 				kind: "retts",
 				shotId,
-				label: `重录 ${shotId} 旁白`,
+				label: isDialogueShot ? `重录 ${shotId} 台词` : `重录 ${shotId} 旁白`,
 				at: new Date().toISOString(),
 			});
 			persistRun(run);
@@ -226,6 +234,16 @@ export async function rettsRun(
 				pushEvent(run, "sound", "client", "redo", deltaText, { stage: "post", focus: shotId });
 			}
 		} catch (error) {
+			// 台词级联中途失败：回滚台词回写，让脚本与（已回滚的）旧片段保持一致
+			if (prevDialogue && shot.dialogue) {
+				shot.audioMode = prevDialogue.audioMode;
+				shot.durationSec = prevDialogue.durationSec;
+				shot.dialogue.audioUrl = prevDialogue.audioUrl;
+				shot.dialogue.audioDurationSec = prevDialogue.audioDurationSec;
+				shot.narrationZh = prevDialogue.narrationZh;
+				shot.narrationEn = prevDialogue.narrationEn;
+				await writeJson(run, "script.json", script).catch(() => {});
+			}
 			if (sc.signal.aborted) {
 				run.status = "cancelled";
 				run.redoActive = null;
@@ -237,9 +255,249 @@ export async function rettsRun(
 			run.status = "failed";
 			run.error = error instanceof Error ? error.message : String(error);
 			run.redoActive = null;
-			pushEvent(run, "sound", "producer", "status", `旁白重录受阻 ⚠️：${run.error}`);
+			pushEvent(run, "sound", "producer", "status", `${isDialogueShot ? "台词重录" : "旁白重录"}受阻 ⚠️：${run.error}`);
 			persistRun(run);
 		}
 	})();
 	return { ok: true };
+}
+
+/**
+ * 旁白镜重录（既有路径抽出）：版本化备份旧 TTS → 重录 → 计费。
+ * 台词镜不走这里（口型绑定音频，必须级联重生成视频，见 rettsDialogueCascade）。
+ */
+async function rettsNarration(
+	sc: StageCtx,
+	shot: ScriptShot,
+	resolvedVoice: string | undefined,
+): Promise<void> {
+	const { run, ctx } = sc;
+	const narration = narrationFor(shot, optionsOf(run).promptLanguage).trim();
+	// 1. 备份现有 TTS（版本化：tts-SHxx_v{n}.mp3）
+	run.ttsVersions[shot.id] = run.ttsVersions[shot.id] ?? [];
+	const versions = run.ttsVersions[shot.id]!;
+	const voiceDirection = shot.ttsDirection ?? fallbackVoiceDirection(run.brief);
+	const { file: okRel } = await withVersionedAsset({
+		run,
+		mainRelPath: `assets/tts-${shot.id}.mp3`,
+		versions,
+		backupRelPath: `assets/tts-${shot.id}_v${versions.length + 1}.mp3`,
+		generate: async () => {
+			const job = sc.queue.submit(
+				{
+					roleName: "video-agent",
+					kind: "tts",
+					prompt: narration,
+					params: { instruction: voiceDirection, ...(resolvedVoice ? { voice: resolvedVoice } : {}) },
+					outputName: `tts-${shot.id}`,
+				},
+				run.dir,
+			);
+			run.metrics.mediaCalls += 1;
+			const finished = await sc.queue.awaitJob(job.id, undefined, sc.signal);
+			return finished.status === "done" && finished.filePath
+				? path.relative(run.dir, finished.filePath)
+				: null;
+		},
+	});
+	const ok = Boolean(okRel);
+
+	// P2：旁白重录成功后按 prompt 字符数计费
+	if (ok) {
+		const adapter = ttsAdapterOf(sc.ctx);
+		if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: narration });
+	}
+	appendSpan(
+		run,
+		{
+			stage: "reshot",
+			name: `镜头 ${shot.id} 旁白重录`,
+			kind: "media",
+			status: ok ? "ok" : "error",
+			input: narration.slice(0, 120),
+			output: ok ? path.basename(okRel!) : `队列状态 error`,
+		},
+		Date.now(),
+	);
+	if (!ok) {
+		// withVersionedAsset 已自动回滚（还有可重试机会、版本数 PUSH/POP 原子）。
+		pushEvent(run, "sound", "producer", "redo", `镜头 ${shot.id} 旁白重录失败 ⚠️，已恢复旧录音。可稍后重试。`);
+		throw new Error(`镜头 ${shot.id} 旁白重录失败（旧版本已回滚）`);
+	}
+}
+
+/**
+ * A5 台词镜级联重做：台词是口型驱动源——重录台词后必须重生成口型视频。
+ * 1. 台词音频链（复用 A2 prepareDialogueAudio：TTS→实测→停顿→超短超长对齐→托管→回写）；
+ * 2. 口型视频重生成（withVersionedAsset 版本化 clip；配额走 reserveShotQuota，
+ *    幂等键命名空间 `${shotId}-retts{n}` 与管线/补拍隔离）；
+ * 3. reference 失败 → 降级普通图生视频（台词转旁白），再失败 → 文生视频（同 clips 降级链）。
+ * 失败时 withVersionedAsset 自动回滚旧片段；调用方负责回滚脚本回写与运行态。
+ */
+async function rettsDialogueCascade(
+	sc: StageCtx,
+	script: ScriptDoc,
+	shot: ScriptShot,
+	attempts: number,
+): Promise<void> {
+	const { run, ctx } = sc;
+	const opts = optionsOf(run);
+
+	// ---- 1. 台词音频链（TTS→实测→停顿→对齐→托管→dialogue 回写）----
+	const outcome = await prepareDialogueAudio(sc, shot);
+	if (outcome.kind === "silent") {
+		throw new Error(`镜头 ${shot.id} 台词 TTS 失败（${outcome.reason}）——旧台词音频与片段未改动，可稍后重试`);
+	}
+	let useReference = outcome.kind === "ready";
+	const audioUrl = outcome.kind === "ready" ? outcome.audioUrl : null;
+	if (outcome.kind === "narration") {
+		// 托管失败：降旁白（与 clips 台词分支同语义），视频按普通路径重生成
+		shot.audioMode = "narration";
+		if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
+		if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
+		pushEvent(
+			run,
+			"sound",
+			"producer",
+			"redo",
+			`镜头 ${shot.id} 台词托管失败 ⚠️（${outcome.reason}），重录降级为旁白：视频按普通路径重生成，台词按画外音贴上。`,
+		);
+	} else if (typeof outcome.audioDurationSec === "number" && outcome.audioDurationSec > 0) {
+		// A4b：以音频反推镜长（与 clips 台词分支同一推导），reference 提交读同一份
+		const derived = dialogueDerivedSec(outcome.audioDurationSec);
+		if (derived !== shot.durationSec) {
+			shot.durationSec = derived;
+			pushEvent(
+				run,
+				"sound",
+				"producer",
+				"redo",
+				`镜头 ${shot.id} 镜长按新台词音频反推为 ${derived}s（实测 ${outcome.audioDurationSec.toFixed(1)}s）。`,
+			);
+		}
+	}
+	// 台词回写落盘（audio/export 阶段与重试读同一份）
+	await writeJson(run, "script.json", script);
+
+	// ---- 2. 口型视频重生成（版本化 + 配额）----
+	const promptArtifact = await readArtifact<{ prompts: { shotId: string; prompt: string }[] }>(run, "prompts.json").catch(
+		() => ({ prompts: [] as { shotId: string; prompt: string }[] }),
+	);
+	const basePrompt = promptArtifact.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
+	const keyframes = await readKeyframes(run).catch(() => ({ frames: [] as { shotId: string; status: string; file: string }[] }));
+	const kf = keyframes.frames.find((f) => f.shotId === shot.id);
+	// 无条件读关键帧：reference 失败降级 i2v 时需要它做首帧锚定（与 clips 先备帧后提交同思路）
+	const kfDataUrl = kf?.status === "done" && kf.file ? await fileDataUrl(run.dir, kf.file) : null;
+	const prompt = useReference ? `${basePrompt}\n<Audio 1>` : basePrompt;
+
+	const estimateSec = estimateClipSeconds(ctx, opts, shot.durationSec);
+	// 幂等键命名空间隔离：管线阶段用 `${runId}:${shotId}:a{n}`，这里带 retts 轮次，
+	// 避免与管线 attempt / 多轮 retts 撞键（撞键会被账本去重，settle 语义错乱）
+	const shotKey = `${shot.id}-retts${attempts}`;
+	let reservation = await reserveShotQuota(sc, shotKey, estimateSec, 0);
+	if (!reservation) {
+		pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 台词重生成配额不足（预估 ${estimateSec}s/镜），已保留新台词音频，旧片段未动。`);
+		throw new Error(`镜头 ${shot.id} 口型视频重生成配额不足（旧版本未改动）`);
+	}
+	run.shotVersions[shot.id] = run.shotVersions[shot.id] ?? [];
+	const versions = run.shotVersions[shot.id]!;
+	let attemptSeq = 0;
+	const { file: okRel } = await withVersionedAsset({
+		run,
+		mainRelPath: `assets/clip-${shot.id}.mp4`,
+		versions,
+		backupRelPath: `assets/clip-${shot.id}_v${versions.length + 1}.mp4`,
+		generate: async () => {
+			if (useReference) {
+				const referenceParams = videoSubmitParamsForDialogue(ctx, audioUrl!, shot.durationSec);
+				if (referenceParams) {
+					const job = sc.queue.submit(
+						{ roleName: "video-agent", kind: "video", prompt, params: referenceParams, outputName: `clip-${shot.id}` },
+						run.dir,
+					);
+					run.metrics.mediaCalls += 1;
+					const finished = await sc.queue.awaitJob(job.id, undefined, sc.signal);
+					if (finished.status === "done" && finished.filePath) return path.relative(run.dir, finished.filePath);
+					// reference 失败 → 降级普通图生视频（新 attempt 新预留），台词转旁白
+					if (sc.ctx.quota && reservation!.reservationId) sc.ctx.quota.release(reservation!.reservationId);
+					shot.audioMode = "narration";
+					if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
+					if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
+					attemptSeq += 1;
+					pushEvent(run, "tech", "producer", "redo", `镜头 ${shot.id} 口型重生成未成功，降级为普通图生视频，台词转旁白轨。`);
+					reservation = await reserveShotQuota(sc, shotKey, estimateSec, attemptSeq);
+					if (!reservation) return null;
+				}
+			}
+			// 普通图生视频（降级路径或托管失败路径；kfDataUrl 可能为 null → 直接文生）
+			const i2vJob = sc.queue.submit(
+				{
+					roleName: "video-agent",
+					kind: "video",
+					prompt,
+					params: videoSubmitParams(ctx, opts, 0, 0, kfDataUrl, shot.durationSec),
+					outputName: `clip-${shot.id}`,
+				},
+				run.dir,
+			);
+			run.metrics.mediaCalls += 1;
+			const i2v = await sc.queue.awaitJob(i2vJob.id, undefined, sc.signal);
+			if (i2v.status === "done" && i2v.filePath) return path.relative(run.dir, i2v.filePath);
+			if (!kfDataUrl) return null; // 已是文生路径，无进一步降级
+			// 图生视频失败：退还预留，降级文生视频重新预留
+			if (sc.ctx.quota && reservation!.reservationId) sc.ctx.quota.release(reservation!.reservationId);
+			attemptSeq += 1;
+			reservation = await reserveShotQuota(sc, shotKey, estimateSec, attemptSeq);
+			if (!reservation) return null;
+			const t2vJob = sc.queue.submit(
+				{
+					roleName: "video-agent",
+					kind: "video",
+					prompt,
+					params: videoSubmitParams(ctx, opts, 0, 0, null, shot.durationSec),
+					outputName: `clip-${shot.id}`,
+				},
+				run.dir,
+			);
+			run.metrics.mediaCalls += 1;
+			const t2v = await sc.queue.awaitJob(t2vJob.id, undefined, sc.signal);
+			return t2v.status === "done" && t2v.filePath ? path.relative(run.dir, t2v.filePath) : null;
+		},
+	});
+	const ok = Boolean(okRel);
+
+	// P2：重生成成功按实际时长计费 + 配额结算；失败退还预留
+	if (ok && okRel) {
+		try {
+			const dur = await probeDuration(okRel, run.dir);
+			const adapter = videoAdapterOf(ctx);
+			if (adapter) trackMediaCost(run, ctx, adapter, {}, dur ?? estimateSec);
+			if (ctx.quota && reservation!.reservationId) ctx.quota.settle(reservation!.reservationId, dur ?? estimateSec);
+		} catch {
+			const adapter = videoAdapterOf(ctx);
+			if (adapter) trackMediaCost(run, ctx, adapter, {}, estimateSec);
+			if (ctx.quota && reservation!.reservationId) ctx.quota.settle(reservation!.reservationId, estimateSec);
+		}
+	} else if (ctx.quota && reservation!.reservationId) {
+		ctx.quota.release(reservation!.reservationId);
+	}
+	// 重生成可能改写了 audioMode（reference 失败降旁白）——再落一次盘，
+	// 让 export 与重试读到与片段一致的脚本（上面那次写盘在降级之前）
+	await writeJson(run, "script.json", script);
+	appendSpan(
+		run,
+		{
+			stage: "reshot",
+			name: `镜头 ${shot.id} 台词口型重生成（第 ${attempts} 轮）`,
+			kind: "media",
+			status: ok ? "ok" : "error",
+			input: prompt.slice(0, 120),
+			output: ok ? path.basename(okRel!) : `队列状态 error`,
+		},
+		Date.now(),
+	);
+	if (!ok) {
+		pushEvent(run, "sound", "producer", "redo", `镜头 ${shot.id} 口型视频重生成失败 ⚠️，已恢复旧版本。可稍后重试。`);
+		throw new Error(`镜头 ${shot.id} 口型视频重生成失败（旧版本已回滚）`);
+	}
 }

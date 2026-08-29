@@ -120,11 +120,16 @@
 - **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
   异步队列 + 接受每日时长天花板。
 
-## A4b+A6 完成现状（2026-08-29 深夜，`e2a5f81` 之后）
+## A5 服务端完成 + A4b+A6 完成现状（2026-08-29 深夜，`3833a16` 之后）
 
+- **A5（服务端）**：`rettsRun` 台词镜级联——音频链复用 `prepareDialogueAudio`，
+  clip 用 `withVersionedAsset` 版本化 + `reserveShotQuota`（幂等键
+  `${shotId}-retts{n}:a{n}` 隔离）；reference 失败降旁白再 i2v/t2v（同 clips）；
+  脚本两处写盘（音频链后 + 重生成后，变异 G 锁）。旁白路径抽出为
+  `rettsNarration`（行为不变）+ 冒烟锁。套件 **167/167**。
 - **A4b**：台词 ready 后 `dialogueDerivedSec(ceil(audioDur) 钳 4–12)` 回写
   `shot.durationSec`；`estimateClipSeconds/videoSubmitParams` 加可选 override，
-  预留/提交/回写同一份（账实相符扩展到动态镜长）。套件 160/160。
+  预留/提交/回写同一份（账实相符扩展到动态镜长）。
 - **A6**：`ClipDurationSec` 白名单 [3,5,8,10] → **3–12 整数区间**
   （`video-agent/src/generation/options.ts`）；UI 快捷档不变。
 - **CloudBase 根因边缘**：真实 EnvId `myagent-d0glujkt6c30cbe8a`（与 JWT aud

@@ -326,6 +326,39 @@ export function rettsNarrationMessages(shot: ScriptShot, instruction: string, op
 	return user;
 }
 
+/**
+ * 台词重录·指令解析（A5 级联重做）：与 rettsNarrationMessages 同构，但面向
+ * 台词镜的 dialogue.lines（人物对白，非旁白）。voice-only 时台词逐字保留。
+ */
+export function rettsDialogueMessages(shot: ScriptShot, instruction: string, opts: GenerationOptions): string {
+	const langNote =
+		opts.promptLanguage === "en"
+			? "成片以英文台词播出（lines.en 为主，lines.zh 给出对应中文）"
+			: "成片以中文台词播出（lines.zh 为主，lines.en 给出对应英文）";
+	const user = [
+		"客户对这一镜的人物台词提出了重录指令。先判断指令类型：",
+		"- 若是内容/措辞层面的修改（改说法、换口吻、增删信息）→ mode=copy-edit，按指令改写台词；",
+		"- 若是纯表演层面的要求（情绪/语速/停顿/能量，如「更愤怒一点」）→ mode=voice-only，台词保持原句不变（逐字保留），并给出一句中文 TTS 表演指导。",
+		"",
+		`镜头 ${shot.id} 当前台词（角色：${shot.dialogue?.characterId ?? "未知"}，情绪：${shot.dialogue?.emotion ?? "无"}）:`,
+		`- zh: ${shot.dialogue?.lines.zh ?? ""}`,
+		`- en: ${shot.dialogue?.lines.en ?? ""}`,
+		`镜头画面: ${shot.visual}`,
+		`当前表演指导: ${shot.ttsDirection ?? "（无）"}`,
+		"",
+		`客户指令: ${instruction}`,
+		"",
+		"要求:",
+		`1. copy-edit 时：${langNote}；改动要体现客户指令；仍是一句口语台词，长度与原文相当（±20%），适合 TTS 朗读，不含舞台指示或旁白腔；`,
+		"2. voice-only 时：linesZh/linesEn 必须与原文逐字相同；",
+		"3. instruction 是给 TTS 的表演指导（中文，≤80 字）：写清情绪、语速、重音与气息；copy-edit 时也要给出与新台词匹配的指导；",
+		"",
+		"只输出如下 JSON（不要围栏）:",
+		'{"mode": "voice-only", "linesZh": "…", "linesEn": "…", "instruction": "…"}',
+	].join("\n");
+	return user;
+}
+
 /** EDL 转场决策产物（宽容解析：缺失/非法项回退为 cut，音效缺省兜底） */
 export interface EdlDoc {
 	/** after = 第几个镜头之后（1-based，即切点编号）；type 白名单外按 cut 处理 */

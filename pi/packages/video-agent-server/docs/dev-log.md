@@ -698,6 +698,29 @@ mock.module。**
 - 设计取舍：`ceil` 而非 round（镜长宁长勿短，音频尾部不截）；只对 reference
   成功的台词镜反推，降级旁白镜不改（J-cut 自动对齐）。
 
+**A5 台词镜级联重做（08-29 深夜，接在 A4b+A6 之后）**：台词是口型驱动源——
+重录台词必须级联重生成口型视频，否则新音频配旧口型（灾难性错位）。
+`rettsRun` 重构为三段：入口分支（台词镜 guard：`audioDrive` 未开 → 同步 bail）
+→ `rettsNarration`（既有旁白路径原样抽出，行为不变，补了此前一直缺的行为
+冒烟测试）→ `rettsDialogueCascade`（新）：
+- 台词音频链**复用 `prepareDialogueAudio`**（TTS→实测→停顿→A4 对齐→托管→回写），
+  零新逻辑；托管失败降旁白（与 clips 同语义）；TTS 失败级联中止（旧片段/脚本/
+  配额原封不动，音频链先于备份所以无需回滚）。
+- 口型视频重生成：**复用 `withVersionedAsset`**（D2，clip 版本化备份）+
+  **复用 `reserveShotQuota`**（配额护栏）。幂等键命名空间隔离：
+  `${shotId}-retts{轮次}:a{n}`——与管线 attempt、多轮 retts 互不撞键
+  （撞键会被账本去重，settle 语义错乱）。
+- 降级链与 clips 台词分支同构：reference 失败 → 降旁白 + 新 attempt i2v →
+  再失败 t2v；每次降级新预留新退还。
+- **脚本一致性两处写盘**：音频链后一次（A4b 反推镜长/降级回写），
+  重生成后再一次（reference 失败降旁白发生在第一次写盘之后）——变异 G 验证
+  （拿掉第二次写盘 → 恰 1 红）。失败回滚脚本回写（catch 里恢复快照）。
+- 已知边缘：旧 cloudPath 被新上传覆盖（同 run 同 shot 同路径幂等），级联失败
+  回滚后 `dialogue.audioUrl` 指回的旧 URL 内容已是新音频——但重试时
+  `isAudioUrlAlive` 复用检查通过，直接对新音频重生成片段，自愈收敛。
+- 前端显式配额预估弹窗（A5 表格末项）归 A7/B2 前端系，未做。
+测试 160 → **168**（+7：级联 6 场景 + 旁白冒烟 1）；变异 G 验证。
+
 **CloudBase 网关探测结论（08-29 深夜，探到根因边缘）**：真实 EnvId
 （`myagent-d0glujkt6c30cbe8a`，与 JWT aud 差一位字符！）已从用户提供的信息确认；
 OpenAPI 规格在 `.cloudbase-mcp/openapi/storage.openapi.yaml`（本机另一 agent 的
