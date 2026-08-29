@@ -574,8 +574,27 @@ audio-gate 同构）：
 ③ 废掉预留闸门（恒返回占位预留）→ 零违规锁 + 足额链路 2 条变红。均已还原、
 复跑 6/6。
 
-遗留（B1 剩余）：**redo 路径未接账本**——`pipeline.ts` 的 reshot 补拍提交
-仍直连队列，A5 级联重做是它的第一个消费者，届时一并接（含成本提示）；
-事件驱动队列与结果回收 webhook 待建。
+### 2026-08-29 B1 redo 路径接账本（reshotRun 层）
 
-验证：tsc clean，`npm test` **130/130**（约 78s）。
+**主线 commit**：
+- `ce60a15` feat(video-agent-server): B1 redo 路径接账本（reshotRun 配额预留/结算/退还）
+
+**改动要点**：
+- `src/redo/reshot.ts` 新增本地配额接线（避免与 `stages/clips.ts` 循环依赖）：
+  1. 提交前先 `reserveShotQuota`（RPM 暂缺可等，配额不足直接 bail）；
+  2. `i2v→t2v` 降级路径退还旧预留、新 attempt 新幂等键重新预留；
+  3. 出片后按 `probeDuration` 实测时长 `settleReservation`，探测失败按预估兜底；
+  4. 失败/取消/回滚统一走 `releaseReservation` 全额退还；
+  5. 配额不足事件直接进 `run.events`，用户可见。
+- 新增 `test/reshot-quota-wiring.test.ts` 5 用例：
+  - 足额链路：i2v 一次成功，实测 3.6s 结算 → 剩余 496.4、inFlight 0；
+  - 探测失败：按预估 5s 兜底结算 → 剩余 495；
+  - 零违规锁：配额 2s < 预估 5s → `mediaCalls === 0` + 预算告警事件；
+  - 全失败退还：i2v + t2v 全失败 → `mediaCalls === 2`、剩余精确回到 500；
+  - i2v 失败 → t2v 成功：旧预留退还、新预留结算 3.6s → 剩余 496.4。
+
+**遗留（B1 剩余）**：
+- ~~redo 路径未接账本~~ ✅ 已完成；
+- 事件驱动队列 + 结果回收 webhook 待建。
+
+验证：tsc clean，`npm test` **135/135**（约 41s）。
