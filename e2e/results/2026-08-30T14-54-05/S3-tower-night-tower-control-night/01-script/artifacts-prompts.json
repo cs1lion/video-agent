@@ -1,0 +1,29 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot of 35-year-old female air traffic controller Su Qing wearing a dark blue uniform shirt with hair neatly tied up and an over-ear communication headset, sitting focused at the operation desk in a realistic nighttime airport control tower interior with circular panoramic windows, cold glowing radar screens, communication panels, a half-empty coffee cup, and distant runway lights twinkling outside, low-key cool ambient lighting dominated by radar screen glow and soft warm LED spill from control panels, slow subtle dolly push-in to highlight her calm professional demeanor, desaturated cool color grade with subtle teal undertones, realistic documentary industrial tone, high detail on material textures. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 close-up of 35-year-old female air traffic controller Su Qing wearing a dark blue uniform shirt with hair neatly tied up and an over-ear communication headset, her hands resting on the matte control panel, sharp focused eyes locked on the cold glowing radar screen in the realistic nighttime control tower interior, low cool side light from the radar display illuminating the texture of her uniform fabric and the panel's surface, slow subtle handheld drift movement to the right following her gaze, desaturated cool color grade with lifted shadow detail, realistic documentary tone, high micro-contrast on instrument displays for readability. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 medium shot of 51-year-old male captain Zhou Yuanhang wearing a white pilot uniform with four rank stripes on sleeves, short black hair mixed with white strands, sharp jawline, upright sitting posture in the dim aircraft cockpit, hand resting on the control yoke, realistic nighttime cabin setting with faint instrument glow in the background, low warm ambient light from dashboard panels highlighting the weathered texture of his skin and crisp uniform fabric, slow subtle push-in camera movement to emphasize his calm experienced aviator aura, cool desaturated color grade with subtle teal undertones, realistic documentary tone, high detail on uniform rank stripes and yoke texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 low-angle wide shot of a realistic wet airport runway at night, landing lights on both sides emitting warm amber glow, dark night sky as background, aircraft approaching in the far distance, wet runway surface reflecting the light sources creating soft light streaks, high contrast between bright warm amber lights and dark cool surroundings, slow subtle pan left camera movement to follow the approaching aircraft, desaturated cool color grade with lifted shadow detail, realistic documentary atmospheric tone, high detail on runway texture and light reflection. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 medium shot of 35-year-old female air traffic controller Su Qing wearing a dark blue uniform shirt with hair neatly tied up, she takes off her over-ear communication headset slightly with a faint soft smile on her face, looking at the approaching plane through the circular panoramic tower window, realistic nighttime control tower interior with cold radar screen glow in the background, soft warm spill from distant runway lights gently illuminating her face, slow subtle dolly pull-back to frame her gentle expression and the approaching plane outside, desaturated cool grade with warm amber face accents from runway light, realistic documentary tone, high detail on fabric and glass texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH06",
+			"prompt": "Cinematic 16:9 wide shot of an aircraft landing safely on the realistic wet airport runway at night, landing gear touching the ground, warm amber landing lights glowing on both sides of the runway, dark night sky background with faint glow from distant control tower windows, high contrast between bright warm light sources and dark cool surroundings, static locked-off camera movement to capture the touchdown moment, desaturated cool color grade with warm amber accents on runway lights, realistic documentary atmospheric tone, high detail on aircraft landing gear and wet runway texture, text \"落地了，就回家\" will be added in post-production, no on-screen text in generated footage. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

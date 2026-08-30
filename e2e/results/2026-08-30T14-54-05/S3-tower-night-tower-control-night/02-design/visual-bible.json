@@ -1,0 +1,19 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"nighttime professional",
+		"documentary",
+		"atmospheric",
+		"industrial"
+	],
+	"palette": [
+		"#0a1f3b",
+		"#c0d6e4",
+		"#ffaa00",
+		"#2d2d2d",
+		"#f5f5f5"
+	],
+	"lighting": "Low-key cool ambient lighting dominated by radar screen glow and distant runway lights, with soft warm spill from control panel LEDs and indicator lights, minimal harsh shadows to maintain realistic atmosphere.",
+	"grade": "Cool desaturated color grade with lifted shadow detail, subtle teal undertone in dark areas, warm amber accents restricted to runway light sources, high micro-contrast on instrument displays for readability."
+}

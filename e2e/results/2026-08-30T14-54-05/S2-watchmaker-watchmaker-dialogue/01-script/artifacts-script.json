@@ -1,0 +1,108 @@
+{
+	"title": "老城修表铺",
+	"logline": "大学生林小满携奶奶遗表寻修表匠贺师傅修理，在拆表讲述中读懂祖辈未诉尽的牵挂。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "A young woman in a cream knit cardigan and plaid skirt, eyes red and swollen, walks into an old watch repair shop and places a worn vintage women's watch on the wooden workbench.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "林小满",
+				"lines": {
+					"zh": "师傅，麻烦修下这块表。",
+					"en": "Master, could you please fix this watch?"
+				},
+				"emotion": "哽咽",
+				"voiceId": "qingchunshaonv",
+				"rawDurationSec": 3.024,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfy1lk9-5/tts-SH01.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "情绪怅然带忐忑，语速偏慢，气息轻缓下沉，重音落在「旧」字，像藏着没说出口的念想"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The 58-year-old watchmaker with short graying hair, wearing a dark brown old vest and white shirt, with a single-eye magnifier over his right eye, picks up the watch and studies it gently.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "这表，我三十年前修过。",
+					"en": "I fixed this watch thirty years ago."
+				},
+				"emotion": "平和",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 3.096,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfy1lk9-5/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "情绪沉稳带暖意，语速平缓，气息平稳，重音落在「常」字，像提起老熟人般自然"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "三十年前，它的主人常来铺里坐。",
+			"narrationEn": "Thirty years ago, its owner used to sit in this shop often.",
+			"visual": "The watchmaker uses fine tweezers to disassemble the watch on the workbench, tiny gears clinking softly under the green desk lamp.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "情绪柔缓带追忆，语速稍慢，「三十年前」后轻顿，重音落在「常来」，气息轻软如翻旧相册"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "她说表停时，正等老伴送玫瑰。",
+			"narrationEn": "She said the watch stopped when she was waiting for her husband to bring her roses.",
+			"visual": "The young woman watches the watchmaker's steady hands at work, tears streaming down her face but her lips curving into a soft, wobbly smile.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "情绪柔婉带动容，语速放缓，重音落在「等」「玫瑰」，气息轻颤，藏着没说出口的酸涩"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The watchmaker holds a tiny polished gear up to the magnifying lamp, his hands completely still as he inspects it.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "等不到花，表就停了。",
+					"en": "She never got the roses, so the watch stopped."
+				},
+				"emotion": "温和",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 2.448,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfy1lk9-5/tts-SH05.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "情绪专注带郑重，语速偏慢，气息平稳沉缓，像在碰易碎的旧念想"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "表修的不是时间，是没说完的话。",
+			"narrationEn": "What we repair is not time, but the unfinished words left behind.",
+			"visual": "The young woman nods, wiping her tears with the back of her hand, her eyes fixed on the scattered watch parts on the workbench.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "情绪释然带暖意，语速稍缓，重音落在「不是时间」「没说完的话」，气息轻稳，似终于懂了藏在表里的心事"
+		},
+		{
+			"id": "SH07",
+			"narrationZh": "老城修表铺，留住想留的时光。",
+			"narrationEn": "Old City Watch Repair Shop: preserve the moments you want to keep.",
+			"visual": "The watchmaker hands the fully assembled, ticking watch back to the young woman, both of them sharing a soft, warm smile.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "情绪温暖收束，语速放缓，重音落在「留住」「想留的时光」，气息柔缓带余韵，像把旧时光轻轻递回手里"
+		}
+	]
+}

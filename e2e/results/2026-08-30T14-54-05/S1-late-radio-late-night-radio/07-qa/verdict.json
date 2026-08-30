@@ -1,0 +1,71 @@
+{
+	"overall": "pass",
+	"score": 82,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 88
+		},
+		{
+			"id": "visualConsistency",
+			"score": 92
+		},
+		{
+			"id": "pacing",
+			"score": 88
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 92
+		},
+		{
+			"id": "characterConsistency",
+			"score": 95
+		},
+		{
+			"id": "audioSync",
+			"score": 17
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过。录音室场景真实，女主播戴耳机面对麦克风，表情平静专注，酒红色衬衫与设定一致，符合深夜电台主播接听电话的初始状态。"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "通过。车内夜间环境真实，司机戴耳机手扶方向盘，白发蓝衬衫符合中年司机形象，表情激动含泪，符合'最想哭的一晚'的情绪表达。"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过。录音室女主播面部特写，表情投入温和，与SH01服装发型一致，情绪传递到位，符合'安静接话'的剧情需求。"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过。全景展示直播间环境，电脑屏幕显示'方晚 深夜电台直播间'，字幕'开给家人的路，有我们陪你。'文字清晰无乱码，符合剧情关键信息。"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过。女主播特写，张嘴说话表情生动，手部操作调音台，手指自然无畸形，与前期镜头人物状态一致。"
+		},
+		{
+			"id": "SH06",
+			"verdict": "ok",
+			"reason": "通过。全景镜头，电脑屏幕显示直播间信息与出租车画面，底部字幕完整清晰，画面构图稳定，无穿模或物体形变。"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 1,
+		"issues": []
+	}
+}

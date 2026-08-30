@@ -1,0 +1,37 @@
+{
+	"brief": {
+		"logline": "写实真人剧情短片：老城修表铺。大学生林小满拿来奶奶留下的旧手表请修表匠贺师傅修理——表停在一个特殊的时间点。贺师傅一边拆表一边讲这块表的原主人三十年前来修过它，林小满边听边掉眼泪又笑。五轮对讲来回，旁白两句交代铺子与时间。全部戏在一张工作台与两只手上。",
+		"keyMessage": "表修的不是时间，是没说完的话。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 7,
+		"clipDurationSec": 6,
+		"fps": 24,
+		"motionIntensity": "low",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "贺师傅",
+				"description": "58 岁男性修表匠，深棕色旧马甲配白衬衫，右眼戴单目放大镜，花白短发，手极稳"
+			},
+			{
+				"name": "林小满",
+				"description": "22 岁女性大学生，米白色针织开衫配格子裙，黑长直发，眼睛红肿，攥着一块旧女表"
+			}
+		],
+		"scenes": [
+			{
+				"name": "修表铺",
+				"description": "写实老修表铺：玻璃柜台、台灯放大镜、挂钟一墙、绿罩工作灯、木质抽屉柜"
+			}
+		],
+		"musicBrief": "无音乐，只要镊子与齿轮的细响。"
+	}
+}

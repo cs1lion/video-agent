@@ -1,0 +1,147 @@
+{
+	"title": "三点十七分的约定",
+	"logline": "大学生林小满带奶奶留下的停摆旧表找修表匠贺师傅修理，修表过程中贺师傅讲述三十年前表主人的故事，修好的表承载着未说出口的约定。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "He Qiang, the 58-year-old watchmaker in a dark brown old vest and white shirt with a monocular magnifier over his right eye, looks up from his cluttered workbench as Lin Xiaoman, a 22-year-old college girl in a cream knit cardigan and plaid skirt with long black hair and red swollen eyes, walks into the old watch shop holding an old ladies' watch.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "放这儿吧，我看看。",
+					"en": "Put it here, let me have a look."
+				},
+				"emotion": "温和",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 2.184,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfzmuta-8/tts-SH01.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "沉缓厚重，带老城岁月感，语速偏慢，重音落在「老铺」「三十载」，气息下沉，尾音稍滞"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Close-up of He Qiang's steady hands placing the old watch under the green desk lamp with the magnifying glass, while Lin Xiaoman sits across the wooden workbench, her hands clenched tightly around the watch.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "这表啊，三十年前也有人拿来修过。",
+					"en": "This watch, someone brought it in for repair thirty years ago too."
+				},
+				"emotion": "感慨",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 3.984,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfzmuta-8/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "珍重平稳，语速缓，重音在「旧表」「轻放」，气息稳，放表前微顿半秒"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "He Qiang carefully removes the watch gears with thin tweezers, the soft ticking of gears and the wall clock filling the quiet shop, as Lin listens quietly with tears welling up in her eyes.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "那是个姑娘，说表停了，等的人没来。",
+					"en": "It was a young woman, she said the watch stopped, the person she waited for never came."
+				},
+				"emotion": "怀念",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 4.224,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfzmuta-8/tts-SH03.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "专注探究，语速适中，重音在「细齿」「纹路」，气息轻缓，像怕碰碎旧时光"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Close-up of Lin Xiaoman's face, tears streaming down her cheeks but a soft smile tugging at her lips as she watches He Qiang work, the glass counter and wooden drawer cabinet visible in the background.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "林小满",
+				"lines": {
+					"zh": "我奶奶说，她等了一辈子。",
+					"en": "My grandma said she waited her whole life."
+				},
+				"emotion": "哽咽又带笑",
+				"voiceId": "qingchunshaonv",
+				"rawDurationSec": 3.264,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfzmuta-8/tts-SH04.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "酸涩裹暖，语速稍缓，重音在「当年」「等」，气息带颤，像忍着泪意"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "He Qiang adjusts the watch hands precisely under the magnifying glass, the watch face clearly showing 3:17, the wall clock behind him also displaying the same time.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "停的时间，是下午三点十七分。",
+					"en": "The time it stopped was 3:17 in the afternoon."
+				},
+				"emotion": "笃定",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 3.648,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfzmuta-8/tts-SH05.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "郑重温软，语速慢，重音在「指到」「那个点」，气息稳，调指针时微顿"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "He Qiang hands the repaired watch back to Lin Xiaoman, who takes it gently with both hands, her fingers brushing the worn watch surface softly.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "贺师傅",
+				"lines": {
+					"zh": "表修的不是时间，是没说完的话。",
+					"en": "We don't repair time for the watch, we repair the unfinished words."
+				},
+				"emotion": "释然",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 4.104,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfzmuta-8/tts-SH06.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "温和带暖意，语速缓，重音在「修好了」「等到了」，气息轻扬，带浅淡笑意"
+		},
+		{
+			"id": "SH07",
+			"narrationZh": "老城的钟，永远记得没说完的约定。",
+			"narrationEn": "The old town's clock always remembers the unfinished promises.",
+			"visual": "The warm green desk lamp glows over the empty workbench, the wall full of old clocks ticking softly, as the front door of the old watch shop stands slightly ajar letting in soft daylight.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "舒展释然，带暖怅惘，语速慢，重音落在「记得」「约定」，气息悠长，尾音轻收"
+		}
+	]
+}

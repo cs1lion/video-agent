@@ -1,0 +1,38 @@
+{
+	"checkedAt": "2026-08-30T15:24:47.940Z",
+	"model": "step-3.7-flash",
+	"fingerprint": "51cef78520ee3d30",
+	"overall": "画风、色调、场景风格统一，女性管制员与男性飞行员主角外观各自前后一致，场景切换合理，无明显穿帮。",
+	"shots": [
+		{
+			"shotId": "SH01",
+			"appearance": "深蓝色短袖制服、金色短发（盘起）、坐姿、戴耳机",
+			"issues": []
+		},
+		{
+			"shotId": "SH02",
+			"appearance": "深蓝色短袖制服、金色短发（盘起）、坐姿、戴耳机",
+			"issues": []
+		},
+		{
+			"shotId": "SH03",
+			"appearance": "白色飞行员制服、黑色短发、戴耳机、驾驶舱场景",
+			"issues": []
+		},
+		{
+			"shotId": "SH04",
+			"appearance": "深蓝色短袖制服、金色发髻、站姿、戴耳机",
+			"issues": []
+		},
+		{
+			"shotId": "SH05",
+			"appearance": "深蓝色短袖制服、金色发髻、站姿、戴耳机（双手调整）",
+			"issues": []
+		},
+		{
+			"shotId": "SH06",
+			"appearance": "深蓝色短袖制服、金色发髻、站姿、戴耳机",
+			"issues": []
+		}
+	]
+}

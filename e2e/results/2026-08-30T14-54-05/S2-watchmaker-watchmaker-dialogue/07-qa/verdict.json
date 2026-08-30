@@ -1,0 +1,76 @@
+{
+	"overall": "pass",
+	"score": 90,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 95
+		},
+		{
+			"id": "visualConsistency",
+			"score": 93
+		},
+		{
+			"id": "pacing",
+			"score": 92
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 95
+		},
+		{
+			"id": "characterConsistency",
+			"score": 96
+		},
+		{
+			"id": "audioSync",
+			"score": 57
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过。女生持表请求修理，场景布置与修表铺设定高度契合，人物动作自然。"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "通过。女生特写镜头，持表动作与SH01连贯，人物形象一致，背景师傅虚化符合景深逻辑。"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过。贺师傅拆表讲述往事，老年修表匠形象（白发、背心、单眼放大镜）符合职业特征，手部操作准确。"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过。贺师傅精细操作场景，工具使用（镊子、放大镜）符合修表工艺，人物与SH03保持一致。"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过。女生情感反应镜头，哭泣表情与剧情转折吻合，手部放置桌面姿态自然，无肢体异常。"
+		},
+		{
+			"id": "SH06",
+			"verdict": "ok",
+			"reason": "通过。贺师傅展示齿轮揭示表停原因，道具（齿轮、工作台）准确，人物形象与前期镜头一致。"
+		},
+		{
+			"id": "SH07",
+			"verdict": "ok",
+			"reason": "通过。两人同框镜头，从悲伤到微笑的情感转变自然，手部互动（持表、擦泪）符合物理逻辑，字幕点题。"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 7,
+		"issues": []
+	}
+}

@@ -1,0 +1,105 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "苏青",
+			"design": "35-year-old female air traffic controller, neat navy blue uniform shirt, hair tightly tied up in a bun, wearing over-ear headset, focused sharp expression, professional aviation styling, front-facing medium shot, cool tone night lighting matching the tower environment, realistic detailed texture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T16:05:58.405Z"
+			},
+			"url": "/api/runs/run-mtg01zzn-9/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "周远航",
+			"design": "51-year-old male commercial pilot, white uniform with four captain rank stripes on the sleeves, short black hair with noticeable white strands, sharp angular jawline, upright sitting posture in the cockpit, realistic professional aviator look, mixed cool-warm lighting, front-facing medium shot matching the flight deck environment.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T16:05:58.405Z"
+			},
+			"url": "/api/runs/run-mtg01zzn-9/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "塔台通话面板",
+			"design": "Aviation control tower communication console panel, matte dark gray metal casing, glowing status indicator lights, rows of functional buttons and small digital displays, placed on the control desk in front of Su Qing, realistic industrial texture, close-up shot, cool screen glow lighting highlighting its operational details.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T16:05:58.405Z"
+			},
+			"url": "/api/runs/run-mtg01zzn-9/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "机场跑道灯串",
+			"design": "Airport runway edge light string, warm yellow-orange glowing lights evenly spaced along the runway, visible through the tower's panoramic window, soft diffused light in the dark night sky, realistic aviation lighting effect, balanced with the cool interior lighting of the control tower, environmental shot.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T16:05:58.405Z"
+			},
+			"url": "/api/runs/run-mtg01zzn-9/files/assets/design-prop-PR02.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "夜间塔台控制室",
+			"design": "Realistic night airport control tower interior, circular panoramic windows surrounding the space, radar screens emitting cold blue glow, dim overhead control panel lights, a coffee cup placed on the console, distant runway lights visible outside the window, cool desaturated color grade, low contrast lighting, wide environmental shot showing the professional tense atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T16:05:58.405Z"
+			},
+			"url": "/api/runs/run-mtg01zzn-9/files/assets/design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "航班驾驶舱内景",
+			"design": "Realistic commercial aircraft cockpit interior during night landing, dashboard instrument lights glowing softly, front windshield showing the dark night sky and streaking runway lights, Captain Zhou Yuanhang sitting upright at the controls, mixed cool interior and warm runway lighting, close-up shot matching the tense yet warm emotional tone of the scene.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T16:05:58.405Z"
+			},
+			"url": "/api/runs/run-mtg01zzn-9/files/assets/design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-30T16:05:15.064Z"
+}

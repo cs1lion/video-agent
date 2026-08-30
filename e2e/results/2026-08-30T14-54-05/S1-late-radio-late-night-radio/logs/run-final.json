@@ -1,0 +1,760 @@
+{
+	"id": "run-mtfxjvzc-4",
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 20,
+		"retries": 0,
+		"perAdapter": {
+			"step-tts": 1,
+			"agnes-video-3": 1,
+			"agnes-video-1": 2,
+			"agnes-video-4": 1,
+			"agnes-video-2": 2
+		},
+		"cost": {
+			"spent": 45.41,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 82,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 88
+			},
+			{
+				"id": "visualConsistency",
+				"score": 92
+			},
+			{
+				"id": "pacing",
+				"score": 88
+			},
+			{
+				"id": "physicalAccuracy",
+				"score": 92
+			},
+			{
+				"id": "characterConsistency",
+				"score": 95
+			},
+			{
+				"id": "audioSync",
+				"score": 17
+			},
+			{
+				"id": "textQuality",
+				"score": 100
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "通过。录音室场景真实，女主播戴耳机面对麦克风，表情平静专注，酒红色衬衫与设定一致，符合深夜电台主播接听电话的初始状态。"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "通过。车内夜间环境真实，司机戴耳机手扶方向盘，白发蓝衬衫符合中年司机形象，表情激动含泪，符合'最想哭的一晚'的情绪表达。"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "通过。录音室女主播面部特写，表情投入温和，与SH01服装发型一致，情绪传递到位，符合'安静接话'的剧情需求。"
+			},
+			{
+				"id": "SH04",
+				"verdict": "ok",
+				"reason": "通过。全景展示直播间环境，电脑屏幕显示'方晚 深夜电台直播间'，字幕'开给家人的路，有我们陪你。'文字清晰无乱码，符合剧情关键信息。"
+			},
+			{
+				"id": "SH05",
+				"verdict": "ok",
+				"reason": "通过。女主播特写，张嘴说话表情生动，手部操作调音台，手指自然无畸形，与前期镜头人物状态一致。"
+			},
+			{
+				"id": "SH06",
+				"verdict": "ok",
+				"reason": "通过。全景镜头，电脑屏幕显示直播间信息与出租车画面，底部字幕完整清晰，画面构图稳定，无穿模或物体形变。"
+			}
+		],
+		"subtitles": {
+			"present": true,
+			"lines": 1,
+			"issues": []
+		}
+	},
+	"videoUrl": "/api/runs/run-mtfxjvzc-4/files/assets/final.mp4",
+	"brief": {
+		"logline": "写实真人剧情短片：深夜电台直播间。女主播方晚接进一位夜班出租车司机陈国平的电话连线——司机说今晚是他开车二十年最想哭的一晚，女儿考上了大学他却在两百公里外跑车；主播安静接话，两人一来一往四轮对讲，旁白两句交代时段与电波。全部情绪靠声音与面部特写完成。",
+		"keyMessage": "有些路，是开给家里人听的。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 6,
+		"clipDurationSec": 7,
+		"fps": 24,
+		"motionIntensity": "low",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"images": [],
+	"events": [
+		{
+			"id": "ev-78abea2d",
+			"at": "2026-08-30T14:54:05.740Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "项目开机 🎬 需求「写实真人剧情短片：深夜电台直播间。女主播方晚接进一位夜班出租车司机陈国平的电话连…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"
+		},
+		{
+			"id": "ev-297c7832",
+			"at": "2026-08-30T14:54:05.744Z",
+			"from": "writer",
+			"to": "producer",
+			"kind": "status",
+			"text": "编剧开工：解析需求，搭建 6 镜叙事骨架。"
+		},
+		{
+			"id": "ev-ad3ffd57",
+			"at": "2026-08-30T14:54:35.606Z",
+			"from": "writer",
+			"to": "art",
+			"kind": "handoff",
+			"text": "剧本《开给家人的路》完成：6 镜，42s。Logline：深夜电台主播与错过女儿升学宴的出租车司机通过电波共情，传递父爱无声的温暖与品牌理念。。请据此制定全片视觉规范。"
+		},
+		{
+			"id": "ev-9c7f21b6",
+			"at": "2026-08-30T14:54:35.607Z",
+			"from": "art",
+			"to": "writer",
+			"kind": "status",
+			"text": "美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"
+		},
+		{
+			"id": "ev-84b7c4a5",
+			"at": "2026-08-30T14:54:56.358Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计开工：6 张概念设计图（人物 2 · 道具 2 · 场景 2）逐张绘制中。"
+		},
+		{
+			"id": "ev-2bf888be",
+			"at": "2026-08-30T14:54:59.980Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「方晚」（人物 CH01）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-8ff88c1f",
+			"at": "2026-08-30T14:55:03.587Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「陈国平」（人物 CH02）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-06959991",
+			"at": "2026-08-30T14:55:07.045Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「监听耳机」（道具 PR01）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-f308f35b",
+			"at": "2026-08-30T14:55:10.579Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「方向盘旧毛巾」（道具 PR02）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-f5b7aee0",
+			"at": "2026-08-30T14:55:14.438Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「深夜电台直播间」（场景 SC01）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-5ef070c6",
+			"at": "2026-08-30T14:55:19.012Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「深夜出租车驾驶舱」（场景 SC02）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-de499a2f",
+			"at": "2026-08-30T14:55:19.014Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"
+		},
+		{
+			"id": "ev-298f391a",
+			"at": "2026-08-30T14:55:19.015Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "status",
+			"text": "审校员核对设计图：逐张比对画面与设计要点…"
+		},
+		{
+			"id": "ev-f0f6090c",
+			"at": "2026-08-30T14:56:14.901Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "redo",
+			"text": "设计图自审发现问题 ⚠️：「方向盘旧毛巾」设计要点为褪色带小撕裂的破旧棉质毛巾，画面中为紫色无明显破旧痕迹的毛巾。安排美术指导带意见重绘。"
+		},
+		{
+			"id": "ev-e4343bfb",
+			"at": "2026-08-30T14:56:23.238Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "「方向盘旧毛巾」已按审核意见重绘，提交复审…"
+		},
+		{
+			"id": "ev-debea7a6",
+			"at": "2026-08-30T14:56:39.942Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "qa",
+			"text": "设计图重绘后仍有问题 ⚠️：「方向盘旧毛巾」设计要点要求68岁银灰发老人，画面为黑发中年男性、设计要点要求毛巾为褪色（faded color），画面为鲜艳紫色、设计要点要求冷光（cool dim light），画面光线偏暖。已在帧上标注，确认前请人工定夺（可手动重绘或确认放行）。"
+		},
+		{
+			"id": "ev-c1f00935",
+			"at": "2026-08-30T14:56:39.943Z",
+			"from": "art",
+			"to": "storyboard",
+			"kind": "handoff",
+			"text": "美术设计定稿：风格 [cinematic / realistic / close-up / late-night / intimate / dialogue-driven / documentary-style / low-key]，色板 #722F37、#000000、#FFD166、#1E3A8A。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"
+		},
+		{
+			"id": "ev-b7768316",
+			"at": "2026-08-30T14:56:39.944Z",
+			"from": "art",
+			"to": "client",
+			"kind": "status",
+			"text": "美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。",
+			"link": {
+				"stage": "bible",
+				"label": "查看美术设计"
+			}
+		},
+		{
+			"id": "ev-3d231db3",
+			"at": "2026-08-30T14:56:41.042Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "美术设计已确认 ✅ 开始绘制分镜关键帧。"
+		},
+		{
+			"id": "ev-035924aa",
+			"at": "2026-08-30T14:56:41.043Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「分镜提示词」继续，直至成片。"
+		},
+		{
+			"id": "ev-59dfd70c",
+			"at": "2026-08-30T14:56:41.044Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "status",
+			"text": "分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"
+		},
+		{
+			"id": "ev-26f4aaf5",
+			"at": "2026-08-30T14:57:21.520Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：方晚(CH01)、深夜电台直播间(SC01)。"
+		},
+		{
+			"id": "ev-81200b32",
+			"at": "2026-08-30T14:57:21.521Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-06e3562a",
+			"at": "2026-08-30T14:57:25.770Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：方晚(CH01)、深夜电台直播间(SC01)。"
+		},
+		{
+			"id": "ev-4c7f1209",
+			"at": "2026-08-30T14:57:25.771Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-9f138740",
+			"at": "2026-08-30T14:57:30.235Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：方晚(CH01)、深夜电台直播间(SC01)。"
+		},
+		{
+			"id": "ev-0b10278f",
+			"at": "2026-08-30T14:57:30.236Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-65a90dab",
+			"at": "2026-08-30T14:57:37.662Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：方晚(CH01)、深夜电台直播间(SC01)。"
+		},
+		{
+			"id": "ev-2130317a",
+			"at": "2026-08-30T14:57:37.663Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-b21b431b",
+			"at": "2026-08-30T14:57:48.882Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：方晚(CH01)、深夜电台直播间(SC01)。"
+		},
+		{
+			"id": "ev-3429c5c4",
+			"at": "2026-08-30T14:57:48.884Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-7738a9d0",
+			"at": "2026-08-30T14:57:56.104Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：方晚(CH01)、深夜电台直播间(SC01)。"
+		},
+		{
+			"id": "ev-03b03f98",
+			"at": "2026-08-30T14:57:56.106Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH06 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-d872047a",
+			"at": "2026-08-30T14:58:00.323Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "handoff",
+			"text": "分镜锁定 ✅ 6 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"
+		},
+		{
+			"id": "ev-05b22358",
+			"at": "2026-08-30T14:58:00.325Z",
+			"from": "storyboard",
+			"to": "client",
+			"kind": "status",
+			"text": "关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。",
+			"link": {
+				"stage": "keyframes",
+				"label": "查看关键帧"
+			}
+		},
+		{
+			"id": "ev-6c7932ea",
+			"at": "2026-08-30T14:58:01.218Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「音频」继续，直至成片。"
+		},
+		{
+			"id": "ev-aff7ae99",
+			"at": "2026-08-30T14:58:01.221Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"
+		},
+		{
+			"id": "ev-b9d8b32b",
+			"at": "2026-08-30T14:58:01.223Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "配音选角：旁白＝播音男声；角色 方晚→经典女声、陈国平→自信男声；与角色声线全部错开。"
+		},
+		{
+			"id": "ev-688dbe99",
+			"at": "2026-08-30T14:58:12.906Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH06（指导：情绪温暖有力量，语速稍缓，气息饱满，『陪你』重读带暖意，结尾…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH06",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-b72c346f",
+			"at": "2026-08-30T14:58:12.908Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "旁白轨交付：1/6 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"
+		},
+		{
+			"id": "ev-a7d55636",
+			"at": "2026-08-30T14:58:12.911Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 提交生成（720p · 7s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium close-up of 32-year-old female radio h…"
+		},
+		{
+			"id": "ev-ef50df97",
+			"at": "2026-08-30T14:58:12.919Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 提交生成（720p · 7s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium close-up of 47-year-old male taxi driv…"
+		},
+		{
+			"id": "ev-702e4f85",
+			"at": "2026-08-30T14:58:12.928Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 提交生成（720p · 7s · 关键帧+提示词 图生视频）：Cinematic 16:9 close-up of 32-year-old female radio host Fan…"
+		},
+		{
+			"id": "ev-bc85e53b",
+			"at": "2026-08-30T14:58:12.942Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 提交生成（720p · 7s · 关键帧+提示词 图生视频）：Cinematic 16:9 close-up of 47-year-old male taxi driver Chen…"
+		},
+		{
+			"id": "ev-b1a5f8d9",
+			"at": "2026-08-30T14:58:12.949Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 提交生成（720p · 7s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium close-up of 32-year-old female radio h…"
+		},
+		{
+			"id": "ev-cf20d7ff",
+			"at": "2026-08-30T14:58:12.952Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH06 提交生成（720p · 7s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium shot of the lit radio program logo nex…"
+		},
+		{
+			"id": "ev-c8f231fb",
+			"at": "2026-08-30T14:59:35.289Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH01 生成完成 ✅（1/6）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-289ad051",
+			"at": "2026-08-30T15:01:13.794Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH02 生成完成 ✅（2/6）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-7c225564",
+			"at": "2026-08-30T15:01:13.951Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH03 生成完成 ✅（3/6）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-d8c070ae",
+			"at": "2026-08-30T15:01:14.109Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH04 生成完成 ✅（4/6）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-4fc3c5d1",
+			"at": "2026-08-30T15:02:03.166Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH05 生成完成 ✅（5/6）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-d0894f6e",
+			"at": "2026-08-30T15:04:24.076Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH06 生成完成 ✅（6/6）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH06",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-fc70aa17",
+			"at": "2026-08-30T15:04:24.078Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "镜头批次交付：6/6 镜成功，移交剪辑师归一化与合成。"
+		},
+		{
+			"id": "ev-e1ec6e6a",
+			"at": "2026-08-30T15:04:24.079Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "status",
+			"text": "剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"
+		},
+		{
+			"id": "ev-d6d34474",
+			"at": "2026-08-30T15:05:07.530Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "粗剪完成（6 镜 · 37.7s · 720p 16:9，转场：叠化 0.5s、叠化 0.5s，音效：嗖声、嗖声，响度 -14 LUFS），移交审片员质检。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "播放成片"
+			}
+		},
+		{
+			"id": "ev-fb5ed211",
+			"at": "2026-08-30T15:07:45.963Z",
+			"from": "reviewer",
+			"to": "client",
+			"kind": "qa",
+			"text": "跨镜一致性预检 ⚠️ 3 处异常：SH01（酒红色衬衫、黑色短发、发夹、头戴式耳机）、SH02（女性：酒红色衬衫、黑色短发、发夹、头戴式耳机；男性驾驶员：蓝）、SH04（驾驶员：蓝色制服、灰发、有明显胡茬、情绪激动（哭泣））。可在质量审读页查看详情并补拍。",
+			"link": {
+				"stage": "review",
+				"label": "查看一致性"
+			}
+		},
+		{
+			"id": "ev-c2a2350b",
+			"at": "2026-08-30T15:07:45.964Z",
+			"from": "reviewer",
+			"to": "producer",
+			"kind": "qa",
+			"text": "质检结论：通过 ✅（综合 82）。最短板 audioSync 17 分。另有 3 处跨镜一致性异常请关注。"
+		},
+		{
+			"id": "ev-24799d4e",
+			"at": "2026-08-30T15:07:45.965Z",
+			"from": "producer",
+			"to": "client",
+			"kind": "status",
+			"text": "全片交付 🎉 成片与七轴质检报告已就绪。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "查看成片"
+			}
+		}
+	],
+	"awaitingResume": false,
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"finalFile": "final.mp4",
+	"costEstimate": {
+		"total": 43.12,
+		"currency": "CNY",
+		"lines": [
+			{
+				"label": "剧本 LLM",
+				"amount": 0.65,
+				"note": "约 2k 输入 + 1.5k 输出 token"
+			},
+			{
+				"label": "美术设计 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "分镜提示词 LLM",
+				"amount": 0.97,
+				"note": "按 shotCount 翻倍"
+			},
+			{
+				"label": "EDL 转场 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "配音指导 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "审片多模 LLM",
+				"amount": 0.65,
+				"note": "含抽帧多模输入"
+			},
+			{
+				"label": "设计稿概念图",
+				"amount": 2,
+				"note": "4 张"
+			},
+			{
+				"label": "分镜关键帧",
+				"amount": 3,
+				"note": "6 张"
+			},
+			{
+				"label": "视频生成",
+				"amount": 33.6,
+				"note": "6 段 × 7s"
+			},
+			{
+				"label": "TTS 配音",
+				"amount": 0.3,
+				"note": "每镜粗估 1k 字符"
+			}
+		]
+	},
+	"productionShots": 6,
+	"dialogueShotCount": 0
+}

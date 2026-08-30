@@ -1,0 +1,23 @@
+{
+	"designReview": null,
+	"keyframeReview": null,
+	"reshotShots": [],
+	"rettsShots": [],
+	"composeCuts": [],
+	"portraitExports": [],
+	"kitchen": null,
+	"applied": [],
+	"metrics": {
+		"quotaUtilization": null,
+		"effectiveThroughput": 0.599,
+		"p0LatencyP95": null,
+		"wasteRate": null,
+		"rejectionRate": null,
+		"consumedSec": 0,
+		"effectiveSec": 42,
+		"wastedSec": 0,
+		"completedClips": 6,
+		"failedClips": 0
+	},
+	"errors": []
+}

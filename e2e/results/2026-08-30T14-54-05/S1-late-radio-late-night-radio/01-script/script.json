@@ -1,0 +1,60 @@
+{
+	"title": "开给家人的路",
+	"logline": "深夜电台主播与错过女儿升学宴的出租车司机通过电波共情，传递父爱无声的温暖与品牌理念。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "In the soundproofed radio studio, host Fang Wan in a deep burgundy shirt with a silver clip in her shoulder-length black hair and a monitor headset sits before the mic with a pop filter, the warm desk light illuminating her calm face, mixing console sliders beside her.",
+			"durationSec": 7,
+			"audioMode": "narration",
+			"ttsDirection": "情绪沉静舒缓，深夜电台特有的松弛感，语速偏缓，气息平稳，尾音带暖意，无刻意起伏"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "In the night taxi cabin, driver Chen Guoping in a dark blue work jacket with short gray hair and dark stubble grips the steering wheel with an old towel draped over it, faint street lights sweeping past the window, the dashboard glowing softly, windshield wipers remain still.",
+			"durationSec": 7,
+			"audioMode": "narration",
+			"ttsDirection": "情绪疲惫又强撑克制，语速稍慢，带沙哑质感，『二十年』『两百公里』重读，气息下沉，句尾有短暂停顿"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Back in the radio studio, Fang Wan leans slightly toward the mic, her expression gentle as she listens, the warm desk light casting soft shadows on the mixing console sliders.",
+			"durationSec": 7,
+			"audioMode": "narration",
+			"ttsDirection": "情绪共情关切，语速放缓，气息轻柔，『嗯』『女儿』重读带软意，句尾留半秒停顿感"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Chen Guoping blinks hard to hold back tears, his voice trembling, the small hanging ornament on the taxi's rearview mirror swaying slightly with the car's movement.",
+			"durationSec": 7,
+			"audioMode": "narration",
+			"ttsDirection": "情绪强忍泪水，语速滞涩，气息发颤，『最想哭』重读带哽咽，句中有半秒哽住的停顿"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "In the studio, Fang Wan's fingers rest lightly on the mixing console fader, her eyes soft with empathy as she speaks into the mic.",
+			"durationSec": 7,
+			"audioMode": "narration",
+			"ttsDirection": "情绪坚定又温柔，语速平稳，气息稳，『我们』重读带暖意，尾音轻扬带安抚感"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "开给家人的路，有我们陪你。",
+			"narrationEn": "The road for family, we walk with you.",
+			"visual": "The radio program's logo lights up next to the mic, with the car brand logo displayed on the studio monitor showing the taxi cruising on the quiet night highway under street lights.",
+			"durationSec": 7,
+			"audioMode": "narration",
+			"ttsDirection": "情绪温暖有力量，语速稍缓，气息饱满，『陪你』重读带暖意，结尾收束利落"
+		}
+	]
+}

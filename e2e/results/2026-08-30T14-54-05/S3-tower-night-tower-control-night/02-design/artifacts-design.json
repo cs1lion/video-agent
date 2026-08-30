@@ -1,0 +1,105 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "苏青",
+			"design": "35-year-old female air traffic controller Su Qing, dark blue uniform shirt, hair neatly tied up without loose strands, wearing over-ear communication headset, sharp focused eyes, posture straight and upright as on duty, realistic cinematic style, medium shot from front, cool low-key lighting matching the tower's ambient glow, emphasizing her professional and calm temperament.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:19:30.860Z"
+			},
+			"url": "/api/runs/run-mtfydmna-6/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "周远航",
+			"design": "51-year-old male captain Zhou Yuanhang, white pilot uniform with four rank stripes on sleeves, short black hair mixed with white strands, sharp jawline, upright sitting posture, realistic cinematic style, medium shot from front, dim cabin lighting highlighting the details of his uniform and weathered features, conveying experienced aviator aura.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:19:30.860Z"
+			},
+			"url": "/api/runs/run-mtfydmna-6/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "塔台控制面板",
+			"design": "Air traffic control tower operation panel, matte dark gray industrial material, embedded with glowing cold blue indicator lights, function buttons and small display screens, realistic documentary texture, close-up shot, soft warm LED spill lighting on its surface, high micro-contrast for clear readability of interface details.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:19:30.860Z"
+			},
+			"url": "/api/runs/run-mtfydmna-6/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "跑道灯串",
+			"design": "Airport runway edge light string, bright amber light sources embedded along the wet runway, realistic weathered metal lamp posts, reflections visible on the damp runway surface, low-angle shot from the tower window, cool ambient night lighting contrasting with the warm amber glow of the lights.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:19:30.860Z"
+			},
+			"url": "/api/runs/run-mtfydmna-6/files/assets/design-prop-PR02.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "深夜塔台内部",
+			"design": "Realistic nighttime airport control tower interior, circular panoramic windows, cold glowing radar screens, communication equipment scattered on the operation desk, empty coffee cup, distant runway lights visible through the windows, low-key cool ambient lighting dominated by radar glow and panel LED spill, desaturated cool color grade with subtle teal undertones, wide shot showing the whole operation area.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:19:30.860Z"
+			},
+			"url": "/api/runs/run-mtfydmna-6/files/assets/design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "夜间降落跑道",
+			"design": "Realistic wet airport runway at night, landing lights on both sides emitting warm amber glow, dark night sky background, low-angle wide shot, cool desaturated color grade with lifted shadow details, wet runway surface reflecting the light sources, high contrast between bright amber lights and dark surroundings, realistic documentary atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:19:30.860Z"
+			},
+			"url": "/api/runs/run-mtfydmna-6/files/assets/design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-30T15:18:18.577Z"
+}

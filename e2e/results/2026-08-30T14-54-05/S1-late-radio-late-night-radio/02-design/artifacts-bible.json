@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"close-up",
+		"late-night",
+		"intimate",
+		"dialogue-driven",
+		"documentary-style",
+		"low-key"
+	],
+	"palette": [
+		"#722F37",
+		"#000000",
+		"#FFD166",
+		"#1E3A8A",
+		"#E5E7EB",
+		"#C0C0C0"
+	],
+	"lighting": "Soft warm desk lamp illuminates the host's face, with dim ambient light from the mixing console and faint cold street light seeping through the taxi window.",
+	"grade": "Warm muted tones for the radio studio, cool desaturated blue-grey for the taxi interior, with high contrast on facial close-ups to emphasize emotional nuance."
+}

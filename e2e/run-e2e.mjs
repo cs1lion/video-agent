@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { CASES } from "./cases.mjs";
 import { api } from "./lib/api.mjs";
 import { collectRun } from "./lib/collect.mjs";
-import { fileToDataUrl, synthesizeWav } from "./lib/wav.mjs";
+import { fileToDataUrl, synthesizeChordWav, synthesizeWav } from "./lib/wav.mjs";
 import { assertCase, writeBatchReport, writeCaseReport } from "./lib/report.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));

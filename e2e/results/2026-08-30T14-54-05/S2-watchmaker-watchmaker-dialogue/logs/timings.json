@@ -1,0 +1,40 @@
+{
+	"totalMs": 558253,
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"ms": 25056
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"ms": 125253
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"ms": 175378
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"ms": 205452
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"ms": 235553
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"ms": 461043
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"ms": 556293
+		}
+	]
+}

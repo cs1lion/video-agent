@@ -1,0 +1,203 @@
+{
+	"id": "run-mtfz9r4y-7",
+	"dir": "C:\\Users\\18712\\OneDrive\\桌面\\piagent-glm\\.pi-studio\\video-agent-runs\\2026-08-30-15-42-写实真人剧情短片：深夜电台直播间。女主播方晚接进-run-mtfz9r4y-7",
+	"brief": {
+		"creative": {
+			"logline": "写实真人剧情短片：深夜电台直播间。女主播方晚接进一位夜班出租车司机陈国平的电话连线——司机说今晚是他开车二十年最想哭的一晚，女儿考上了大学他却在两百公里外跑车；主播安静接话，两人一来一往四轮对讲，旁白两句交代时段与电波。全部情绪靠声音与面部特写完成。",
+			"keyMessage": "有些路，是开给家里人听的。"
+		},
+		"intent": {},
+		"generationDirectives": {
+			"script": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"visual": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"clips": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"audio": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"export": {
+				"promptFragment": "",
+				"sources": []
+			}
+		},
+		"interviewLog": [],
+		"generationOptions": {
+			"resolution": "720p",
+			"aspectRatio": "16:9",
+			"shotCount": 6,
+			"clipDurationSec": 7,
+			"fps": 24,
+			"motionIntensity": "low",
+			"detailBoost": true,
+			"promptLanguage": "zh",
+			"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+			"audioDrive": "dialogue"
+		},
+		"coSpace": {
+			"characters": [
+				{
+					"name": "方晚",
+					"description": "32 岁女性电台主播，深酒红色衬衫，黑色齐肩发别一枚银夹，戴监听耳机，语速稳"
+				},
+				{
+					"name": "陈国平",
+					"description": "47 岁男性出租车司机，深蓝色工装夹克，短灰发，胡茬青黑，方向盘上搭着一条旧毛巾"
+				}
+			],
+			"scenes": [
+				{
+					"name": "电台直播间",
+					"description": "写实的深夜电台：隔音棉墙、调音台推子、一盏桌面暖灯、防喷罩与话筒"
+				},
+				{
+					"name": "出租车内",
+					"description": "写实的深夜出租车驾驶位：零星路灯光扫过、挂饰轻晃、雨刮未开、仪表微光"
+				}
+			],
+			"ideas": [],
+			"musicBrief": "无音乐，只要直播间的安静与车内的引擎底噪。"
+		}
+	},
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 27,
+		"retries": 0,
+		"perAdapter": {
+			"step-tts": 6,
+			"agnes-video-4": 1,
+			"agnes-video-1": 2,
+			"agnes-video-2": 2,
+			"agnes-video-3": 1
+		},
+		"cost": {
+			"spent": 46.48,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 89,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 98
+			},
+			{
+				"id": "visualConsistency",
+				"score": 95
+			},
+			{
+				"id": "pacing",
+				"score": 95
+			},
+			{
+				"id": "physicalAccuracy",
+				"score": 100
+			},
+			{
+				"id": "characterConsistency",
+				"score": 100
+			},
+			{
+				"id": "audioSync",
+				"score": 33
+			},
+			{
+				"id": "textQuality",
+				"score": 100
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH04",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH05",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH06",
+				"verdict": "ok",
+				"reason": "通过"
+			}
+		],
+		"subtitles": {
+			"present": true,
+			"lines": 6,
+			"issues": []
+		}
+	},
+	"videoUrl": "/api/runs/run-mtfz9r4y-7/files/assets/final.mp4",
+	"images": [],
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"redoActive": null,
+	"finalFile": "final.mp4"
+}

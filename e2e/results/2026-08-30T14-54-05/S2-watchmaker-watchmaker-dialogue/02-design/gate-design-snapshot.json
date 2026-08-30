@@ -1,0 +1,80 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "贺师傅",
+			"design": "A 58-year-old male watchmaker with short graying hair, wearing a worn dark brown vest over a crisp white shirt, a single magnifying loupe over his right eye, steady dexterous hands, realistic textured skin and worn fabric, warm nostalgic tone, medium shot suitable for close-up of hands and face.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"url": "/api/runs/run-mtfy1lk9-5/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "林小满",
+			"design": "A 22-year-old female college student with long straight black hair, wearing a cream knit cardigan and plaid skirt, red swollen eyes, holding an old women's watch, soft vulnerable expression with tears, realistic warm tone, medium shot focusing on facial expression and hands.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"url": "/api/runs/run-mtfy1lk9-5/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "旧女表",
+			"design": "Old women's mechanical watch with a slightly worn silver case, stopped at a specific fixed time, faint scratches on the surface, realistic metallic texture, warm low-contrast tone, close-up shot suitable for showing fine details.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"url": "/api/runs/run-mtfy1lk9-5/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "修表工作台",
+			"design": "Worn wooden watch repair workbench scattered with tiny gears, tweezers and watch parts, a green-shaded work lamp placed on top, glass display cabinet in soft background, realistic worn wood texture, warm ambient lighting, medium shot showing the whole workbench surface.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"url": "/api/runs/run-mtfy1lk9-5/files/assets/design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "单目放大镜",
+			"design": "Single-eye magnifying loupe with metal frame and clear glass lens, worn realistic texture, close-up shot suitable for showing detail on the wearer's face and watch parts.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:09:56.011Z"
+			},
+			"url": "/api/runs/run-mtfy1lk9-5/files/assets/design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "修表铺工作台场景",
+			"design": "Intimate medium shot of a workbench in an old city watch repair shop, soft top-down illumination from the green-shaded work lamp, supplemented by warm ambient light from wall clocks and wooden cabinet lamps, scattered watch parts on the wooden surface, low-contrast warm desaturated tone with fine film grain, quiet nostalgic atmosphere, focus on the workbench and characters' hands.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"url": "/api/runs/run-mtfy1lk9-5/files/assets/design-scene-SC01.png"
+		}
+	],
+	"generatedAt": "2026-08-30T15:08:36.658Z"
+}

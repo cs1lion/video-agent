@@ -1,0 +1,29 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot of 35-year-old female air traffic controller Su Qing in neat navy blue uniform shirt, hair tightly tied up in a bun, wearing over-ear headset, sitting before glowing radar screens in a realistic night airport control tower interior with circular panoramic windows, a coffee cup on the console, distant runway lights twinkling outside, mixed lighting of cold radar screen glow, dim overhead panel lights and warm runway light filtering through windows, slow dolly push-in to show spatial depth, cool desaturated color grade with subtle warm highlights, professional tense atmosphere, high detail realistic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 medium close-up of 35-year-old female air traffic controller Su Qing in neat navy blue uniform shirt, hair tightly tied up in a bun, wearing over-ear headset, picking up the microphone with focused eyes fixed on the blinking delayed flight icon on the radar screen, realistic night control tower interior with cold blue radar glow surrounding her, low cool side light from the screen illuminating her face, slow dolly push-in to her focused expression, cool desaturated color grade, calm professional tone, high detail realistic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 medium shot of 51-year-old male commercial pilot Captain Zhou Yuanhang in white uniform with four captain rank stripes on the sleeves, short black hair mixed with noticeable white strands, sharp angular jawline, sitting upright in the cockpit holding the intercom, realistic commercial aircraft cockpit interior with softly glowing dashboard instrument lights, dark night sky and streaking runway lights visible through the front windshield, mixed lighting of cool interior instrument glow and warm runway light, slow dolly push-in from his shoulder to his hands, cool desaturated color grade with subtle warm highlights, steady professional tone, high detail realistic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 medium close-up of 35-year-old female air traffic controller Su Qing in neat navy blue uniform shirt, hair tightly tied up in a bun, wearing over-ear headset, speaking into the microphone with focused expression, communication panel in front of her softly lit with status indicators, realistic night control tower interior with cold radar glow in the background, dim overhead panel light and cool side light from the screen, slow dolly push-in to her face and the panel, cool desaturated color grade, professional calm tone, high detail realistic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 shot of 51-year-old male commercial pilot Captain Zhou Yuanhang in white uniform with four captain rank stripes on the sleeves, short black hair mixed with noticeable white strands, sitting upright in the cockpit as streaking warm runway lights pass the front windshield, mixed cool interior and warm runway lighting, slow handheld follow of the passing lights, then cut to 35-year-old female air traffic controller Su Qing in neat navy blue uniform shirt, hair tightly tied up in a bun, wearing over-ear headset, taking off her headset with a faint relieved smile in the night control tower, soft cold radar glow on her face, slow dolly push-in on her smile, cool desaturated color grade with subtle warm highlights, tense yet warm emotional tone, high detail realistic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH06",
+			"prompt": "Cinematic 16:9 medium shot of 35-year-old female air traffic controller Su Qing in neat navy blue uniform shirt, hair tightly tied up in a bun, wearing over-ear headset, looking out the circular panoramic window at the taxiing plane, warm distant runway lights filtering through the window, soft cold radar glow on her face, slow pan left from her soft expression to the plane outside, cool desaturated color grade with subtle warm highlights, gentle emotional tone, high detail realistic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

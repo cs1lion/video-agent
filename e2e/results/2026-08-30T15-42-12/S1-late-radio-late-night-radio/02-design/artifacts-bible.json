@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"slice-of-life",
+		"intimate",
+		"low-key",
+		"character-driven",
+		"nocturnal",
+		"broadcast-studio"
+	],
+	"palette": [
+		"#722F37",
+		"#1A1A1A",
+		"#FFD166",
+		"#0F1A2E",
+		"#A8C5D6",
+		"#5C5C5C"
+	],
+	"lighting": "Soft warm key light from the desk lamp on the radio studio table, low cool ambient light from control panel indicators, faint flickering street light through the taxi windshield casting dynamic soft shadows, faint dashboard glow illuminating the driver's face.",
+	"grade": "Muted desaturated tones overall, warm low-saturation palette for the studio, cool low-saturation palette for the taxi interior, lifted shadow detail with crushed deep blacks to preserve the quiet, heavy nocturnal mood."
+}

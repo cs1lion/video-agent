@@ -48,6 +48,33 @@ export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
 			);
 		}
 	}
+	// 对白密度守卫（2026-08-30 压力轮实证）：台词模式下 LLM 可能整本写成旁白
+	//（S1 电台片六镜 0 对白，brief 明确"四轮对讲"）——不足即带强化反馈重写一次。
+	if (opts.audioDrive === "dialogue") {
+		const dialogueCount = script.shots.filter((s) => s.audioMode === "dialogue").length;
+		const required = Math.max(2, Math.ceil(opts.shotCount / 2));
+		if (dialogueCount < required) {
+			pushEvent(
+				run,
+				"writer",
+				"producer",
+				"status",
+				`⚠️ 剧本对白密度不足（${dialogueCount} 镜有对白，brief 要求 ≥${required}）——强化重写一次。`,
+			);
+			throwIfAborted(signal);
+			script = await generateDoc<ScriptDoc>(
+				sc,
+				scriptMessages(
+					run.brief,
+					opts,
+					`上一次生成的剧本只有 ${dialogueCount} 个 dialogue 镜，不达标。brief 明确要求多轮对讲：本次必须让至少 ${required} 个镜头是 dialogue（每轮对白一个独立镜头，让角色开口说出台词），narration 仅限开场/收尾各至多一镜，严禁用旁白转述本该角色说的话。`,
+				),
+				refImageNote(run),
+				"script",
+			);
+			script = normalizeScript(script, opts);
+		}
+	}
 	// D1 闸门前置：台词模式下多角色对白必须拆镜。落盘前拦截——用户写完才发现
 	// 要拆镜的返工成本太高（且已烧 script 阶段配额）。违规镜降级为旁白，不阻断。
 	if (opts.audioDrive === "dialogue") {

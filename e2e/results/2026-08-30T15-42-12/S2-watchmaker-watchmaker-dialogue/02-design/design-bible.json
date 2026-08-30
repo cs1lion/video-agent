@@ -1,0 +1,84 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "贺师傅",
+			"design": "58-year-old male watchmaker with short graying hair, wearing a worn dark brown vest over a crisp white shirt, a monocular magnifier fixed on his right eye, extremely steady hands for delicate watch repair, steady experienced demeanor, front mid-shot, warm vintage color tone matching the retro watch repair shop setting.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:53:51.480Z"
+			}
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "林小满",
+			"design": "22-year-old female college student with long straight black hair, wearing a beige knit cardigan and plaid skirt, puffy red eyes from recent crying, clutching an old ladies' watch tightly, front mid-shot, soft warm lighting highlighting her soft emotional expression.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:53:51.480Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "旧女表",
+			"design": "Vintage ladies' mechanical watch with a worn silver case, stopped exactly at 3:17, small scratches on the white dial, aged brown leather strap, placed on tweezers or workbench surface, close-up shot, warm light highlighting its aged texture and the special stopped time point.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:53:51.480Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "修表工作台",
+			"design": "Wooden retro watch repair workbench, equipped with green-shaded desk lamp, magnifying glass, scattered tiny watch gears and steel tweezers, wooden drawer cabinet beside the bench, glass display cabinet and wall full of old hanging clocks in the soft background, medium shot, warm low-saturated color grade, tactile texture of wood and metal parts emphasized.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:53:51.480Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "修表铺工作区",
+			"design": "Intimate retro watch repair shop interior, warm green light from the desk lamp as the key light source, wooden workbench as the core area, wooden drawer cabinet beside the bench, wall covered with various old ticking hanging clocks, scattered watch parts and tools on the bench, low-saturated warm color grade, soft ambient fill light, realistic tactile texture of all objects.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T15:53:51.480Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-30T15:53:18.084Z"
+}

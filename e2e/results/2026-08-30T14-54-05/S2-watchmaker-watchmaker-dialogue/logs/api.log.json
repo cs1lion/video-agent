@@ -1,0 +1,30 @@
+[
+	{
+		"at": "2026-08-30T15:07:52.043Z",
+		"action": "generate",
+		"runId": "run-mtfy1lk9-5",
+		"response": {
+			"runId": "run-mtfy1lk9-5"
+		}
+	},
+	{
+		"at": "2026-08-30T15:09:57.317Z",
+		"action": "resume",
+		"gate": "design",
+		"failedDesign": 0
+	},
+	{
+		"at": "2026-08-30T15:11:17.516Z",
+		"action": "resume",
+		"gate": "keyframes",
+		"confirmedShotIds": [
+			"SH01",
+			"SH02",
+			"SH03",
+			"SH04",
+			"SH05",
+			"SH06",
+			"SH07"
+		]
+	}
+]

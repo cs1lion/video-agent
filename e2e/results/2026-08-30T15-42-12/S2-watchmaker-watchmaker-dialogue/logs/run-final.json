@@ -1,0 +1,898 @@
+{
+	"id": "run-mtfzmuta-8",
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 6,
+		"mediaCalls": 26,
+		"retries": 1,
+		"perAdapter": {
+			"step-tts": 7,
+			"agnes-video-3": 2,
+			"agnes-video-4": 1,
+			"agnes-video-1": 2,
+			"agnes-video-2": 2
+		},
+		"cost": {
+			"spent": 45.54,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "warn",
+		"score": 0,
+		"axes": [],
+		"subtitles": {
+			"present": true,
+			"lines": 7,
+			"issues": []
+		}
+	},
+	"videoUrl": "/api/runs/run-mtfzmuta-8/files/assets/final.mp4",
+	"error": "质检阶段跳过: LLM HTTP 451: {\"error\":{\"message\":\"The content you provided or machine outputted is blocked.\",\"type\":\"censorship_blocked\"}}",
+	"brief": {
+		"logline": "写实真人剧情短片：老城修表铺。大学生林小满拿来奶奶留下的旧手表请修表匠贺师傅修理——表停在一个特殊的时间点。贺师傅一边拆表一边讲这块表的原主人三十年前来修过它，林小满边听边掉眼泪又笑。五轮对讲来回，旁白两句交代铺子与时间。全部戏在一张工作台与两只手上。",
+		"keyMessage": "表修的不是时间，是没说完的话。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 7,
+		"clipDurationSec": 6,
+		"fps": 24,
+		"motionIntensity": "low",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"images": [],
+	"events": [
+		{
+			"id": "ev-d577564f",
+			"at": "2026-08-30T15:52:23.426Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "项目开机 🎬 需求「写实真人剧情短片：老城修表铺。大学生林小满拿来奶奶留下的旧手表请修表匠贺师傅修理…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"
+		},
+		{
+			"id": "ev-dd90bb9c",
+			"at": "2026-08-30T15:52:23.429Z",
+			"from": "writer",
+			"to": "producer",
+			"kind": "status",
+			"text": "编剧开工：解析需求，搭建 7 镜叙事骨架。"
+		},
+		{
+			"id": "ev-0516d0be",
+			"at": "2026-08-30T15:52:45.134Z",
+			"from": "writer",
+			"to": "art",
+			"kind": "handoff",
+			"text": "剧本《三点十七分的约定》完成：7 镜，42s。Logline：大学生林小满带奶奶留下的停摆旧表找修表匠贺师傅修理，修表过程中贺师傅讲述三十年前表主人的故事，修好的表承载着未说出口的约定。。请据此制定全片视觉规范。"
+		},
+		{
+			"id": "ev-7b503204",
+			"at": "2026-08-30T15:52:45.135Z",
+			"from": "art",
+			"to": "writer",
+			"kind": "status",
+			"text": "美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"
+		},
+		{
+			"id": "ev-62546864",
+			"at": "2026-08-30T15:53:18.086Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计开工：5 张概念设计图（人物 2 · 道具 2 · 场景 1）逐张绘制中。"
+		},
+		{
+			"id": "ev-bd513f89",
+			"at": "2026-08-30T15:53:22.453Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「贺师傅」（人物 CH01）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-71c608c5",
+			"at": "2026-08-30T15:53:25.755Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「林小满」（人物 CH02）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-55f5e57f",
+			"at": "2026-08-30T15:53:29.162Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「旧女表」（道具 PR01）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-ac692b50",
+			"at": "2026-08-30T15:53:32.470Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「修表工作台」（道具 PR02）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-eb2c4b06",
+			"at": "2026-08-30T15:53:35.986Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「修表铺工作区」（场景 SC01）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-03f39cbf",
+			"at": "2026-08-30T15:53:35.988Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计完成 ✅ 5/5 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"
+		},
+		{
+			"id": "ev-7b260846",
+			"at": "2026-08-30T15:53:35.988Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "status",
+			"text": "审校员核对设计图：逐张比对画面与设计要点…"
+		},
+		{
+			"id": "ev-b562d7b0",
+			"at": "2026-08-30T15:53:51.481Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "status",
+			"text": "设计图自审通过 ✅ 5 张与设计要点相符。"
+		},
+		{
+			"id": "ev-b15a0702",
+			"at": "2026-08-30T15:53:51.482Z",
+			"from": "art",
+			"to": "storyboard",
+			"kind": "handoff",
+			"text": "美术设计定稿：风格 [cinematic / realistic / intimate / retro / tactile / narrative / close-up / lifestyle]，色板 #D2B48C、#F5F5DC、#A9A9A9、#556B2F。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"
+		},
+		{
+			"id": "ev-d62aef30",
+			"at": "2026-08-30T15:53:51.483Z",
+			"from": "art",
+			"to": "client",
+			"kind": "status",
+			"text": "美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。",
+			"link": {
+				"stage": "bible",
+				"label": "查看美术设计"
+			}
+		},
+		{
+			"id": "ev-2be3c911",
+			"at": "2026-08-30T15:53:53.631Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "美术设计已确认 ✅ 开始绘制分镜关键帧。"
+		},
+		{
+			"id": "ev-0d8a27af",
+			"at": "2026-08-30T15:53:53.632Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「分镜提示词」继续，直至成片。"
+		},
+		{
+			"id": "ev-644b9e17",
+			"at": "2026-08-30T15:53:53.633Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "status",
+			"text": "分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"
+		},
+		{
+			"id": "ev-cfa821c3",
+			"at": "2026-08-30T15:54:33.068Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-413b2463",
+			"at": "2026-08-30T15:54:33.069Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-079dd97c",
+			"at": "2026-08-30T15:54:37.277Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-e9dedecf",
+			"at": "2026-08-30T15:54:37.279Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-417d01c3",
+			"at": "2026-08-30T15:54:41.544Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-5a361919",
+			"at": "2026-08-30T15:54:41.545Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-fbc86f2e",
+			"at": "2026-08-30T15:54:45.885Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-74f0f0f1",
+			"at": "2026-08-30T15:54:45.887Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-62569dd9",
+			"at": "2026-08-30T15:54:50.104Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-2ae23143",
+			"at": "2026-08-30T15:54:50.105Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-825c9188",
+			"at": "2026-08-30T15:54:54.613Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-17606e38",
+			"at": "2026-08-30T15:54:54.616Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH06 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-8359fa4f",
+			"at": "2026-08-30T15:55:05.292Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：贺师傅(CH01)、修表铺工作区(SC01)。"
+		},
+		{
+			"id": "ev-299c4c3f",
+			"at": "2026-08-30T15:55:05.293Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH07 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-bad07b89",
+			"at": "2026-08-30T15:55:31.310Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "handoff",
+			"text": "分镜锁定 ✅ 7 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"
+		},
+		{
+			"id": "ev-30fd6c64",
+			"at": "2026-08-30T15:55:31.311Z",
+			"from": "storyboard",
+			"to": "client",
+			"kind": "status",
+			"text": "关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。",
+			"link": {
+				"stage": "keyframes",
+				"label": "查看关键帧"
+			}
+		},
+		{
+			"id": "ev-c13ea892",
+			"at": "2026-08-30T15:55:33.875Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「音频」继续，直至成片。"
+		},
+		{
+			"id": "ev-60719b1c",
+			"at": "2026-08-30T15:55:33.877Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"
+		},
+		{
+			"id": "ev-024def6f",
+			"at": "2026-08-30T15:55:33.880Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "配音选角：旁白＝播音男声；角色 贺师傅→深沉男音、林小满→清纯少女；与角色声线全部错开。"
+		},
+		{
+			"id": "ev-0bea1315",
+			"at": "2026-08-30T15:55:43.712Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH07（指导：舒展释然，带暖怅惘，语速慢，重音落在「记得」「约定」，气息悠…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH07",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-ed16bf6c",
+			"at": "2026-08-30T15:55:43.713Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "旁白轨交付：1/7 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"
+		},
+		{
+			"id": "ev-966b45e4",
+			"at": "2026-08-30T15:55:46.893Z",
+			"from": "sound",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 台词 6.0s 短于镜长，尾部补静音到 6s。"
+		},
+		{
+			"id": "ev-2a91d668",
+			"at": "2026-08-30T15:55:47.535Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH01 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01",
+				"label": "试听台词"
+			}
+		},
+		{
+			"id": "ev-b1aadff5",
+			"at": "2026-08-30T15:55:47.538Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic medium shot, aspect ratio 16:9, of 58-year-old mal…"
+		},
+		{
+			"id": "ev-ce8dbf12",
+			"at": "2026-08-30T15:55:50.932Z",
+			"from": "sound",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 台词 6.0s 短于镜长，尾部补静音到 6s。"
+		},
+		{
+			"id": "ev-9485634d",
+			"at": "2026-08-30T15:55:51.328Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH02 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02",
+				"label": "试听台词"
+			}
+		},
+		{
+			"id": "ev-9e5817f7",
+			"at": "2026-08-30T15:55:51.330Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic close-up, aspect ratio 16:9, of 58-year-old male w…"
+		},
+		{
+			"id": "ev-94e7d723",
+			"at": "2026-08-30T15:55:54.949Z",
+			"from": "sound",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 台词 6.0s 短于镜长，尾部补静音到 6s。"
+		},
+		{
+			"id": "ev-0456fe58",
+			"at": "2026-08-30T15:55:55.279Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH03 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03",
+				"label": "试听台词"
+			}
+		},
+		{
+			"id": "ev-443ad193",
+			"at": "2026-08-30T15:55:55.282Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic medium shot, aspect ratio 16:9, of 58-year-old mal…"
+		},
+		{
+			"id": "ev-1c0ae496",
+			"at": "2026-08-30T15:55:59.166Z",
+			"from": "sound",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 台词 6.0s 短于镜长，尾部补静音到 6s。"
+		},
+		{
+			"id": "ev-864739d4",
+			"at": "2026-08-30T15:55:59.669Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH04 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04",
+				"label": "试听台词"
+			}
+		},
+		{
+			"id": "ev-40173ea1",
+			"at": "2026-08-30T15:55:59.672Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic close-up, aspect ratio 16:9, of 22-year-old female…"
+		},
+		{
+			"id": "ev-b718f0d0",
+			"at": "2026-08-30T15:56:03.052Z",
+			"from": "sound",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 台词 6.0s 短于镜长，尾部补静音到 6s。"
+		},
+		{
+			"id": "ev-b1a73fa9",
+			"at": "2026-08-30T15:56:03.352Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH05 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05",
+				"label": "试听台词"
+			}
+		},
+		{
+			"id": "ev-15fb7a74",
+			"at": "2026-08-30T15:56:03.355Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic medium shot, aspect ratio 16:9, of 58-year-old mal…"
+		},
+		{
+			"id": "ev-f01c4d2f",
+			"at": "2026-08-30T15:56:07.286Z",
+			"from": "sound",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH06 台词 6.0s 短于镜长，尾部补静音到 6s。"
+		},
+		{
+			"id": "ev-51dcf83e",
+			"at": "2026-08-30T15:56:07.664Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH06 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH06",
+				"label": "试听台词"
+			}
+		},
+		{
+			"id": "ev-2056404d",
+			"at": "2026-08-30T15:56:07.667Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH06 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic medium shot, aspect ratio 16:9, of 58-year-old mal…"
+		},
+		{
+			"id": "ev-c3781483",
+			"at": "2026-08-30T15:56:07.669Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH07 提交生成（720p · 6s · 关键帧+提示词 图生视频）：Cinematic wide shot, aspect ratio 16:9, of the empty wooden …"
+		},
+		{
+			"id": "ev-b5ca8827",
+			"at": "2026-08-30T15:57:07.178Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01"
+			}
+		},
+		{
+			"id": "ev-8ff159a0",
+			"at": "2026-08-30T15:57:07.332Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH01 生成完成 ✅（1/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-69c215f3",
+			"at": "2026-08-30T15:58:28.407Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02"
+			}
+		},
+		{
+			"id": "ev-e1b7fc1d",
+			"at": "2026-08-30T15:58:28.567Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH02 生成完成 ✅（2/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-ca6e4ca9",
+			"at": "2026-08-30T15:58:28.754Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03"
+			}
+		},
+		{
+			"id": "ev-61632951",
+			"at": "2026-08-30T15:58:28.914Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH03 生成完成 ✅（3/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-50104f00",
+			"at": "2026-08-30T15:58:29.116Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04"
+			}
+		},
+		{
+			"id": "ev-03114c71",
+			"at": "2026-08-30T15:58:29.270Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH04 生成完成 ✅（4/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-589fc677",
+			"at": "2026-08-30T15:58:29.472Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05"
+			}
+		},
+		{
+			"id": "ev-5f59f973",
+			"at": "2026-08-30T15:58:29.622Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH05 生成完成 ✅（5/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-376d9088",
+			"at": "2026-08-30T15:59:41.518Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH06 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。",
+			"link": {
+				"stage": "generate",
+				"focus": "SH06"
+			}
+		},
+		{
+			"id": "ev-7157ee1f",
+			"at": "2026-08-30T15:59:41.674Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH06 生成完成 ✅（6/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH06",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-66006942",
+			"at": "2026-08-30T15:59:41.834Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH07 生成完成 ✅（7/7）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH07",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-d84070e0",
+			"at": "2026-08-30T15:59:41.836Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "镜头批次交付：7/7 镜成功，移交剪辑师归一化与合成。"
+		},
+		{
+			"id": "ev-3b594d70",
+			"at": "2026-08-30T15:59:41.837Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "status",
+			"text": "剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"
+		},
+		{
+			"id": "ev-7d7af29c",
+			"at": "2026-08-30T16:00:10.094Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "粗剪完成（7 镜 · 29.4s · 720p 16:9，转场：叠化 0.4s、叠化 0.6s，音效：嗖声、嗖声，响度 -14 LUFS），移交审片员质检。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "播放成片"
+			}
+		},
+		{
+			"id": "ev-80ac4706",
+			"at": "2026-08-30T16:04:02.464Z",
+			"from": "reviewer",
+			"to": "client",
+			"kind": "qa",
+			"text": "跨镜一致性预检 ⚠️ 3 处异常：SH04（灰白发男性（白衬衫+棕马甲）、黑发女性（米色开衫+白衬衫，眼）、SH06（灰白发男性（白衬衫+棕马甲）、黑发女性（米色开衫+白衬衫+格）、SH07（灰白发男性（白衬衫+棕马甲），暖色调）。可在质量审读页查看详情并补拍。",
+			"link": {
+				"stage": "review",
+				"label": "查看一致性"
+			}
+		},
+		{
+			"id": "ev-689b4c00",
+			"at": "2026-08-30T16:04:02.466Z",
+			"from": "producer",
+			"to": "client",
+			"kind": "status",
+			"text": "全片交付 🎉 成片与七轴质检报告已就绪。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "查看成片"
+			}
+		}
+	],
+	"awaitingResume": false,
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"finalFile": "final.mp4",
+	"costEstimate": {
+		"total": 44.17,
+		"currency": "CNY",
+		"lines": [
+			{
+				"label": "剧本 LLM",
+				"amount": 0.65,
+				"note": "约 2k 输入 + 1.5k 输出 token"
+			},
+			{
+				"label": "美术设计 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "分镜提示词 LLM",
+				"amount": 0.97,
+				"note": "按 shotCount 翻倍"
+			},
+			{
+				"label": "EDL 转场 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "配音指导 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "审片多模 LLM",
+				"amount": 0.65,
+				"note": "含抽帧多模输入"
+			},
+			{
+				"label": "设计稿概念图",
+				"amount": 2.5,
+				"note": "5 张"
+			},
+			{
+				"label": "分镜关键帧",
+				"amount": 3.5,
+				"note": "7 张"
+			},
+			{
+				"label": "视频生成",
+				"amount": 33.6,
+				"note": "7 段 × 6s"
+			},
+			{
+				"label": "TTS 配音",
+				"amount": 0.35,
+				"note": "每镜粗估 1k 字符"
+			}
+		]
+	},
+	"productionShots": 7,
+	"dialogueShotCount": 6
+}

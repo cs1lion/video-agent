@@ -1,0 +1,100 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "方晚",
+			"design": "32-year-old female late-night radio host, wearing deep burgundy satin shirt, black shoulder-length hair pinned with a silver metal clip, over-ear monitoring headphones, calm expression, close-up shot, warm low-saturation key light from desk lamp, realistic cinematic style matching the live-action short film",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "陈国平",
+			"design": "47-year-old male taxi driver, short gray hair with dark stubble, wearing dark blue work jacket, old towel draped on steering wheel beside him, faint dashboard glow illuminating his face, cool low-saturation ambient light, realistic slice-of-life style matching the character setting",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "主播监听耳机",
+			"design": "Professional over-ear broadcast monitoring headphones, matte black plastic shell, soft leather ear pads, thin adjustable headband, connected to studio audio equipment via cable, worn on the host's head, realistic texture, suitable for close-up detail shots, matching the studio prop requirement",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"设计要点要求耳机连接录音室音频设备（studio audio equipment）并符合录音室道具要求（studio prop requirement），但画面显示为汽车内部驾驶场景，场景严重不符"
+				],
+				"checkedAt": "2026-08-30T15:45:13.591Z"
+			},
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "旧毛巾",
+			"design": "Worn gray cotton hand towel with frayed edges and faint use stains, casually draped on the taxi steering wheel, soft fabric texture, visible under faint dashboard glow, realistic everyday item, no artificial decoration, matching the character's setting",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "耐用车载毛巾",
+			"design": "Durable ultra-absorbent microfiber car towel, neatly folded with simple printed branding, same size and material as the old towel on the steering wheel, placed beside it for product display, clear product details, realistic commercial shot style for the recommended car product",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png",
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"毛巾上的品牌文字为乱码（倒置无意义字符），不符合simple printed branding要求；设计要点要求毛巾放置于方向盘上的旧毛巾旁（placed beside it）进行展示，但画面中方向盘上无旧毛巾；其中一块毛巾为卷起状态，不符合neatly folded要求"
+				],
+				"checkedAt": "2026-08-30T15:45:13.591Z"
+			},
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "深夜电台直播间",
+			"design": "Realistic late-night radio studio, soundproof foam covered walls, analog mixing console with glowing push faders and indicator lights, warm desk lamp on the work surface, pop filter and gooseneck microphone on the desk, low-key warm lighting, quiet heavy nocturnal mood, wide shot showing the full studio space, matching the scene setting",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "深夜出租车驾驶位",
+			"design": "Realistic taxi driver's seat at night, faint flickering street lights sweeping across the windshield through the window, small hanging decorations swaying slightly, dashboard with faint glow, windshield wipers stationary, cool low-saturation ambient light, medium shot focusing on the driver's area, matching the scene setting provided",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"url": "/api/runs/run-mtfz9r4y-7/files/assets/design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-30T15:43:10.195Z"
+}

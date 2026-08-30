@@ -20,6 +20,9 @@ for (const c of CASES) {
 	if (!/anime|cartoon/.test(c.options.negativePrompt)) throw new Error(`${c.id} 负向词缺非写实排除项`);
 	if (!/garbled text/.test(c.options.negativePrompt)) throw new Error(`${c.id} 负向词缺乱码文字排除项`);
 	if (!c.expect.requireDialogueShots) throw new Error(`${c.id} 必须断言台词镜存在（全台词方案）`);
+	if ((c.expect.minShots ?? 0) < 6) throw new Error(`${c.id} 压力轮镜数应 ≥6（多轮对话容量）`);
+	if (c.options.clipDurationSec < 6) throw new Error(`${c.id} 压力轮单镜应 ≥6s（长镜对白）`);
+	if (!c.brief.logline.includes("四轮") && !c.brief.logline.includes("五轮")) throw new Error(`${c.id} brief 应声明多轮对讲`);
 	if (!c.expect.requireTtsAudio) throw new Error(`${c.id} 必须断言 TTS 音轨存在`);
 	if (!c.expect.requireSubtitlesAudit) throw new Error(`${c.id} 必须断言字幕结构审核通过`);
 	if (!c.expect.requireVoiceDistinction) throw new Error(`${c.id} 必须断言配音选角区分`);
@@ -97,15 +100,19 @@ const baseCase = (extra = {}) => ({
 	...extra,
 });
 
-// F1：现代都市基准
-const f1 = assertCase({
-	...baseCase(),
-	expect: CASES[0].expect,
-	run: dialogueRun(78, 3),
-	collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: 3 }) },
-});
-console.log("F1 modern ->", f1.verdict, "| 失败项:", f1.failed.length ? f1.failed.join("; ") : "无");
-if (f1.verdict !== "PASS") throw new Error("F1 应判 PASS");
+// 三套压力片逐套断言（F3 带 BGM）
+for (const [idx, c] of CASES.entries()) {
+	const r = assertCase({
+		...baseCase(),
+		expect: c.expect,
+		audioForm: c.audioForm,
+		finalBytes: 5_000_000,
+		run: dialogueRun(84, c.options.shotCount),
+		collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: c.options.shotCount, withBgm: Boolean(c.bgm) }) },
+	});
+	console.log(`${c.id} ->`, r.verdict, "| 失败项:", r.failed.length ? r.failed.join("; ") : "无");
+	if (r.verdict !== "PASS") throw new Error(`${c.id} 应判 PASS`);
+}
 
 // 审核轴缺失必须 FAIL
 const noAuditAxes = assertCase({
@@ -171,8 +178,8 @@ const bad = assertCase({
 console.log("broken run ->", bad.verdict, "| 失败项数:", bad.failed.length);
 if (bad.verdict !== "FAIL") throw new Error("异常用例应判 FAIL");
 
-// 用例矩阵自检：十套、id 唯一、结构合规
-if (CASES.length !== 10) throw new Error(`用例应为 10 套，实际 ${CASES.length}`);
+// 用例矩阵自检：压力轮三套、id 唯一、结构合规
+if (CASES.length !== 3) throw new Error(`本轮应为 3 套压力片，实际 ${CASES.length}`);
 if (new Set(CASES.map((c) => c.id)).size !== CASES.length) throw new Error("用例 id 重复");
 for (const c of CASES) {
 	if (!Array.isArray(c.postActions)) throw new Error(`${c.id} 缺 postActions 数组`);

@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"close-up",
+		"intimate",
+		"tactile",
+		"narrative",
+		"nostalgic",
+		"warm"
+	],
+	"palette": [
+		"#8B4513",
+		"#F5F5DC",
+		"#D4AF37",
+		"#2F4F4F",
+		"#C0C0C0",
+		"#8B0000"
+	],
+	"lighting": "Soft top-down illumination from the green-shaded work lamp, supplemented by warm ambient light from the wall clock and wooden cabinet lamps, with focused highlights on the watch parts and the characters' hands to emphasize texture and detail.",
+	"grade": "Low-contrast warm color grade with muted, slightly desaturated tones, fine film grain added to enhance the quiet nostalgic atmosphere of the old watch repair shop."
+}

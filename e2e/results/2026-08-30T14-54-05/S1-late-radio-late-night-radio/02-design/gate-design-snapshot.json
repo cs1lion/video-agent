@@ -1,0 +1,84 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "方晚",
+			"design": "32-year-old female radio host with shoulder-length black hair pinned by a silver clip, wearing a deep burgundy button-up shirt and over-ear monitoring headphones. She has soft facial features and a calm, focused expression. Front close-up shot highlights her gentle empathetic look when speaking to the mic, with realistic skin texture and warm low-key lighting matching the studio ambient.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"url": "/api/runs/run-mtfxjvzc-4/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "陈国平",
+			"design": "47-year-old male taxi driver with short gray hair and dark stubble, wearing a dark blue work jacket. He has weary but kind facial features, with a worn old towel draped over the steering wheel beside him. Interior car close-up shot uses cool desaturated blue-grey tone, with faint street light seeping through the window to highlight his trembling expression holding back tears, showing realistic texture of the jacket and towel.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"url": "/api/runs/run-mtfxjvzc-4/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "监听耳机",
+			"design": "Over-ear black monitoring headphones with soft padded ear cups and a flexible headband, worn on the host's head. Made of matte plastic and foam with no fancy decorations, with realistic texture. Close-up shot shows it fits naturally with the host's appearance, consistent with the late-night radio studio setting.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"url": "/api/runs/run-mtfxjvzc-4/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "方向盘旧毛巾",
+			"design": "Worn cotton towel with faded color and small tears, casually draped over the taxi steering wheel. It has soft fabric texture and is slightly crumpled, consistent with the driver's long-term use. Medium close-up shot in the taxi interior uses cool dim light to show its worn state, highlighting the driver's hardworking identity.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"设计要点要求68岁银灰发老人，画面为黑发中年男性",
+					"设计要点要求毛巾为褪色（faded color），画面为鲜艳紫色",
+					"设计要点要求冷光（cool dim light），画面光线偏暖"
+				],
+				"checkedAt": "2026-08-30T14:56:39.940Z"
+			},
+			"url": "/api/runs/run-mtfxjvzc-4/files/assets/design-prop-PR02.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "深夜电台直播间",
+			"design": "Realistic late-night radio studio with soundproof cotton walls, a mixing console with glowing faders, a warm desk lamp on the work desk, a pop filter and professional microphone placed in front of the host. The overall tone is warm and muted, with low-key soft lighting, supporting close-up and medium shot perspectives, accurately restoring the late-night broadcast room atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"url": "/api/runs/run-mtfxjvzc-4/files/assets/design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "深夜出租车驾驶舱",
+			"design": "Realistic late-night taxi driver's cabin, with faint street light seeping through the window, small hanging ornaments swaying slightly, a dashboard with faint glow, and a worn old towel on the steering wheel. The overall tone is cool desaturated blue-grey, with dim ambient light that conveys the engine low-noise atmosphere, supporting medium close-up and close-up perspectives, accurately restoring the late-night driving environment.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"url": "/api/runs/run-mtfxjvzc-4/files/assets/design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-30T14:54:56.357Z"
+}

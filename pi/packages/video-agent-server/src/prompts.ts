@@ -118,7 +118,7 @@ export function coSpaceBlock(coSpace: CoCreationSpace | undefined): string {
 }
 
 /** 阶段一：剧本（镜头列表 + 双语旁白 + 画面描述） */
-export function scriptMessages(brief: EnrichedBrief, opts: GenerationOptions): ChatMessage[] {
+export function scriptMessages(brief: EnrichedBrief, opts: GenerationOptions, extraDirective?: string): ChatMessage[] {
 	const zhChars = Math.max(6, opts.clipDurationSec * 4);
 	const audioDriveOn = opts.audioDrive === "dialogue";
 	const audioModeRule = audioDriveOn
@@ -145,6 +145,7 @@ export function scriptMessages(brief: EnrichedBrief, opts: GenerationOptions): C
 		`3. narrationZh / narrationEn 是该镜头的旁白，各一句话，中文不超过 ${zhChars} 字（${opts.clipDurationSec} 秒内从容念完），英文意思一致；`,
 		"4. visual 是该镜头的画面描述，用英文一句话，写清主体、环境、动作；",
 		"5. 整体有起承转合，最后一镜落到产品/CTA；",
+		...(extraDirective ? [`⚠️ 重写要求: ${extraDirective}`] : []),
 		...audioModeRule,
 		"",
 		"只输出如下 JSON（不要围栏）:",
@@ -227,7 +228,7 @@ export function shotPromptMessages(
 		`2. 目标画幅 ${opts.aspectRatio}，提示词里写明构图取向（不要写像素值）;`,
 		opts.detailBoost ? "3. 强调高细节、材质质感;" : "3. 保持画面简洁;",
 		"4. 每段提示词 60-110 个英文单词，一段连贯文字，必含五要素：主体及其外观锚点短语 / 环境与空间深度 / 光线（方向+性质，如 low warm side light） / 镜头运动 / 风格与调性；",
-		"5. 画面内不得出现任何文字、字幕、logo、UI（这些由后期烧录，模型画字必乱码）；",
+		"5. 画面内不得出现任何文字、字幕、logo、UI、二维码（这些由后期烧录，模型画字必乱码）；同时画面叙事不得依赖模型无法精确生成的元素——钟表指针位置、报纸标题、屏幕内容等一律模糊化处理，禁止让台词/剧情依赖其精确显示；",
 		`6. 在提示词末尾追加一句: "Strictly avoid: ${avoid}"`,
 		"",
 		"示例（仅示意结构，不要照抄内容）:",

@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"night aviation",
+		"professional",
+		"moody",
+		"documentary",
+		"intimate",
+		"16:9 aspect ratio"
+	],
+	"palette": [
+		"#0a1f3b",
+		"#e8f4fc",
+		"#ffaa00",
+		"#1c1c1c",
+		"#2d4a6e",
+		"#b8b8b8"
+	],
+	"lighting": "Low-key practical lighting dominated by cool radar screen glow, runway light spill through circular windows, faint overhead control panel backlight, and deep underexposed shadows in unlit corners.",
+	"grade": "Cool desaturated color grade with lifted shadow detail, subtle teal-orange contrast, and natural skin tone preservation for realistic character portrayal."
+}

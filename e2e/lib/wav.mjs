@@ -60,3 +60,66 @@ export function fileToDataUrl(file) {
 							: "audio/mpeg";
 	return `data:${mime};base64,${buf.toString("base64")}`;
 }
+
+
+/**
+ * 和弦琶音 BGM 合成（"有设计的 BGM"基础版）：
+ * 根音持续低音 + 三和弦上行琶音循环，按 mood 选调式与速度。
+ * mood: "warm"(大调 72bpm) | "cold"(小调 60bpm) | "calm"(大调慢速) ；默认 warm。
+ * 返回 16bit PCM mono 44.1k 的 Buffer（不写文件）。
+ */
+export function synthesizeChordPcm({ seconds = 40, mood = "warm" } = {}) {
+  const rate = 44100;
+  const n = Math.floor(seconds * rate);
+  const pcm = Buffer.alloc(n * 2);
+  const scales = {
+    warm: { root: 220.0, minor: false, bpm: 72 },   // A3 大调
+    calm: { root: 196.0, minor: false, bpm: 56 },   // G3 大调慢
+    cold: { root: 220.0, minor: true, bpm: 60 },    // A3 小调
+  };
+  const { root, minor, bpm } = scales[mood] ?? scales.warm;
+  const third = minor ? root * 1.1892 : root * 1.2599; // 小三度/大三度
+  const fifth = root * 1.4983;
+  const beat = 60 / bpm;
+  const noteLen = beat / 2; // 八分音符琶音
+  const arp = [root * 2, third * 2, fifth * 2, root * 4];
+  for (let i = 0; i < n; i += 1) {
+    const t = i / rate;
+    // 低音持续（根音，音量 0.10）+ 轻微慢颤
+    const bass = Math.sin(2 * Math.PI * root * t) * 0.1 * (0.9 + 0.1 * Math.sin(2 * Math.PI * 0.25 * t));
+    // 琶音（音量 0.16，每音 90% 段落 + 12% 淡出防咔哒）
+    const step = Math.floor(t / noteLen) % arp.length;
+    const inNote = (t % noteLen) / noteLen;
+    const env = inNote < 0.88 ? 1 : (1 - (inNote - 0.88) / 0.12) * 0.6;
+    const note = Math.sin(2 * Math.PI * arp[step] * t) * 0.16 * env;
+    let v = bass + note;
+    // 每小节（4 拍）轻微呼吸起伏
+    v *= 0.85 + 0.15 * Math.sin(2 * Math.PI * (bpm / 60 / 4) * t);
+    const s = Math.max(-1, Math.min(1, v));
+    pcm.writeInt16LE(Math.round(s * 32767), i * 2);
+  }
+  return pcm;
+}
+
+
+/** 和弦琶音 BGM 合成（带 WAV 头直接落盘） */
+export function synthesizeChordWav({ seconds = 40, mood = "warm", outPath } = {}) {
+  const pcm = synthesizeChordPcm({ seconds, mood });
+  const rate = 44100;
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(rate, 24);
+  header.writeUInt32LE(rate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(pcm.length, 40);
+  fs.writeFileSync(outPath, Buffer.concat([header, pcm]));
+  return outPath;
+}
