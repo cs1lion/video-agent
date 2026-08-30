@@ -138,6 +138,25 @@
 - **跨 agent 可见性**：郭煜要求"把修改思路记在项目 md 文档，让不同 agent 都能主动看到" →
   即本 `.workbuddy/memory/` 机制的出发点。
 
+## 📌 台词链路方法论（2026-08-30 血泪换来的六条，改台词/音频/导出前必读）
+
+1. **agnes reference 跟读在内容层不可信**：包络相关高达 0.78-0.91 的"跟读"，ASR 转写与
+   台词的字面重合仅 0.07-0.14——模型在**模仿节奏说乱语**（口型动、有吐字、不是人话）。
+   包络高≠可懂。防线 = 双关卡（包络≥0.7 + ASR 字面重合≥0.5，qa/audio-follow.ts + qa/asr-check.ts），
+   未过 → **dubOver**：口型视频保留、归一化时音轨替换为 TTS 原声（export normalizeShot audioPath）。
+   声音正确性 > 口型同步，这是定案不是权衡遗留。
+2. **reference 提交音频必须是原始 24kHz TTS**：垫尾/插停顿重编码出的 44.1k mp3 会让供应商
+   读取参考音频失败（对照实验：原始 0.568 vs 处理版 0.072）。处理版只落盘不提交。
+3. **双网关**：key1/2 属 `apihub.agnes-ai.com`，key3/4 属 `api.agnes-ai.cn`（含 poll statusUrl）。
+   key 在 A 网关 401 不代表失效——先试另一网关。401 持续 → quota.quarantineAdapter 自动隔离 30 分钟。
+4. **一镜一主语音互斥**：normalizeScript 对 dialogue 镜清空 narrationZh/En——LLM 会把收尾旁白
+   塞进台词镜，A3 语义丢弃后表现为"旁白消失"（step-3.7 整片深审抓到的设计冲突）。
+5. **字幕与人声时长锚定**：台词字幕 ≤台词人声时长+0.8s（不是镜长）；镜头节奏也用
+   rawDurationSec（垫尾静音不进镜长）——否则成片后半段大段死寂，听感="没声音/有嘶嘶声"。
+6. **step-3.7-flash 能整片直审**：`video_url` 支持 base64 MP4 直发（<128MB），带【设计预期 JSON+
+   七项审阅要求】产出精确到秒的问题清单（e2e/deep-review.mjs）。注意：它是推理模型，
+   max_tokens 要给足（reasoning 会吃掉配额），content 空时去 reasoning 尾部捞 JSON。
+
 ## Agnes 限流事实（2026-08-28 查证官方 Token Plan FAQ，纠正旧报告）
 
 - **多 key 不叠加**：限流池按 **key type（访问类型）** 共享，**同类型多个 key 不增加 RPM 也不增加配额**
