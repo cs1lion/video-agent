@@ -1,0 +1,733 @@
+{
+	"id": "run-mtez6cnf-31",
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 22,
+		"retries": 4,
+		"perAdapter": {
+			"agnes-video": 5,
+			"step-tts": 5
+		},
+		"cost": {
+			"spent": 27.94,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 97,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 98
+			},
+			{
+				"id": "visualConsistency",
+				"score": 92
+			},
+			{
+				"id": "pacing",
+				"score": 95
+			},
+			{
+				"id": "audioSync",
+				"score": 100
+			},
+			{
+				"id": "textQuality",
+				"score": 100
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "通过。展现深夜城郊公交站等待场景，外卖员父亲与女儿，符合开场设定。"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "通过。展现递包子关键动作，符合广告核心情节。"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "通过。展现父女共食包子，暗示雨中对白，情感铺垫到位。"
+			},
+			{
+				"id": "SH04",
+				"verdict": "ok",
+				"reason": "通过。展现末班车由远及近，推动情节至高潮。"
+			},
+			{
+				"id": "SH05",
+				"verdict": "ok",
+				"reason": "通过。展现抵达车内团圆，完成抵达即团圆主题。"
+			}
+		]
+	},
+	"videoUrl": "/api/runs/run-mtez6cnf-31/files/assets/final.mp4",
+	"brief": {
+		"logline": "写实真人短片：深夜十一点的城郊公交站，末班车迟迟不来。一位跑了一天外卖的中年男人蹲在站台边，把凉掉的包子掰了一半递给同在等车的女儿。父女在雨声里有一小段压着嗓子的对白，最后车灯由远及近——故事讲「抵达本身就已经是团圆」。",
+		"keyMessage": "再远的路，也有人等你到站。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 5,
+		"fps": 24,
+		"motionIntensity": "medium",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+	},
+	"images": [],
+	"events": [
+		{
+			"id": "ev-00f61f42",
+			"at": "2026-08-29T22:51:47.219Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "项目开机 🎬 需求「写实真人短片：深夜十一点的城郊公交站，末班车迟迟不来。一位跑了一天外卖的中年男人…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"
+		},
+		{
+			"id": "ev-a1056448",
+			"at": "2026-08-29T22:51:47.222Z",
+			"from": "writer",
+			"to": "producer",
+			"kind": "status",
+			"text": "编剧开工：解析需求，搭建 5 镜叙事骨架。"
+		},
+		{
+			"id": "ev-0398b8b3",
+			"at": "2026-08-29T22:52:05.209Z",
+			"from": "writer",
+			"to": "art",
+			"kind": "handoff",
+			"text": "剧本《等你到站》完成：5 镜，25s。Logline：深夜城郊公交站，跑了一天外卖的老周和等他的女儿小雨在雨夜分享凉包子，最终等来末班车，诠释「抵达本身即团圆」的温情故事。。请据此制定全片视觉规范。"
+		},
+		{
+			"id": "ev-396b7911",
+			"at": "2026-08-29T22:52:05.209Z",
+			"from": "art",
+			"to": "writer",
+			"kind": "status",
+			"text": "美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"
+		},
+		{
+			"id": "ev-4ba5a549",
+			"at": "2026-08-29T22:52:37.322Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计开工：6 张概念设计图（人物 2 · 道具 2 · 场景 2）逐张绘制中。"
+		},
+		{
+			"id": "ev-1da5bb26",
+			"at": "2026-08-29T22:52:40.729Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「老周」（人物 CH01）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-8218ad67",
+			"at": "2026-08-29T22:52:44.106Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「周小雨」（人物 CH02）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-66c07717",
+			"at": "2026-08-29T22:52:47.430Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「凉包子」（道具 PR01）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-fb2f7398",
+			"at": "2026-08-29T22:52:50.724Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「旧书包」（道具 PR02）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-988da69e",
+			"at": "2026-08-29T22:52:54.239Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「城郊深夜公交站」（场景 SC01）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-05cd546e",
+			"at": "2026-08-29T22:52:57.707Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「末班公交车内」（场景 SC02）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-47323918",
+			"at": "2026-08-29T22:52:57.710Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"
+		},
+		{
+			"id": "ev-03303e5b",
+			"at": "2026-08-29T22:52:57.710Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "status",
+			"text": "审校员核对设计图：逐张比对画面与设计要点…"
+		},
+		{
+			"id": "ev-f7b4a611",
+			"at": "2026-08-29T22:53:21.313Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "redo",
+			"text": "设计图自审发现问题 ⚠️：「周小雨」设计要点明确要求写实生活质感（realistic lifestyle texture）及自然肤质，画面呈现为动漫/插画风格（anime style），渲染风格严重不符。安排美术指导带意见重绘。"
+		},
+		{
+			"id": "ev-6986fd37",
+			"at": "2026-08-29T22:53:25.801Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "「周小雨」已按审核意见重绘，提交复审…"
+		},
+		{
+			"id": "ev-ecf5cbf3",
+			"at": "2026-08-29T22:53:36.396Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "qa",
+			"text": "设计图重绘后审核问题已全部修复 ✅ 卡片 周小雨 复审通过。"
+		},
+		{
+			"id": "ev-99502a14",
+			"at": "2026-08-29T22:53:36.396Z",
+			"from": "art",
+			"to": "storyboard",
+			"kind": "handoff",
+			"text": "美术设计定稿：风格 [cinematic / realistic / lifestyle / documentary / urban nocturnal / intimate / gritty]，色板 #1a2a3a、#f5e6d3、#ffb84d、#4a5568。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"
+		},
+		{
+			"id": "ev-7efbe6d7",
+			"at": "2026-08-29T22:53:36.396Z",
+			"from": "art",
+			"to": "client",
+			"kind": "status",
+			"text": "美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。",
+			"link": {
+				"stage": "bible",
+				"label": "查看美术设计"
+			}
+		},
+		{
+			"id": "ev-0a533422",
+			"at": "2026-08-29T22:53:37.480Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "美术设计已确认 ✅ 开始绘制分镜关键帧。"
+		},
+		{
+			"id": "ev-0687f78d",
+			"at": "2026-08-29T22:53:37.480Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「分镜提示词」继续，直至成片。"
+		},
+		{
+			"id": "ev-e1ac2968",
+			"at": "2026-08-29T22:53:37.480Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "status",
+			"text": "分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"
+		},
+		{
+			"id": "ev-9b99fedb",
+			"at": "2026-08-29T22:54:05.777Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：老周(CH01)、城郊深夜公交站(SC01)。"
+		},
+		{
+			"id": "ev-1318f375",
+			"at": "2026-08-29T22:54:05.777Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-4d132cc9",
+			"at": "2026-08-29T22:54:13.862Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：老周(CH01)、城郊深夜公交站(SC01)。"
+		},
+		{
+			"id": "ev-4a541042",
+			"at": "2026-08-29T22:54:13.862Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-48598895",
+			"at": "2026-08-29T22:54:18.026Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：老周(CH01)、城郊深夜公交站(SC01)。"
+		},
+		{
+			"id": "ev-d8c7b366",
+			"at": "2026-08-29T22:54:18.026Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-1c3f9810",
+			"at": "2026-08-29T22:54:23.100Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：老周(CH01)、城郊深夜公交站(SC01)。"
+		},
+		{
+			"id": "ev-68d687e3",
+			"at": "2026-08-29T22:54:23.101Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-10a8ed13",
+			"at": "2026-08-29T22:54:27.450Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：老周(CH01)、城郊深夜公交站(SC01)。"
+		},
+		{
+			"id": "ev-e1822496",
+			"at": "2026-08-29T22:54:27.451Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-6e32b569",
+			"at": "2026-08-29T22:54:31.539Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "handoff",
+			"text": "分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"
+		},
+		{
+			"id": "ev-5eb91cc1",
+			"at": "2026-08-29T22:54:31.539Z",
+			"from": "storyboard",
+			"to": "client",
+			"kind": "status",
+			"text": "关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。",
+			"link": {
+				"stage": "keyframes",
+				"label": "查看关键帧"
+			}
+		},
+		{
+			"id": "ev-09bf662e",
+			"at": "2026-08-29T22:54:32.639Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「镜头生成」继续，直至成片。"
+		},
+		{
+			"id": "ev-836f11b0",
+			"at": "2026-08-29T22:54:32.643Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic wide establishing shot of deep night suburban bus …"
+		},
+		{
+			"id": "ev-49c2afd3",
+			"at": "2026-08-29T22:55:23.544Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH01 生成完成 ✅（1/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-ee65fc31",
+			"at": "2026-08-29T22:55:23.545Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Medium shot of 46-year-old delivery rider Old Zhou wearing a…"
+		},
+		{
+			"id": "ev-d3c1646a",
+			"at": "2026-08-29T23:00:13.155Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH02 生成完成 ✅（2/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-20e61596",
+			"at": "2026-08-29T23:00:13.156Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Close-up of 46-year-old delivery rider Old Zhou wearing a wo…"
+		},
+		{
+			"id": "ev-ccab48a3",
+			"at": "2026-08-29T23:01:18.241Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH03 生成完成 ✅（3/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-bb078da1",
+			"at": "2026-08-29T23:01:18.242Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Wide shot of father and daughter standing on suburban bus st…"
+		},
+		{
+			"id": "ev-755338eb",
+			"at": "2026-08-29T23:02:12.842Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH04 生成完成 ✅（4/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-8f860493",
+			"at": "2026-08-29T23:02:12.844Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Medium wide shot inside empty late-night bus, 46-year-old Ol…"
+		},
+		{
+			"id": "ev-7d70b9e2",
+			"at": "2026-08-29T23:09:18.357Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH05 生成完成 ✅（5/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-acd7e6ae",
+			"at": "2026-08-29T23:09:18.357Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"
+		},
+		{
+			"id": "ev-7e02f5d8",
+			"at": "2026-08-29T23:09:18.357Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"
+		},
+		{
+			"id": "ev-1301d0aa",
+			"at": "2026-08-29T23:09:31.849Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH01（指导：沉缓低语，语速偏慢，气息裹着夜风凉意，“冷得发颤”重音下沉，…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH01",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-069937e8",
+			"at": "2026-08-29T23:09:34.477Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH02（指导：语速放缓，带着奔波后的温软，“热乎着半块”轻读带暖意，气息轻…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH02",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-9ffe692b",
+			"at": "2026-08-29T23:09:36.803Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH03（指导：气息收拢压低声线，语速轻缓，“说话”重音轻颤，藏着克制的牵挂…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH03",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-c3262225",
+			"at": "2026-08-29T23:09:39.159Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH04（指导：语速稍扬，带着盼头，“亮起了灯”重音轻提，气息裹着点雀跃的亮…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH04",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-4cacd702",
+			"at": "2026-08-29T23:09:41.531Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH05（指导：语气笃定温暖，语速平稳，“等你到站”重音加重，气息沉而暖，落…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH05",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-4ff46fc9",
+			"at": "2026-08-29T23:09:41.531Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "旁白轨交付：5/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"
+		},
+		{
+			"id": "ev-21c363e1",
+			"at": "2026-08-29T23:09:41.531Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "status",
+			"text": "剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"
+		},
+		{
+			"id": "ev-9820d08a",
+			"at": "2026-08-29T23:10:04.807Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "粗剪完成（5 镜 · 19.6s · 720p 16:9，转场：叠化 0.5s、叠化 0.6s，音效：上升音、嗖声，响度 -14 LUFS），移交审片员质检。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "播放成片"
+			}
+		},
+		{
+			"id": "ev-57284616",
+			"at": "2026-08-29T23:10:41.544Z",
+			"from": "reviewer",
+			"to": "producer",
+			"kind": "qa",
+			"text": "质检结论：通过 ✅（综合 97）。最短板 visualConsistency 92 分。"
+		},
+		{
+			"id": "ev-277db230",
+			"at": "2026-08-29T23:10:41.544Z",
+			"from": "producer",
+			"to": "client",
+			"kind": "status",
+			"text": "全片交付 🎉 成片与五轴质检报告已就绪。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "查看成片"
+			}
+		}
+	],
+	"awaitingResume": false,
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"finalFile": "final.mp4",
+	"costEstimate": {
+		"total": 28.47,
+		"currency": "CNY",
+		"lines": [
+			{
+				"label": "剧本 LLM",
+				"amount": 0.65,
+				"note": "约 2k 输入 + 1.5k 输出 token"
+			},
+			{
+				"label": "美术设计 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "分镜提示词 LLM",
+				"amount": 0.97,
+				"note": "按 shotCount 翻倍"
+			},
+			{
+				"label": "EDL 转场 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "配音指导 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "审片多模 LLM",
+				"amount": 0.65,
+				"note": "含抽帧多模输入"
+			},
+			{
+				"label": "设计稿概念图",
+				"amount": 1.5,
+				"note": "3 张"
+			},
+			{
+				"label": "分镜关键帧",
+				"amount": 2.5,
+				"note": "5 张"
+			},
+			{
+				"label": "视频生成",
+				"amount": 20,
+				"note": "5 段 × 5s"
+			},
+			{
+				"label": "TTS 配音",
+				"amount": 0.25,
+				"note": "每镜粗估 1k 字符"
+			}
+		]
+	},
+	"productionShots": 5,
+	"dialogueShotCount": 0
+}

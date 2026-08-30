@@ -33,7 +33,7 @@ export function StoryboardStage({
 						return (
 							<div key={p.shotId} className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
 								<div className="flex items-center gap-3 border-b border-white/10 px-4 py-2">
-									<span className="font-mono text-sm font-semibold text-cyan-300">{p.shotId}</span>
+									<span className="font-mono text-sm font-semibold text-zinc-300">{p.shotId}</span>
 									{narration && <span className="truncate text-xs text-zinc-500">旁白 · {narration}</span>}
 								</div>
 								<p className="px-4 py-3 font-mono text-xs leading-relaxed text-zinc-300">{p.prompt}</p>

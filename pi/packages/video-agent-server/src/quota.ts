@@ -26,12 +26,22 @@ export interface PoolSpec {
 	rpmCap: number;
 	/** 每日时长配额（秒）；null = 无明确配额 */
 	dailyQuotaSec: number | null;
+	/**
+	 * 绑定的媒体适配器 ID（= models.json media 条目，含真实 key）。
+	 * **账本与执行的桥梁**：选池后提交时把任务投给该 adapter，
+	 * 才能把"多 key 记账"落到"多 key 真实并发"。缺省 = 不绑定，走默认 adapter 解析。
+	 */
+	adapterId?: string;
 }
 
 /** 池快照（B2 observe_kitchen 的观察对象，决策相关信息而非全量事件） */
 export interface PoolSnapshot {
 	id: string;
 	keyType: KeyType;
+	/** 绑定的媒体适配器 ID（未绑定则缺省，供代理/运维看到"池 ↔ key"对应关系） */
+	adapterId?: string;
+	/** 令牌桶容量 = 每分钟最大提交数 */
+	rpmCap: number;
 	/** 当前可用 RPM 令牌（已按 now 补充） */
 	rpmTokens: number;
 	/** 距下一个 RPM 令牌可用的毫秒数（0 = 现在就能提交） */
@@ -49,7 +59,17 @@ export interface PoolSnapshot {
 export type ReserveRejectReason = "unknown_pool" | "invalid" | "rpm_exhausted" | "insufficient_quota";
 
 export type ReserveResult =
-	| { ok: true; reservationId: string; reservedSec: number; /** 命中幂等键、未重复扣减 */ reused: boolean }
+	| {
+			ok: true;
+			reservationId: string;
+			reservedSec: number;
+			/** 命中幂等键、未重复扣减 */
+			reused: boolean;
+			/** 本次预留落在哪个池（多 key 并发下提交时要用同池绑定的 adapter） */
+			poolId: string;
+			/** 该池绑定的媒体适配器（未绑定则为 undefined，提交时走默认解析） */
+			adapterId?: string;
+	  }
 	| { ok: false; reason: ReserveRejectReason };
 
 export type SettleResult =
@@ -178,13 +198,27 @@ export class QuotaLedger {
 	}
 
 	/** B5 度量：已消耗配额秒数 = dailyQuota - remaining（null = 无配额池/Infinity 池） */
-	consumedSec(poolId: string, now: number = Date.now()): number | null {
+	/**
+	 * 已消耗秒数。**多池下不传 poolId 则汇总全部池**（多 key 场景的账面消耗；
+	 * 此前硬编码单池 id，配了 POOLS 后统计会直接失效）。
+	 * 无每日配额的池不参与汇总（限免期无从谈"已消耗/上限"），全部无配额时返回 null。
+	 */
+	consumedSec(poolId?: string, now: number = Date.now()): number | null {
 		this.rollToDay(now);
-		const pool = this.pools.get(poolId);
-		if (!pool) return null;
-		const daily = pool.spec.dailyQuotaSec;
-		if (daily === null || !Number.isFinite(daily)) return null;
-		return Math.max(0, Math.round(daily - pool.remainingQuotaSec));
+		if (poolId !== undefined) {
+			const pool = this.pools.get(poolId);
+			if (!pool) return null;
+			const daily = pool.spec.dailyQuotaSec;
+			if (daily === null || !Number.isFinite(daily)) return null;
+			return Math.max(0, Math.round(daily - pool.remainingQuotaSec));
+		}
+		let total: number | null = null;
+		for (const pool of this.pools.values()) {
+			const daily = pool.spec.dailyQuotaSec;
+			if (daily === null || !Number.isFinite(daily)) continue;
+			total = (total ?? 0) + Math.max(0, Math.round(daily - pool.remainingQuotaSec));
+		}
+		return total;
 	}
 
 	/**
@@ -205,7 +239,14 @@ export class QuotaLedger {
 			if (existingId) {
 				const existing = this.reservations.get(existingId);
 				if (existing && existing.status === "active") {
-					return { ok: true, reservationId: existing.id, reservedSec: existing.reservedSec, reused: true };
+					return {
+						ok: true,
+						reservationId: existing.id,
+						reservedSec: existing.reservedSec,
+						reused: true,
+						poolId: existing.poolId,
+						adapterId: this.pools.get(existing.poolId)?.spec.adapterId,
+					};
 				}
 				this.idempotency.delete(opts.idempotencyKey);
 			}
@@ -226,7 +267,7 @@ export class QuotaLedger {
 		};
 		this.reservations.set(id, reservation);
 		if (opts.idempotencyKey !== undefined) this.idempotency.set(opts.idempotencyKey, id);
-		return { ok: true, reservationId: id, reservedSec: estimatedSec, reused: false };
+		return { ok: true, reservationId: id, reservedSec: estimatedSec, reused: false, poolId, adapterId: pool.spec.adapterId };
 	}
 
 	/**
@@ -290,6 +331,8 @@ export class QuotaLedger {
 			return {
 				id: pool.spec.id,
 				keyType: pool.spec.keyType,
+				...(pool.spec.adapterId ? { adapterId: pool.spec.adapterId } : {}),
+				rpmCap: pool.spec.rpmCap,
 				rpmTokens: round3(pool.bucket.available(now)),
 				rpmWaitMs: pool.bucket.msUntil(1, now),
 				remainingQuotaSec: round3(pool.remainingQuotaSec),

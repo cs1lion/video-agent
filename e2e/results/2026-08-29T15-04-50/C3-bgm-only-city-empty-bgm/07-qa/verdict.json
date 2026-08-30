@@ -1,0 +1,58 @@
+{
+	"overall": "pass",
+	"score": 72,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 80
+		},
+		{
+			"id": "visualConsistency",
+			"score": 90
+		},
+		{
+			"id": "pacing",
+			"score": 90
+		},
+		{
+			"id": "audioSync",
+			"score": 0
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "清晨雾气弥漫的街道与未熄的路灯呈现城市沉睡状态，人物作为叙事线索贯穿全片"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "街道蒸汽升腾与商铺卷帘门开启，展现城市苏醒的细节与生活气息"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "城市远景与环卫车作业，天光渐亮呈现从夜到昼的过渡阶段"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "地铁站入口场景，衔接从街道到公共交通的叙事线索"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "第一班地铁进站，准确呈现核心元素与城市启动的瞬间"
+		},
+		{
+			"id": "SH06",
+			"verdict": "ok",
+			"reason": "车厢内倚靠望向窗外日出，完成城市从沉睡到醒来的情绪收尾"
+		}
+	]
+}

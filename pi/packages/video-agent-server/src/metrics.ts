@@ -90,3 +90,17 @@ export function computeRunMetrics(input: MetricsInput): RunMetrics {
 		failedClips: failedCount,
 	};
 }
+
+/** 完成/失败镜头的真实秒数（script.json 镜长求和；script 缺失或镜长缺省回落 5s/镜） */
+export function shotSeconds(
+	script: { shots: { id: string; durationSec?: number }[] } | null,
+	completedIds: string[],
+	failedIds: string[],
+): { effectiveSec: number; wastedSec: number } {
+	const fallback = 5;
+	const durOf = (id: string) => script?.shots.find((s) => s.id === id)?.durationSec ?? fallback;
+	return {
+		effectiveSec: completedIds.reduce((s, id) => s + durOf(id), 0),
+		wastedSec: failedIds.reduce((s, id) => s + durOf(id), 0),
+	};
+}

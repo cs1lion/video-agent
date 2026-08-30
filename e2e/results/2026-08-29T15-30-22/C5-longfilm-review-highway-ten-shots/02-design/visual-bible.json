@@ -1,0 +1,21 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"documentary",
+		"road movie",
+		"gritty",
+		"nostalgic",
+		"realist",
+		"lifestyle",
+		"muted"
+	],
+	"palette": [
+		"#2C3E50",
+		"#D4A017",
+		"#8B4513",
+		"#708090",
+		"#F5F5DC"
+	],
+	"lighting": "Natural lighting as the primary source, supplemented by warm low-angle headlights and dim service area lamps, high-contrast low-key lighting during storm sequences to highlight the driver's solitude",
+	"grade": "Muted desaturated color grade with lifted shadows for nostalgic realism, cool blue undertones applied to rainy night scenes, and soft warm amber highlights for quiet emotional beats"
+}

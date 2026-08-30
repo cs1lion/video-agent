@@ -4,8 +4,10 @@
 
 import { useEffect, useState } from "react";
 import { Camera, LoaderCircle, ScanSearch } from "lucide-react";
-import type { AssetFile, AxisId, ConsistencyDoc, QaShotVerdict, QaVerdict } from "@/api/client";
+import type { AssetFile, AxisId, ConsistencyDoc, PriorityInstruction, QaShotVerdict, QaVerdict } from "@/api/client";
 import { api } from "@/api/client";
+import { MetricsCard } from "@/components/MetricsCard";
+import { ShotPriorityControl } from "@/components/ShotPriorityControl";
 import { GlowButton, ProgressBar, ProgressRing } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { EmptyState, StageShell } from "./shared";
@@ -53,7 +55,7 @@ function ConsistencyCheck({
 			<div className="mb-2 flex flex-wrap items-center gap-2">
 				<ScanSearch className="size-3.5 text-emerald-300" />
 				<span className="text-xs tracking-wide text-zinc-300">跨镜一致性预检</span>
-				<span className="text-[10px] text-zinc-600">审校模型逐镜比对角色外观与画风，在你看片之前标出跳变点</span>
+				<span className="text-[10px] text-zinc-500">审校模型逐镜比对角色外观与画风，在你看片之前标出跳变点</span>
 				<GlowButton
 					variant="outline"
 					disabled={busy}
@@ -84,18 +86,18 @@ function ConsistencyCheck({
 									</span>
 								</div>
 							))}
-							<p className="text-[10px] text-zinc-600">
+							<p className="text-[10px] text-zinc-500">
 								提示：对不一致镜头点「补拍重做」——跳变描述会自动预填进重做指令；也可在成片交付页发起审议让导演出方案。
 							</p>
 						</div>
 					)}
-					<p className="font-mono text-[9px] text-zinc-700">
+					<p className="font-mono text-[9px] text-zinc-600">
 						{doc.model} · {new Date(doc.checkedAt).toLocaleString("zh-CN")}
 					</p>
 				</div>
 			)}
 			{doc === null && !busy && !error && (
-				<p className="text-[11px] text-zinc-600">
+				<p className="text-[11px] text-zinc-500">
 					尚未预检。出片中或预检被跳过；可点上方按钮手动重跑。
 				</p>
 			)}
@@ -122,6 +124,30 @@ export function ReviewStage({
 	onReshot: (shotId: string, instruction?: string) => void;
 }) {
 	const frames = assets.filter((a) => a.type === "image" && a.name.startsWith("qa-"));
+	const [priorities, setPriorities] = useState<Record<string, PriorityInstruction["priority"]>>({});
+	useEffect(() => {
+		let alive = true;
+		api
+			.fetchPriorityInstructions(runId)
+			.then((list) => {
+				if (!alive) return;
+				setPriorities(Object.fromEntries(list.map((i) => [i.shotId, i.priority])));
+			})
+			.catch(() => {
+				// 老 run 无指令文件：空态合法
+			});
+		return () => {
+			alive = false;
+		};
+	}, [runId]);
+	const setPriorityOf = (shotId: string, p: PriorityInstruction["priority"] | undefined) => {
+		setPriorities((m) => {
+			const next = { ...m };
+			if (p) next[shotId] = p;
+			else delete next[shotId];
+			return next;
+		});
+	};
 	// 一致性数据提升到本层：预检面板展示 + 补拍指令预填共用
 	const [consistencyDoc, setConsistencyDoc] = useState<ConsistencyDoc | null | undefined>(undefined);
 	const [checking, setChecking] = useState(false);
@@ -194,6 +220,8 @@ export function ReviewStage({
 					))}
 				</div>
 
+				<MetricsCard runId={runId} runStatus={runStatus} />
+
 				<ConsistencyCheck doc={consistencyDoc} busy={checking} error={checkError} onRun={() => void runConsistency()} />
 
 				{frames.length > 0 && (
@@ -201,7 +229,7 @@ export function ReviewStage({
 						<div className="mb-2.5 flex items-baseline justify-between">
 							<span className="text-xs tracking-wide text-zinc-500">审片依据 · 逐镜标注</span>
 							{shots.length === 0 && (
-								<span className="text-[10px] text-zinc-600">（本 run 生成于逐镜标注功能上线前，仅展示抽帧）</span>
+								<span className="text-[10px] text-zinc-500">（本 run 生成于逐镜标注功能上线前，仅展示抽帧）</span>
 							)}
 						</div>
 						<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -214,11 +242,20 @@ export function ReviewStage({
 									<div key={f.name} className={`overflow-hidden rounded-xl border ${v ? v.bar : "border-white/10"}`}>
 										<img src={f.url} alt={f.name} className="aspect-video w-full object-cover" />
 										<div className="space-y-1.5 bg-black/40 px-2.5 py-2">
-											<div className="flex items-center justify-between gap-1">
-												<span className="font-mono text-[10px] text-cyan-300">{id}</span>
-												{v ? (
-													<span className={`rounded-full border px-1.5 py-px text-[10px] ${v.cls}`}>{v.label}</span>
-												) : null}
+											<div className="flex items-center gap-1">
+												<span className="font-mono text-[10px] text-zinc-300">{id}</span>
+												<span className="ml-auto flex items-center gap-1">
+													{v ? (
+														<span className={`rounded-full border px-1.5 py-px text-[10px] ${v.cls}`}>{v.label}</span>
+													) : null}
+													<ShotPriorityControl
+														runId={runId}
+														shotId={id}
+														value={priorities[id]}
+														onChange={(p) => setPriorityOf(id, p)}
+														interactive={runStatus === "running"}
+													/>
+												</span>
 											</div>
 											{shot && shot.verdict !== "ok" && (
 												<p className="line-clamp-2 text-[10px] leading-snug text-zinc-400">{shot.reason}</p>

@@ -1,0 +1,54 @@
+{
+	"title": "首班车唤醒的城市",
+	"logline": "以六个无旁白空镜完整呈现清晨城市从沉睡到苏醒的过程，最终落点到首班地铁承载城市新一天的出行起点",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "At 5:30 a.m., dim streetlights cast soft glows on completely empty residential streets, with only scattered lights visible in dark apartment windows and thin mist hanging in the air.",
+			"durationSec": 5,
+			"ttsDirection": "情绪静谧清冷，语速极缓，气息轻若游丝，每个字都像怕惊扰沉睡的城市，重音落在时间细碎的松弛感上"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "A small breakfast stall's metal shutter is pulled up, releasing thick clouds of hot steam that curl and fade into the cold morning air on the still-quiet street.",
+			"durationSec": 5,
+			"ttsDirection": "情绪微暖带期待，语速稍缓偏轻快，气息裹着暖意，重音落在卷帘门滑开的轻响动感上"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The sky over the city shifts from deep indigo to pale lavender as a sanitation truck with flashing amber lights slowly cruises along the empty elevated road.",
+			"durationSec": 5,
+			"ttsDirection": "情绪舒展渐明，语速渐缓渐扬，气息悠长舒展，重音落在天色晕染的渐变层次上"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "A subway station staff member pulls open the heavy entrance shutter, revealing the brightly lit, completely empty platform inside with a faint breeze blowing through the vents.",
+			"durationSec": 5,
+			"ttsDirection": "情绪笃定有力，语速平稳，气息沉稳，重音落在金属门被拉开的厚重实感上"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The first morning subway train, its front lights glowing, slowly glides into the empty station and comes to a smooth stop at the platform.",
+			"durationSec": 5,
+			"ttsDirection": "情绪蓄势而动，语速稍快，气息带推进感，重音落在列车驶来的动势节奏上"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The subway doors slide open to reveal the brightening platform, with the city's skyline glowing in the rising golden sun behind the station, and the \"City Rail Go\" app download prompt appears at the bottom of the frame.",
+			"durationSec": 5,
+			"ttsDirection": "情绪明亮开阔，语速放缓上扬，气息清亮通透，重音落在车门打开的豁然瞬间上"
+		}
+	]
+}

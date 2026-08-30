@@ -1,0 +1,114 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "地铁站务员",
+			"design": "Middle-aged male station staff in standard dark blue uniform with reflective silver stripes, wearing a peaked cap and canvas work gloves, holding the metal shutter pull rod. Soft diffused pre-dawn lighting, half-body side shot, realistic fabric and metal texture, grounded urban worker vibe.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "早餐摊金属卷帘门",
+			"design": "Weathered galvanized metal rolling shutter with horizontal slats, slightly dented edges, cold metallic texture. Early dim ambient light hits its surface, side view, realistic urban utilitarian object, no extra decoration.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "首班地铁列车",
+			"design": "Modern urban subway train with smooth silver body, glowing warm front headlights, clean window surfaces reflecting the dim pre-dawn sky. Front three-quarter view, realistic industrial design, subtle light bloom effect on the lights.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "环卫车警示灯",
+			"design": "Red and white flashing LED warning lights mounted on top of a sanitation truck, strobing effect in the dim pre-dawn light, small size but highly visible, side view, realistic urban utility detail.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "清晨居民区街道",
+			"design": "Empty narrow residential street at 5:30am, dim warm streetlights casting soft glows on slightly wet asphalt, closed house doors and windows, no pedestrians, deep navy and misty gray color tone, wide shot from street level, immersive quiet urban morning atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "地铁站入口",
+			"design": "Subway station entrance with heavy metal shutter being pulled up, bright warm interior light spilling out onto the dark street, concrete steps and public signage, transition from dark exterior to lit interior, eye-level front view, realistic urban public space texture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		},
+		{
+			"id": "SC03",
+			"category": "scene",
+			"name": "城市天际线远景",
+			"design": "Panoramic view of the city skyline at sunrise, skyscrapers outlined against the pale peach and warm amber sky, faint city lights still on, the whole city bathed in soft golden hour light, high-angle wide shot, meditative atmospheric urban landscape.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC03.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T15:06:29.628Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-29T15:05:28.125Z"
+}

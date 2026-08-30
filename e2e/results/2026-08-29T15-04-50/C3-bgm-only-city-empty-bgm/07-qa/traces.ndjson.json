@@ -1,0 +1,372 @@
+{
+	"spans": [
+		{
+			"stage": "script",
+			"name": "剧本文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面这支广告撰写剧本。\n一句话需求: 写实空镜短片：清晨五点半的城市，全片没有人物对白、也没有旁白解说，只有街道、蒸汽、第一班地铁与天光渐亮。用六个镜头的推进讲一座城市从沉睡到醒来的完整过程，情绪完全靠画面与背景音乐完成。\n关键信息: 城",
+			"output": "JSON 产物（title,logline,shots）",
+			"spanId": "52beaed9",
+			"startAt": "2026-08-29T15:04:50.664Z",
+			"durationMs": 17874
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面这支广告制定美术设计（全片决定性的视觉基准：本产物的风格、色彩与光线将直接约束后续所有关键帧和视频素材，必须一次定准）。\n一句话需求: 写实空镜短片：清晨五点半的城市，全片没有人物对白、也没有旁白解说，只有街道、蒸汽、第一班地铁与天光",
+			"output": "JSON 产物（styleKeywords,palette,lighting,grade）",
+			"spanId": "fa84097b",
+			"startAt": "2026-08-29T15:05:08.540Z",
+			"durationMs": 6716
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计·实体推导",
+			"kind": "llm",
+			"status": "ok",
+			"input": "首班车唤醒的城市 + 美术设计",
+			"output": "人物 1 / 道具 3 / 场景 3",
+			"spanId": "f6f4e37d",
+			"startAt": "2026-08-29T15:05:15.259Z",
+			"durationMs": 12866
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 CH01（地铁站务员）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Middle-aged male station staff in standard dark blue uniform with reflective silver stripes, wearing a peaked cap and ca",
+			"output": "design-character-CH01.png",
+			"spanId": "df837936",
+			"startAt": "2026-08-29T15:05:28.127Z",
+			"durationMs": 4320
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR01（早餐摊金属卷帘门）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Weathered galvanized metal rolling shutter with horizontal slats, slightly dented edges, cold metallic texture. Early di",
+			"output": "design-prop-PR01.png",
+			"spanId": "cbe153cf",
+			"startAt": "2026-08-29T15:05:32.448Z",
+			"durationMs": 3665
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR02（首班地铁列车）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Modern urban subway train with smooth silver body, glowing warm front headlights, clean window surfaces reflecting the d",
+			"output": "design-prop-PR02.png",
+			"spanId": "a3f0d1ea",
+			"startAt": "2026-08-29T15:05:36.114Z",
+			"durationMs": 3453
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR03（环卫车警示灯）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Red and white flashing LED warning lights mounted on top of a sanitation truck, strobing effect in the dim pre-dawn ligh",
+			"output": "design-prop-PR03.png",
+			"spanId": "7249c6d6",
+			"startAt": "2026-08-29T15:05:39.568Z",
+			"durationMs": 15782
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC01（清晨居民区街道）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Empty narrow residential street at 5:30am, dim warm streetlights casting soft glows on slightly wet asphalt, closed hous",
+			"output": "design-scene-SC01.png",
+			"spanId": "5b3fd1c6",
+			"startAt": "2026-08-29T15:05:55.352Z",
+			"durationMs": 4345
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC02（地铁站入口）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Subway station entrance with heavy metal shutter being pulled up, bright warm interior light spilling out onto the dark ",
+			"output": "design-scene-SC02.png",
+			"spanId": "c432f1af",
+			"startAt": "2026-08-29T15:05:59.706Z",
+			"durationMs": 5694
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC03（城市天际线远景）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Panoramic view of the city skyline at sunrise, skyscrapers outlined against the pale peach and warm amber sky, faint cit",
+			"output": "design-scene-SC03.png",
+			"spanId": "20397c6e",
+			"startAt": "2026-08-29T15:06:05.401Z",
+			"durationMs": 6347
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计·出图自审",
+			"kind": "qa",
+			"status": "ok",
+			"input": "7 张设计图送审",
+			"output": "7 ok / 0 warn / 0 fail",
+			"spanId": "fcba1cb2",
+			"startAt": "2026-08-29T15:06:11.749Z",
+			"durationMs": 17881
+		},
+		{
+			"stage": "prompts",
+			"name": "分镜提示词文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面广告的每个镜头写一段视频生成模型的英文提示词。\n一句话需求: 写实空镜短片：清晨五点半的城市，全片没有人物对白、也没有旁白解说，只有街道、蒸汽、第一班地铁与天光渐亮。用六个镜头的推进讲一座城市从沉睡到醒来的完整过程，情绪完全靠画面与背",
+			"output": "JSON 产物（prompts）",
+			"spanId": "c3a7c63b",
+			"startAt": "2026-08-29T15:06:31.147Z",
+			"durationMs": 53852
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH01",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic wide shot of an empty narrow residential street at 5:30am, dim warm streetlights casting soft glows on slightl",
+			"output": "key-SH01.png",
+			"spanId": "97bbb2d2",
+			"startAt": "2026-08-29T15:07:25.002Z",
+			"durationMs": 45006
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH02",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic medium shot of thick clouds of hot steam curling and fading from a pulled-up metal breakfast stall shutter on ",
+			"output": "key-SH02.png",
+			"spanId": "fcb57f83",
+			"startAt": "2026-08-29T15:08:10.008Z",
+			"durationMs": 22430
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH03",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic high-angle wide shot of the sky shifting from deep indigo to pale lavender above the city, a sanitation truck ",
+			"output": "key-SH03.png",
+			"spanId": "c7a94353",
+			"startAt": "2026-08-29T15:08:32.439Z",
+			"durationMs": 14040
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH04",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic half-body side shot of a middle-aged male station staff wearing a standard dark blue uniform with reflective s",
+			"output": "key-SH04.png",
+			"spanId": "2bb87a74",
+			"startAt": "2026-08-29T15:08:46.480Z",
+			"durationMs": 9053
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH05",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic wide shot of the first morning subway train with glowing front lights slowly gliding into the completely empty",
+			"output": "key-SH05.png",
+			"spanId": "4790f477",
+			"startAt": "2026-08-29T15:08:55.534Z",
+			"durationMs": 19914
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH06",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic low-angle shot of subway doors sliding open to reveal the brightening empty platform, city skyline glowing in ",
+			"output": "key-SH06.png",
+			"spanId": "64903a33",
+			"startAt": "2026-08-29T15:09:15.449Z",
+			"durationMs": 7745
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH01 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic wide shot of an empty narrow residential street at 5:30am, dim warm streetlights casting soft glows on slightl",
+			"output": "clip-SH01.mp4",
+			"spanId": "7c27d0b0",
+			"startAt": "2026-08-29T15:09:26.491Z",
+			"durationMs": 183532
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH02 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic medium shot of thick clouds of hot steam curling and fading from a pulled-up metal breakfast stall shutter on ",
+			"output": "clip-SH02.mp4",
+			"spanId": "1558594c",
+			"startAt": "2026-08-29T15:12:30.024Z",
+			"durationMs": 377699
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH03 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic high-angle wide shot of the sky shifting from deep indigo to pale lavender above the city, a sanitation truck ",
+			"output": "clip-SH03.mp4",
+			"spanId": "7c9ca1e6",
+			"startAt": "2026-08-29T15:18:47.725Z",
+			"durationMs": 167101
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH04 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic half-body side shot of a middle-aged male station staff wearing a standard dark blue uniform with reflective s",
+			"output": "clip-SH04.mp4",
+			"spanId": "df4b96f5",
+			"startAt": "2026-08-29T15:21:34.828Z",
+			"durationMs": 169915
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH05 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic wide shot of the first morning subway train with glowing front lights slowly gliding into the completely empty",
+			"output": "clip-SH05.mp4",
+			"spanId": "6d01a28c",
+			"startAt": "2026-08-29T15:24:24.745Z",
+			"durationMs": 115044
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH06 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic low-angle shot of subway doors sliding open to reveal the brightening empty platform, city skyline glowing in ",
+			"output": "clip-SH06.mp4",
+			"spanId": "c16031cd",
+			"startAt": "2026-08-29T15:26:19.791Z",
+			"durationMs": 121266
+		},
+		{
+			"stage": "audio",
+			"name": "配音导演·表演指导",
+			"kind": "llm",
+			"status": "ok",
+			"input": "6 镜旁白",
+			"output": "SH01:情绪静谧清冷，语速极缓，气息轻若游丝… SH02:情绪微暖带期待，语速稍缓偏轻快，气息… SH03:情绪舒展渐明，语速渐缓渐扬，气息悠长… SH04:情绪笃定有力，语速平稳，气息沉稳，重… SH05:情绪蓄势而动，语速稍快，气息带推进感… SH06:情绪明亮开阔，语速放缓上扬，气息清亮…",
+			"spanId": "a4494344",
+			"startAt": "2026-08-29T15:28:21.058Z",
+			"durationMs": 9252
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH01 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH01.mp4（5.0s）",
+			"spanId": "1c190374",
+			"startAt": "2026-08-29T15:28:30.312Z",
+			"durationMs": 495
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH02 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH02.mp4（5.0s）",
+			"spanId": "1810a7d8",
+			"startAt": "2026-08-29T15:28:30.807Z",
+			"durationMs": 516
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH03 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH03.mp4（5.0s）",
+			"spanId": "5a30f6d9",
+			"startAt": "2026-08-29T15:28:31.323Z",
+			"durationMs": 585
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH04 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH04.mp4（5.0s）",
+			"spanId": "362cc284",
+			"startAt": "2026-08-29T15:28:31.908Z",
+			"durationMs": 448
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH05 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH05.mp4（5.0s）",
+			"spanId": "70abc099",
+			"startAt": "2026-08-29T15:28:32.357Z",
+			"durationMs": 542
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH06 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH06.mp4（5.0s）",
+			"spanId": "2d771854",
+			"startAt": "2026-08-29T15:28:32.899Z",
+			"durationMs": 488
+		},
+		{
+			"stage": "export",
+			"name": "剪辑决策（转场 EDL）",
+			"kind": "llm",
+			"status": "ok",
+			"input": "6 镜节奏表",
+			"output": "1:cut 2:fade 3:cut 4:cut 5:fade",
+			"spanId": "cd7be883",
+			"startAt": "2026-08-29T15:28:33.387Z",
+			"durationMs": 18439
+		},
+		{
+			"stage": "export",
+			"name": "时间线合成（转场+混音）",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"input": "叠化 0.5s、叠化 0.5s · BGM 铺底闪避 · SFX 嗖声、嗖声 · 响度 -14 LUFS",
+			"output": "final.mp4（6 镜 · 29.0s · 2 处转场 · 2 处音效）",
+			"spanId": "03a275b0",
+			"startAt": "2026-08-29T15:28:51.829Z",
+			"durationMs": 3570
+		},
+		{
+			"stage": "export",
+			"name": "审片质检（五轴 + 逐镜标注）",
+			"kind": "qa",
+			"status": "ok",
+			"input": "6 帧抽检",
+			"output": "综合 72（pass）；逐镜 6 ok / 0 warn / 0 fail",
+			"spanId": "317b949e",
+			"startAt": "2026-08-29T15:28:55.399Z",
+			"durationMs": 25047
+		}
+	]
+}

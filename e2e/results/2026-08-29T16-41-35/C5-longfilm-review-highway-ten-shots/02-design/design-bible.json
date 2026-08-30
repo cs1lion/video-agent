@@ -1,0 +1,114 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "退休货运司机",
+			"design": "A gray-haired man in his 60s, wearing a worn dark canvas work jacket, loose cargo work pants and scuffed non-slip driving shoes. His face is lined with deep wrinkles, hands rough and calloused from decades of steering, carrying a dented old stainless steel thermos. Full-body front view, natural soft dawn daylight, gritty realistic documentary style.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "货运学徒司机",
+			"design": "A young man in his 20s, wearing a clean bright orange high-visibility work jacket, neat work pants and new work boots. He has a gentle, respectful expression, clean and steady hands. Half-body front view, soft diffused post-rain morning light, realistic naturalistic style.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "卡车全地形轮胎",
+			"design": "A rugged all-terrain truck tire with deep, widely spaced tread pattern, matte dark rubber texture, small brand logo printed on the sidewall. Slightly dusty surface with faint road wear and scratch marks. Close-up side view, placed on wet asphalt road, soft morning light highlighting the tread texture, realistic product presentation style.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "旧卡车钥匙",
+			"design": "A worn metal truck key with faded paint, slight rust spots on the edge, attached to a frayed old leather keychain. Slightly scuffed surface with clear years of use marks. Close-up front view, held in the old driver's rough hand, soft warm side light, realistic documentary texture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "清晨货运场装货场景",
+			"design": "An open freight yard at dawn, gray concrete ground with faint oil stains, several parked freight trucks in the distance. Pale golden sunrise light filters through thin light mist, cool blue tone in shadow areas, natural realistic lighting, gritty road movie atmosphere, wide establishing shot.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "暴雨夜公路驾驶场景",
+			"design": "A wet asphalt highway at dark rainy night, raindrops hitting the windshield, bright truck headlights cutting through the dark, blurred passing scenery outside the window. Cool blue moonlight mixed with soft warm dashboard instrument glow, visible raindrops on the glass, muted desaturated tone, claustrophobic cab interior atmosphere, medium shot from inside the cab.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		},
+		{
+			"id": "SC03",
+			"category": "scene",
+			"name": "清晨货运场交钥匙场景",
+			"design": "The same freight yard after rain in early morning, light mist hanging low over the ground, wet asphalt reflecting soft golden sunrise light. The old truck parked on the side, warm low-contrast nostalgic tone, soft diffused light, quiet and sentimental atmosphere, medium long shot.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC03.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:19.596Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-29T16:42:26.314Z"
+}

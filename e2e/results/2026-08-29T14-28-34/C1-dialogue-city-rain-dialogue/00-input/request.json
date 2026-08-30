@@ -1,0 +1,41 @@
+{
+	"brief": {
+		"logline": "写实真人短片：深夜十一点的城郊公交站，末班车迟迟不来。一位跑了一天外卖的中年男人蹲在站台边，把凉掉的包子掰了一半递给同在等车的女儿。父女在雨声里有一小段压着嗓子的对白，最后车灯由远及近——故事讲「抵达本身就已经是团圆」。",
+		"keyMessage": "再远的路，也有人等你到站。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 5,
+		"fps": 24,
+		"motionIntensity": "medium",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "老周",
+				"description": "46 岁外卖骑手，深蓝旧冲锋衣，胡茬，眼下有疲惫纹路，说话习惯低头"
+			},
+			{
+				"name": "周小雨",
+				"description": "11 岁女孩，校服外套偏大，背旧书包，头发被雨打湿贴在额角"
+			}
+		],
+		"scenes": [
+			{
+				"name": "城郊公交站",
+				"description": "深夜写实：褪色广告灯箱、积水倒映暖黄路灯光、远处高架车流是虚焦光斑"
+			},
+			{
+				"name": "末班公交车内",
+				"description": "写实车厢：空座、冷白顶灯、车窗雨痕与自己的倒影"
+			}
+		],
+		"musicBrief": "低音量钢琴单音 + 雨声环境音，情绪克制，结尾随车灯渐亮微微抬起。"
+	}
+}

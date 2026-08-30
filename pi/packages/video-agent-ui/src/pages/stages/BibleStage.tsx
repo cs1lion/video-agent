@@ -50,7 +50,7 @@ function DesignCard({
 								)}
 							</>
 						) : (
-							<LoaderCircle className="size-5 animate-spin text-cyan-300/80" />
+							<LoaderCircle className="size-5 animate-spin text-zinc-400" />
 						)}
 					</div>
 				)}
@@ -69,7 +69,7 @@ function DesignCard({
 					</div>
 				)}
 				<div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-8">
-					<span className="font-mono text-[10px] text-cyan-300">{entity.id}</span>
+					<span className="font-mono text-[10px] text-zinc-300">{entity.id}</span>
 					<span className="truncate text-xs font-medium text-zinc-100">{entity.name}</span>
 				</div>
 			</div>
@@ -113,7 +113,7 @@ function DesignCard({
 							onAdjust(entity.id, instruction.trim());
 							setInstruction("");
 						}}
-						className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-violet-400/40 px-2.5 py-1.5 text-xs text-violet-200 transition-colors hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+						className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-amber-300/40 px-2.5 py-1.5 text-xs text-amber-200 transition-colors hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						<RefreshCw className="size-3.5" />
 						重绘
@@ -191,11 +191,11 @@ export function BibleStage({
 
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-								<div className="mb-1.5 font-mono text-[10px] tracking-widest text-cyan-300/80">LIGHTING</div>
+								<div className="mb-1.5 font-mono text-[10px] tracking-widest text-zinc-500">LIGHTING</div>
 								<p className="text-sm leading-relaxed text-zinc-200">{bible.lighting}</p>
 							</div>
 							<div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-								<div className="mb-1.5 font-mono text-[10px] tracking-widest text-violet-300/80">COLOR GRADE</div>
+								<div className="mb-1.5 font-mono text-[10px] tracking-widest text-zinc-500">COLOR GRADE</div>
 								<p className="text-sm leading-relaxed text-zinc-200">{bible.grade}</p>
 							</div>
 						</div>
@@ -211,7 +211,7 @@ export function BibleStage({
 							type="button"
 							disabled={designBusy}
 							onClick={onDesignReview}
-							className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-cyan-400/40 px-2.5 py-1.5 text-xs text-cyan-200 transition-colors hover:bg-cyan-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+							className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-amber-300/40 px-2.5 py-1.5 text-xs text-amber-200 transition-colors hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							{designBusy ? <LoaderCircle className="size-3.5 animate-spin" /> : <BadgeCheck className="size-3.5" />}
 							重新审核
@@ -225,12 +225,12 @@ export function BibleStage({
 							return (
 								<section key={key} className="rounded-2xl border border-white/10 bg-black/20 p-4">
 									<div className="mb-3 flex items-baseline gap-2.5">
-										<Icon className="size-4 translate-y-0.5 text-cyan-300/80" />
+										<Icon className="size-4 translate-y-0.5 text-zinc-400" />
 										<h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
-										<span className="text-[11px] text-zinc-600">{note}</span>
+										<span className="text-[11px] text-zinc-500">{note}</span>
 									</div>
 									{entities.length === 0 ? (
-										<p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-xs text-zinc-600">
+										<p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-xs text-zinc-500">
 										美术设计定稿后自动推导并绘制…
 										</p>
 									) : (

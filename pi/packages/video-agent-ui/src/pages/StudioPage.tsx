@@ -3,7 +3,7 @@
  * 头部：返回 + runId + 全局进度环 + 状态 pill；awaiting 时顶部出现「继续推进」条。
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -13,7 +13,6 @@ import {
 	Camera,
 	Clapperboard,
 	LoaderCircle,
-	PlayCircle,
 	WandSparkles,
 	XCircle,
 } from "lucide-react";
@@ -30,7 +29,8 @@ import { RefineModal } from "@/components/RefineModal";
 import { ReshotModal } from "@/components/ReshotModal";
 import { GlowButton, ProgressRing } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
-import type { StageId } from "@/api/client";
+import type { KitchenSummary, StageId } from "@/api/client";
+import { api } from "@/api/client";
 import { BriefStage } from "./stages/BriefStage";
 import { ScriptStage } from "./stages/ScriptStage";
 import { KitchenPanel } from "@/components/KitchenPanel";
@@ -143,10 +143,24 @@ export function StudioPage() {
 	const [reshotTarget, setReshotTarget] = useState<{ shotId: string; instruction?: string } | null>(null);
 	const [selectedKeyframes, setSelectedKeyframes] = useState<string[]>([]);
 
+	// 厨房汇总统一刷新源（设计方案 §4-F）：KitchenPanel 与制片人灯共用同一份数据
+	const [kitchenSummary, setKitchenSummary] = useState<KitchenSummary | null>(null);
+	const loadKitchen = useCallback(async () => {
+		try {
+			setKitchenSummary(await api.kitchenFetch(runId));
+		} catch {
+			// 辅助信息：拉取失败静默（老 run 无 kitchen.ndjson 返回空列表是合法态）
+		}
+	}, [runId]);
+
 	useEffect(() => {
 		if (runId) bind(runId);
 		return () => unbind();
 	}, [runId, bind, unbind]);
+
+	useEffect(() => {
+		if (runId) void loadKitchen();
+	}, [runId, loadKitchen]);
 
 	// 首次拿到产物时跳到最新可用阶段
 	const [jumped, setJumped] = useState(false);
@@ -238,7 +252,7 @@ export function StudioPage() {
 						</>
 					) : (
 						<>
-							<LoaderCircle className="size-6 animate-spin text-cyan-300" />
+							<LoaderCircle className="size-6 animate-spin text-zinc-400" />
 							<p className="text-sm text-zinc-500">正在接入制作现场…</p>
 						</>
 					)}
@@ -341,7 +355,7 @@ export function StudioPage() {
 									{run.costEstimate.total.toFixed(2)}
 								</span>
 								<span className="text-zinc-500"> / </span>
-								<span className="text-cyan-200">
+								<span className="text-amber-200">
 									¥{(run.metrics?.cost?.spent ?? 0).toFixed(2)}
 								</span>
 							</span>
@@ -360,11 +374,17 @@ export function StudioPage() {
 		<div className="relative z-10 flex shrink-0 items-center gap-4 border-b border-white/[0.07] px-5 py-2">
 			<PipelineFlow stages={run.stages} audioDrive={run.options.audioDrive} className="min-w-0 flex-1 pb-0" />
 			<div className="h-8 w-px shrink-0 bg-white/10" />
-			<TeamPresence run={run} chatBusy={chatBusy} />
+			<TeamPresence run={run} chatBusy={chatBusy} kitchen={kitchenSummary} />
 		</div>
 
 		{/* B2 只读制片主任：observe_kitchen 建议 + 采纳率（B2 不自动执行） */}
-		<KitchenPanel runId={run.id} running={run.status === "running"} />
+		<KitchenPanel
+			runId={run.id}
+			running={run.status === "running"}
+			onJump={jumpToArtifact}
+			summary={kitchenSummary}
+			onRefresh={loadKitchen}
+		/>
 
 		{/* awaiting 确认条：闸门 / refine 重塑共用 */}
 			<AnimatePresence>
@@ -375,14 +395,20 @@ export function StudioPage() {
 						exit={{ height: 0, opacity: 0 }}
 						className="relative z-20 shrink-0 overflow-hidden border-b border-amber-400/20 bg-amber-400/10"
 					>
-						<div className="flex flex-wrap items-center gap-3 px-5 py-2.5 text-xs text-amber-100">
-							<PlayCircle className="size-4 shrink-0" />
-							<span className="flex-1">
+						<div className="clap-stripe h-1.5 w-full" />
+						<div className="flex flex-wrap items-center gap-3 px-5 py-3 text-xs text-amber-100">
+							<span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-amber-300/50 bg-amber-400/15 shadow-[0_0_16px_rgba(251,191,36,0.25)]">
+								<Clapperboard className="size-4 text-amber-200" />
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="block font-display text-sm font-black tracking-wide text-amber-100">打板 · 等你确认</span>
+								<span className="mt-0.5 block leading-relaxed text-amber-100/80">
 								{run.gate === "design"
 									? "美术设计已就绪：请确认人物形象与场景设定，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"
 									: run.gate === "keyframes"
 										? `关键帧已就绪：请勾选要进入成片的 ${confirmedForResume.length}/${scriptShotIds.length} 镜。预计消耗 ${confirmedForResume.length} 段视频（约 ${estimatedVideoSeconds}s）和 ${confirmedForResume.length} 条配音${isPartialKeyframeConfirm ? `；未勾选的 ${scriptShotIds.length - confirmedForResume.length} 镜不会提交、不会消耗额度` : ""}。${staleKeyframes > 0 ? `其中 ${staleKeyframes} 镜已落后美术设计，须重绘后才能进入成片。` : ""}`
 										: "产物已按你的意见重塑，确认无误后继续推进下游阶段。"}
+								</span>
 							</span>
 							{run.gate === "design" && (
 								<GlowButton variant="ghost" onClick={() => setStage("bible")}>
@@ -440,7 +466,7 @@ export function StudioPage() {
 						initial={{ height: 0, opacity: 0 }}
 						animate={{ height: "auto", opacity: 1 }}
 						exit={{ height: 0, opacity: 0 }}
-						className="relative z-20 shrink-0 overflow-hidden border-b border-amber-300/25 bg-gradient-to-r from-amber-400/[0.12] via-amber-400/[0.06] to-violet-400/[0.08]"
+						className="relative z-20 shrink-0 overflow-hidden border-b border-amber-300/25 bg-gradient-to-r from-amber-400/[0.12] via-amber-400/[0.06] to-zinc-400/[0.08]"
 					>
 						<span className="redo-scan absolute inset-x-0 top-0 h-px" />
 						<div className="flex flex-wrap items-center gap-3 px-5 py-2.5 text-xs text-amber-100">
@@ -554,6 +580,8 @@ export function StudioPage() {
 								)}
 								{stage === "generate" && (
 									<GenerateStage
+										runId={run.id}
+										runStatus={run.status}
 										assets={artifacts?.assets ?? []}
 										script={artifacts?.script ?? null}
 										shotCount={run.options.shotCount}

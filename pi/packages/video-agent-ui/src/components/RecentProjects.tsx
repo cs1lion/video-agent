@@ -10,7 +10,7 @@ import { ArrowUpRight, History } from "lucide-react";
 import { api, type RunSummary } from "@/api/client";
 
 const STATUS_LABEL: Record<RunSummary["status"], { label: string; tone: string }> = {
-	running: { label: "制作中", tone: "border-cyan-300/40 bg-cyan-400/10 text-cyan-200" },
+	running: { label: "制作中", tone: "border-zinc-100/40 bg-white/[0.08] text-zinc-100" },
 	awaiting: { label: "待确认", tone: "border-amber-300/45 bg-amber-400/10 text-amber-200" },
 	done: { label: "已完成", tone: "border-emerald-300/45 bg-emerald-400/10 text-emerald-200" },
 	failed: { label: "已中断", tone: "border-rose-300/45 bg-rose-400/10 text-rose-200" },
@@ -77,7 +77,7 @@ export function RecentProjects() {
 								<span className="ml-auto shrink-0 font-mono text-[10px] text-zinc-500">
 									{run.doneStages}/{run.totalStages}
 								</span>
-								<ArrowUpRight className="size-3.5 shrink-0 text-zinc-600 transition-colors group-hover:text-amber-200" />
+								<ArrowUpRight className="size-3.5 shrink-0 text-zinc-500 transition-colors group-hover:text-amber-200" />
 							</div>
 							<p className="line-clamp-2 text-sm leading-relaxed text-zinc-200">{run.logline}</p>
 						</motion.button>

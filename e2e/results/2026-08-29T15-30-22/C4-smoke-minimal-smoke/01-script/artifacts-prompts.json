@@ -1,0 +1,17 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic vertical 9:16 close-up of a middle-aged male noodle shop owner, wearing a plain white cotton short-sleeve work shirt with rolled-up sleeves, dark canvas apron with light flour stains, short neat black hair, warm weathered face, focused gentle expression, rhythmically kneading pale dough on a floured wooden board in a compact authentic noodle shop kitchen with floured countertop, stainless steel stove, hanging copper cookware and textured worn surfaces, soft diffused morning side light filtering through the frosted kitchen window paired with subtle warm stove glow, slow dolly push-in to emphasize the kneading motion, warm low-contrast color grade, cozy documentary lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic vertical 9:16 medium shot of fresh noodles being dropped into a rolling pot of boiling broth in a compact authentic noodle shop kitchen with floured countertop, stainless steel stove and hanging copper cookware, thick steam billowing up to fill the upper half of the frame, soft diffused morning side light from the frosted kitchen window mixed with warm stove glow, slow handheld tilt up to follow the rising steam, warm low-contrast color grade, cozy documentary lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic vertical 9:16 close-up of the middle-aged male noodle shop owner in his plain white cotton short-sleeve work shirt with rolled-up sleeves and flour-stained dark canvas apron placing a steaming bowl of topped noodles on a simple wooden windowsill counter in front of a young female guest, wearing a soft beige knit cardigan and light blue jeans, holding a reusable coffee cup with a relaxed morning smile, the scene set by a large glass window overlooking the quiet morning street, soft natural morning side light illuminating the pair, slow handheld follow of the serving motion then gentle hold on the smiling guest, warm low-contrast color grade, cozy authentic lifestyle documentary style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

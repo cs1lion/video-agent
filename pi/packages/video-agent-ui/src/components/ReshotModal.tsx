@@ -67,7 +67,7 @@ export function ReshotModal({
 					>
 						<div className="mb-1 flex items-start justify-between">
 							<div>
-								<div className="font-mono text-[10px] tracking-[0.3em] text-cyan-300/80">RESHOT</div>
+								<div className="font-mono text-[10px] tracking-[0.3em] text-amber-300/80">RESHOT</div>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
 									重做镜头 {shot.id}
 									{attempts > 0 && (
@@ -114,7 +114,7 @@ export function ReshotModal({
 								该镜头已达重做上限。可在「分镜提示词」阶段微调后整体重跑，或接受当前版本。
 							</p>
 						) : (
-							<p className="mt-3 text-xs text-zinc-600">剩余重做次数：{remaining} 次</p>
+							<p className="mt-3 text-xs text-zinc-500">剩余重做次数：{remaining} 次</p>
 						)}
 
 						<div className="mt-5 flex items-center justify-end gap-3">

@@ -1,0 +1,86 @@
+{
+	"title": "最后一趟",
+	"logline": "退休长途货车司机完成最后一次跑车，将三十年公路人生托付给徒弟，诠释赶路人与公路的羁绊。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "三十年的货，今天最后一趟。",
+			"narrationEn": "This is the last run after thirty years on the road.",
+			"visual": "Dawn cargo yard, a retired long-haul truck driver checks the cargo manifest while his apprentice stands beside a parked heavy-duty truck.",
+			"durationSec": 5,
+			"ttsDirection": "情绪平静释然，语速稍缓，“三十年”稍作停顿，“最后一趟”轻收，气息沉缓"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "出城的路，走了几千遍。",
+			"narrationEn": "I've taken this route out of the city thousands of times.",
+			"visual": "Heavy truck drives along the suburban expressway leaving the city, the driver glances at the shrinking urban skyline in the rearview mirror.",
+			"durationSec": 5,
+			"ttsDirection": "情绪松弛平和，语速平稳，“几千遍”重读带淡淡感慨，气息平稳悠长"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "服务区的泡面，还是老味道。",
+			"narrationEn": "The instant noodles at the rest stop still taste the same as always.",
+			"visual": "Noon highway rest stop, the old driver sits alone on the concrete steps eating instant noodles, his apprentice fills the truck's water tank nearby.",
+			"durationSec": 5,
+			"ttsDirection": "情绪温怀念旧，语速稍慢，“老味道”重读带暖意，气息轻缓"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "暴雨夜的路，看不清尽头。",
+			"narrationEn": "The road disappears into the rain on this stormy night.",
+			"visual": "Stormy night, the truck's headlights cut through the pouring rain, the driver grips the steering wheel tightly as the wipers swing rapidly.",
+			"durationSec": 5,
+			"ttsDirection": "情绪沉静坚毅，语速稍缓，“看不清尽头”重读，气息沉稳带雨夜沉郁感"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "该换人开一段了。",
+			"narrationEn": "It's time for someone else to take the wheel for a while.",
+			"visual": "Pre-dawn rest stop, the apprentice gets into the driver's seat, the old man leans against the door handing him a lit cigarette.",
+			"durationSec": 5,
+			"ttsDirection": "情绪释然欣慰，语速平稳，“该换人”稍作停顿，“开一段了”轻收，气息松弛舒展"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "山边的花，开了三十回。",
+			"narrationEn": "The wildflowers by the mountain road have bloomed thirty times over the years.",
+			"visual": "Early morning winding mountain road, the heavy truck drives along the cliff edge, the driver looks out at blooming wildflowers on the roadside.",
+			"durationSec": 5,
+			"ttsDirection": "情绪豁达舒展，语速稍快，“三十回”重读带笑意，气息轻快明亮"
+		},
+		{
+			"id": "SH07",
+			"narrationZh": "货到了，人也没跑丢。",
+			"narrationEn": "The cargo arrived safe, and so did I, all these years.",
+			"visual": "Sunrise at the destination cargo yard, the old driver and apprentice count the delivered goods together, smiling.",
+			"durationSec": 5,
+			"ttsDirection": "情绪踏实自豪，语速平稳，“货到了”“没跑丢”稍重读，气息沉稳有力"
+		},
+		{
+			"id": "SH08",
+			"narrationZh": "钥匙给你，路接着走。",
+			"narrationEn": "Here's the key, the road goes on for you.",
+			"visual": "Parking lot after unloading, the retired driver hands the truck key to his apprentice, who receives it with both hands.",
+			"durationSec": 5,
+			"ttsDirection": "情绪郑重温和，语速稍缓，“钥匙给你”稍作停顿，“路接着走”重读，气息平稳带期许"
+		},
+		{
+			"id": "SH09",
+			"narrationZh": "路会记得每一个跑完它的人。",
+			"narrationEn": "The road remembers everyone who has driven its full length.",
+			"visual": "The apprentice drives the truck away, the old man stands by the roadside waving as the vehicle disappears into the distance.",
+			"durationSec": 5,
+			"ttsDirection": "情绪释然悠远，语速放缓，“路会记得”稍作停顿，“跑完它的人”重读，气息悠长舒展"
+		},
+		{
+			"id": "SH10",
+			"narrationZh": "好车，陪你跑完每段路。",
+			"narrationEn": "Quality trucks accompany you through every mile of the road.",
+			"visual": "Close-up of the heavy truck brand logo on the front grille, with the product tagline displayed below.",
+			"durationSec": 5,
+			"ttsDirection": "情绪温暖收束，语速放缓，“好车”“每段路”重读，气息轻缓柔和"
+		}
+	]
+}

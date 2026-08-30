@@ -1,0 +1,31 @@
+{
+	"used": 1,
+	"renders": [
+		{
+			"file": "assets\\cut1.mp4",
+			"at": "2026-08-29T16:18:31.636Z",
+			"selections": {
+				"SH01": {
+					"video": "clip-SH01.mp4",
+					"audio": "tts-SH01.mp3"
+				},
+				"SH02": {
+					"video": "clip-SH02.mp4",
+					"audio": "tts-SH02.mp3"
+				},
+				"SH03": {
+					"video": "clip-SH03_v1.mp4",
+					"audio": "tts-SH03.mp3"
+				},
+				"SH04": {
+					"video": "clip-SH04.mp4",
+					"audio": "tts-SH04.mp3"
+				},
+				"SH05": {
+					"video": "clip-SH05.mp4",
+					"audio": "tts-SH05.mp3"
+				}
+			}
+		}
+	]
+}

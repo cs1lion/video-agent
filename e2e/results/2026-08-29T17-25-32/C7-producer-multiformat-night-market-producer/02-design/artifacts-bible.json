@@ -1,0 +1,20 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"documentary",
+		"realistic",
+		"nocturnal",
+		"lifestyle",
+		"intimate",
+		"gritty"
+	],
+	"palette": [
+		"#1E1E24",
+		"#F4C095",
+		"#5C7A99",
+		"#B5834A",
+		"#D96C4F"
+	],
+	"lighting": "Low-key warm practical lighting from street lamps and stall lanterns, paired with soft cool ambient fill from the pre-dawn sky.",
+	"grade": "Desaturated cool shadows with lifted warm midtones, subtle fine grain for tactile realism, slight halation on light sources to enhance the quiet nocturnal atmosphere."
+}

@@ -116,7 +116,7 @@ export function PipelineFlow({
 											running && "text-amber-300",
 											done && "text-emerald-300",
 											failed && "text-rose-300",
-											status === "pending" && "text-zinc-600",
+											status === "pending" && "text-zinc-500",
 										)}
 									/>
 									<span
@@ -137,9 +137,9 @@ export function PipelineFlow({
 										<StatusDot tone="pending" />
 									)}
 								</div>
-								<div className="mt-0.5 pl-[22px] text-[10px] text-zinc-600">
+								<div className="mt-0.5 pl-[22px] text-[10px] text-zinc-500">
 									{audioDrive === "dialogue" && node.id === "clips" ? (
-										<span className="text-violet-300/80">台词驱动口型 · audio → clips</span>
+										<span className="text-amber-300/80">台词驱动口型 · audio → clips</span>
 									) : (
 										node.role
 									)}

@@ -1,0 +1,29 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide shot of an empty narrow residential street at 5:30am, dim warm streetlights casting soft glows on slightly wet asphalt, closed house doors and windows, faint scattered lights in dark apartment windows, thin mist hanging in the air receding into depth, soft diffused pre-dawn ambient light with low warm streetlight side glow, slow dolly push-in from street level towards the misty end of the street, cool desaturated deep navy and misty gray palette, fine natural film grain, meditative quiet urban morning tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium shot of thick clouds of hot steam curling and fading from a pulled-up metal breakfast stall shutter on the still-quiet empty street, wet asphalt reflecting faint streetlight glows, closed storefronts lining the street in the background, soft diffused pre-dawn ambient light mixed with faint warm streetlight glow, static locked-off composition with shallow depth of field focusing on the steam, atmospheric urban realism style, fine texture of steam and cold metal, quiet meditative tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic high-angle wide shot of the sky shifting from deep indigo to pale lavender above the city, a sanitation truck with flashing amber lights slowly cruising along the empty elevated road winding through distant skyscraper outlines, faint city lights still twinkling in the distance, soft diffused pre-dawn ambient light with cool blue tone gradually warming, slow pan left across the sky to follow the truck, cinematic time-lapse aesthetic, meditative atmospheric urban landscape, fine natural film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic half-body side shot of a middle-aged male station staff wearing a standard dark blue uniform with reflective silver stripes, a peaked cap and canvas work gloves, holding the metal shutter pull rod, subway station entrance with concrete steps and public signage behind him, bright warm interior light spilling out onto the dark pre-dawn street, soft diffused pre-dawn ambient light rim-lighting his silhouette, slow dolly push-in towards the entrance, urban realism style, realistic fabric and metal texture, grounded quiet urban worker vibe. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic wide shot of the first morning subway train with glowing front lights slowly gliding into the completely empty station platform, faint breeze blowing through the vents, distant faint city lights visible at the far end of the platform, bright warm interior platform light mixing with soft diffused pre-dawn ambient light, slow dolly push-in along the platform following the train as it stops smoothly, immersive urban realism style, fine texture of train metal and concrete platform, quiet anticipatory tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH06",
+			"prompt": "Cinematic low-angle shot of subway doors sliding open to reveal the brightening empty platform, city skyline glowing in the rising golden sun behind the station, warm golden hour illumination bathing the scene, soft diffused pre-dawn ambient light mixing with warm platform light, slow pan up from the open doors to the skyline behind, cinematic urban realism style, warm amber and pale peach palette, fine natural film grain, hopeful waking city tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

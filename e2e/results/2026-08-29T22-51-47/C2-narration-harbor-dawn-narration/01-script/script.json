@@ -1,0 +1,46 @@
+{
+	"title": "日复一日的远航",
+	"logline": "以写实真人纪录风格呈现老渔妇三十年每日天未亮出海劳作的日常，诠释「重复本身是一种勇气」的核心主张，最终落点至船用动力产品的陪伴价值。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "天刚蒙亮，她已到船边。",
+			"narrationEn": "At the first hint of dawn, she is already by her boat.",
+			"visual": "Dawn breaks over a quiet, misty fishing port, an elderly fisherwoman unties the mooring rope of her small wooden fishing boat.",
+			"durationSec": 5,
+			"ttsDirection": "沉静克制，语速偏缓，『已』字重读，气息沉稳带晨雾滞涩感，开头留半秒气口"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "三十年的网，补过上百回。",
+			"narrationEn": "The fishing net has been mended hundreds of times over thirty years.",
+			"visual": "She crouches on the boat deck, carefully checking each mesh of the worn, patched fishing net.",
+			"durationSec": 5,
+			"ttsDirection": "平缓厚重，语速适中，『上百回』重读，气息下沉带岁月沉淀暖意，尾音稍收"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "马达一响，就出海。",
+			"narrationEn": "The engine starts, and she heads out to sea.",
+			"visual": "She pulls the starter cord of the weathered outboard motor, which sputters to life with a low rumble.",
+			"durationSec": 5,
+			"ttsDirection": "利落笃定，语速稍快，『响』字重读，气息短促有力，无拖沓尾音"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "日复一日，也是远航。",
+			"narrationEn": "Day after day is a voyage in itself.",
+			"visual": "Her small boat cuts through the calm morning sea, sailing past the breakwater as the golden sun rises over the horizon.",
+			"durationSec": 5,
+			"ttsDirection": "克制有力，语速中等偏缓，『远航』重读，气息沉稳带力量感，尾音稳收"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "陪每个日常的勇气。",
+			"narrationEn": "Accompanying the courage in every daily routine.",
+			"visual": "Close-up of the durable outboard motor mounted on the boat, with the brand logo and product name clearly visible.",
+			"durationSec": 5,
+			"ttsDirection": "温和收束，语速放缓，『勇气』重读，气息轻柔带暖意，尾音自然落定"
+		}
+	]
+}

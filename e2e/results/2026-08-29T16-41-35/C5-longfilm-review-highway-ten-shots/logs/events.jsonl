@@ -1,0 +1,83 @@
+{"id":"ev-4319f1dc","at":"2026-08-29T16:41:35.389Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实真人公路短片：一位退休长途货车司机最后一次跑车，从装货、出城、服务区独坐、暴…」已确认，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。"}
+{"id":"ev-b9501ff5","at":"2026-08-29T16:41:35.390Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 10 镜叙事骨架。"}
+{"id":"ev-30d65e97","at":"2026-08-29T16:42:02.237Z","from":"writer","to":"art","kind":"handoff","text":"剧本《路记得》完成：10 镜，50s。Logline：跑足三十年长途货运的退休司机完成最后一次出车，将卡车钥匙交给学徒，十镜凝练公路人生，传递“路会记得每一个跑完它的人”的核心理念，最终落点至轮胎产品。请据此制定全片视觉规范。"}
+{"id":"ev-9461d7fd","at":"2026-08-29T16:42:02.237Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-540da112","at":"2026-08-29T16:42:26.316Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：7 张概念设计图（人物 2 · 道具 2 · 场景 3）逐张绘制中。"}
+{"id":"ev-c5c5c342","at":"2026-08-29T16:42:30.063Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「退休货运司机」（人物 CH01）"}
+{"id":"ev-38f64923","at":"2026-08-29T16:42:33.669Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「货运学徒司机」（人物 CH02）"}
+{"id":"ev-40fb0a13","at":"2026-08-29T16:42:41.823Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「卡车全地形轮胎」（道具 PR01）"}
+{"id":"ev-caf3694b","at":"2026-08-29T16:42:45.847Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「旧卡车钥匙」（道具 PR02）"}
+{"id":"ev-c6951cd5","at":"2026-08-29T16:42:49.434Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「清晨货运场装货场景」（场景 SC01）"}
+{"id":"ev-9d277a27","at":"2026-08-29T16:42:53.069Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「暴雨夜公路驾驶场景」（场景 SC02）"}
+{"id":"ev-05a6d755","at":"2026-08-29T16:42:56.797Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「清晨货运场交钥匙场景」（场景 SC03）"}
+{"id":"ev-1644d427","at":"2026-08-29T16:42:56.799Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 7/7 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-57766ae3","at":"2026-08-29T16:42:56.799Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-a1e3f15e","at":"2026-08-29T16:43:29.167Z","from":"reviewer","to":"art","kind":"redo","text":"设计图自审发现问题 ⚠️：「清晨货运场交钥匙场景」时间设定矛盾：设计要点为清晨场景（含金色日出光），画面出现明亮满月，与日出光线逻辑冲突。安排美术指导带意见重绘。"}
+{"id":"ev-80f43ad4","at":"2026-08-29T16:43:34.165Z","from":"art","to":"reviewer","kind":"handoff","text":"「清晨货运场交钥匙场景」已按审核意见重绘，提交复审…"}
+{"id":"ev-749c8527","at":"2026-08-29T16:43:52.844Z","from":"art","to":"reviewer","kind":"qa","text":"设计图重绘后审核问题已全部修复 ✅ 卡片 清晨货运场交钥匙场景 复审通过。"}
+{"id":"ev-e0d3215c","at":"2026-08-29T16:43:52.844Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / road movie / realistic / documentary / gritty / nostalgic / naturalistic]，色板 #2C3E50、#8B4513、#D4A373、#708090。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-10f90e3d","at":"2026-08-29T16:43:52.845Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-85daee0d","at":"2026-08-29T16:43:55.701Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-ef72cf61","at":"2026-08-29T16:43:55.701Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-f4327603","at":"2026-08-29T16:43:55.701Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-ff3b40c6","at":"2026-08-29T16:45:14.779Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-3fa8cec7","at":"2026-08-29T16:45:14.779Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-aa2a35e6","at":"2026-08-29T16:45:19.509Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-bbae9a4e","at":"2026-08-29T16:45:19.509Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-3b6e753c","at":"2026-08-29T16:45:24.385Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-a470dcf8","at":"2026-08-29T16:45:24.385Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-d040da65","at":"2026-08-29T16:45:29.048Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-0f6b907e","at":"2026-08-29T16:45:29.048Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-572e6a47","at":"2026-08-29T16:45:33.920Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-2af71bb4","at":"2026-08-29T16:45:33.920Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-4ba98776","at":"2026-08-29T16:45:38.788Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-7c31d66f","at":"2026-08-29T16:45:38.788Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH06 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-b12be134","at":"2026-08-29T16:45:43.990Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-4e93f4a8","at":"2026-08-29T16:45:43.990Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH07 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-2d4b4daf","at":"2026-08-29T16:45:48.711Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-c2ce3f56","at":"2026-08-29T16:45:48.711Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH08 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-5424c8f0","at":"2026-08-29T16:45:53.291Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-39380a5d","at":"2026-08-29T16:45:53.291Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH09 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-d02169db","at":"2026-08-29T16:45:58.342Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：退休货运司机(CH01)、清晨货运场装货场景(SC01)。"}
+{"id":"ev-b916f57d","at":"2026-08-29T16:45:58.342Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH10 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-9fdcc311","at":"2026-08-29T16:46:03.481Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 10 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-65743538","at":"2026-08-29T16:46:03.481Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-ef50f638","at":"2026-08-29T16:46:05.997Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「镜头生成」继续，直至成片。"}
+{"id":"ev-efb1e1a9","at":"2026-08-29T16:46:06.001Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 wide establishing shot of a gray-haired man i…"}
+{"id":"ev-1b17eb15","at":"2026-08-29T16:49:49.144Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/10）"}
+{"id":"ev-17cd467a","at":"2026-08-29T16:49:49.147Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium shot from inside the cab of a gray-hai…"}
+{"id":"ev-83276db0","at":"2026-08-29T16:52:02.764Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/10）"}
+{"id":"ev-312d3604","at":"2026-08-29T16:52:02.766Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 static locked-off medium shot from the passen…"}
+{"id":"ev-b6b8a804","at":"2026-08-29T16:54:41.435Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/10）"}
+{"id":"ev-4a2f18c7","at":"2026-08-29T16:54:41.436Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium shot of a gray-haired man in his 60s w…"}
+{"id":"ev-786bed5a","at":"2026-08-29T16:57:13.961Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH04 生成完成 ✅（4/10）"}
+{"id":"ev-45d13c2d","at":"2026-08-29T16:57:13.962Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium close-up over-the-shoulder shot from t…"}
+{"id":"ev-7e6682aa","at":"2026-08-29T17:00:03.028Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH05 生成完成 ✅（5/10）"}
+{"id":"ev-7d669638","at":"2026-08-29T17:00:03.029Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH06 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium shot from inside the cab of a gray-hai…"}
+{"id":"ev-86e3702d","at":"2026-08-29T17:01:38.740Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH06 生成完成 ✅（6/10）"}
+{"id":"ev-d6412edd","at":"2026-08-29T17:01:38.741Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH07 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 wide establishing shot of a gray-haired man i…"}
+{"id":"ev-76a52841","at":"2026-08-29T17:02:43.853Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH07 生成完成 ✅（7/10）"}
+{"id":"ev-47fb89b4","at":"2026-08-29T17:02:43.855Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH08 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium long shot of a gray-haired man in his …"}
+{"id":"ev-8a8de64b","at":"2026-08-29T17:03:44.244Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH08 生成完成 ✅（8/10）"}
+{"id":"ev-8c97dcd1","at":"2026-08-29T17:03:44.245Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH09 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium shot of a young man in his 20s wearing…"}
+{"id":"ev-3583bbd8","at":"2026-08-29T17:04:45.627Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH09 生成完成 ✅（9/10）"}
+{"id":"ev-e9ba4d72","at":"2026-08-29T17:04:45.629Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH10 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 low angle tracking shot of a rugged all-terra…"}
+{"id":"ev-57d06886","at":"2026-08-29T17:06:54.759Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH10 生成完成 ✅（10/10）"}
+{"id":"ev-0331288f","at":"2026-08-29T17:06:54.759Z","from":"tech","to":"editor","kind":"handoff","text":"镜头批次交付：10/10 镜成功，移交剪辑师归一化与合成。"}
+{"id":"ev-949a9194","at":"2026-08-29T17:06:54.759Z","from":"sound","to":"editor","kind":"status","text":"声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"}
+{"id":"ev-88d486f0","at":"2026-08-29T17:07:08.269Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH01（指导：语速偏缓，情绪沉静带淡淡感慨，『最后一次』重读，后接轻微停顿…）"}
+{"id":"ev-a5500800","at":"2026-08-29T17:07:10.275Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH02（指导：语速舒缓，情绪怀旧悠远，『三十年』重读，气息平稳绵长…）"}
+{"id":"ev-faecee41","at":"2026-08-29T17:07:12.326Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH03（指导：语速平稳，情绪释然带暖意，『都记得我』重读，尾音轻放…）"}
+{"id":"ev-e33bcbc4","at":"2026-08-29T17:07:14.461Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH04（指导：语速偏缓，情绪落寞中带暖意，『那个味』重读，气息带回味感…）"}
+{"id":"ev-eaca3bc7","at":"2026-08-29T17:07:16.474Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH05（指导：语速沉稳，情绪关切郑重，『慢点开』重读，气息下沉…）"}
+{"id":"ev-8f07dfe2","at":"2026-08-29T17:07:18.557Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH06（指导：语速平稳，情绪坦然笃定，『几千遍』重读，气息平稳无起伏…）"}
+{"id":"ev-59a589ac","at":"2026-08-29T17:07:20.492Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH07（指导：语速偏缓，情绪释然带轻松，『到了』重读，尾音轻收…）"}
+{"id":"ev-181f812f","at":"2026-08-29T17:07:22.443Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH08（指导：语速沉稳，情绪郑重带不舍，『交给你了』重读，气息微沉…）"}
+{"id":"ev-bfc2c147","at":"2026-08-29T17:07:24.497Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH09（指导：语速平稳，情绪释然欣慰，『每一个』重读，气息悠远绵长…）"}
+{"id":"ev-1771197f","at":"2026-08-29T17:07:26.609Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH10（指导：语速偏缓，情绪温暖笃定，『每段路』重读，尾音带暖意…）"}
+{"id":"ev-8f06f357","at":"2026-08-29T17:07:26.609Z","from":"sound","to":"editor","kind":"handoff","text":"旁白轨交付：10/10 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"}
+{"id":"ev-a9c2887b","at":"2026-08-29T17:07:26.609Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-02b20869","at":"2026-08-29T17:08:05.312Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（10 镜 · 35.1s · 720p 16:9，转场：叠化 0.5s、黑场过渡 0.5s、白闪 0.3s，音效：嗖声、嗖声、低频冲击，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-0abdc1b6","at":"2026-08-29T17:09:04.005Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 3 处异常：SH04（深色工装服、花白短发、吃面场景、暖色调）、SH07（深色工装服、金色短发、手持保温杯、暖色调）、SH10（深色工装服、金色短发、手持保温杯、暖色调）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-de8197e2","at":"2026-08-29T17:09:04.005Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：通过 ✅（综合 95）。最短板 pacing 90 分。另有 3 处跨镜一致性异常请关注。"}
+{"id":"ev-62402bec","at":"2026-08-29T17:09:04.006Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与五轴质检报告已就绪。"}

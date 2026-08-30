@@ -77,7 +77,7 @@ function ItemList<T extends { name: string; description: string }>({
 						<button
 							type="button"
 							onClick={() => onChange(items.filter((_, j) => j !== i))}
-							className="cursor-pointer rounded-md p-1 text-zinc-600 opacity-0 transition-opacity hover:bg-rose-400/10 hover:text-rose-300 group-hover:opacity-100"
+							className="cursor-pointer rounded-md p-1 text-zinc-500 opacity-0 transition-opacity hover:bg-rose-400/10 hover:text-rose-300 group-hover:opacity-100"
 							aria-label="删除"
 						>
 							<Trash2 className="size-3.5" />
@@ -97,7 +97,7 @@ function ItemList<T extends { name: string; description: string }>({
 			<button
 				type="button"
 				onClick={() => onChange([...items, { name: "", description: "" } as T])}
-				className="w-full cursor-pointer rounded-xl border border-dashed border-white/15 py-2 text-xs text-zinc-500 transition-colors hover:border-cyan-300/40 hover:text-cyan-200"
+				className="w-full cursor-pointer rounded-xl border border-dashed border-white/15 py-2 text-xs text-zinc-500 transition-colors hover:border-amber-300/40 hover:text-amber-200"
 			>
 				+ 添加一条
 			</button>
@@ -240,7 +240,7 @@ export function CoCreatePage() {
 						返回首页
 					</button>
 					<h1 className="text-lg font-semibold text-zinc-100">共创工作室</h1>
-					<span className="rounded-full border border-violet-300/40 bg-violet-400/10 px-2.5 py-0.5 text-[11px] text-violet-200">
+					<span className="rounded-full border border-amber-300/40 bg-amber-400/10 px-2.5 py-0.5 text-[11px] text-amber-200">
 						CO-CREATION
 					</span>
 				</header>
@@ -250,16 +250,16 @@ export function CoCreatePage() {
 				)}
 
 				{incoming?.brief && (
-					<div className="mb-4 rounded-xl border border-cyan-300/25 bg-cyan-400/[0.05] px-4 py-2.5">
+					<div className="mb-4 rounded-xl border border-zinc-100/25 bg-white/[0.05] px-4 py-2.5">
 						<div className="flex flex-wrap items-center gap-2">
-							<span className="rounded-full border border-cyan-300/40 bg-cyan-400/10 px-2 py-0.5 text-[10px] text-cyan-200">
+							<span className="rounded-full border border-zinc-100/40 bg-white/[0.08] px-2 py-0.5 text-[10px] text-zinc-100">
 								已从首页带入
 							</span>
 							<span className="min-w-0 flex-1 truncate text-xs text-zinc-300">
 								{incoming.brief.logline}
 								{incoming.brief.keyMessage ? ` · 关键信息：${incoming.brief.keyMessage}` : ""}
 							</span>
-							<span className="text-[10px] text-zinc-600">参考图可增删，合伙人会贴合这些信息给建议</span>
+							<span className="text-[10px] text-zinc-500">参考图可增删，合伙人会贴合这些信息给建议</span>
 						</div>
 						{images.length > 0 && (
 							<div className="mt-2.5">
@@ -284,7 +284,7 @@ export function CoCreatePage() {
 									<div
 										className={
 											m.role === "user"
-												? "max-w-[80%] rounded-2xl rounded-br-md border border-cyan-300/30 bg-cyan-400/10 px-4 py-2.5 text-sm leading-relaxed text-cyan-50"
+												? "max-w-[80%] rounded-2xl rounded-br-md border border-zinc-100/30 bg-white/[0.08] px-4 py-2.5 text-sm leading-relaxed text-zinc-50"
 												: "max-w-[85%] rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm leading-relaxed text-zinc-200"
 										}
 									>
@@ -308,7 +308,7 @@ export function CoCreatePage() {
 									type="button"
 									disabled={chatBusy}
 									onClick={() => void send(h)}
-									className="cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-400 transition-colors hover:border-violet-300/40 hover:text-violet-200 disabled:opacity-40"
+									className="cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-400 transition-colors hover:border-amber-300/40 hover:text-amber-200 disabled:opacity-40"
 								>
 									{h}
 								</button>
@@ -348,7 +348,7 @@ export function CoCreatePage() {
 									type="button"
 									onClick={() => void extract()}
 									disabled={extracting || messages.length < 2}
-									className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-violet-400/40 px-3 py-1.5 text-xs text-violet-200 transition-colors hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+									className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-300/40 px-3 py-1.5 text-xs text-amber-200 transition-colors hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-40"
 								>
 									{extracting ? <LoaderCircle className="size-3.5 animate-spin" /> : <WandSparkles className="size-3.5" />}
 									从对话提炼
@@ -358,8 +358,8 @@ export function CoCreatePage() {
 						<div className="max-h-[52vh] space-y-4 overflow-y-auto pr-1">
 							<section>
 								<div className="mb-2 flex items-center gap-2 text-xs font-medium text-zinc-300">
-									<UserRound className="size-3.5 text-cyan-300/80" />
-									人物形象 <span className="text-zinc-600">外貌 / 性格 / 与产品的关系</span>
+									<UserRound className="size-3.5 text-zinc-400" />
+									人物形象 <span className="text-zinc-500">外貌 / 性格 / 与产品的关系</span>
 								</div>
 								<ItemList<CoCharacter>
 									items={space.characters}
@@ -387,8 +387,8 @@ export function CoCreatePage() {
 							</section>
 							<section>
 								<div className="mb-2 flex items-center gap-2 text-xs font-medium text-zinc-300">
-									<Package className="size-3.5 text-cyan-300/80" />
-									场景描述 <span className="text-zinc-600">空间氛围与关键陈设</span>
+									<Package className="size-3.5 text-zinc-400" />
+									场景描述 <span className="text-zinc-500">空间氛围与关键陈设</span>
 								</div>
 								<ItemList
 									items={space.scenes}
@@ -399,8 +399,8 @@ export function CoCreatePage() {
 							</section>
 							<section>
 								<div className="mb-2 flex items-center gap-2 text-xs font-medium text-zinc-300">
-									<ScrollText className="size-3.5 text-cyan-300/80" />
-									创意情节 <span className="text-zinc-600">已认可的节拍 / 卖点演绎</span>
+									<ScrollText className="size-3.5 text-zinc-400" />
+									创意情节 <span className="text-zinc-500">已认可的节拍 / 卖点演绎</span>
 								</div>
 								<ItemList
 									items={space.ideas.map((i) => ({ name: "", description: i }))}
@@ -417,7 +417,7 @@ export function CoCreatePage() {
 							<section>
 								<div className="mb-2 flex items-center gap-2 text-xs font-medium text-zinc-300">
 									<Sparkles className="size-3.5 text-amber-300/80" />
-									背景音乐简报 <span className="text-zinc-600">风格 / 乐器 / 节奏意图</span>
+									背景音乐简报 <span className="text-zinc-500">风格 / 乐器 / 节奏意图</span>
 								</div>
 								<textarea
 									value={space.musicBrief ?? ""}
@@ -427,7 +427,7 @@ export function CoCreatePage() {
 									className="field-input !text-xs"
 									onChange={(e) => setSpace((s) => ({ ...s, musicBrief: e.target.value }))}
 								/>
-								<p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
+								<p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
 									音乐生成模型尚未接入：简报会随项目落盘并在交付说明中呈现，接入后可直接按此生成底床。
 								</p>
 							</section>
@@ -483,7 +483,7 @@ export function CoCreatePage() {
 											.map((l) => `${l.label} ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`)
 											.join(" · ")}
 									</div>
-									<p className="mt-1 text-[10px] text-zinc-600">
+									<p className="mt-1 text-[10px] text-zinc-500">
 										{`含共创 ${space.characters.length + space.scenes.length} 项资产迭代`}
 										{options.audioDrive === "dialogue" && " · 台词镜：台词先录、口型后生成，超长自动精简重录（已含重录缓冲）"}
 									</p>
@@ -493,7 +493,7 @@ export function CoCreatePage() {
 								{launching ? <LoaderCircle className="size-4 animate-spin" /> : <Clapperboard className="size-4" />}
 								带着共创设定启动制作
 							</GlowButton>
-							<p className="text-[11px] leading-relaxed text-zinc-600">
+							<p className="text-[11px] leading-relaxed text-zinc-500">
 								人物与场景将直接作为美术设计的推导基准，全阶段 prompt 注入共创设定；镜头数与单镜时长可在上方调大，做更长的成片。
 							</p>
 						</div>

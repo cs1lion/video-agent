@@ -1,0 +1,745 @@
+{
+	"id": "run-mtemyxwj-29",
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 22,
+		"retries": 1,
+		"perAdapter": {
+			"agnes-video": 5,
+			"step-tts": 5
+		},
+		"cost": {
+			"spent": 27.77,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 90,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 95
+			},
+			{
+				"id": "visualConsistency",
+				"score": 90
+			},
+			{
+				"id": "pacing",
+				"score": 85
+			},
+			{
+				"id": "audioSync",
+				"score": 100
+			},
+			{
+				"id": "textQuality",
+				"score": 80
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH04",
+				"verdict": "warn",
+				"reason": "招牌文字疑似乱码"
+			},
+			{
+				"id": "SH05",
+				"verdict": "ok",
+				"reason": "通过"
+			}
+		]
+	},
+	"videoUrl": "/api/runs/run-mtemyxwj-29/files/assets/final.mp4",
+	"brief": {
+		"logline": "写实真人短片：老城区一家开了三十年的理发店，老板最后一次为老街坊剃头、擦镜子、摘下转灯。旁白平静，讲一门手艺的谢幕。",
+		"keyMessage": "有些门关上，是因为它已经完成了。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 5,
+		"fps": 24,
+		"motionIntensity": "low",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+	},
+	"images": [],
+	"events": [
+		{
+			"id": "ev-23434a1c",
+			"at": "2026-08-29T17:10:06.117Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "项目开机 🎬 需求「写实真人短片：老城区一家开了三十年的理发店，老板最后一次为老街坊剃头、擦镜子、摘…」已确认，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。"
+		},
+		{
+			"id": "ev-1add9845",
+			"at": "2026-08-29T17:10:06.117Z",
+			"from": "writer",
+			"to": "producer",
+			"kind": "status",
+			"text": "编剧开工：解析需求，搭建 5 镜叙事骨架。"
+		},
+		{
+			"id": "ev-0e552c5a",
+			"at": "2026-08-29T17:10:30.273Z",
+			"from": "writer",
+			"to": "art",
+			"kind": "handoff",
+			"text": "剧本《老转灯》完成：5 镜，25s。Logline：记录老城区经营三十年的理发店老板最后一次营业、关停店铺的过程，呈现老手艺的谢幕时刻。。请据此制定全片视觉规范。"
+		},
+		{
+			"id": "ev-e50ab854",
+			"at": "2026-08-29T17:10:30.273Z",
+			"from": "art",
+			"to": "writer",
+			"kind": "status",
+			"text": "美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"
+		},
+		{
+			"id": "ev-5d6c7405",
+			"at": "2026-08-29T17:10:52.283Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计开工：6 张概念设计图（人物 1 · 道具 3 · 场景 2）逐张绘制中。"
+		},
+		{
+			"id": "ev-762a420d",
+			"at": "2026-08-29T17:10:55.497Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「中年理发师」（人物 CH01）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-7acb995c",
+			"at": "2026-08-29T17:10:58.855Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「红白转灯」（道具 PR01）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-127c642f",
+			"at": "2026-08-29T17:11:02.094Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「旧理发椅」（道具 PR02）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-f5591582",
+			"at": "2026-08-29T17:11:05.405Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「擦镜布」（道具 PR03）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR03",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-69aeb9cd",
+			"at": "2026-08-29T17:11:08.813Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「理发店晨光内景」（场景 SC01）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-a15b3ace",
+			"at": "2026-08-29T17:11:12.221Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「店门口外景」（场景 SC02）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-4076d6ab",
+			"at": "2026-08-29T17:11:12.224Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"
+		},
+		{
+			"id": "ev-955494d9",
+			"at": "2026-08-29T17:11:12.224Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "status",
+			"text": "审校员核对设计图：逐张比对画面与设计要点…"
+		},
+		{
+			"id": "ev-04fac447",
+			"at": "2026-08-29T17:11:37.070Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "redo",
+			"text": "设计图自审发现问题 ⚠️：「店门口外景」招牌文字为乱码（龟拐柿宝等无意义字符），非真实手写店名；画面中人物动作非移除灯具(removing the lamp)，而为推门/整理门框动作，且无灯具出现。安排美术指导带意见重绘。"
+		},
+		{
+			"id": "ev-192d04c6",
+			"at": "2026-08-29T17:11:41.156Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "「店门口外景」已按审核意见重绘，提交复审…"
+		},
+		{
+			"id": "ev-671e126a",
+			"at": "2026-08-29T17:12:36.872Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "qa",
+			"text": "设计图重绘后审核问题已全部修复 ✅ 卡片 店门口外景 复审通过。"
+		},
+		{
+			"id": "ev-cee7ad8e",
+			"at": "2026-08-29T17:12:36.872Z",
+			"from": "art",
+			"to": "storyboard",
+			"kind": "handoff",
+			"text": "美术设计定稿：风格 [cinematic / nostalgic / lifestyle / documentary / warm / authentic / urban / retro]，色板 #8B5A2B、#C4A77D、#2F2F2F、#E8DCC4。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"
+		},
+		{
+			"id": "ev-1550734a",
+			"at": "2026-08-29T17:12:36.872Z",
+			"from": "art",
+			"to": "client",
+			"kind": "status",
+			"text": "美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。",
+			"link": {
+				"stage": "bible",
+				"label": "查看美术设计"
+			}
+		},
+		{
+			"id": "ev-1083624d",
+			"at": "2026-08-29T17:12:41.497Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "美术设计已确认 ✅ 开始绘制分镜关键帧。"
+		},
+		{
+			"id": "ev-686b0c74",
+			"at": "2026-08-29T17:12:41.497Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「分镜提示词」继续，直至成片。"
+		},
+		{
+			"id": "ev-ed39673d",
+			"at": "2026-08-29T17:12:41.497Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "status",
+			"text": "分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"
+		},
+		{
+			"id": "ev-3e2b7881",
+			"at": "2026-08-29T17:13:03.930Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：中年理发师(CH01)、理发店晨光内景(SC01)。"
+		},
+		{
+			"id": "ev-ee15a680",
+			"at": "2026-08-29T17:13:03.930Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-a66896b0",
+			"at": "2026-08-29T17:13:08.103Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：中年理发师(CH01)、理发店晨光内景(SC01)。"
+		},
+		{
+			"id": "ev-7c2df1c9",
+			"at": "2026-08-29T17:13:08.103Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-f4d5de88",
+			"at": "2026-08-29T17:13:12.144Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：中年理发师(CH01)、理发店晨光内景(SC01)。"
+		},
+		{
+			"id": "ev-924673c3",
+			"at": "2026-08-29T17:13:12.144Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-ff5f04b7",
+			"at": "2026-08-29T17:13:16.064Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：中年理发师(CH01)、理发店晨光内景(SC01)。"
+		},
+		{
+			"id": "ev-8d208c2f",
+			"at": "2026-08-29T17:13:16.064Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-6aa1f8f8",
+			"at": "2026-08-29T17:13:20.169Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：中年理发师(CH01)、理发店晨光内景(SC01)。"
+		},
+		{
+			"id": "ev-f169c60a",
+			"at": "2026-08-29T17:13:20.170Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-46564cf8",
+			"at": "2026-08-29T17:13:23.951Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "handoff",
+			"text": "分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"
+		},
+		{
+			"id": "ev-e6d28893",
+			"at": "2026-08-29T17:13:23.951Z",
+			"from": "storyboard",
+			"to": "client",
+			"kind": "status",
+			"text": "关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。",
+			"link": {
+				"stage": "keyframes",
+				"label": "查看关键帧"
+			}
+		},
+		{
+			"id": "ev-176c12e1",
+			"at": "2026-08-29T17:13:26.636Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「镜头生成」继续，直至成片。"
+		},
+		{
+			"id": "ev-faa63559",
+			"at": "2026-08-29T17:13:26.639Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic medium close-up 16:9 shot of a middle-aged male ba…"
+		},
+		{
+			"id": "ev-b5398c56",
+			"at": "2026-08-29T17:14:26.479Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH01 生成完成 ✅（1/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-4f2083f7",
+			"at": "2026-08-29T17:14:26.481Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic medium shot 16:9 of a middle-aged male barber with…"
+		},
+		{
+			"id": "ev-f2980cfa",
+			"at": "2026-08-29T17:17:28.226Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH02 生成完成 ✅（2/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-9a003d14",
+			"at": "2026-08-29T17:17:28.228Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic medium shot 16:9 of a middle-aged male barber with…"
+		},
+		{
+			"id": "ev-4a028124",
+			"at": "2026-08-29T17:19:50.699Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH03 生成完成 ✅（3/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-576aaa1c",
+			"at": "2026-08-29T17:19:50.701Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic wide shot 16:9 of a middle-aged male barber with s…"
+		},
+		{
+			"id": "ev-53654e2c",
+			"at": "2026-08-29T17:21:51.972Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH04 生成完成 ✅（4/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-ac95b0e7",
+			"at": "2026-08-29T17:21:51.974Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic medium close-up 16:9 of a middle-aged male barber …"
+		},
+		{
+			"id": "ev-d38d1385",
+			"at": "2026-08-29T17:22:46.266Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH05 生成完成 ✅（5/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-bd6fee77",
+			"at": "2026-08-29T17:22:46.266Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"
+		},
+		{
+			"id": "ev-ac1d63d4",
+			"at": "2026-08-29T17:22:46.266Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"
+		},
+		{
+			"id": "ev-9987d728",
+			"at": "2026-08-29T17:22:58.885Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH01（指导：情绪沉静怀旧，语速舒缓偏慢，『三十年』重读，气息下沉带感慨，…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH01",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-05c1c722",
+			"at": "2026-08-29T17:23:01.535Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH02（指导：情绪平和带暖意，语速平稳，『都我剃的』重读，气息稳，带点不易…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH02",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-cb169546",
+			"at": "2026-08-29T17:23:04.050Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH03（指导：情绪细腻眷恋，语速稍缓，『上万遍』重读，气息轻缓，带点对日常…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH03",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-a2e6aeae",
+			"at": "2026-08-29T17:23:06.279Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH04（指导：情绪释然通透，语速放缓，『完成了』重读，气息放轻，带点豁达的…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH04",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-6edd79aa",
+			"at": "2026-08-29T17:23:08.583Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH05（指导：情绪沉稳笃定，语速平缓，『好手艺』『好刀』重读，气息稳，句尾…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH05",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-64873410",
+			"at": "2026-08-29T17:23:08.583Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "旁白轨交付：5/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"
+		},
+		{
+			"id": "ev-d44d14b5",
+			"at": "2026-08-29T17:23:08.583Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "status",
+			"text": "剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"
+		},
+		{
+			"id": "ev-d6c1d1f0",
+			"at": "2026-08-29T17:23:42.019Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "粗剪完成（5 镜 · 16.3s · 720p 16:9，转场：叠化 0.5s、黑场过渡 0.6s，音效：嗖声、嗖声，响度 -14 LUFS），移交审片员质检。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "播放成片"
+			}
+		},
+		{
+			"id": "ev-f15bacc6",
+			"at": "2026-08-29T17:24:23.275Z",
+			"from": "reviewer",
+			"to": "client",
+			"kind": "qa",
+			"text": "跨镜一致性预检 ⚠️ 2 处异常：SH02（黑色短发、白色外套、暖色调室内环境）、SH04（灰白色短发、白色外套、室外街道环境）。可在质量审读页查看详情并补拍。",
+			"link": {
+				"stage": "review",
+				"label": "查看一致性"
+			}
+		},
+		{
+			"id": "ev-6d98c539",
+			"at": "2026-08-29T17:24:23.275Z",
+			"from": "reviewer",
+			"to": "producer",
+			"kind": "qa",
+			"text": "质检结论：通过 ✅（综合 90）。最短板 textQuality 80 分。另有 2 处跨镜一致性异常请关注。"
+		},
+		{
+			"id": "ev-24cbacb3",
+			"at": "2026-08-29T17:24:23.276Z",
+			"from": "producer",
+			"to": "client",
+			"kind": "status",
+			"text": "全片交付 🎉 成片与五轴质检报告已就绪。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "查看成片"
+			}
+		}
+	],
+	"awaitingResume": false,
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"finalFile": "final.mp4",
+	"costEstimate": {
+		"total": 28.47,
+		"currency": "CNY",
+		"lines": [
+			{
+				"label": "剧本 LLM",
+				"amount": 0.65,
+				"note": "约 2k 输入 + 1.5k 输出 token"
+			},
+			{
+				"label": "美术设计 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "分镜提示词 LLM",
+				"amount": 0.97,
+				"note": "按 shotCount 翻倍"
+			},
+			{
+				"label": "EDL 转场 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "配音指导 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "审片多模 LLM",
+				"amount": 0.65,
+				"note": "含抽帧多模输入"
+			},
+			{
+				"label": "设计稿概念图",
+				"amount": 1.5,
+				"note": "3 张"
+			},
+			{
+				"label": "分镜关键帧",
+				"amount": 2.5,
+				"note": "5 张"
+			},
+			{
+				"label": "视频生成",
+				"amount": 20,
+				"note": "5 段 × 5s"
+			},
+			{
+				"label": "TTS 配音",
+				"amount": 0.25,
+				"note": "每镜粗估 1k 字符"
+			}
+		]
+	},
+	"productionShots": 5,
+	"dialogueShotCount": 0
+}

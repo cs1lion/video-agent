@@ -1,0 +1,53 @@
+{
+	"overall": "pass",
+	"score": 97,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 98
+		},
+		{
+			"id": "visualConsistency",
+			"score": 92
+		},
+		{
+			"id": "pacing",
+			"score": 95
+		},
+		{
+			"id": "audioSync",
+			"score": 100
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过。展现深夜城郊公交站等待场景，外卖员父亲与女儿，符合开场设定。"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "通过。展现递包子关键动作，符合广告核心情节。"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过。展现父女共食包子，暗示雨中对白，情感铺垫到位。"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过。展现末班车由远及近，推动情节至高潮。"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过。展现抵达车内团圆，完成抵达即团圆主题。"
+		}
+	]
+}

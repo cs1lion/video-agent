@@ -529,6 +529,26 @@ export interface CoSpaceDraft {
 
 export type SuggestionType = "submit" | "defer" | "downgrade" | "escalate" | "signal" | "wait";
 
+/** 烤炉（配额池投影；字段与服务端 kitchen.ts KitchenOven 对齐） */
+export interface KitchenOven {
+	id: string;
+	keyType: "free" | "enterprise" | "tokenplan" | string;
+	/** 当前可用 RPM 令牌 */
+	tokens: number;
+	/** 令牌桶容量（= 每分钟最大提交数；令牌点渲染的分母） */
+	rpmCap: number;
+	/** 距下一个令牌可用的毫秒数（0 = 现在就能提交） */
+	rpmWaitMs: number;
+	/** 今日剩余秒数（null = 限时免费/无明确配额，只受 RPM 约束） */
+	remainingQuotaSec: number | null;
+	/** 在途预留总秒数 */
+	reservedSec: number;
+	/** 在途预留条数（在烤） */
+	inFlight: number;
+	/** 累计超支秒数 */
+	overrunSec: number;
+}
+
 export interface ProducerSuggestion {
 	id: string;
 	type: SuggestionType;
@@ -548,6 +568,7 @@ export interface KitchenObservation {
 	at: string;
 	snapshot: {
 		generatedAt: number;
+		ovens: KitchenOven[];
 		readyTasks: { id: string; outputName: string; seconds: number | null; retryCount: number }[];
 		inFlightTasks: { id: string; outputName: string }[];
 		recentFailures: { id: string; outputName: string; reason: string }[];
@@ -849,6 +870,10 @@ export const api = {
 	async kitchenFetch(runId: string): Promise<KitchenSummary> {
 		return getJson<KitchenSummary>(`/api/runs/${encodeURIComponent(runId)}/kitchen`);
 	},
+	/** 轻量厨房快照（无 LLM/无落盘）：烤炉条 5s 轮询令牌呼吸用 */
+	async kitchenSnapshot(runId: string): Promise<{ generatedAt: number; ovens: KitchenOven[] }> {
+		return getJson<{ generatedAt: number; ovens: KitchenOven[] }>(`/api/runs/${encodeURIComponent(runId)}/kitchen/snapshot`);
+	},
 	/** B2：对建议表态（B2 只记录，不触发执行） */
 	async kitchenFeedback(runId: string, obsId: string, suggestionId: string, decision: "adopted" | "dismissed"): Promise<void> {
 		await postJson(`/api/runs/${encodeURIComponent(runId)}/kitchen/feedback`, { obsId, suggestionId, decision });
@@ -866,6 +891,27 @@ export const api = {
 	/** B4：导演 → 制片主任的优先级指令（P0/P1/P2 + 质量底线） */
 	async submitPriorityInstruction(runId: string, instruction: { shotId: string; priority: string; qualityBar: string; maxRetries?: number }): Promise<{ ok: boolean; detail: string }> {
 		return postJson(`/api/runs/${encodeURIComponent(runId)}/director/priority`, instruction);
+	},
+	/** B4 读路径：每镜最新一条优先级指令（ndjson 追加式，同镜取最后） */
+	async fetchPriorityInstructions(runId: string): Promise<PriorityInstruction[]> {
+		const data = await getJson<{
+			instructions: Array<{ shotId: string; priority: string; qualityBar: string; maxRetries: number }>;
+		}>(`/api/runs/${encodeURIComponent(runId)}/director/priority`);
+		const latest = new Map<string, PriorityInstruction>();
+		for (const inst of data.instructions) {
+			if (inst.priority === "P0" || inst.priority === "P1" || inst.priority === "P2") {
+				latest.set(inst.shotId, {
+					shotId: inst.shotId,
+					priority: inst.priority,
+					qualityBar:
+						inst.qualityBar === "must_keep" || inst.qualityBar === "nice_to_have" || inst.qualityBar === "sacrificable"
+							? inst.qualityBar
+							: "nice_to_have",
+					maxRetries: inst.maxRetries,
+				});
+			}
+		}
+		return [...latest.values()];
 	},
 	// ---- B5 A/B 度量 ----
 	/** B5：运行度量（配额利用率/有效吞吐/P0延迟P95/浪费率/被拒率） */

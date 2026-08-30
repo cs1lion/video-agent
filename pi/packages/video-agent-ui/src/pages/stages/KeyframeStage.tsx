@@ -72,7 +72,7 @@ function KeyframeCard({
 							</>
 						) : (
 							<>
-								<LoaderCircle className="size-5 animate-spin text-cyan-300/80" />
+								<LoaderCircle className="size-5 animate-spin text-zinc-400" />
 								<span className="text-[11px] text-zinc-500">片段生成阶段会自动逐镜产出…</span>
 							</>
 						)}
@@ -111,7 +111,7 @@ function KeyframeCard({
 			</div>
 			<div className="space-y-2 px-3 py-2.5">
 				<div className="flex items-center gap-2">
-					<span className="font-mono text-xs text-cyan-300">{shotId}</span>
+					<span className="font-mono text-xs text-zinc-300">{shotId}</span>
 					{narration && <span className="truncate text-[11px] text-zinc-500">{narration}</span>}
 				</div>
 				{dependency && (
@@ -122,7 +122,7 @@ function KeyframeCard({
 						{staleDependency && <span className="text-amber-300/90">{staleDependency} 已更新</span>}
 					</div>
 				)}
-				{prompt && <p className="line-clamp-2 font-mono text-[10px] leading-relaxed text-zinc-600">{prompt}</p>}
+				{prompt && <p className="line-clamp-2 font-mono text-[10px] leading-relaxed text-zinc-500">{prompt}</p>}
 				<div className="flex items-center gap-1.5">
 					<input
 						value={instruction}
@@ -146,7 +146,7 @@ function KeyframeCard({
 						}}
 						className={cn(
 							"inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition-colors",
-							"border-violet-400/40 text-violet-200 hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-40",
+							"border-amber-300/40 text-amber-200 hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-40",
 						)}
 					>
 						<RefreshCw className="size-3.5" />
@@ -198,7 +198,7 @@ export function KeyframeStage({
 				<EmptyState text="分镜提示词就绪后，这里会出现每一镜的关键帧。" />
 			) : (
 				<div className="space-y-4">
-					<p className="rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-4 py-2.5 text-xs leading-relaxed text-cyan-100/90">
+					<p className="rounded-xl border border-zinc-100/25 bg-white/[0.06] px-4 py-2.5 text-xs leading-relaxed text-zinc-100/90">
 						视频按「关键帧锚定 + 分镜提示词」生成：每镜先出一张首帧锚定图锁定构图与色调，再由视频模型延展成动态镜头。
 									每张关键帧的服务端参考板会把命中的角色、场景与道具定稿合成为一张视觉锚定图，视频原料严格跟随美术设计。
 									对某张不满意可直接改（例：更暖的光、主角靠近产品）；重绘后补拍该镜将以新关键帧为准。已就绪 {readyCount}/{shotIds.length}。

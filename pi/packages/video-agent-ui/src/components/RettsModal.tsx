@@ -74,20 +74,19 @@ export function RettsModal({
 							<div>
 								<div className="font-mono text-[10px] tracking-[0.3em] text-amber-300/80">RE-TTS</div>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">
-									{isDialogue ? (
-										<>
-											重录镜头 {shot.id} 台词
-											<span className="ml-2 align-middle text-[10px] font-normal text-violet-300">将重新生成该镜画面</span>
-										</>
-									) : (
-										`重录镜头 ${shot.id} 旁白`
-									)}
+									{isDialogue ? `重录镜头 ${shot.id} 台词` : `重录镜头 ${shot.id} 旁白`}
 									{attempts > 0 && (
 										<span className="ml-2 text-xs font-normal text-zinc-500">
 											已重录 {attempts}/{MAX_RETTS_PER_SHOT} 次
 										</span>
 									)}
 								</h3>
+								{isDialogue && (
+									<p className="mt-1 flex items-center gap-1.5 text-xs text-amber-200">
+										<AudioLines className="size-3.5" />
+										级联重做：将重新生成该镜画面
+									</p>
+								)}
 							</div>
 							<button
 								type="button"
@@ -100,7 +99,7 @@ export function RettsModal({
 						</div>
 
 						{isDialogue && dialogue ? (
-							<div className="mt-3 rounded-xl border border-violet-400/20 bg-violet-400/[0.06] px-3 py-2.5 text-xs leading-relaxed text-violet-100/85">
+							<div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2.5 text-xs leading-relaxed text-amber-100/85">
 								<span className="font-medium">当前台词（{dialogue.characterId}）：</span>
 								{dialogue.lines.zh}
 							</div>
@@ -139,7 +138,11 @@ export function RettsModal({
 								<>
 									重录台词是<span className="text-zinc-300">级联重做</span>
 									：台词是口型的驱动源，新音频就位后会自动重新生成该镜口型画面（旧画面备份为历史版本），再按新时长重排、重新混音并复审。
-									预计消耗：{durationSec ?? 5}s 视频配额 + 2 次 TTS + 1 轮 LLM。台词沿用剧本中的角色音色。
+									预计消耗：
+									<span className="font-mono text-sm text-amber-200">
+										{durationSec ?? 5}s 视频配额 + 2 次 TTS + 1 轮 LLM
+									</span>
+									。台词沿用剧本中的角色音色。
 								</>
 							) : (
 								<>
@@ -180,7 +183,7 @@ export function RettsModal({
 								该镜头已达重录上限。可在「剧本」阶段微调文案后整体重跑，或接受当前版本。
 							</p>
 						) : (
-							<p className="mt-3 text-xs text-zinc-600">剩余重录次数：{remaining} 次</p>
+							<p className="mt-3 text-xs text-zinc-500">剩余重录次数：{remaining} 次</p>
 						)}
 
 						<div className="mt-5 flex items-center justify-end gap-3">

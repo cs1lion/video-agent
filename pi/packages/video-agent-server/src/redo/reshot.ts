@@ -253,6 +253,8 @@ export async function reshotRun(
 						{
 							roleName: "video-agent",
 							kind: "video",
+							// 多 key 并发：任务投给预留所在池绑定的 adapter（不传则走默认解析）
+							adapterId: reservation?.adapterId,
 							prompt,
 							params: videoSubmitParams(sc.ctx, opts, width, height, kfDataUrl),
 							outputName: `clip-${shotId}`,
@@ -282,6 +284,8 @@ export async function reshotRun(
 						{
 							roleName: "video-agent",
 							kind: "video",
+							// 多 key 并发：任务投给预留所在池绑定的 adapter（不传则走默认解析）
+							adapterId: reservation?.adapterId,
 							prompt,
 							params: videoSubmitParams(sc.ctx, opts, width, height, null),
 							outputName: `clip-${shotId}`,

@@ -63,7 +63,7 @@ export function RefineModal({
 					>
 						<div className="mb-1 flex items-start justify-between">
 							<div>
-								<div className="font-mono text-[10px] tracking-[0.3em] text-violet-300/80">REFINE</div>
+								<div className="font-mono text-[10px] tracking-[0.3em] text-amber-300/80">REFINE</div>
 								<h3 className="mt-1 text-lg font-semibold text-zinc-100">调整「{STAGE_LABEL[stageId] ?? stageId}」</h3>
 							</div>
 							<button
@@ -101,7 +101,7 @@ export function RefineModal({
 									key={h}
 									type="button"
 									onClick={() => setInstruction((v) => (v ? `${v}；${h}` : h))}
-									className="cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-400 transition-colors hover:border-violet-300/40 hover:text-violet-200"
+									className="cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-400 transition-colors hover:border-amber-300/40 hover:text-amber-200"
 								>
 									+ {h}
 								</button>
@@ -131,7 +131,7 @@ export function RefineModal({
 										只重做这一阶段的文案产物，完成后暂停，你确认满意再推进下游，不浪费生成额度。
 									</span>
 								</span>
-								<Sparkles className="ml-auto size-3.5 shrink-0 text-violet-300 opacity-60" />
+								<Sparkles className="ml-auto size-3.5 shrink-0 text-amber-300 opacity-60" />
 							</GlowButton>
 						</div>
 

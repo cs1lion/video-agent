@@ -16,20 +16,9 @@
   --color-iris: #f59e0b;
   --color-flare: #fde68a;
 
-  /* legacy 冷色重定向：全站 cyan-* → 琥珀阶梯、violet-* → 锌灰阶梯。
-     存量类名不用动，视觉立即统一；新代码请直接用 amber/zinc */
-  --color-cyan-100: #fef3c7;
-  --color-cyan-200: #fde68a;
-  --color-cyan-300: #fcd34d;
-  --color-cyan-400: #fbbf24;
-  --color-cyan-500: #f59e0b;
-  --color-cyan-600: #d97706;
-  --color-violet-100: #f4f4f5;
-  --color-violet-200: #e4e4e7;
-  --color-violet-300: #d4d4d8;
-  --color-violet-400: #a1a1aa;
-  --color-violet-500: #71717a;
-  --color-violet-600: #52525b;
+  /* 2026-08-29 起 cyan/violet 类名全站清零、重定向变量移除——类名不再说谎。
+     语义色只认：emerald=完成/通过、amber=注意/贵/动作、rose=失败/危险/被拒；
+     进行中=中性白+动效；结构标签=锌灰。 */
 }
 
 html,
@@ -391,6 +380,15 @@ body {
 /* Beam Border：冷灰工业——收敛为静态细发线（玻璃拟态退场，保留类名兼容） */
 .beam-border {
   border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+/* 场记板斜纹带：确认闸门（awaiting）仪式的视觉签名 */
+.clap-stripe {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(251, 191, 36, 0.85) 0 12px,
+    rgba(10, 10, 11, 0.9) 12px 24px
+  );
 }
 
 /* 骨架屏：未生成阶段的空态占位（复用 shimmer 扫光） */

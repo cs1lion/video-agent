@@ -102,6 +102,12 @@ export interface SubmitInput {
 	/** File name (without extension) under the project assets dir. */
 	outputName: string;
 	priority?: number;
+	/**
+	 * 显式指定适配器（多 key 并发：配额账本选池后按池绑定的 adapter 提交，
+	 * 把"多 key 记账"落到"多 key 真实并发"）。缺省/找不到时回退
+	 * resolveAdapterFor 的角色绑定解析，行为与旧版完全一致。
+	 */
+	adapterId?: string;
 }
 
 export class MediaQueueError extends Error {}
@@ -287,7 +293,12 @@ export class GenerationQueue {
 
 	/** Queue a generation. Returns the job; use awaitJob to wait for it. */
 	submit(input: SubmitInput, projectDir: string): QueueJob {
-		const config = resolveAdapterFor(this.config, input.roleName, input.kind);
+		// 多 key 并发：显式 adapterId（来自配额账本选中的池）优先；
+		// 找不到（配置漂移/写错）时回退角色绑定解析，宁可退化单 key 也不让任务失败。
+		const explicit = input.adapterId
+			? this.config?.media.find((a) => a.id === input.adapterId && a.kind === input.kind)
+			: undefined;
+		const config = explicit ?? resolveAdapterFor(this.config, input.roleName, input.kind);
 		if (!config) {
 			const known = this.config?.media.map((adapter) => `${adapter.id}(${adapter.kind})`).join(", ") || "（无）";
 			throw new MediaQueueError(

@@ -1,0 +1,17 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Vertical 9:16 cinematic lifestyle food photography shot, close-up of middle-aged Chinese noodle shop owner with warm approachable expression, wearing a simple white cotton T-shirt and a light blue apron dusted with flour, short black hair, slightly tanned skin, calloused hands kneading dough on floured dark wooden board, small cozy traditional Chinese noodle shop kitchen background with shelves of simple cooking ingredients, soft diffused early morning sunlight seeping through frosted window illuminating dancing dust motes, slow dolly push-in toward the kneading hands, warm hazy glow, cozy fresh morning vibe, realistic documentary tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Vertical 9:16 realistic food photography shot, middle-aged Chinese noodle shop owner with gentle smile, wearing a simple white cotton T-shirt and a light blue apron dusted with flour, short black hair, slightly tanned skin, lowering fresh noodles into large stainless steel boiling pot on gas stove, thick steam rising instantly, small cozy traditional Chinese noodle shop kitchen background with ingredient shelves in soft focus, soft diffused early morning sunlight from frosted window catching the steam with warm glow, slow pan down following the noodle lowering motion, warm low-contrast color grade, cozy documentary tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Vertical 9:16 cinematic lifestyle shot, middle-aged Chinese noodle shop owner with warm expression, wearing a simple white cotton T-shirt and a light blue apron dusted with flour, short black hair, slightly tanned skin, carrying steaming bowl of noodles to first customer by shop window, customer is young office worker in neat light gray jacket holding reusable coffee cup, light brown short hair, fair skin, relaxed expectant expression smiling back, narrow window spot with small wooden stool and simple table, faint quiet early morning street outside the glass, soft morning backlight outlining customer silhouette, slow handheld follow from kitchen area to window then static locked-off hold on the interaction, warm hazy glow, cozy fresh morning vibe. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

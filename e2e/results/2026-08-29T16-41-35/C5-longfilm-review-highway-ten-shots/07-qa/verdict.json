@@ -1,0 +1,78 @@
+{
+	"overall": "pass",
+	"score": 95,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 95
+		},
+		{
+			"id": "visualConsistency",
+			"score": 92
+		},
+		{
+			"id": "pacing",
+			"score": 90
+		},
+		{
+			"id": "audioSync",
+			"score": 100
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH06",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH07",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH08",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH09",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH10",
+			"verdict": "ok",
+			"reason": "通过"
+		}
+	]
+}

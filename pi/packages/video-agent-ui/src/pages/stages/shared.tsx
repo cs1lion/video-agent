@@ -29,7 +29,7 @@ export function StageShell({
 export function EmptyState({ text }: { text: string }) {
 	return (
 		<div className="flex h-44 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
-			<Film className="size-6 text-zinc-600" />
+			<Film className="size-6 text-zinc-500" />
 			<p className="text-sm text-zinc-500">{text}</p>
 		</div>
 	);
@@ -49,7 +49,7 @@ export function RefineAction({
 		<button
 			type="button"
 			onClick={() => onRefine(stageId)}
-			className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-violet-400/40 px-3 py-1.5 text-xs text-violet-200 transition-colors hover:bg-violet-400/10"
+			className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-300/40 px-3 py-1.5 text-xs text-amber-200 transition-colors hover:bg-amber-400/10"
 		>
 			<WandSparkles className="size-3.5" />
 			{label}

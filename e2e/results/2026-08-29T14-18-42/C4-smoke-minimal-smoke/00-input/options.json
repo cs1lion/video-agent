@@ -1,0 +1,12 @@
+{
+	"resolution": "480p",
+	"aspectRatio": "9:16",
+	"shotCount": 3,
+	"clipDurationSec": 4,
+	"fps": 24,
+	"motionIntensity": "low",
+	"detailBoost": false,
+	"promptLanguage": "zh",
+	"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+	"audioDrive": "off"
+}

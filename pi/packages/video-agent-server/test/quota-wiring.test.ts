@@ -36,10 +36,13 @@ let probeSec: number | null = 3.6;
 class FakeQueue {
 	submitCalls = 0;
 	failVideo = false;
+	/** 每次提交收到的 adapterId（多 key 并发：账本选池 → 执行走对应 key 的账实相符锁） */
+	adapterIds: (string | undefined)[] = [];
 	private seq = 0;
 	private readonly jobs = new Map<string, unknown>();
-	submit(input: { kind: "image" | "video" | "tts" | "music"; outputName: string }, projectDir: string) {
+	submit(input: { kind: "image" | "video" | "tts" | "music"; outputName: string; adapterId?: string }, projectDir: string) {
 		this.submitCalls += 1;
+		this.adapterIds.push(input.adapterId);
 		const id = `J${this.seq++}`;
 		const relative = path.posix.join("assets", `${input.outputName}.mp4`);
 		if (input.kind === "video" && this.failVideo) {

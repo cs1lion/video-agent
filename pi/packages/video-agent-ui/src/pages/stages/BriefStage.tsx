@@ -21,7 +21,7 @@ export function BriefStage({ run }: { run: RunView }) {
 			<div className="space-y-5">
 				<p className="text-base leading-relaxed text-zinc-100">{run.brief.logline}</p>
 				{run.brief.keyMessage && (
-					<div className="inline-block rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-1.5 text-xs text-cyan-100">
+					<div className="inline-block rounded-lg border border-zinc-100/30 bg-white/[0.06] px-3 py-1.5 text-xs text-zinc-100">
 						关键信息 · {run.brief.keyMessage}
 					</div>
 				)}
@@ -37,7 +37,7 @@ export function BriefStage({ run }: { run: RunView }) {
 										alt={img.name}
 										className="aspect-square w-full rounded-xl border border-white/15 object-cover"
 									/>
-									<figcaption className="mt-1 truncate text-center text-[10px] text-zinc-600">{img.name}</figcaption>
+									<figcaption className="mt-1 truncate text-center text-[10px] text-zinc-500">{img.name}</figcaption>
 								</figure>
 							))}
 						</div>

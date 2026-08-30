@@ -1,0 +1,22 @@
+{
+	"transitions": [
+		{
+			"afterShotIndex": 0,
+			"type": "cut",
+			"durationSec": 0,
+			"sfxType": null
+		},
+		{
+			"afterShotIndex": 1,
+			"type": "fade",
+			"durationSec": 0.5,
+			"sfxType": "whoosh"
+		}
+	],
+	"shotDur": [
+		3.508,
+		3.0039999999999996,
+		2.9080000000000004
+	],
+	"generatedAt": "2026-08-29T16:40:46.259Z"
+}

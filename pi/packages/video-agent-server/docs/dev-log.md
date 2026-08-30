@@ -716,6 +716,39 @@ compare_all.py`，与 08-28 verify.py 同法）钉死根因——**prompt 形态
 表述有误）；验收素材：`_tts_test/e2e-v1.mp4`（0.990，最佳）与
 `e2e-a2-SH01.mp4`（0.701，生产链路直出）。
 
+**多 key 并发接线完成（2026-08-29 续，接 B5 之后）**：用户指出 4 个 Agnes
+key 全在 `工具模型.txt` 里但只用了 1 个。排查发现三层断点：
+
+1. **配置层**：`models.json` 只有 1 个 video adapter（1 个 key），其余 3 个
+   在文档里但没接入。**修**：加 `agnes-video-1`~`-4` 四条 adapter（各带独立
+   key、`concurrency:1`、`minIntervalMs:20000`）。
+2. **账本↔执行桥接**：`PoolSpec` 加 `adapterId`（池绑 adapter），`ReserveResult`
+   返回 `poolId`+`adapterId`，`SubmitInput` 加 `adapterId`，`queue.submit()` 显式
+   指定时走绑定 adapter（找不到回退默认解析，不硬失败）。clips/reshot/retts 的
+   submit 全传 `reservation.adapterId`。`config.ts` 的 `parsePools()` 解析
+   `adapterId` 并校验一对一绑定。`loadQuotaLedger(mediaConfig)` 自动探测
+   models.json 的 video adapter 数量建多池（>1 才走，单 adapter 回退单池不破坏
+   旧行为）。`consumedSec()` 改可选 poolId（不传 = 多池汇总）。
+3. **调用层**：clips.ts 原来是 `for { submit → awaitJob → next }` 串行——每镜
+   等 60-100s 才提交下一镜，3 个 key 空闲。**重构为两阶段**：Phase 1 批量
+   准备+预留+提交（pickPool 自动选不同池→不同 adapter→不同 key 并行入队），
+   Phase 2 批量 `awaitJob` 等出片+结算。降级链（reference→i2v→t2v）在 Phase 2
+   per-clip 处理。**教训**：初版重构在 Phase 2 又调了一次 `submitClip`（Phase 1
+   已提交的 job 重复提交→测试抓到 "实际 3 次 submit 预期 2 次"）——修为
+   Phase 1 存 `initialJob` 对象，Phase 2 直接 `awaitJob(initialJob.id)`。
+
+**效果**：4 key × 2 RPM = 8 RPM（理论 4× 提速）；队列 `globalConcurrency:6`
+限制总并行 6 个 job，4 个 adapter 各 `concurrency:1` = 4 路真实并行。pickPool
+策略（最早可用池优先）自动负载均衡。
+
+**预检改进**：单池时 `remainingSec(VIDEO_QUOTA_POOL)` 预检不变；多池时预检跳过
+（`poolIds().length > 1`），让 pickPool 在 reserveShotQuota 内逐镜选池——避免
+单池预检用某个池的剩余值误判全局不足。
+
+**为什么之前没接上**：之前的会话建了 `pickPool()` + 多池测试 + 更新了总文档，
+但没动 models.json、没给 submit 加 adapterId、没改串行循环——文档先行代码落后。
+本次把三层全接上。套件 **246/246** + UI build ✅。
+
 **B4 导演契约 + B5 A/B 度量（2026-08-29，接 B3 之后）**：创意决策与资源
 决策的解耦闭环落位——导演只管创作质量（下优先级指令），制片主任只管资源
 （出预算告警），两者用**结构化契约**通信：
@@ -1049,3 +1082,93 @@ audioUrl 复用（重做路径会失效）——公开 URL 仍是唯一正解。
   已重写，并把"实测推翻官方文档、据此把单池改多池"讲成叙事亮点。
 - 1.2/1.3/1.8/4.7 同步多池改造、配置方式与套件数字（229→243）。
 - 顺带修掉上一轮审查漏掉的过时项：环境事实表里的 `CLIP_DURATIONS=[3,5,8,10]`（A6 已改 3–12）。
+
+## 2026-08-30：决策轨迹 + RLHF 管线可行性调研（只调研，未动代码）
+
+**起因**：外部设计稿（仓库根目录 `video-agent_意图澄清与RLHF轨迹框架设计.html`）
+提出给管线补「决策轨迹层」以打通 RLHF 三元组。要求先核实可行性，暂不改代码。
+
+**结论：方向可行，家底比设计稿以为的更好，但稿子有 8 处与代码不符，已逐一实测勘误。**
+最关键三条：
+1. **偏好管道已存在**——`PreferenceRecord`（deliberation.ts:148）落盘
+   `preferences.jsonl` 且 `get_preferences` 工具已在消费；新设计只能**扩展**它
+   （加 `kind` 判别），绝不新建并行偏好文件。
+2. **审议提案上限是 2**（deliberation.ts:706 prompt 写死）——设计稿"天然 3–5
+   提案构成偏好对"的前提当前不成立，实施前必须先改 prompt（2–4 差异化 +
+   低成本方案必在），否则没有 rejected 侧。
+3. **选池决策点是 `pickPool()`**（quota.ts，确定性）；kitchen.ts 只是只读快照层。
+   另：QA 前后对比钩子已存在（`snapshotShotVerdict`/`computeQaRegressionText`，
+   pipeline.ts:789–835）只是未落盘；QA 实为 5 轴。
+
+**产出**：修正版设计落盘 `docs/architecture/decision-trace.md`（三层轨迹、4 个
+旁路埋点、五阶段计划、验收与护栏）。合规核对通过：全部加法式、不碰"不做"清单、
+埋点静默失败仿 `appendSpan`。
+
+**当前状态：待批准实施**。下一步由用户决定走阶段 ①（数据结构 + 2 埋点，1–2 天）
+与否。五阶段中 ①②④ 无训练即有收益（澄清推翻率/采纳分布报表直接优化题库与
+prompt——免费期瓶颈是 RPM，少一次误判重做 = 省一个 30s 提交窗口）。
+
+## 2026-08-30（续）：e2e 反馈轮修复补记 —— health 预检、度量真实秒数、优先级契约持久化
+
+**起因**：三方反馈交叉（e2e 八轮结果 + 《评审报告-08-29》+ 事后审计），
+逐条判「真实与否」后修了服务端三项（F1–F3）。全量裁决表在根目录
+《问题与修复记录-2026-08-30》（该文档已回链本条），此处只记"为什么"。
+
+### F1 `GET /api/health`：预检防打进旧代码服务
+
+- **事故**：e2e 批次 C7 FAIL（kitchen 路由 404），根因是 8787 被其他会话的
+  旧代码服务占用，而 harness 预检对"可达但无能力"的目标**降级放行**——白烧约
+  13 分钟配额。
+- **为什么选 features 清单而不是简单 200**：预检要回答的问题不是"服务活着"，
+  而是"目标与当前代码库一致"。`{ok, features:[…]}` 让 harness 能逐项校验能力
+  （`run-e2e.mjs` 侧对应升级：无 health = degraded 或能力缺项 → exit 3）。
+  features 增删时预检自动跟上，不需要两边各维护一份清单。
+
+### F2 `shotSeconds`：度量不再用常量估算秒数
+
+- **为什么**：限时免费期 `quotaUtilization`/`wasteRate` 恒 null，`effectiveSec`
+  是 A/B 的主指标——而它之前用硬编码 5s/镜估算，与 3–12s 实际镜长不符，
+  **恰好在最常被看的状态下失真**。
+- **做法**：metrics.ts 抽纯函数 `shotSeconds`（script.json 镜长求和；
+  script 缺失或镜长缺省回落 5s/镜）；server metrics 路由读 script.json，
+  老 run 无 script 自动走回落（合法态，不报错）。
+- **锁**：3 条契约测试（真实求和 / script 缺失回落 / 单镜缺省回落）。
+
+### F3 导演优先级契约跨重入队生效
+
+- **为什么**：`applyPriorityInstruction` 只改当前排队任务，reshot 重入队后优先级
+  丢失——「契约」实为一次性建议，弱于叙事承诺（施工报告三期审计 #1）。
+- **做法**：`stages/clips.ts` 入队时读已持久化指令，经 `PRIORITY_QUEUE_VALUES`
+  映射设 `submit priority`；重入队自然重应用，不需要额外的"同步"机制。
+- 运行中/已完成镜头照旧必拒（语义不变）。
+
+### 随带补记：前端调度版施工新增的两个只读端点 + 一个快照字段
+
+08-29 前端施工引入、此前未入 dev-log，与上述改动同在工作树，一并记录：
+- `GET /api/runs/:id/kitchen/snapshot`：纯函数折叠（`buildKitchenSnapshot`），
+  无 LLM / 无落盘，供前端烤炉条 5s 轮询令牌呼吸。与 `/kitchen/summary`（读
+  ndjson 全量）的分工：快照=高频轻量，summary=低频全量。
+- `GET /api/runs/:id/director/priority`：镜头优先级指令列表，段控状态回显用。
+- `PoolSnapshot` / `KitchenOven` 加 `rpmCap`（令牌桶容量）：前端令牌点渲染的分母。
+  三者均为加法式，不动既有契约。
+
+### 验证（本轮亲手跑）
+
+- `npx tsc --noEmit` clean；`npm test` **246/246**（56 suite，0 失败 0 跳过，约 97s）。
+- e2e harness 离线复核：7 个 .mjs `node --check` 全过 + `selfcheck.mjs`
+  SELFCHECK PASS（用例结构 / WAV 合成 / 断言正反例，不烧钱）。
+- **未验证（如实记录）**：C7 未在正确服务重跑（付费配额，约 13min，见记录 U1）；
+  F3 对运行中镜头的真实生效需 E2E（同见 U1/U3）。
+
+### 当晚补：e2e 批次结果排查（H1–H3，详见《问题与修复记录》§七）
+
+- **C6 一直误判 FAIL 的根因**：断言找 `cut-\d+.mp4`（带连字符），而服务端产出
+  `cut{N}.mp4`（compose.ts `cut${seq}`）——采集 bucket 规则是对的，断言规则写错。
+  修断言正则 + selfcheck 夹具；顺带勘误服务端/README 三处"cut-N"表述。
+- **22-51 批次 summary 丢 C1**：批次报告全批结束才落盘 → 改逐用例按 id 合并写回
+  （`upsertBatchReport`）+ `--batch` 目录续跑；顺带修"开始时间=结束时间"。
+- **服务端唯一改动（加法）**：`composeCut` 成功返回加 `file` 字段（`cut{N}.mp4`），
+  harness 动作留痕记真实产物名；既有消费方不受影响。
+- **C1 台词镜 0 不是产品回归**：该批次 script.json 无 `audioMode` 字段 = 打进了
+  不含 A1/A2 的旧代码服务（9 个批次全部 base=8787），与 C7 同根因，已被
+  F1 预检（`/api/health` features）阻断。

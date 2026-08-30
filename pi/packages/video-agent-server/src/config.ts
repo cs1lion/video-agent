@@ -32,7 +32,7 @@ export const VIDEO_QUOTA_POOL = "video";
  * 2026-08-29：视频模型处于**限时免费**状态（无每日秒数配额，但 RPM 限流依然存在）→
  * 生产设 `VIDEO_AGENT_QUOTA_DAILY_SEC=0` 即可，账本退化为「只记 RPM 令牌桶 + 用量统计」。
  */
-export function loadQuotaLedger(): QuotaLedger {
+export function loadQuotaLedger(mediaConfig?: MediaModelsFile): QuotaLedger {
 	const dailyRaw = process.env.VIDEO_AGENT_QUOTA_DAILY_SEC;
 	const parsedDaily = dailyRaw === undefined ? Number.NaN : Number(dailyRaw);
 	const dailyQuotaSec = Number.isFinite(parsedDaily) ? (parsedDaily > 0 ? parsedDaily : null) : 500;
@@ -43,19 +43,37 @@ export function loadQuotaLedger(): QuotaLedger {
 		kt === "free" || kt === "enterprise" || kt === "tokenplan"
 			? kt
 			: dailyQuotaSec === null
-				? "enterprise" // 无每日时长配额（限时免费/企业版）：按真实 Key 层级标注，勿误判为 free
+				? "enterprise"
 				: "tokenplan";
 	if (dailyRaw === undefined && process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT !== "1") {
-		// 运营提示（一次性，进程级 console）：默认值按 TokenPlan 保守估计；实际 Key 为
-		// 企业版时真实额度更高，不覆盖会让账本"精确地记一笔错误的预算"。
 		console.warn(
 			"[video-agent] 未设置 VIDEO_AGENT_QUOTA_DAILY_SEC，按保守默认 500s/天记账（当前 Agnes Key 为企业版，真实额度更高）。" +
 				"要放开请设 VIDEO_AGENT_QUOTA_DAILY_SEC=<秒数>（\"0\" = 不限每日量，只受 RPM 约束；" +
-				"视频模型限时免费期推荐设 0 —— 此时账本只记 RPM 令牌桶与用量，不再有每日秒数告警）；测试环境可设 VIDEO_AGENT_SILENCE_QUOTA_HINT=1 关闭本提示。",
+				"视频模型限时免费期推荐设 0）；测试环境可设 VIDEO_AGENT_SILENCE_QUOTA_HINT=1 关闭本提示。",
 		);
 	}
-	const pools = parsePools() ?? [{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }];
-	return new QuotaLedger(pools);
+	// ① 显式多池配置（VIDEO_AGENT_QUOTA_POOLS）优先——精细控制每池的 keyType/rpmCap/dailyQuotaSec
+	const explicit = parsePools();
+	if (explicit) return new QuotaLedger(explicit);
+	// ② 自动探测：从 models.json 的 video adapter 自动建多池（一 key 一池 + adapterId 绑定）。
+	// 这样配了 4 个 adapter 就自动有 4 个池，pickPool 会自动选最早可用的池，submit 时走绑定的 adapter。
+	// 单 adapter 时不走这条（回退③单池，保持旧行为不破坏）。
+	if (mediaConfig) {
+		const videoAdapters = mediaConfig.media.filter((m) => m.kind === "video");
+		if (videoAdapters.length > 1) {
+			return new QuotaLedger(
+				videoAdapters.map((a) => ({
+					id: a.id,
+					keyType,
+					rpmCap,
+					dailyQuotaSec,
+					adapterId: a.id,
+				})),
+			);
+		}
+	}
+	// ③ 回退单池（旧行为）
+	return new QuotaLedger([{ id: VIDEO_QUOTA_POOL, keyType, rpmCap, dailyQuotaSec }]);
 }
 
 /** 合法的 Key 层级（与 quota.ts 的 KeyType 对齐） */
@@ -89,9 +107,10 @@ function parsePools(): PoolSpec[] | null {
 	}
 	const pools: PoolSpec[] = [];
 	const seen = new Set<string>();
+	const seenAdapters = new Set<string>();
 	for (const item of parsed) {
 		if (typeof item !== "object" || item === null) return warnPools("元素应为对象");
-		const { id, keyType, rpmCap, dailyQuotaSec } = item as Record<string, unknown>;
+		const { id, keyType, rpmCap, dailyQuotaSec, adapterId } = item as Record<string, unknown>;
 		if (typeof id !== "string" || id === "") return warnPools("id 应为非空字符串");
 		if (seen.has(id)) return warnPools(`id 重复：${id}`);
 		if (typeof keyType !== "string" || !KEY_TYPES.includes(keyType as (typeof KEY_TYPES)[number])) {
@@ -100,6 +119,19 @@ function parsePools(): PoolSpec[] | null {
 		if (typeof rpmCap !== "number" || !Number.isFinite(rpmCap) || rpmCap <= 0) {
 			return warnPools(`rpmCap 应为正数（id=${id}）`);
 		}
+		// adapterId 绑定真实 key（models.json media 条目）：选池后任务投给该 adapter，
+		// 才能把"多 key 记账"落到"多 key 真实并发"。同一 adapter 最多绑一个池（一对一才账实相符）
+		let boundAdapter: string | undefined;
+		if (adapterId !== undefined && adapterId !== null) {
+			if (typeof adapterId !== "string" || adapterId === "") {
+				return warnPools(`adapterId 应为非空字符串（id=${id}）`);
+			}
+			if (seenAdapters.has(adapterId)) {
+				return warnPools(`adapterId 重复绑定：${adapterId}（一个 key 一个池才账实相符）`);
+			}
+			boundAdapter = adapterId;
+			seenAdapters.add(adapterId);
+		}
 		const daily =
 			dailyQuotaSec === undefined || dailyQuotaSec === null
 				? null
@@ -107,7 +139,13 @@ function parsePools(): PoolSpec[] | null {
 					? dailyQuotaSec
 					: null;
 		seen.add(id);
-		pools.push({ id, keyType: keyType as KeyType, rpmCap, dailyQuotaSec: daily });
+		pools.push({
+			id,
+			keyType: keyType as KeyType,
+			rpmCap,
+			dailyQuotaSec: daily,
+			...(boundAdapter ? { adapterId: boundAdapter } : {}),
+		});
 	}
 	return pools;
 }
@@ -185,7 +223,7 @@ export function loadServerContext(): ServerContext {
 		llm: loadLlmConfig(mediaConfig),
 		port: Number(process.env.PORT ?? 8787),
 		priceCatalog,
-		quota: loadQuotaLedger(),
+		quota: loadQuotaLedger(mediaConfig),
 	};
 }
 

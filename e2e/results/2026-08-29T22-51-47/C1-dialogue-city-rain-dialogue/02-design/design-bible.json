@@ -1,0 +1,74 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "老周",
+			"design": "A 46-year-old male delivery rider, wearing a worn dark blue windbreaker with faint usage stains, stubble on jaw, visible fatigue lines under eyes, habitually lowering his head when speaking, natural skin texture with subtle under-eye shadows, realistic gritty texture, full-body front view, matching the restrained exhausted yet warm emotional tone.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "周小雨",
+			"design": "An 11-year-old girl, wearing an oversized school uniform jacket, carrying a worn old schoolbag, wet hair stuck to her forehead from rain, innocent and quiet expression, natural skin texture with faint rain droplets, realistic lifestyle texture, half-body front view, blending with the rainy night atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T22:53:36.395Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "凉包子",
+			"design": "Cold half-steamed bun, soft pale dough with slight dryness from being left out, plain filling visible at the broken edge, slight condensation on surface from cool air, realistic food texture, close-up view, matching the low-key warm tone of the scene.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "旧书包",
+			"design": "Worn canvas schoolbag, faded color with faint scratches and wear marks, simple zipper design, loose shoulder straps with slight fraying, realistic daily item texture, side view, fitting the humble family background.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "城郊深夜公交站",
+			"design": "Suburban bus stop at deep night, faded advertisement lightbox with dim light, puddles on ground reflecting warm yellow street lamp light, blurred light spots of distant overpass traffic in background, desaturated cool blue base with lifted warm midtones, fine grain for gritty realistic texture, wide establishing shot, realistic urban nocturnal gritty texture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "末班公交车内",
+			"design": "Empty late-night bus interior, cold white ceiling light, raindrops on windows with faint passenger reflections, empty seats with worn fabric, soft cool diffused lighting, slight grain for realistic texture, medium wide shot, matching the quiet lonely yet hopeful atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-29T22:52:37.321Z"
+}

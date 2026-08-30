@@ -39,6 +39,17 @@ const HERO_LIGHTFALL_COLORS = ["#fbbf24", "#e4e4e7", "#52525b"];
 export function HomePage() {
 	const navigate = useNavigate();
 	const [logline, setLogline] = useState("");
+	const [placeholderIdx, setPlaceholderIdx] = useState(0);
+	// 口令条示例轮换池（§5-H：台词片示例进池）
+	const PLACEHOLDERS = [
+		"说一句创意：25 秒气泡水广告，夏日傍晚天台的清爽感…",
+		"说一句创意：两个角色的天台风波短剧，要台词对得上口型…",
+	];
+	useEffect(() => {
+		if (logline.trim()) return;
+		const timer = window.setInterval(() => setPlaceholderIdx((i) => (i + 1) % PLACEHOLDERS.length), 4500);
+		return () => window.clearInterval(timer);
+	}, [logline, PLACEHOLDERS.length]);
 	const [keyMessage, setKeyMessage] = useState("");
 	const [images, setImageList] = useState<UploadedImage[]>([]);
 	const [options, setOptions] = useState<GenerationOptions>({ ...DEFAULT_GENERATION_OPTIONS });
@@ -237,8 +248,8 @@ export function HomePage() {
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && canRoll) void startInterview();
 							}}
-							placeholder="说一句创意：25 秒气泡水广告，夏日傍晚天台的清爽感…"
-							className="h-10 min-w-0 flex-1 bg-transparent px-1 text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
+							placeholder={PLACEHOLDERS[placeholderIdx]}
+							className="h-10 min-w-0 flex-1 bg-transparent px-1 text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
 						/>
 						<GlowButton onClick={startInterview} disabled={!canRoll} className="shrink-0">
 							{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Clapperboard className="size-4" />}
@@ -255,7 +266,7 @@ export function HomePage() {
 							<MessageCircleQuestion className="size-3.5" />
 							先聊几句（创意访谈）
 						</button>
-						<span className="text-zinc-700">·</span>
+						<span className="text-zinc-600">·</span>
 						<button
 							type="button"
 							onClick={generate}
@@ -265,7 +276,7 @@ export function HomePage() {
 							<SkipForward className="size-3.5" />
 							跳过访谈直接制作
 						</button>
-						<span className="text-zinc-700">·</span>
+						<span className="text-zinc-600">·</span>
 						<button
 							type="button"
 							onClick={() => navigate("/cocreate", { state: { brief: briefOf(), options, images } })}
@@ -332,7 +343,7 @@ export function HomePage() {
 															className={cn(
 																"rounded-full border px-2.5 py-0.5 text-[11px]",
 																question.weight === "tailored"
-																	? "border-violet-300/50 bg-violet-400/10 text-violet-200"
+																	? "border-dashed border-amber-300/50 bg-amber-400/10 text-amber-200"
 																	: "border-amber-300/40 bg-amber-400/10 text-amber-200",
 															)}
 														>
@@ -354,7 +365,7 @@ export function HomePage() {
 															>
 																<div className="flex items-center justify-between gap-3">
 																	<span className="text-sm font-medium text-zinc-100 group-hover:text-amber-100">{opt.label}</span>
-																	<ArrowRight className="size-4 shrink-0 text-zinc-600 transition-colors group-hover:text-amber-300" />
+																	<ArrowRight className="size-4 shrink-0 text-zinc-500 transition-colors group-hover:text-amber-300" />
 																</div>
 																{opt.hint && <div className="mt-1 text-xs text-zinc-500">{opt.hint}</div>}
 															</button>
@@ -384,9 +395,9 @@ export function HomePage() {
 												</div>
 											) : tailorPending ? (
 												<div className="flex h-40 flex-col items-center justify-center gap-3">
-													<LoaderCircle className="size-5 animate-spin text-violet-300" />
+													<LoaderCircle className="size-5 animate-spin text-zinc-300" />
 													<p className="text-sm text-zinc-300">正在按你的需求生成 5 道定制问题…</p>
-													<p className="text-[11px] text-zinc-600">已结合你的风格偏好，通常几秒内完成；也可以先跳过</p>
+													<p className="text-[11px] text-zinc-500">已结合你的风格偏好，通常几秒内完成；也可以先跳过</p>
 													<GlowButton variant="ghost" onClick={skipInterview} disabled={busy}>
 														跳过剩余问题
 													</GlowButton>
@@ -443,7 +454,7 @@ export function HomePage() {
 																.map((l) => `${l.label} ${estimate.currency === "CNY" ? "¥" : "$"}${l.amount.toFixed(2)}`)
 																.join(" · ")}
 														</div>
-														<p className="mt-1 text-[10px] text-zinc-600">
+														<p className="mt-1 text-[10px] text-zinc-500">
 															只是参考估算。实时计费以生成后实际调用为准（下次迭代接入）。
 														</p>
 													</div>
@@ -480,7 +491,7 @@ export function HomePage() {
 					</div>
 					<GlassPanel className="p-5">
 						<PipelineFlow demo />
-						<p className="mt-3 text-[11px] leading-relaxed text-zinc-600">
+						<p className="mt-3 text-[11px] leading-relaxed text-zinc-500">
 							每个阶段由对应 Agent 负责，产物实时可查；美术设计与关键帧两处设有确认闸门，你点头才继续。
 						</p>
 					</GlassPanel>
@@ -539,8 +550,8 @@ export function HomePage() {
 					</AnimatePresence>
 				</section>
 
-				<footer className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-zinc-600">
-					{["pi-video-agent pipeline", "StepFun", "DAG 7 阶段", "LLM + 生成媒体", "多 Agent 协作"].map((s) => (
+				<footer className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-zinc-500">
+					{["pi-video-agent pipeline", "StepFun", "DAG 7 阶段", "LLM + 生成媒体", "多 Agent 协作", "台词驱动口型"].map((s) => (
 						<span key={s} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1 font-mono text-[10px] tracking-wide">
 							{s}
 						</span>

@@ -1,0 +1,206 @@
+{
+	"frames": [
+		{
+			"shotId": "SH01",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH01-sheet.png",
+			"file": "assets\\key-SH01.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH02",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH02-sheet.png",
+			"file": "assets\\key-SH02.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景不符：画面为卡车驾驶室内部，而定稿要求为清晨户外货运站（Dawn outdoor cargo yard）"
+				],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH03",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH03-sheet.png",
+			"file": "assets\\key-SH03.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"场景存疑：画面背景有建筑物，疑似服务区/加油站区域，与定稿要求的纯货运站场景略有偏差"
+				],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH04",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH04-sheet.png",
+			"file": "assets\\key-SH04.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景不符：画面为卡车驾驶室内部（雨天），而定稿要求为清晨户外货运站"
+				],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH05",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH05-sheet.png",
+			"file": "assets\\key-SH05.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH06",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH06-sheet.png",
+			"file": "assets\\key-SH06.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景不符：画面为山间公路，而非清晨货运站；且缺少远处城市天际线剪影"
+				],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH07",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH07-sheet.png",
+			"file": "assets\\key-SH07.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH08",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH08-sheet.png",
+			"file": "assets\\key-SH08.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH09",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH09-sheet.png",
+			"file": "assets\\key-SH09.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景不符：画面为公路路边，而非清晨货运站"
+				],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		},
+		{
+			"shotId": "SH10",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH10-sheet.png",
+			"file": "assets\\key-SH10.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:02:51.529Z"
+			}
+		}
+	],
+	"confirmedShotIds": [
+		"SH01",
+		"SH02",
+		"SH03",
+		"SH04",
+		"SH05",
+		"SH06",
+		"SH07",
+		"SH08",
+		"SH09",
+		"SH10"
+	]
+}

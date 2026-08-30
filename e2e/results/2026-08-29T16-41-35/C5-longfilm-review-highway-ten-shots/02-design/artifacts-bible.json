@@ -1,0 +1,20 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"road movie",
+		"realistic",
+		"documentary",
+		"gritty",
+		"nostalgic",
+		"naturalistic"
+	],
+	"palette": [
+		"#2C3E50",
+		"#8B4513",
+		"#D4A373",
+		"#708090",
+		"#F5F5DC"
+	],
+	"lighting": "Natural daylight for daytime loading and road scenes, warm low tungsten lighting for the service area interior, cool dim blue moonlight paired with soft dashboard instrument glow for the rainy night drive, soft diffused golden sunrise light for the final key handover scene",
+	"grade": "Muted desaturated tones with lifted shadows for rainy night sequences, warm low-contrast grading for nostalgic daytime road shots, subtle 35mm film grain overlay for an authentic lived-in aesthetic"
+}

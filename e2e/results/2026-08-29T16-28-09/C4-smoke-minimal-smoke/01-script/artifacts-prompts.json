@@ -1,0 +1,17 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 9:16 vertical medium close-up of middle-aged Asian male noodle shop owner wearing a plain white cotton apron with faint flour stains, short black hair, warm weathered face, hands lightly dusted with flour kneading smooth dough on a floured dark wooden countertop in a compact traditional Chinese noodle shop kitchen at dawn, neat stainless steel equipment in the soft background depth, soft diffused golden side morning light seeping through the small kitchen window highlighting skin texture and floating flour particles, slow subtle dolly push-in focusing on his kneading hands, warm textured documentary slice-of-life tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 9:16 vertical medium shot of middle-aged Asian male noodle shop owner wearing a plain white cotton apron with faint flour stains, short black hair, warm weathered face, hands lightly dusted with flour dropping freshly stretched noodles into a rolling pot of boiling water in the compact traditional Chinese noodle shop kitchen at dawn, dark wooden countertop and neat stainless steel equipment in the background depth, soft golden morning light from the kitchen window illuminating curling upward steam, slow subtle handheld follow shot tracking the falling noodles with a gentle upward drift matching the rising steam, warm textured documentary lifestyle tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 9:16 vertical medium shot of middle-aged Asian male noodle shop owner wearing a plain white cotton apron with faint flour stains, short black hair, warm weathered face placing a steaming hot noodle bowl in front of young Asian male guest wearing a light casual jacket, relaxed posture, holding chopsticks ready seated at a simple solid wood table by the sunlit shop window, cozy sunlit windowsill seating area with faint steam in the soft background depth, soft warm golden morning light pouring through the window illuminating the guest's peaceful expression, slow subtle dolly pull-in from the kitchen area to the table with a gentle drift framing the served bowl, warm cozy slice-of-life inviting tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

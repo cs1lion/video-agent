@@ -1,0 +1,64 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "老渔妇",
+			"design": "A weathered elderly fisherwoman in her 60s, wearing a faded waterproof canvas coat, a frayed knitted headscarf, and salt-stained work pants. Her skin is deep brown from years of sun exposure, with rough calluses on her hands. Captured in natural documentary style with soft pre-dawn light, full-body shot, authentic lived-in texture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "船用外挂马达",
+			"design": "Weathered outboard motor with visible salt corrosion, scratches and wear marks from years of use. Dark metal body with the brand logo printed on the side, worn connection ports, mounted on the stern of a small wooden boat. Documentary realistic texture, natural lighting, close-up and full-view shots available.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "补丁渔网",
+			"design": "Worn green nylon fishing net with multiple hand-sewn dark blue patches, frayed mesh edges, stuck with dried seaweed and salt grains. Rough, authentic texture matching the fisherwoman's daily work. Documentary style, soft pre-dawn light, close-up shot of hands checking the mesh.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T22:53:48.691Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "黎明渔港码头",
+			"design": "Quiet misty fishing port before dawn, calm water reflecting the dim ambient light, worn concrete dock stacked with old fishing gear and mooring ropes. Cool muted blue-gray color tone, soft diffused light, documentary realistic style, wide panoramic shot showing the empty, serene port atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "日出海面防波堤",
+			"design": "Small fishing boat sailing past a concrete breakwater at sunrise, golden low-angle sunlight spilling over the sea horizon, sea surface with gentle ripples, sky gradient from cool blue to warm orange. Warm color lift in midtones, documentary style, medium to wide shot highlighting the quiet dignity of the daily routine.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-29T22:52:24.705Z"
+}

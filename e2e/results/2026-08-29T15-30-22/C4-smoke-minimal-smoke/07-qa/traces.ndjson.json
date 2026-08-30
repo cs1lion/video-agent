@@ -1,0 +1,309 @@
+{
+	"spans": [
+		{
+			"stage": "script",
+			"name": "剧本文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面这支广告撰写剧本。\n一句话需求: 写实竖屏短片：清晨的面馆后厨，老板揉面、下锅、端到窗边第一位客人面前。三镜讲完「一天从一碗面开始」。\n关键信息: 热气升起的时候，一天就开始了。\n要求:\n1. 恰好 3 个镜头，编号 SH01…SH0",
+			"output": "JSON 产物（title,logline,shots）",
+			"spanId": "857276f4",
+			"startAt": "2026-08-29T15:30:22.460Z",
+			"durationMs": 13598
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面这支广告制定美术设计（全片决定性的视觉基准：本产物的风格、色彩与光线将直接约束后续所有关键帧和视频素材，必须一次定准）。\n一句话需求: 写实竖屏短片：清晨的面馆后厨，老板揉面、下锅、端到窗边第一位客人面前。三镜讲完「一天从一碗面开始」",
+			"output": "JSON 产物（styleKeywords,palette,lighting,grade,aspectRatio）",
+			"spanId": "37534091",
+			"startAt": "2026-08-29T15:30:36.060Z",
+			"durationMs": 12593
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计·实体推导",
+			"kind": "llm",
+			"status": "ok",
+			"input": "一天从一碗面开始 + 美术设计",
+			"output": "人物 2 / 道具 3 / 场景 2",
+			"spanId": "6c4647e7",
+			"startAt": "2026-08-29T15:30:48.656Z",
+			"durationMs": 20855
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 CH01（面馆老板）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Middle-aged male noodle shop owner, wearing a plain white cotton short-sleeve work shirt with rolled-up sleeves, dark ca",
+			"output": "design-character-CH01.png",
+			"spanId": "1ef2fe4c",
+			"startAt": "2026-08-29T15:31:09.513Z",
+			"durationMs": 7165
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 CH02（首位客人）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Young female guest sitting by the window, wearing a soft beige knit cardigan and light blue jeans, holding a reusable co",
+			"output": "design-character-CH02.png",
+			"spanId": "94f89a18",
+			"startAt": "2026-08-29T15:31:16.680Z",
+			"durationMs": 3735
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR01（揉面面团）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Pale off-white wheat dough on a well-used wooden kneading board, slightly flour-dusted surface, soft pliable texture wit",
+			"output": "design-prop-PR01.png",
+			"spanId": "f3a09812",
+			"startAt": "2026-08-29T15:31:20.416Z",
+			"durationMs": 3918
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR02（煮面汤锅）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Stainless steel pot of rolling boiling clear broth on a gas stove, thick wispy steam billowing out, small oil droplets a",
+			"output": "design-prop-PR02.png",
+			"spanId": "b8b47f2d",
+			"startAt": "2026-08-29T15:31:24.335Z",
+			"durationMs": 4054
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR03（第一碗热面）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Steaming bowl of topped wheat noodles in plain white ceramic bowl, garnished with chopped green onion and a dash of chil",
+			"output": "design-prop-PR03.png",
+			"spanId": "31d3fde9",
+			"startAt": "2026-08-29T15:31:28.390Z",
+			"durationMs": 3540
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC01（面馆后厨操作区）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Compact authentic noodle shop kitchen, floured wooden countertop, stainless steel stove, hanging copper cookware, soft d",
+			"output": "design-scene-SC01.png",
+			"spanId": "0b096fae",
+			"startAt": "2026-08-29T15:31:31.932Z",
+			"durationMs": 6369
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC02（窗边餐台）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Simple wooden windowsill counter next to a large glass window overlooking the quiet morning street, soft natural morning",
+			"output": "design-scene-SC02.png",
+			"spanId": "5204db6f",
+			"startAt": "2026-08-29T15:31:38.302Z",
+			"durationMs": 3515
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计·出图自审",
+			"kind": "qa",
+			"status": "ok",
+			"input": "7 张设计图送审",
+			"output": "7 ok / 0 warn / 0 fail",
+			"spanId": "193a183d",
+			"startAt": "2026-08-29T15:31:41.819Z",
+			"durationMs": 24379
+		},
+		{
+			"stage": "prompts",
+			"name": "分镜提示词文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面广告的每个镜头写一段视频生成模型的英文提示词。\n一句话需求: 写实竖屏短片：清晨的面馆后厨，老板揉面、下锅、端到窗边第一位客人面前。三镜讲完「一天从一碗面开始」。\n关键信息: 热气升起的时候，一天就开始了。\n美术设计: {\"style",
+			"output": "JSON 产物（prompts）",
+			"spanId": "a21b584b",
+			"startAt": "2026-08-29T15:32:07.705Z",
+			"durationMs": 22534
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH01",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic vertical 9:16 close-up of a middle-aged male noodle shop owner, wearing a plain white cotton short-sleeve work",
+			"output": "key-SH01.png",
+			"spanId": "cce8634f",
+			"startAt": "2026-08-29T15:32:30.243Z",
+			"durationMs": 5161
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH02",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic vertical 9:16 medium shot of fresh noodles being dropped into a rolling pot of boiling broth in a compact auth",
+			"output": "key-SH02.png",
+			"spanId": "23d1e0c9",
+			"startAt": "2026-08-29T15:32:35.404Z",
+			"durationMs": 4345
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH03",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic vertical 9:16 close-up of the middle-aged male noodle shop owner in his plain white cotton short-sleeve work s",
+			"output": "key-SH03.png",
+			"spanId": "5b783879",
+			"startAt": "2026-08-29T15:32:39.750Z",
+			"durationMs": 4474
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH01 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic vertical 9:16 close-up of a middle-aged male noodle shop owner, wearing a plain white cotton short-sleeve work",
+			"output": "clip-SH01.mp4",
+			"spanId": "655ebfe6",
+			"startAt": "2026-08-29T15:32:47.790Z",
+			"durationMs": 67834
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH02 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic vertical 9:16 medium shot of fresh noodles being dropped into a rolling pot of boiling broth in a compact auth",
+			"output": "clip-SH02.mp4",
+			"spanId": "921d3b51",
+			"startAt": "2026-08-29T15:33:55.625Z",
+			"durationMs": 66295
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH03 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic vertical 9:16 close-up of the middle-aged male noodle shop owner in his plain white cotton short-sleeve work s",
+			"output": "clip-SH03.mp4",
+			"spanId": "ff5d010b",
+			"startAt": "2026-08-29T15:35:01.922Z",
+			"durationMs": 61002
+		},
+		{
+			"stage": "audio",
+			"name": "配音导演·表演指导",
+			"kind": "llm",
+			"status": "ok",
+			"input": "3 镜旁白",
+			"output": "SH01:情绪温暖踏实，语速平缓适中，重音落在… SH02:情绪轻快带期待，语速稍缓，重音落在「… SH03:情绪温暖笃定，语速放缓，重音落在「这…",
+			"spanId": "4c2b411e",
+			"startAt": "2026-08-29T15:36:02.924Z",
+			"durationMs": 6364
+		},
+		{
+			"stage": "audio",
+			"name": "镜头 SH01 配音",
+			"kind": "media",
+			"status": "ok",
+			"input": "[指导] 情绪温暖踏实，语速平缓适中，重音落在「头一份」，气息沉稳带满足感｜清晨揉面，是头一份踏实",
+			"output": "tts-SH01.mp3",
+			"spanId": "558edccd",
+			"startAt": "2026-08-29T15:36:09.289Z",
+			"durationMs": 2334
+		},
+		{
+			"stage": "audio",
+			"name": "镜头 SH02 配音",
+			"kind": "media",
+			"status": "ok",
+			"input": "[指导] 情绪轻快带期待，语速稍缓，重音落在「热气升起来」，气息轻柔带暖意｜沸水煮面，热气升起来的时候",
+			"output": "tts-SH02.mp3",
+			"spanId": "1e67a858",
+			"startAt": "2026-08-29T15:36:11.623Z",
+			"durationMs": 2375
+		},
+		{
+			"stage": "audio",
+			"name": "镜头 SH03 配音",
+			"kind": "media",
+			"status": "ok",
+			"input": "[指导] 情绪温暖笃定，语速放缓，重音落在「这碗面」，气息平稳带笑意，收尾利落｜一天，就从这碗面开始了",
+			"output": "tts-SH03.mp3",
+			"spanId": "a5113b7b",
+			"startAt": "2026-08-29T15:36:13.998Z",
+			"durationMs": 2245
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH01 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH01.mp4（3.7s）",
+			"spanId": "5c46f0d0",
+			"startAt": "2026-08-29T15:36:16.706Z",
+			"durationMs": 376
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH02 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH02.mp4（4.1s）",
+			"spanId": "b1c86354",
+			"startAt": "2026-08-29T15:36:17.082Z",
+			"durationMs": 365
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH03 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH03.mp4（3.7s）",
+			"spanId": "173c1f3b",
+			"startAt": "2026-08-29T15:36:17.447Z",
+			"durationMs": 338
+		},
+		{
+			"stage": "export",
+			"name": "剪辑决策（转场 EDL）",
+			"kind": "llm",
+			"status": "ok",
+			"input": "3 镜节奏表",
+			"output": "1:cut 2:fade",
+			"spanId": "26f5bd14",
+			"startAt": "2026-08-29T15:36:17.785Z",
+			"durationMs": 5593
+		},
+		{
+			"stage": "export",
+			"name": "时间线合成（转场+混音）",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"input": "叠化 0.5s · SFX 嗖声 · 响度 -14 LUFS",
+			"output": "final.mp4（3 镜 · 11.1s · 1 处转场 · 1 处音效）",
+			"spanId": "41762b67",
+			"startAt": "2026-08-29T15:36:23.382Z",
+			"durationMs": 1334
+		},
+		{
+			"stage": "export",
+			"name": "审片质检（五轴 + 逐镜标注）",
+			"kind": "qa",
+			"status": "ok",
+			"input": "3 帧抽检",
+			"output": "综合 97（pass）；逐镜 3 ok / 0 warn / 0 fail",
+			"spanId": "9186eed5",
+			"startAt": "2026-08-29T15:36:24.716Z",
+			"durationMs": 11518
+		}
+	]
+}

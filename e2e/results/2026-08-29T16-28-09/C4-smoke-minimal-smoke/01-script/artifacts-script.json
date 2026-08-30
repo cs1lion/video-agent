@@ -1,0 +1,30 @@
+{
+	"title": "一碗面的清晨",
+	"logline": "写实竖屏短片记录清晨面馆后厨制作热面的全过程，传递一天从一碗面开始的生活仪式感。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "晨起揉面，烟火初醒",
+			"narrationEn": "Early morning dough kneading brings the first hint of kitchen warmth.",
+			"visual": "In a quiet dawn noodle shop kitchen, the owner kneads smooth dough on a floured wooden countertop.",
+			"durationSec": 5,
+			"ttsDirection": "沉静舒缓带暖意，语速偏慢，气息平稳，“揉面”处重读，传递踏实安稳的清晨氛围感"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "沸水煮面，热气漫起",
+			"narrationEn": "Boiling water churns as steam rises from the cooking pot.",
+			"visual": "Freshly stretched noodles are dropped into a rolling pot of boiling water, with steam curling upwards.",
+			"durationSec": 5,
+			"ttsDirection": "情绪鲜活上扬，语速稍快，“沸水”“热气”重读，气息带跃动感，传递烟火升腾的鲜活劲儿"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "一碗热面，开启一天",
+			"narrationEn": "A hot bowl of noodles marks the start of a brand new day.",
+			"visual": "The owner places a steaming hot bowl of noodles in front of the first guest by the sunlit shop window.",
+			"durationSec": 5,
+			"ttsDirection": "情绪温暖明亮，语速放缓，“一天”重读，尾音带轻缓笑意，传递治愈开启的满足感"
+		}
+	]
+}

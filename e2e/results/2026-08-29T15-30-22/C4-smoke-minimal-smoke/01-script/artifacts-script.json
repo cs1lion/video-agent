@@ -1,0 +1,30 @@
+{
+	"title": "一天从一碗面开始",
+	"logline": "清晨面馆后厨，老板揉面、煮面后将第一碗热面端给窗边首位客人，诠释日常仪式感。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "清晨揉面，是头一份踏实",
+			"narrationEn": "The early morning kneading is the first touch of solid comfort.",
+			"visual": "Close-up of a noodle shop owner's hands rhythmically kneading pale dough on a floured wooden board in the dim back kitchen at dawn, with a simmering broth pot visible in the background.",
+			"durationSec": 5,
+			"ttsDirection": "情绪温暖踏实，语速平缓适中，重音落在「头一份」，气息沉稳带满足感"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "沸水煮面，热气升起来的时候",
+			"narrationEn": "When the water boils and noodles cook, steam rises up.",
+			"visual": "Medium shot of fresh noodles being dropped into a rolling pot of boiling broth, thick steam billowing up to fill the upper half of the vertical frame.",
+			"durationSec": 5,
+			"ttsDirection": "情绪轻快带期待，语速稍缓，重音落在「热气升起来」，气息轻柔带暖意"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "一天，就从这碗面开始了",
+			"narrationEn": "The whole day starts with this bowl of noodles.",
+			"visual": "Close-up of the owner placing a steaming bowl of topped noodles on the windowsill counter in front of the first seated customer, who smiles and nods in greeting.",
+			"durationSec": 5,
+			"ttsDirection": "情绪温暖笃定，语速放缓，重音落在「这碗面」，气息平稳带笑意，收尾利落"
+		}
+	]
+}

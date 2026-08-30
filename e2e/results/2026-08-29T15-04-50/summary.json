@@ -1,0 +1,230 @@
+{
+	"base": "http://127.0.0.1:8787",
+	"startedAt": 1788017410517,
+	"pass": 1,
+	"total": 1,
+	"results": [
+		{
+			"id": "C3-bgm-only",
+			"title": "《空城六分钟》· 纯音乐无旁白 · 写实城市空镜",
+			"audioForm": "bgm",
+			"dir": "C3-bgm-only-city-empty-bgm",
+			"run": {
+				"id": "run-mteihuxx-22",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 72,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 80
+						},
+						{
+							"id": "visualConsistency",
+							"score": 90
+						},
+						{
+							"id": "pacing",
+							"score": 90
+						},
+						{
+							"id": "audioSync",
+							"score": 0
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "清晨雾气弥漫的街道与未熄的路灯呈现城市沉睡状态，人物作为叙事线索贯穿全片"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "街道蒸汽升腾与商铺卷帘门开启，展现城市苏醒的细节与生活气息"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "城市远景与环卫车作业，天光渐亮呈现从夜到昼的过渡阶段"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "地铁站入口场景，衔接从街道到公共交通的叙事线索"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "第一班地铁进站，准确呈现核心元素与城市启动的瞬间"
+						},
+						{
+							"id": "SH06",
+							"verdict": "ok",
+							"reason": "车厢内倚靠望向窗外日出，完成城市从沉睡到醒来的情绪收尾"
+						}
+					]
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				]
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（8186KB / 阈值 50KB）",
+					"镜头数达标（6 / 期望 ≥6）",
+					"片段产物存在（6 段）",
+					"关键帧数 ≥ 片段数（6 vs 6）",
+					"BGM 已入时间线",
+					"五轴质检有分（综合 72（pass））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 1519870,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 20052
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 100202
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 155306
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 275544
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 1412866
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 1422890
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 1518081
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05.jpg",
+						"qa-SH06.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"shot-SH06.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-prop-PR03.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02.png",
+						"design-scene-SC03.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png",
+						"key-SH06.png"
+					],
+					"05-audio": [
+						"bgm.wav"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4",
+						"clip-SH06.mp4"
+					]
+				}
+			},
+			"finalBytes": 8382697
+		}
+	]
+}

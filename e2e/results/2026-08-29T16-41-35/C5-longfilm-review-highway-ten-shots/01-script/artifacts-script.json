@@ -1,0 +1,86 @@
+{
+	"title": "路记得",
+	"logline": "跑足三十年长途货运的退休司机完成最后一次出车，将卡车钥匙交给学徒，十镜凝练公路人生，传递“路会记得每一个跑完它的人”的核心理念，最终落点至轮胎产品",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "最后一次，装完这趟货。",
+			"narrationEn": "This is the last load I'll secure.",
+			"visual": "Dawn freight yard, gray-haired truck driver checks the cargo tied in the trailer.",
+			"durationSec": 5,
+			"ttsDirection": "语速偏缓，情绪沉静带淡淡感慨，『最后一次』重读，后接轻微停顿"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "出城的路，走了三十年。",
+			"narrationEn": "This road out of town, I've driven it for 30 years.",
+			"visual": "Truck drives past the suburban toll gate at sunrise, driver's calloused hands steady on the steering wheel.",
+			"durationSec": 5,
+			"ttsDirection": "语速舒缓，情绪怀旧悠远，『三十年』重读，气息平稳绵长"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "每块里程碑，都记得我。",
+			"narrationEn": "Every mile marker remembers me.",
+			"visual": "Truck cruises on the open highway, a weathered mile marker marked \"1200KM\" flashes past the side window.",
+			"durationSec": 5,
+			"ttsDirection": "语速平稳，情绪释然带暖意，『都记得我』重读，尾音轻放"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "服务区的泡面，还是那个味。",
+			"narrationEn": "The instant noodles at the rest stop still taste the same.",
+			"visual": "Noon rest stop, driver sits alone on the truck step eating a bowl of instant noodles, a dented old thermos placed beside him.",
+			"durationSec": 5,
+			"ttsDirection": "语速偏缓，情绪落寞中带暖意，『那个味』重读，气息带回味感"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "暴雨天，路滑，慢点开。",
+			"narrationEn": "Rainy roads are slippery, drive slow.",
+			"visual": "Heavy rain pours on the windshield, wipers swipe back and forth rapidly, driver's focused eyes stare at the wet road ahead.",
+			"durationSec": 5,
+			"ttsDirection": "语速沉稳，情绪关切郑重，『慢点开』重读，气息下沉"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "夜路，我走了几千遍。",
+			"narrationEn": "I've driven this night road thousands of times.",
+			"visual": "Night rainstorm, truck's bright headlights cut through the dark wet asphalt, a small family car passes by in the opposite lane.",
+			"durationSec": 5,
+			"ttsDirection": "语速平稳，情绪坦然笃定，『几千遍』重读，气息平稳无起伏"
+		},
+		{
+			"id": "SH07",
+			"narrationZh": "天亮了，货也到了。",
+			"narrationEn": "Dawn breaks, and the cargo arrives.",
+			"visual": "Early morning after rain, truck pulls into the destination freight yard, light mist hangs over the parked cargo containers.",
+			"durationSec": 5,
+			"ttsDirection": "语速偏缓，情绪释然带轻松，『到了』重读，尾音轻收"
+		},
+		{
+			"id": "SH08",
+			"narrationZh": "以后，路交给你了。",
+			"narrationEn": "The road is yours now.",
+			"visual": "Young apprentice driver walks up to the truck, old man hands him the truck key with a gentle smile.",
+			"durationSec": 5,
+			"ttsDirection": "语速沉稳，情绪郑重带不舍，『交给你了』重读，气息微沉"
+		},
+		{
+			"id": "SH09",
+			"narrationZh": "路会记得每一个跑完它的人。",
+			"narrationEn": "The road remembers everyone who finishes the drive.",
+			"visual": "Apprentice gets in the driver's seat, starts the truck and drives away slowly, old man waves standing by the roadside.",
+			"durationSec": 5,
+			"ttsDirection": "语速平稳，情绪释然欣慰，『每一个』重读，气息悠远绵长"
+		},
+		{
+			"id": "SH10",
+			"narrationZh": "好轮胎，陪你跑完每段路。",
+			"narrationEn": "Quality tires, with you on every road.",
+			"visual": "Close-up of the truck's rugged all-terrain tire rolling on the highway, brand logo clearly printed on the tread, product tagline appears below.",
+			"durationSec": 5,
+			"ttsDirection": "语速偏缓，情绪温暖笃定，『每段路』重读，尾音带暖意"
+		}
+	]
+}

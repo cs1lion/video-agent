@@ -27,7 +27,7 @@ export function SectionTitle({
 			{kicker && (
 				<div className="shiny-text mb-1 font-mono text-[10px] tracking-[0.35em]">{kicker}</div>
 			)}
-				<h2 className="text-lg font-semibold text-zinc-100">{title}</h2>
+				<h2 className="font-display text-xl font-black tracking-wide text-zinc-100">{title}</h2>
 			</div>
 			{right}
 		</div>
@@ -88,7 +88,7 @@ export function Chip({
 			className={cn(
 				"cursor-pointer rounded-full px-3 py-1.5 text-xs transition-all duration-200",
 				active
-					? "border border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.25)]"
+					? "border border-zinc-100/50 bg-white/[0.08] text-zinc-100 shadow-[0_0_16px_rgba(244,244,245,0.15)]"
 					: "border border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/25 hover:text-zinc-200",
 			)}
 		>
@@ -187,7 +187,7 @@ export function Segmented<T extends string | number>({
 					className={cn(
 						"cursor-pointer rounded-lg px-3 py-1.5 text-xs transition-all duration-200",
 						o.value === value
-							? "bg-gradient-to-r from-cyan-500/30 to-violet-500/30 text-cyan-100 shadow-[0_0_12px_rgba(34,211,238,0.15)]"
+							? "bg-gradient-to-r from-amber-500/30 to-zinc-500/30 text-amber-100 shadow-[0_0_12px_rgba(251,191,36,0.15)]"
 							: "text-zinc-400 hover:text-zinc-200",
 					)}
 				>

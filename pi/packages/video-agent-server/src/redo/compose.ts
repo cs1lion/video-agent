@@ -1,5 +1,5 @@
 /**
- * composeCut —— 组合出片（按勾选版本装配交付版 cut-N.mp4）。
+ * composeCut —— 组合出片（按勾选版本装配交付版 cut{N}.mp4，N 从 1 起）。
  *
  * 关键设计：
  * 1. 限次护栏：MAX_COMPOSE_PER_RUN = 2（不烧模型额度，仅本地 ffmpeg 装配）
@@ -137,11 +137,11 @@ interface ScriptDocLike {
 	shots: ScriptShotLike[];
 }
 
-/** 组合出片：按每镜选定的视频/音频版本装配一条 cut-N.mp4 */
+/** 组合出片：按每镜选定的视频/音频版本装配一条 cut{N}.mp4 */
 export async function composeCut(
 	run: RunRecord,
 	selections: Record<string, { video?: unknown; audio?: unknown }>,
-): Promise<{ ok: boolean; error?: string; remaining?: number }> {
+): Promise<{ ok: boolean; error?: string; remaining?: number; file?: string }> {
 	if (run.status === "running") return { ok: false, error: "管线运行中，请稍候" };
 
 	// ---- 读取 cuts 持久化账本，超上限拒 ----
@@ -335,7 +335,7 @@ export async function composeCut(
 			"user",
 			`交付版 #${seq} 装配完成 ✅（${keptShots.length} 镜 · ${info.totalSec.toFixed(1)}s）。按你勾选的版本组合合成，主成片不受影响。`,
 		);
-		return { ok: true, remaining: MAX_COMPOSE_PER_RUN - seq };
+		return { ok: true, remaining: MAX_COMPOSE_PER_RUN - seq, file: `cut${seq}.mp4` };
 	} finally {
 		run.status = prevStatus;
 		persistRun(run);

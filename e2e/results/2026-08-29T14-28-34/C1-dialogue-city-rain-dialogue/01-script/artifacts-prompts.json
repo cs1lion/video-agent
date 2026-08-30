@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic medium wide shot of 46-year-old food delivery rider Zhou, wearing a worn dark blue windbreaker with faded delivery platform logos, stubble and tired lines under his eyes, squatting at the edge of the suburban bus stop in light rain, wet ground reflecting warm yellow street lamp glow, blurred bokeh from distant highway traffic, low warm side light from street lamp mixed with cool rainy ambient light, slow dolly push-in towards the man with shallow depth of field, realistic documentary lifestyle style, desaturated cool grade with subtle warm highlights, high detail on weathered skin and wet fabric. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium shot of 11-year-old girl Zhou Xiaoyu, wearing an oversized school uniform, carrying an old canvas backpack, wet hair stuck to her forehead, walking towards Zhou in worn dark blue windbreaker at the suburban bus stop, wet ground with warm street lamp reflection and distant blurred traffic bokeh, light rain falling, warm side light on the girl’s face mixed with cool rainy ambient light, handheld follow shot moving slightly with her as she approaches, shallow depth of field, realistic emotional documentary style, high detail on wet uniform fabric and cold steamed bun texture, desaturated cool grade with subtle warm highlights. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic intimate medium shot of Zhou in worn dark blue windbreaker with stubble and tired lines under his eyes, and his daughter Zhou Xiaoyu in oversized school uniform with wet hair, crouching together at the suburban bus stop, Xiaoyu tucking a strand of wet hair behind her ear, rain falling around them, wet ground reflecting warm street lamp glow, blurred distant highway bokeh in background, soft low warm side light mixed with cool diffused rainy ambient light, static locked-off composition with shallow depth of field focusing on their faces, realistic documentary emotional style, high detail on weathered skin and wet hair texture, quiet restrained tone, desaturated cool grade with subtle warm highlights. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic wide shot of Zhou in worn dark blue windbreaker and Xiaoyu in oversized school uniform with wet hair, looking up in unison at the suburban bus stop, bright bus headlights approaching from the far end of the road, gradually illuminating the rainy platform, wet ground reflecting mixed warm street lamp and cool headlight beams, light rain falling, cool ambient rainy light, slow pan right following the approaching headlights, shallow depth of field with distant traffic bokeh, realistic urban night cinematic style, high detail on wet ground texture and light beams through rain, desaturated cool grade with subtle warm highlights, quiet emotional build-up tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic medium shot from inside the empty late-night last bus, cold white ceiling fluorescent light illuminating empty fabric seats, rain streaks on windows with faint silhouettes of Zhou in worn dark blue windbreaker and Xiaoyu in oversized school uniform reflected on the glass, quiet dim cool tone, faint warm street lamp glow on window edges, static locked-off composition facing the bus entrance, shallow depth of field, realistic documentary lifestyle style, high detail on rain streaks on glass and wet fabric seat texture, desaturated cool grade with low contrast, restrained quiet emotional tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

@@ -1,0 +1,18 @@
+{
+	"brief": {
+		"logline": "写实真人短片：凌晨一点的夜市，摊主收摊、洗刷、熄灯，最后推着车走进巷子。旁白只有三句，讲一个城市背面的人如何结束一天。",
+		"keyMessage": "城市睡着前，有人在替它收拾。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 4,
+		"fps": 24,
+		"motionIntensity": "medium",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "off"
+	}
+}

@@ -1,0 +1,746 @@
+{
+	"id": "run-mteniss3-30",
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 23,
+		"retries": 1,
+		"perAdapter": {
+			"agnes-video": 5,
+			"step-tts": 5
+		},
+		"cost": {
+			"spent": 28.33,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 82,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 65
+			},
+			{
+				"id": "visualConsistency",
+				"score": 85
+			},
+			{
+				"id": "pacing",
+				"score": 60
+			},
+			{
+				"id": "audioSync",
+				"score": 100
+			},
+			{
+				"id": "textQuality",
+				"score": 100
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "warn",
+				"reason": "画面呈现摊主整理食材，背景仍有顾客与蒸汽，更接近营业状态而非收摊阶段"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "摊主清洗厨具，蒸汽升腾，准确呈现收摊过程中的洗刷环节"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "摊主收拾摊位并推车，地面散落垃圾袋，符合收摊收拾的场景"
+			},
+			{
+				"id": "SH04",
+				"verdict": "ok",
+				"reason": "摊主推车独行于熄灯后的巷中，完美呈现推车走进巷子的结尾画面"
+			},
+			{
+				"id": "SH05",
+				"verdict": "warn",
+				"reason": "摊主在摊位前看手机，周围仍有蒸汽与营业灯光，与熄灯结束一天的叙事要求不符"
+			}
+		]
+	},
+	"videoUrl": "/api/runs/run-mteniss3-30/files/assets/final.mp4",
+	"brief": {
+		"logline": "写实真人短片：凌晨一点的夜市，摊主收摊、洗刷、熄灯，最后推着车走进巷子。旁白只有三句，讲一个城市背面的人如何结束一天。",
+		"keyMessage": "城市睡着前，有人在替它收拾。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 5,
+		"fps": 24,
+		"motionIntensity": "medium",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+	},
+	"images": [],
+	"events": [
+		{
+			"id": "ev-3103be49",
+			"at": "2026-08-29T17:25:32.597Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "项目开机 🎬 需求「写实真人短片：凌晨一点的夜市，摊主收摊、洗刷、熄灯，最后推着车走进巷子。旁白只有…」已确认，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。"
+		},
+		{
+			"id": "ev-4b93328d",
+			"at": "2026-08-29T17:25:32.597Z",
+			"from": "writer",
+			"to": "producer",
+			"kind": "status",
+			"text": "编剧开工：解析需求，搭建 5 镜叙事骨架。"
+		},
+		{
+			"id": "ev-858ad6d3",
+			"at": "2026-08-29T17:25:47.901Z",
+			"from": "writer",
+			"to": "art",
+			"kind": "handoff",
+			"text": "剧本《收摊之后》完成：5 镜，25s。Logline：凌晨一点的夜市摊主完成收摊、洗刷、熄灯后推车回家，展现城市背面人群的日常，引出夜宵即时配送服务。请据此制定全片视觉规范。"
+		},
+		{
+			"id": "ev-ddbd6ac3",
+			"at": "2026-08-29T17:25:47.901Z",
+			"from": "art",
+			"to": "writer",
+			"kind": "status",
+			"text": "美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"
+		},
+		{
+			"id": "ev-3f2d7117",
+			"at": "2026-08-29T17:26:11.388Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计开工：7 张概念设计图（人物 1 · 道具 3 · 场景 3）逐张绘制中。"
+		},
+		{
+			"id": "ev-76b4ef17",
+			"at": "2026-08-29T17:26:14.727Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「夜市摊主」（人物 CH01）",
+			"link": {
+				"stage": "bible",
+				"focus": "CH01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-14b83e70",
+			"at": "2026-08-29T17:26:18.080Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「夜市餐车」（道具 PR01）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-cc2e273b",
+			"at": "2026-08-29T17:26:21.451Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「智能手机」（道具 PR02）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-1fa294e3",
+			"at": "2026-08-29T17:26:24.730Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「铁质炒锅」（道具 PR03）",
+			"link": {
+				"stage": "bible",
+				"focus": "PR03",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-e41b3049",
+			"at": "2026-08-29T17:26:28.403Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「凌晨夜市街巷」（场景 SC01）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC01",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-9119ffba",
+			"at": "2026-08-29T17:26:31.950Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「摊位洗刷区」（场景 SC02）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC02",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-882ac542",
+			"at": "2026-08-29T17:26:35.441Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "设计图完成 ✅「居民区窄巷」（场景 SC03）",
+			"link": {
+				"stage": "bible",
+				"focus": "SC03",
+				"label": "查看设计图"
+			}
+		},
+		{
+			"id": "ev-e6a6e903",
+			"at": "2026-08-29T17:26:35.442Z",
+			"from": "art",
+			"to": "producer",
+			"kind": "status",
+			"text": "美术设计完成 ✅ 7/7 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"
+		},
+		{
+			"id": "ev-99904bde",
+			"at": "2026-08-29T17:26:35.442Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "status",
+			"text": "审校员核对设计图：逐张比对画面与设计要点…"
+		},
+		{
+			"id": "ev-df7ea289",
+			"at": "2026-08-29T17:27:21.626Z",
+			"from": "reviewer",
+			"to": "art",
+			"kind": "redo",
+			"text": "设计图自审发现问题 ⚠️：「凌晨夜市街巷」设计要点为凌晨1点大多数摊位已关闭，画面中摊位均处于营业状态，灯笼全部点亮，有顾客及摊主活动，场景氛围明显不符。安排美术指导带意见重绘。"
+		},
+		{
+			"id": "ev-9836686a",
+			"at": "2026-08-29T17:27:26.032Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "「凌晨夜市街巷」已按审核意见重绘，提交复审…"
+		},
+		{
+			"id": "ev-e9a92b8e",
+			"at": "2026-08-29T17:27:52.938Z",
+			"from": "art",
+			"to": "reviewer",
+			"kind": "qa",
+			"text": "设计图重绘后审核问题已全部修复 ✅ 卡片 凌晨夜市街巷 复审通过。"
+		},
+		{
+			"id": "ev-237a4a1a",
+			"at": "2026-08-29T17:27:52.938Z",
+			"from": "art",
+			"to": "storyboard",
+			"kind": "handoff",
+			"text": "美术设计定稿：风格 [cinematic / documentary / realistic / nocturnal / lifestyle / intimate / gritty]，色板 #1E1E24、#F4C095、#5C7A99、#B5834A。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"
+		},
+		{
+			"id": "ev-e2ee8a37",
+			"at": "2026-08-29T17:27:52.938Z",
+			"from": "art",
+			"to": "client",
+			"kind": "status",
+			"text": "美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。",
+			"link": {
+				"stage": "bible",
+				"label": "查看美术设计"
+			}
+		},
+		{
+			"id": "ev-b645d790",
+			"at": "2026-08-29T17:27:53.119Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "美术设计已确认 ✅ 开始绘制分镜关键帧。"
+		},
+		{
+			"id": "ev-601e92bf",
+			"at": "2026-08-29T17:27:53.119Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「分镜提示词」继续，直至成片。"
+		},
+		{
+			"id": "ev-54dfb6ac",
+			"at": "2026-08-29T17:27:53.119Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "status",
+			"text": "分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"
+		},
+		{
+			"id": "ev-17fa2310",
+			"at": "2026-08-29T17:28:21.240Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：夜市摊主(CH01)、凌晨夜市街巷(SC01)。"
+		},
+		{
+			"id": "ev-aeabae8f",
+			"at": "2026-08-29T17:28:21.240Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-0d487094",
+			"at": "2026-08-29T17:28:25.578Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：夜市摊主(CH01)、凌晨夜市街巷(SC01)。"
+		},
+		{
+			"id": "ev-6f5b228a",
+			"at": "2026-08-29T17:28:25.578Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-25279328",
+			"at": "2026-08-29T17:28:29.855Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：夜市摊主(CH01)、凌晨夜市街巷(SC01)。"
+		},
+		{
+			"id": "ev-5ec8303b",
+			"at": "2026-08-29T17:28:29.855Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-decf3ef1",
+			"at": "2026-08-29T17:28:33.887Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：夜市摊主(CH01)、凌晨夜市街巷(SC01)。"
+		},
+		{
+			"id": "ev-298c3099",
+			"at": "2026-08-29T17:28:33.887Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-bd8c3e4b",
+			"at": "2026-08-29T17:28:38.077Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头画面将锚定 2 个设计定稿：夜市摊主(CH01)、凌晨夜市街巷(SC01)。"
+		},
+		{
+			"id": "ev-da65b235",
+			"at": "2026-08-29T17:28:38.077Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"
+		},
+		{
+			"id": "ev-a59ececa",
+			"at": "2026-08-29T17:28:42.156Z",
+			"from": "storyboard",
+			"to": "tech",
+			"kind": "handoff",
+			"text": "分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"
+		},
+		{
+			"id": "ev-492278b6",
+			"at": "2026-08-29T17:28:42.156Z",
+			"from": "storyboard",
+			"to": "client",
+			"kind": "status",
+			"text": "关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。",
+			"link": {
+				"stage": "keyframes",
+				"label": "查看关键帧"
+			}
+		},
+		{
+			"id": "ev-bd44b8ae",
+			"at": "2026-08-29T17:28:43.247Z",
+			"from": "producer",
+			"to": "all",
+			"kind": "status",
+			"text": "确认推进 ▶ 从「镜头生成」继续，直至成片。"
+		},
+		{
+			"id": "ev-a84e61db",
+			"at": "2026-08-29T17:28:43.252Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH01 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 wide shot of a middle-aged male night market …"
+		},
+		{
+			"id": "ev-441f5996",
+			"at": "2026-08-29T17:29:56.869Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH01 生成完成 ✅（1/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH01",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-3f8ecfb1",
+			"at": "2026-08-29T17:29:56.870Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH02 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium close-up shot of the middle-aged male …"
+		},
+		{
+			"id": "ev-a19498b9",
+			"at": "2026-08-29T17:30:57.407Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH02 生成完成 ✅（2/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH02",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-0f9f6a0f",
+			"at": "2026-08-29T17:30:57.408Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH03 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 medium shot of the middle-aged male night mar…"
+		},
+		{
+			"id": "ev-7d210959",
+			"at": "2026-08-29T17:32:50.995Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH03 生成完成 ✅（3/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH03",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-6d034f20",
+			"at": "2026-08-29T17:32:50.997Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH04 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 low-angle shot of the middle-aged male night …"
+		},
+		{
+			"id": "ev-4975d523",
+			"at": "2026-08-29T17:33:49.667Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH04 生成完成 ✅（4/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH04",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-37cb8a82",
+			"at": "2026-08-29T17:33:49.670Z",
+			"from": "tech",
+			"to": "producer",
+			"kind": "status",
+			"text": "镜头 SH05 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 close-up shot of the middle-aged male night m…"
+		},
+		{
+			"id": "ev-9e0fcc7b",
+			"at": "2026-08-29T17:35:52.128Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "status",
+			"text": "镜头 SH05 生成完成 ✅（5/5）",
+			"link": {
+				"stage": "generate",
+				"focus": "SH05",
+				"label": "查看片段"
+			}
+		},
+		{
+			"id": "ev-eed2a84b",
+			"at": "2026-08-29T17:35:52.128Z",
+			"from": "tech",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"
+		},
+		{
+			"id": "ev-e86ec559",
+			"at": "2026-08-29T17:35:52.128Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"
+		},
+		{
+			"id": "ev-9ef46899",
+			"at": "2026-08-29T17:36:02.747Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH01（指导：沉静共情，语速偏缓，“亮着灯”重音稍拖，气息沉稳如深夜旁观者…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH01",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-bfcfa807",
+			"at": "2026-08-29T17:36:04.946Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH02（指导：平实略带倦意，语速平稳，“刚准备”轻读带短停，气息如劳作间隙…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH02",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-128ac0bf",
+			"at": "2026-08-29T17:36:07.130Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH03（指导：温柔沉郁，语速稍慢，“所有人”重音下沉，气息稍滞，如看着深夜…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH03",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-24f3e002",
+			"at": "2026-08-29T17:36:09.370Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH04（指导：释然柔软，语速放缓，“往家走”轻读带暖意，气息下沉又松，如跟…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH04",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-6fbfd52a",
+			"at": "2026-08-29T17:36:12.224Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "status",
+			"text": "旁白录制完成 ✅ 镜头 SH05（指导：温暖上扬，语速稍快，“赶来”重读带笑意，气息轻快，像突然递到…）",
+			"link": {
+				"stage": "post",
+				"focus": "SH05",
+				"label": "试听配音"
+			}
+		},
+		{
+			"id": "ev-e5846fc8",
+			"at": "2026-08-29T17:36:12.224Z",
+			"from": "sound",
+			"to": "editor",
+			"kind": "handoff",
+			"text": "旁白轨交付：5/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"
+		},
+		{
+			"id": "ev-227e9ed0",
+			"at": "2026-08-29T17:36:12.224Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "status",
+			"text": "剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"
+		},
+		{
+			"id": "ev-99f4dfce",
+			"at": "2026-08-29T17:36:25.937Z",
+			"from": "editor",
+			"to": "reviewer",
+			"kind": "handoff",
+			"text": "粗剪完成（5 镜 · 13.1s · 720p 16:9，转场：叠化 0.5s，音效：上升音，BGM 铺底，响度 -14 LUFS），移交审片员质检。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "播放成片"
+			}
+		},
+		{
+			"id": "ev-8febf9f4",
+			"at": "2026-08-29T17:37:12.760Z",
+			"from": "reviewer",
+			"to": "producer",
+			"kind": "qa",
+			"text": "质检结论：通过 ✅（综合 82）。最短板 pacing 60 分。"
+		},
+		{
+			"id": "ev-5608b7d3",
+			"at": "2026-08-29T17:37:12.760Z",
+			"from": "producer",
+			"to": "client",
+			"kind": "status",
+			"text": "全片交付 🎉 成片与五轴质检报告已就绪。",
+			"link": {
+				"stage": "export",
+				"focus": "final",
+				"label": "查看成片"
+			}
+		}
+	],
+	"awaitingResume": false,
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"finalFile": "final.mp4",
+	"costEstimate": {
+		"total": 28.47,
+		"currency": "CNY",
+		"lines": [
+			{
+				"label": "剧本 LLM",
+				"amount": 0.65,
+				"note": "约 2k 输入 + 1.5k 输出 token"
+			},
+			{
+				"label": "美术设计 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "分镜提示词 LLM",
+				"amount": 0.97,
+				"note": "按 shotCount 翻倍"
+			},
+			{
+				"label": "EDL 转场 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "配音指导 LLM",
+				"amount": 0.65
+			},
+			{
+				"label": "审片多模 LLM",
+				"amount": 0.65,
+				"note": "含抽帧多模输入"
+			},
+			{
+				"label": "设计稿概念图",
+				"amount": 1.5,
+				"note": "3 张"
+			},
+			{
+				"label": "分镜关键帧",
+				"amount": 2.5,
+				"note": "5 张"
+			},
+			{
+				"label": "视频生成",
+				"amount": 20,
+				"note": "5 段 × 5s"
+			},
+			{
+				"label": "TTS 配音",
+				"amount": 0.25,
+				"note": "每镜粗估 1k 字符"
+			}
+		]
+	},
+	"productionShots": 5,
+	"dialogueShotCount": 0
+}

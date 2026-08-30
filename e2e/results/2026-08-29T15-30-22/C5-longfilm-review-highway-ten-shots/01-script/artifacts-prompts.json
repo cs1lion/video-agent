@@ -1,0 +1,45 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide 16:9 shot of dawn outdoor cargo yard SC01 with stacked cargo pallets, distant city skyline silhouette and wet reflective ground, a retired long-haul truck driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots checks a yellowed cargo manifest while young apprentice CH02 wearing a clean dark work jacket, slim-fit work pants and clean work boots stands beside a parked heavy-duty truck, soft cool dawn ambient light with faint warm highlights on the truck surface, slow dolly push-in to emphasize the quiet pre-departure atmosphere, muted desaturated nostalgic realist road movie style, high detail on fabric texture and cargo material. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium 16:9 handheld tracking shot following the heavy truck driving along the suburban expressway leaving the city, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots glances at the shrinking urban skyline in the rearview mirror, soft warm low-angle morning side light filtering through the windshield, camera moves with the truck at steady cruising speed then subtly pans left to capture the receding city skyline in the mirror, gritty nostalgic road movie style with muted desaturated tones, high detail on the truck's body texture and dashboard wear. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic medium 16:9 static locked-off shot at noon highway rest stop, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots sits alone on rough concrete steps eating instant noodles, young apprentice CH02 wearing a clean dark work jacket, slim-fit work pants and clean work boots fills the truck's water tank in the soft blurred background with distant parked trucks and rest stop signage, harsh overhead noon natural light mixed with dim service area lamp glow, shallow depth of field to isolate the driver's solitary figure, muted desaturated realist documentary style, high detail on the concrete texture and food packaging. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic close-up 16:9 shot inside heavy truck cabin SC02 during stormy night, rain droplets streaking the windshield, dim warm dashboard light illuminates retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots gripping the steering wheel tightly, high-contrast low-key lighting with cool blue undertones from the storm outside and warm amber glow from the dashboard, slow dolly push-in to focus on the driver's weathered hands on the wheel, gritty nostalgic realist style, high detail on rain droplet texture and worn leather on the steering wheel. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic medium long 16:9 shot at pre-dawn rest stop, young apprentice CH02 wearing a clean dark work jacket, slim-fit work pants and clean work boots gets into the driver's seat of the parked heavy truck, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots leans against the truck door handing him a lit cigarette, soft warm pre-dawn ambient light mixed with dim service area lamp glow, slight slow pan to capture the quiet handover moment, muted desaturated nostalgic realist style, high detail on the cigarette ember and fabric texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH06",
+			"prompt": "Cinematic wide 16:9 handheld tracking shot of early morning winding mountain road, heavy truck drives along the cliff edge, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots looks out at blooming wildflowers on the roadside, soft warm sunrise light casting long shadows, distant valley mist softening the background, camera follows the truck's movement then subtly pans right to frame the wildflowers in the foreground, muted desaturated tones with warm amber highlights, nostalgic road movie style, high detail on the wildflower petals and mountain rock texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH07",
+			"prompt": "Cinematic medium 16:9 shot at sunrise destination cargo yard, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots and young apprentice CH02 wearing a clean dark work jacket, slim-fit work pants and clean work boots count the delivered goods together and smile softly, soft warm golden sunrise light washing over the cargo pallets and the two figures, slow dolly push-in to emphasize the quiet satisfaction of the completed run, muted desaturated nostalgic realist style, high detail on the cargo packaging and the drivers' facial wrinkles. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH08",
+			"prompt": "Cinematic medium close-up 16:9 static locked-off shot in parking lot after unloading, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots hands the truck key to young apprentice CH02 wearing a clean dark work jacket, slim-fit work pants and clean work boots who receives it with both hands, soft warm diffused morning light, shallow depth of field to focus on the key and the two pairs of hands, muted desaturated nostalgic realist style, high detail on the key's metal texture and fabric stitching. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH09",
+			"prompt": "Cinematic wide 16:9 shot of roadside at sunrise, the apprentice drives the heavy truck away, retired driver CH01 wearing a worn dark blue work jacket with faded company logo, gray work pants and scuffed leather boots stands by the roadside waving as the vehicle disappears into the distant mountain road, soft warm sunrise light casting long soft shadows, slow pan right to follow the receding truck until it is just a small dot on the horizon, muted desaturated nostalgic road movie style, high detail on the road surface and the driver's waving hand. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH10",
+			"prompt": "Cinematic extreme close-up 16:9 static locked-off shot of the heavy truck's front grille, the embossed brand logo on the grille has no text or markings, soft warm sunrise light grazing the metal surface to highlight the texture, shallow depth of field to blur the distant background, muted desaturated nostalgic realist style, high detail on the metal grain and logo embossing. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

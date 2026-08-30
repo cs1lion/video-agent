@@ -1,0 +1,99 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "面馆老板",
+			"design": "Middle-aged Chinese man with a warm, approachable expression, wearing a simple white cotton T-shirt and a light blue apron dusted with flour. Short black hair, slightly tanned skin, calloused hands from years of kneading dough. Front-facing half-body view, natural morning light highlighting his gentle smile.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T14:20:38.767Z"
+			}
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "首位顾客",
+			"design": "Young office worker in a neat light gray jacket, holding a reusable coffee cup, with a relaxed, expectant expression. Light brown short hair, fair skin, standing by the shop window. Half-body side view, soft morning backlight outlining his silhouette.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T14:20:38.767Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "揉面面团",
+			"design": "Freshly kneaded smooth white wheat dough, dusted with a thin layer of white flour, resting on a dark wooden kneading board. Soft natural light highlighting the soft texture of the dough, close-up view to show the fine flour particles.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T14:20:38.767Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "热汤面",
+			"design": "Steaming bowl of clear broth wheat noodles, topped with a few green scallions and a slice of braised egg, in a simple white ceramic bowl. Wispy hot steam rising from the surface, warm golden light catching the steam, close-up view to emphasize the appetizing look.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T14:20:38.767Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "面馆后厨",
+			"design": "Small, cozy traditional Chinese noodle shop kitchen, with a dark wooden kneading board, a large stainless steel boiling pot on a gas stove, and shelves holding simple cooking ingredients. Soft diffused morning sunlight seeping through the frosted kitchen window, dust motes dancing in the light, warm hazy atmosphere, medium-wide view.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T14:20:38.767Z"
+			}
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "面馆窗边",
+			"design": "Narrow spot by the noodle shop front window, with a small wooden stool and a simple small table, morning sunlight streaming through the glass, faint view of the quiet street outside. Warm, cozy morning vibe, medium shot to show the space where the customer waits.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T14:20:38.767Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-29T14:19:13.014Z"
+}

@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.65,Sub,深夜十一点，城郊站台冷雨飘
+Dialogue: 0,0:00:04.65,0:00:08.71,Sub,跑了一天，包子给你留半块
+Dialogue: 0,0:00:08.71,0:00:12.40,Sub,父女压着嗓子，说些家常话
+Dialogue: 0,0:00:12.80,0:00:16.04,Sub,远的地方，总有人等你到站
+Dialogue: 0,0:00:16.04,0:00:19.80,Sub,再远的路，抵达就是团圆

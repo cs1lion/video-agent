@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.65,Sub,这条街的灯，亮了三十年
+Dialogue: 0,0:00:04.65,0:00:08.07,Sub,老李的头，我剃了三十年
+Dialogue: 0,0:00:08.07,0:00:12.47,Sub,镜子擦干净了，以后也亮堂
+Dialogue: 0,0:00:12.47,0:00:16.41,Sub,这门手艺，到这儿就收工了
+Dialogue: 0,0:00:16.81,0:00:20.21,Sub,老手艺的薪火，等你接力

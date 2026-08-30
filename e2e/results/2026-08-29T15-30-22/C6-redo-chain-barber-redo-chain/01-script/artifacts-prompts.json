@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot of a middle-aged male barber wearing a faded navy blue work uniform with frayed cuffs, black old cloth shoes polishing the red-and-white revolving barber pole outside a shabby old urban barbershop in an old town alley, faded handwritten shop sign, mottled old tiled floor, surrounding old residential alleys visible in background, soft diffused natural daylight illuminating the scene, slow dolly push-in composition with shallow depth of field, warm desaturated nostalgic documentary style with subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 medium shot of a middle-aged male barber wearing a faded navy blue work uniform with frayed cuffs, black old cloth shoes trimming hair of an elderly regular customer with vintage scissors inside a cluttered intimate old barbershop, oval tarnished silver wall mirror, vintage rotary barber lamp hanging from ceiling, scattered barber tools on counter, frosted glass window letting in soft light, warm ambient lighting from the vintage lamp complementing the diffused natural light, slow handheld gentle follow tracking the barber's hand movements, shallow depth of field, warm desaturated nostalgic documentary style with subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 medium shot of a middle-aged male barber wearing a faded navy blue work uniform with frayed cuffs, black old cloth shoes wiping an old oval tarnished silver wall mirror with a light gray linen mirror wiping cloth, his gentle weathered face visible in the mirror reflection, cluttered intimate old barbershop interior background, soft diffused natural light from frosted glass window, warm ambient light from vintage rotary barber lamp, slow pan left following the wiping cloth movement, shallow depth of field, warm desaturated nostalgic documentary style with subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 wide shot of a middle-aged male barber wearing a faded navy blue work uniform with frayed cuffs, black old cloth shoes gently lifting the red-and-white revolving barber pole off its metal mount outside the shabby old urban barbershop, mottled old tiled floor, faded handwritten shop sign, surrounding old residential alleys in background, soft diffused natural daylight, slow dolly pull-out composition showing the full shop facade and the barber's action, shallow depth of field, warm desaturated nostalgic documentary style with subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 medium shot of a middle-aged male barber wearing a faded navy blue work uniform with frayed cuffs, black old cloth shoes placing his well-worn straight razor into a glass display case beside a set of new traditional barber tools on the cluttered counter of the old barbershop, scattered barber tools around, oval tarnished silver wall mirror in background, soft diffused natural light from frosted glass window, warm ambient light from vintage rotary barber lamp, slow dolly push-in focusing on the razor being placed into the case, shallow depth of field, warm desaturated nostalgic documentary style with subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

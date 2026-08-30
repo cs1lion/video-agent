@@ -1,0 +1,30 @@
+{
+	"title": "一天从一碗面开始",
+	"logline": "清晨面馆后厨，老板从揉面、下面到端面给第一位客人，展现一天由一碗热面开启的温暖日常。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "晨光里，面团在掌心揉醒",
+			"narrationEn": "In the morning light, the dough is kneaded awake in the palm.",
+			"visual": "Vertical shot: close-up of a noodle shop owner's hands kneading dough on a floured wooden board in the bright kitchen, morning sunlight streaming through the window.",
+			"durationSec": 5,
+			"ttsDirection": "语气温和舒展，语速偏缓，重音落在「揉醒」，气息轻缓带暖意，贴合清晨醒神的松弛感"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "沸水翻滚，白汽裹着面香",
+			"narrationEn": "Boiling water rolls, white steam wraps around the noodle aroma.",
+			"visual": "Vertical shot: the owner lowering a bundle of fresh noodles into a rolling pot of boiling water in the kitchen, thick steam rising instantly.",
+			"durationSec": 5,
+			"ttsDirection": "语气鲜活带劲，语速稍快，重音落在「面香」，气息上扬带热感，传递出沸腾的烟火气"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "热气升起，一天就开始了",
+			"narrationEn": "When steam rises, a brand new day begins.",
+			"visual": "Vertical shot: the owner carrying a steaming bowl of noodles to the first customer by the shop window, the customer smiling in return, early morning street view in the background.",
+			"durationSec": 5,
+			"ttsDirection": "语气舒展满足，语速放缓，重音落在「开始了」，气息沉稳带暖意，收尾稍作停顿，传递新一天的踏实感"
+		}
+	]
+}

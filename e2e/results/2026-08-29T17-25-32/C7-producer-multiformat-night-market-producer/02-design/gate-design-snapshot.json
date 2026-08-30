@@ -1,0 +1,91 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "夜市摊主",
+			"design": "Middle-aged male night market vendor, wearing a faded dark apron stained with cooking oil, loose short-sleeved shirt with rolled cuffs, slightly dirty work pants, black rimmed glasses, tired but gentle expression, holding a greasy cleaning rag. Documentary realistic style, full body or medium shot, warm low-key lighting to match the nocturnal atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-character-CH01.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "夜市餐车",
+			"design": "Second-hand metal food cart with worn paint, slightly dented body, equipped with folding shelves, wheels with rubber tires, stacked with stall supplies and leftover ingredient boxes. Gritty realistic texture, warm lantern light reflection on metal surface, full side view to show its fully loaded state.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "智能手机",
+			"design": "Common mid-range smartphone with a slightly worn silicone case, screen glowing with bright food delivery app interface, obvious fingerprints on the screen, held in the vendor's left hand. Realistic consumer electronics look, close-up shot to highlight the glowing app UI against the dark alley background.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "铁质炒锅",
+			"design": "Heavy-duty carbon steel wok with burnt oil stains on the outer wall, slightly worn inner surface, being scrubbed with a scouring pad under running tap water. Realistic kitchenware texture, close-up shot to show soap foam and water droplets on the wok surface.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png",
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "凌晨夜市街巷",
+			"design": "Narrow urban night market alley at 1 a.m., most stalls have closed, only a few warm stall lanterns still lit, scattered discarded food packaging on the wet ground, distant dim street lamps, cool pre-dawn ambient light mixing with warm practical lighting. Cinematic wide shot, desaturated cool shadows with lifted warm midtones, subtle fine grain for tactile realism.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:27:52.936Z"
+			},
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "摊位洗刷区",
+			"design": "Small corner of the vendor's stall with a running tap, stacked dirty dishes, buckets of soapy water, leftover ingredient containers, warm lantern light hanging above, wet countertop with visible oil stains. Medium close-up shot, low-key lighting to highlight the scrubbing action, gritty realistic details of grease and foam.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-scene-SC02.png"
+		},
+		{
+			"id": "SC03",
+			"category": "scene",
+			"name": "居民区窄巷",
+			"design": "Quiet dimly lit residential alley between old low-rise apartment buildings, no pedestrians, faint warm light from street lamps, small puddles on the ground from earlier rain, the vendor pushing the loaded cart down the middle of the alley. Low-angle shot, soft cool ambient fill from pre-dawn sky, slight halation on light sources to enhance the quiet nocturnal atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC03.png",
+			"url": "/api/runs/run-mteniss3-30/files/assets/design-scene-SC03.png"
+		}
+	],
+	"generatedAt": "2026-08-29T17:26:11.387Z"
+}

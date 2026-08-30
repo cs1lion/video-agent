@@ -1,0 +1,92 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "老理发师",
+			"design": "Middle-aged male barber with gentle weathered face, wearing a faded navy blue work uniform with frayed cuffs, black old cloth shoes, holding a light gray linen mirror wiping cloth. Realistic documentary style, half-body front view, highlighting the texture of a veteran craftsman.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"设计要点要求中年男性，画面呈现为银发老年男性，年龄特征明显不符"
+				],
+				"checkedAt": "2026-08-29T16:05:02.078Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "复古红白转灯",
+			"design": "Red and white striped revolving barber pole with worn metal mount, slight rust spots on the bottom, faded paint surface, vintage rotary lamp on the top, realistic texture, front view, placed outside the shabby barbershop.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:05:02.078Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "老式理发剪刀",
+			"design": "Vintage steel barber scissors with slight patina on the blade, worn brown leather scabbard, smooth cutting edge due to long-term maintenance, realistic metallic texture, close-up view, showing clear traces of years of frequent use.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"画面左侧存在无关缩略图，破坏特写视角要求"
+				],
+				"checkedAt": "2026-08-29T16:05:02.078Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "老城区理发店外景",
+			"design": "Shabby old urban barbershop with faded handwritten sign, red-white revolving barber pole placed outside, mottled old tiled floor, surrounding old residential alleys, soft diffused natural daylight, warm desaturated nostalgic tone, wide shot showing the full shop facade and surrounding environment.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"地面为水泥/石材路面，非斑驳旧瓷砖地面；招牌为印刷体牌匾，非手写风格"
+				],
+				"checkedAt": "2026-08-29T16:05:02.078Z"
+			}
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "理发店内景",
+			"design": "Cluttered intimate old barbershop interior, oval tarnished silver wall mirror, vintage rotary barber lamp hanging from the ceiling, scattered barber tools on the counter, frosted glass window letting in soft light, warm ambient lighting, realistic documentary style, medium shot showing the full shop space and atmosphere.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"天花板悬挂的为普通复古吊灯，非复古旋转理发灯"
+				],
+				"checkedAt": "2026-08-29T16:05:02.078Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-29T16:03:48.301Z"
+}

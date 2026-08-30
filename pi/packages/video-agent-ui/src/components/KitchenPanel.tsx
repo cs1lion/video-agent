@@ -5,10 +5,11 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { ChefHat, LoaderCircle, Play, ThumbsDown, ThumbsUp } from "lucide-react";
-import type { KitchenObservation, KitchenSummary, SuggestionType } from "@/api/client";
+import { ChefHat, LoaderCircle, Play, ThumbsDown, ThumbsUp, TriangleAlert } from "lucide-react";
+import type { BudgetAlert, KitchenObservation, KitchenSummary, SuggestionType } from "@/api/client";
 import { api } from "@/api/client";
 import { cn } from "@/lib/utils";
+import { OvenBoard, OvenChips, useOvens } from "./OvenChips";
 
 const TYPE_LABEL: Record<SuggestionType, string> = {
 	submit: "提交",
@@ -24,7 +25,7 @@ const TYPE_TONE: Record<SuggestionType, string> = {
 	defer: "border-amber-300/40 text-amber-200",
 	downgrade: "border-amber-300/40 text-amber-200",
 	escalate: "border-rose-300/40 text-rose-200",
-	signal: "border-cyan-300/40 text-cyan-200",
+	signal: "border-dashed border-amber-300/50 text-amber-200",
 	wait: "border-white/15 text-zinc-400",
 };
 
@@ -36,24 +37,45 @@ function executionOf(obs: KitchenObservation, suggestionId: string) {
 	return obs.executions?.find((e) => e.id === suggestionId);
 }
 
-export function KitchenPanel({ runId, running }: { runId: string; running: boolean }) {
+export function KitchenPanel({
+	runId,
+	running,
+	onJump,
+	summary,
+	onRefresh,
+}: {
+	runId: string;
+	running: boolean;
+	/** 告警镜头号 → 跳目标阶段定位（复用 StudioPage jumpToArtifact） */
+	onJump?: (targetStage: string, focus?: string) => void;
+	/** 厨房汇总由 StudioPage 统一拉取下发（刷新源统一，供制片人灯共用） */
+	summary: KitchenSummary | null;
+	/** 动作（观察/反馈/应用）后回灌刷新 */
+	onRefresh: () => Promise<void>;
+}) {
 	const [open, setOpen] = useState(false);
-	const [summary, setSummary] = useState<KitchenSummary | null>(null);
+	const [alerts, setAlerts] = useState<BudgetAlert[]>([]);
+	const [seenAlerts, setSeenAlerts] = useState<Set<number>>(new Set());
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [reasonsOpen, setReasonsOpen] = useState<Record<string, boolean>>({});
+	const ovens = useOvens(runId);
 
-	const load = useCallback(async () => {
+	const loadAlerts = useCallback(async () => {
 		try {
-			setSummary(await api.kitchenFetch(runId));
-			setError(null);
+			setAlerts(await api.fetchBudgetAlerts(runId));
 		} catch {
-			// 观察面板是辅助信息：拉取失败静默（老 run 无 kitchen.ndjson 返回空列表是合法态）
+			// 告警是辅助信息：拉取失败静默
 		}
 	}, [runId]);
 
 	useEffect(() => {
-		void load();
-	}, [load]);
+		void loadAlerts();
+	}, [loadAlerts]);
+
+	const reload = async () => {
+		await Promise.all([onRefresh(), loadAlerts()]);
+	};
 
 	const observe = async () => {
 		if (busy) return;
@@ -61,7 +83,7 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 		setError(null);
 		try {
 			await api.kitchenObserve(runId);
-			await load();
+			await reload();
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
 		} finally {
@@ -74,7 +96,7 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 		setBusy(true);
 		try {
 			await api.kitchenFeedback(runId, obsId, suggestionId, decision);
-			await load();
+			await reload();
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
 		} finally {
@@ -90,7 +112,7 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 		try {
 			const r = await api.kitchenApply(runId, obsId, suggestionId);
 			if (!r.verdict.ok && r.verdict.detail) setError(`守卫否决：${r.verdict.detail}`);
-			await load();
+			await reload();
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
 		} finally {
@@ -101,6 +123,8 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 	const stats = summary?.stats;
 	const observations = [...(summary?.observations ?? [])].reverse().slice(0, 5);
 	const suggestionCount = observations.reduce((n, o) => n + o.suggestions.length, 0);
+	const alertsSorted = [...alerts].sort((a, b) => b.at - a.at);
+	const unreadAlert = alertsSorted.find((a) => !seenAlerts.has(a.at)) ?? null;
 
 	return (
 		<div className="relative z-10 shrink-0 border-b border-white/[0.07] px-5 py-1.5">
@@ -110,26 +134,38 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 					onClick={() => setOpen((v) => !v)}
 					className="flex cursor-pointer items-center gap-2 text-xs text-zinc-300 transition-colors hover:text-zinc-100"
 				>
-					<ChefHat className="size-3.5 text-violet-300" />
-					<span>制片主任建议</span>
+					<ChefHat className="size-3.5 text-amber-300" />
+					<span>制片主任</span>
 					{suggestionCount > 0 && (
-						<span className="rounded-full border border-violet-300/30 bg-violet-400/10 px-1.5 py-px font-mono text-[9px] text-violet-200">
+						<span className="rounded-full border border-amber-300/30 bg-amber-400/10 px-1.5 py-px font-mono text-[9px] text-amber-200">
 							{suggestionCount}
 						</span>
 					)}
 					{stats && stats.total > 0 && (
-						<span className="text-[10px] text-zinc-600">
-							采纳率 {Math.round((stats.adoptionRate ?? 0) * 100)}%
-							{stats.applied + stats.rejected > 0 && ` · 被拒率 ${Math.round((stats.rejectionRate ?? 0) * 100)}%`}
-						</span>
+						<span className="text-[10px] text-zinc-500">采纳率 {Math.round((stats.adoptionRate ?? 0) * 100)}%</span>
 					)}
 				</button>
+				<OvenChips ovens={ovens} />
+				{unreadAlert && (
+					<button
+						type="button"
+						title={unreadAlert.message}
+						onClick={() => {
+							setOpen(true);
+							setSeenAlerts((s) => new Set(s).add(unreadAlert.at));
+						}}
+						className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-amber-300/40 bg-amber-400/10 px-2 py-0.5 text-[10px] text-amber-200 transition-colors hover:bg-amber-400/20"
+					>
+						<TriangleAlert className="size-3" />
+						缺口 {Math.round(unreadAlert.shortfallSec)}s
+					</button>
+				)}
 				<button
 					type="button"
 					onClick={() => void observe()}
 					disabled={busy || !running}
 					title={running ? "让制片主任看一眼当前厨房（配额/排队/在途/失败）" : "仅在 run 运行中可观察"}
-					className="ml-auto inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-violet-300/30 px-2.5 py-1 text-[11px] text-violet-200 transition-colors hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+					className="ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-amber-300/30 px-2.5 py-1 text-[11px] text-amber-200 transition-colors hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					{busy ? <LoaderCircle className="size-3 animate-spin" /> : <ChefHat className="size-3" />}
 					观察厨房
@@ -138,14 +174,53 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 			{error && <p className="mt-1 text-[10px] text-rose-300">{error}</p>}
 			{open && (
 				<div className="mt-2 space-y-2 pb-2">
+					<OvenBoard ovens={ovens} />
+					{alertsSorted.length > 0 && (
+						<div className="space-y-1.5">
+							{alertsSorted.map((a) => (
+								<div key={a.at} className="rounded-lg border border-amber-300/30 bg-amber-400/[0.05] px-3 py-2">
+									<div className="flex items-center gap-2 text-[10px] text-zinc-500">
+										<TriangleAlert className="size-3 shrink-0 text-amber-300" />
+										<span className="font-mono">{new Date(a.at).toLocaleTimeString()}</span>
+										<span>
+											剩余 {Math.round(a.remainingSec)}s · 需要 {Math.round(a.requiredSec)}s
+										</span>
+									</div>
+									<p className="mt-1 text-[11px] leading-relaxed text-zinc-200">{a.message}</p>
+									<p className="mt-0.5 text-[10px] leading-relaxed text-zinc-500">{a.suggestion}</p>
+									{a.affectedShots.length > 0 && (
+										<div className="mt-1.5 flex flex-wrap gap-1">
+											{a.affectedShots.map((shot) => (
+												<button
+													key={shot}
+													type="button"
+													title="跳到片段生成并定位该镜"
+													onClick={() => onJump?.("generate", shot)}
+													className="cursor-pointer rounded border border-white/10 px-1.5 py-px font-mono text-[9px] text-zinc-400 transition-colors hover:border-amber-300/40 hover:text-amber-200"
+												>
+													{shot}
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+							))}
+						</div>
+					)}
 					{observations.length === 0 ? (
-						<p className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[11px] text-zinc-600">
-							还没有观察记录。run 运行中点「观察厨房」，制片主任会给出配额/排序建议（只建议，不自动执行）。
-						</p>
+						<div className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+							<div className="space-y-1.5">
+								<div className="skeleton h-2.5 w-3/5" />
+								<div className="skeleton h-2.5 w-2/5" />
+							</div>
+							<p className="mt-2 text-[11px] text-zinc-500">
+								制片主任待命中——run 开跑后点「观察厨房」，他会给出投料建议。
+							</p>
+						</div>
 					) : (
 						observations.map((obs) => (
-							<div key={obs.id} className="rounded-xl border border-violet-300/15 bg-violet-400/[0.04] p-3">
-								<div className="mb-1.5 flex items-center gap-2 text-[10px] text-zinc-600">
+							<div key={obs.id} className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+								<div className="mb-1.5 flex items-center gap-2 text-[10px] text-zinc-500">
 									<span className="font-mono">{new Date(obs.at).toLocaleTimeString()}</span>
 									<span>
 										排队 {obs.snapshot.readyTasks.length} · 在途 {obs.snapshot.inFlightTasks.length} · 失败{" "}
@@ -173,9 +248,22 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 													<div className="min-w-0 flex-1">
 														<p className="text-[11px] leading-relaxed text-zinc-200">
 															{s.message}
-															{s.taskId && <span className="ml-1 font-mono text-[9px] text-zinc-600">{s.taskId}</span>}
+															{s.taskId && <span className="ml-1 font-mono text-[9px] text-zinc-500">{s.taskId}</span>}
 														</p>
-														{s.reason && <p className="mt-0.5 text-[10px] leading-relaxed text-zinc-600">{s.reason}</p>}
+														{s.reason && (
+															<div className="mt-0.5">
+																<button
+																	type="button"
+																	onClick={() => setReasonsOpen((m) => ({ ...m, [s.id]: !m[s.id] }))}
+																	className="cursor-pointer text-[10px] text-zinc-500 transition-colors hover:text-zinc-400"
+																>
+																	{reasonsOpen[s.id] ? "理由 ▾" : "理由 ▸"}
+																</button>
+																{reasonsOpen[s.id] && (
+																	<p className="mt-0.5 text-[10px] leading-relaxed text-zinc-500">{s.reason}</p>
+																)}
+															</div>
+														)}
 														{execution && (
 															<p
 																className={cn(
@@ -199,7 +287,7 @@ export function KitchenPanel({ runId, running }: { runId: string; running: boole
 																	? "border-emerald-300/50 bg-emerald-400/15 text-emerald-200"
 																	: execution?.status === "rejected"
 																		? "border-rose-300/50 bg-rose-400/15 text-rose-200"
-																		: "border-violet-300/40 text-violet-200 hover:bg-violet-400/10",
+																		: "border-amber-300/40 text-amber-200 hover:bg-amber-400/10",
 															)}
 														>
 															<Play className="size-3" />

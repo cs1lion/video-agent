@@ -8,7 +8,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { computeRunMetrics, percentile, p95, type MetricsInput } from "../src/metrics.ts";
+import { computeRunMetrics, percentile, p95, shotSeconds, type MetricsInput } from "../src/metrics.ts";
 
 function input(overrides: Partial<MetricsInput> = {}): MetricsInput {
 	return {
@@ -124,5 +124,26 @@ describe("A/B 对比语义（设计 §3.8 验收）", () => {
 		assert.ok(agent.quotaUtilization! > baseline.quotaUtilization!, "代理利用率应高于基线");
 		assert.ok(agent.wasteRate! < baseline.wasteRate!, "代理浪费率应低于基线");
 		assert.ok(agent.effectiveThroughput! > baseline.effectiveThroughput!, "代理吞吐应更高");
+	});
+});
+
+describe("shotSeconds（度量真实秒数，2026-08-30 失真修复）", () => {
+	const script = { shots: [{ id: "SH01", durationSec: 3 }, { id: "SH02", durationSec: 8 }, { id: "SH03" }] };
+
+	it("按 script 真实镜长求和（3–12s 档位不得被 5s 常量抹平）", () => {
+		const s = shotSeconds(script, ["SH01", "SH02"], ["SH03"]);
+		assert.equal(s.effectiveSec, 11, "3+8=11，而非 2×5=10");
+		assert.equal(s.wastedSec, 5, "SH03 无镜长 → 回落 5");
+	});
+
+	it("script 缺失 → 全部回落 5s/镜（老 run 兼容）", () => {
+		const s = shotSeconds(null, ["SH01", "SH02"], ["SH03"]);
+		assert.equal(s.effectiveSec, 10);
+		assert.equal(s.wastedSec, 5);
+	});
+
+	it("未知镜头 id → 回落 5s/镜", () => {
+		const s = shotSeconds(script, ["SH99"], []);
+		assert.equal(s.effectiveSec, 5);
 	});
 });

@@ -1,0 +1,95 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "夜市中年摊主",
+			"design": "Middle-aged Asian male stall owner, wearing worn cotton work uniform with faint grease stains, rolled-up sleeves, tanned skin with subtle wrinkles, holding a damp cleaning rag, expression tired yet calm. Cinematic low-key lighting, warm lantern glow on face, cool shadows around, candid documentary style, full-body shot with surrounding stall elements.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:20:08.916Z"
+			},
+			"url": "/api/runs/run-mtel4ppo-26/files/assets/design-character-CH01.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "三轮餐车",
+			"design": "Weathered metal three-wheeled food cart, stacked with cleaned stainless steel bowls and chopsticks, faint oil stains on surface, small lantern hanging on handle, warm dim lantern light. Low-angle shot to show loaded items and worn texture, realistic documentary style, desaturated cool tones with warm light highlights.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T16:20:08.916Z"
+			},
+			"url": "/api/runs/run-mtel4ppo-26/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "品牌热粥碗",
+			"design": "Ceramic bowl of branded warm porridge, gentle steam curling, warm orange glow from porridge, simple printed brand logo on bowl, placed on cart handle. Close-up shot to highlight warm texture, contrast with dark alley background, soft diffused light, raw film grain feel.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"设计要点要求碗放置在餐车车把(cart handle)上，画面中碗实际放置在金属栏杆上"
+				],
+				"checkedAt": "2026-08-29T16:20:08.916Z"
+			},
+			"url": "/api/runs/run-mtel4ppo-26/files/assets/design-prop-PR02.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "凌晨夜市摊区",
+			"design": "Night market stall area at 1am, most customers gone, leftover greasy plates on tables, half-off neon signs, wet ground reflecting neon and street lamp lights, scattered deep shadows. Low-key practical lighting, desaturated cool tones with warm neon highlights, cinematic wide shot, subtle film grain for raw documentary feel.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"设计要点要求'most customers gone'(大多数顾客已离开)，画面中夜市摊位前仍有大量顾客聚集"
+				],
+				"checkedAt": "2026-08-29T16:20:08.916Z"
+			},
+			"url": "/api/runs/run-mtel4ppo-26/files/assets/design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "老城窄巷",
+			"design": "Dark narrow old city alley, wet cobblestone ground, dim distant street lamp light, deep shadows on both sides, warm glow from porridge bowl as main light source, quiet empty atmosphere. Low-angle shot following stall owner pushing cart, desaturated cool shadows with warm midtones, candid documentary style.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"设计要点要求'warm glow from porridge bowl as main light source'(粥碗暖光作为主要光源)，画面中主要光源为路灯与灯笼，未见粥碗或粥碗光"
+				],
+				"checkedAt": "2026-08-29T16:20:08.916Z"
+			},
+			"url": "/api/runs/run-mtel4ppo-26/files/assets/design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-29T16:19:26.688Z"
+}

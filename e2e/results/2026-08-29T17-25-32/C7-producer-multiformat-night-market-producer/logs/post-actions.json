@@ -1,0 +1,20 @@
+{
+	"designReview": null,
+	"keyframeReview": null,
+	"reshotShots": [],
+	"rettsShots": [],
+	"composeCuts": [],
+	"portraitExports": [
+		{
+			"aspectRatio": "9:16",
+			"status": "done"
+		}
+	],
+	"kitchen": null,
+	"applied": [],
+	"metrics": null,
+	"errors": [
+		"kitchenObserve: HTTP 404: Not Found",
+		"kitchenApply: HTTP 404: Not Found"
+	]
+}

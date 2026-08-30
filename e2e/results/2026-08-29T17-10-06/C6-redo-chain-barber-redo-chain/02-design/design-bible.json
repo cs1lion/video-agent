@@ -1,0 +1,76 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "中年理发师",
+			"design": "Middle-aged male barber with slightly graying temples, wearing a frayed white work coat with faint hair clipping stains, gentle weathered facial features, calloused hands, authentic lived-in appearance, recommended full-body front view to show his attire and working posture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "红白转灯",
+			"design": "Retro red-and-white rotating barber lamp, slightly faded plastic casing with minor scuffs from long-term use, three-color spinning segments, metal mounting bracket with faint rust spots, iconic barber shop symbol, recommended close-up side view to highlight texture and wear marks.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "旧理发椅",
+			"design": "Worn vintage barber chair with faded brown leather upholstery, cracked plastic armrests, slightly squeaky metal base, faint scuff marks on the seat, classic mid-century design, recommended three-quarter view to show overall condition and details.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "擦镜布",
+			"design": "Plain off-white cotton cleaning rag, slightly frayed edges, faint smudges of cleaning solution, soft worn texture, used for wiping the salon mirror, recommended close-up flat lay view to show fabric details.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "理发店晨光内景",
+			"design": "Warm nostalgic inner-city barber shop interior, soft late afternoon sunlight filtering through dusty venetian blinds casting warm striped shadows, vintage decor, half-packed moving boxes in the background, desaturated warm color grade with subtle film grain, recommended wide environmental shot to capture the whole space.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "店门口外景",
+			"design": "Entrance of the old neighborhood barber shop, plain wooden door frame, faded handwritten store sign, soft morning light, quiet empty street outside, nostalgic urban retro atmosphere, recommended medium shot to frame the door and the barber's action of removing the lamp.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"人物动作未明确体现设计要点要求的「移除灯具」（removing the lamp）动作"
+				],
+				"checkedAt": "2026-08-29T17:12:36.870Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-29T17:10:52.281Z"
+}

@@ -26,6 +26,7 @@ import type {
 import { api, SFX_LABEL, TRANSITION_LABEL } from "@/api/client";
 import { useStudio } from "@/store/store";
 import { DeliberationPanel } from "@/components/DeliberationPanel";
+import { MetricsCard } from "@/components/MetricsCard";
 import { GlowButton } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { EmptyState, StageShell } from "./shared";
@@ -40,15 +41,15 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 const KIND_BAR: Record<TraceSpan["kind"], string> = {
-	llm: "bg-cyan-400/70",
-	media: "bg-violet-400/70",
+	llm: "bg-zinc-200/70",
+	media: "bg-zinc-400/70",
 	ffmpeg: "bg-amber-400/70",
 	qa: "bg-emerald-400/70",
 };
 
 const KIND_DOT: Record<TraceSpan["kind"], string> = {
-	llm: "bg-cyan-300",
-	media: "bg-violet-300",
+	llm: "bg-zinc-200",
+	media: "bg-zinc-300",
 	ffmpeg: "bg-amber-300",
 	qa: "bg-emerald-300",
 };
@@ -116,19 +117,19 @@ function TraceTimeline({ runId, runStatus }: { runId: string; runStatus: string 
 				className="flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left"
 			>
 				<span className="text-xs tracking-wide text-zinc-400">运行追踪</span>
-				<span className="font-mono text-[10px] text-zinc-600">
+				<span className="font-mono text-[10px] text-zinc-500">
 					{spans ? `${spans.length} spans` : "…"}
 				</span>
-				{runStatus === "running" && <LoaderCircle className="size-3 animate-spin text-cyan-300" />}
+				{runStatus === "running" && <LoaderCircle className="size-3 animate-spin text-zinc-400" />}
 				<span className="ml-auto text-xs text-zinc-500">{expanded ? "收起" : "展开"}</span>
 			</button>
 
 			{expanded && (
 				<div className="space-y-4 border-t border-white/[0.06] px-4 py-3">
 					{spans === null ? (
-						<p className="py-4 text-center text-xs text-zinc-600">加载中…</p>
+						<p className="py-4 text-center text-xs text-zinc-500">加载中…</p>
 					) : spans.length === 0 ? (
-						<p className="py-4 text-center text-xs text-zinc-600">
+						<p className="py-4 text-center text-xs text-zinc-500">
 							（本 run 生成于追踪功能上线前，无 span 记录；新 run 将完整留痕）</p>
 					) : (
 						<>
@@ -138,7 +139,7 @@ function TraceTimeline({ runId, runStatus }: { runId: string; runStatus: string 
 										<span className="text-[10px] tracking-widest text-zinc-500">
 											{STAGE_GROUP_LABEL[stage] ?? stage}
 										</span>
-										<span className="font-mono text-[10px] text-zinc-700">{list.length}</span>
+										<span className="font-mono text-[10px] text-zinc-600">{list.length}</span>
 									</div>
 									<div className="space-y-1">
 										{list.map((span) => (
@@ -157,7 +158,7 @@ function TraceTimeline({ runId, runStatus }: { runId: string; runStatus: string 
 												<span
 													className={cn(
 														"w-24 shrink-0 text-right text-[10px]",
-														span.status === "ok" ? "text-zinc-600" : "text-rose-300",
+														span.status === "ok" ? "text-zinc-500" : "text-rose-300",
 													)}
 												>
 													{span.status === "ok" ? "" : span.status === "semantic-fail" ? "语义不合格" : "失败"}
@@ -175,7 +176,7 @@ function TraceTimeline({ runId, runStatus }: { runId: string; runStatus: string 
 							<button
 								type="button"
 								onClick={() => setReloadKey((k) => k + 1)}
-								className="cursor-pointer text-[10px] text-zinc-600 hover:text-zinc-400"
+								className="cursor-pointer text-[10px] text-zinc-500 hover:text-zinc-400"
 							>
 								刷新
 							</button>
@@ -228,7 +229,7 @@ function TransitionTimeline({ runId, runStatus }: { runId: string; runStatus: st
 			<div className="mb-2.5 flex items-center gap-2">
 				<Scissors className="size-3.5 text-amber-300" />
 				<span className="text-xs tracking-wide text-zinc-400">剪辑时间轴</span>
-				<span className="font-mono text-[10px] text-zinc-600">
+				<span className="font-mono text-[10px] text-zinc-500">
 					{shotDur.length} 镜 · {total.toFixed(1)}s · {used.length} 处转场{sfxCount > 0 ? ` · ${sfxCount} 处音效` : ""}
 				</span>
 				{runStatus === "running" && <LoaderCircle className="size-3 animate-spin text-amber-300" />}
@@ -239,10 +240,10 @@ function TransitionTimeline({ runId, runStatus }: { runId: string; runStatus: st
 					return (
 						<div key={i} className="flex shrink-0 items-center gap-1">
 							<div
-								className="flex min-w-[64px] flex-col justify-between rounded-lg border border-cyan-300/20 bg-gradient-to-b from-cyan-400/10 to-violet-400/10 px-2 py-1.5"
+								className="flex min-w-[64px] flex-col justify-between rounded-lg border border-white/[0.08] bg-gradient-to-b from-amber-400/10 to-zinc-400/10 px-2 py-1.5"
 								style={{ width: `${Math.max(64, (dur / total) * 560)}px` }}
 							>
-								<span className="font-mono text-[10px] text-cyan-200/80">SH{String(i + 1).padStart(2, "0")}</span>
+								<span className="font-mono text-[10px] text-zinc-300">SH{String(i + 1).padStart(2, "0")}</span>
 								<span className="font-mono text-[10px] text-zinc-500">{dur.toFixed(1)}s</span>
 							</div>
 							{i < shotDur.length - 1 &&
@@ -350,19 +351,19 @@ function ComposeDesk({
 	const chip = (active: boolean) =>
 		cn(
 			"cursor-pointer rounded-md border px-1.5 py-px font-mono text-[10px] transition-colors",
-			active ? "border-cyan-300/50 bg-cyan-400/10 text-cyan-200" : "border-white/10 text-zinc-500 hover:text-zinc-300",
+			active ? "border-zinc-100/40 bg-white/[0.08] text-zinc-100" : "border-white/10 text-zinc-500 hover:text-zinc-300",
 		);
 
 	return (
-		<div className="rounded-xl border border-violet-300/20 bg-violet-400/[0.04] px-4 py-3">
+		<div className="rounded-xl border border-amber-300/20 bg-amber-400/[0.04] px-4 py-3">
 			<div className="mb-3 flex flex-wrap items-center gap-2">
-				<Sparkles className="size-3.5 text-violet-300" />
+				<Sparkles className="size-3.5 text-amber-300" />
 				<span className="text-xs tracking-wide text-zinc-300">组合出片 · 版本并列</span>
-				<span className="text-[10px] text-zinc-600">逐镜勾选视频与配音版本，本地装配一条交付版（主成片不受影响）</span>
+				<span className="text-[10px] text-zinc-500">逐镜勾选视频与配音版本，本地装配一条交付版（主成片不受影响）</span>
 				<span
 					className={cn(
 						"ml-auto rounded-full border px-2 py-0.5 font-mono text-[10px]",
-						remaining > 0 ? "border-violet-300/40 bg-violet-400/10 text-violet-200" : "border-white/10 text-zinc-500",
+						remaining > 0 ? "border-amber-300/40 bg-amber-400/10 text-amber-200" : "border-white/10 text-zinc-500",
 					)}
 				>
 					剩 {remaining} 次
@@ -371,8 +372,8 @@ function ComposeDesk({
 			<div className="space-y-2">
 				{data.shots.map((s) => (
 					<div key={s.shotId} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg bg-white/[0.02] px-3 py-2">
-						<span className="w-12 shrink-0 font-mono text-xs text-cyan-300">{s.shotId}</span>
-						<span className="text-[10px] text-zinc-600">画面</span>
+						<span className="w-12 shrink-0 font-mono text-xs text-zinc-300">{s.shotId}</span>
+						<span className="text-[10px] text-zinc-500">画面</span>
 						{s.video.map((v) => (
 							<button
 								key={v.file}
@@ -385,9 +386,9 @@ function ComposeDesk({
 							</button>
 						))}
 						<span className="mx-1 h-3.5 w-px bg-white/10" />
-						<span className="text-[10px] text-zinc-600">配音</span>
+						<span className="text-[10px] text-zinc-500">配音</span>
 						{s.audio.length === 0 ? (
-							<span className="font-mono text-[10px] text-zinc-700">无配音</span>
+							<span className="font-mono text-[10px] text-zinc-600">无配音</span>
 						) : (
 							s.audio.map((a) => (
 								<button
@@ -414,7 +415,7 @@ function ComposeDesk({
 					)}
 					合成交付版
 				</GlowButton>
-				{remaining === 0 && <span className="text-[11px] text-zinc-600">次数已用尽；微调后可继续用「重新导出」。</span>}
+				{remaining === 0 && <span className="text-[11px] text-zinc-500">次数已用尽；微调后可继续用「重新导出」。</span>}
 			</div>
 
 			{/* 已合成的交付版列表 */}
@@ -425,16 +426,16 @@ function ComposeDesk({
 						const url = `/api/runs/${run.id}/files/assets/${encodeURIComponent(name)}`;
 						return (
 							<div key={r.file} id={`art-cut-${i + 1}`} className="flex items-center gap-2 text-[11px]">
-								<Film className="size-3 shrink-0 text-violet-300" />
+								<Film className="size-3 shrink-0 text-amber-300" />
 								<button
 									type="button"
 									onClick={() => onPreview(url)}
-									className="cursor-pointer font-mono text-cyan-300 hover:underline"
+									className="cursor-pointer font-mono text-zinc-300 hover:text-amber-200 hover:underline"
 								>
 									{name}
 								</button>
-								<span className="text-zinc-600">{new Date(r.at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span>
-								<a href={url} download className="ml-auto inline-flex items-center gap-1 text-zinc-500 hover:text-cyan-200">
+								<span className="text-zinc-500">{new Date(r.at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span>
+								<a href={url} download className="ml-auto inline-flex items-center gap-1 text-zinc-500 hover:text-amber-200">
 									<Download className="size-3" />
 									下载
 								</a>
@@ -504,9 +505,11 @@ export function ExportStage({
 				<EmptyState text="剪辑师正在装配最终成片…" />
 			) : (
 				<div className="space-y-5">
+					<MetricsCard runId={run.id} runStatus={run.status} />
+
 					<div
 						id="art-final"
-						className="overflow-hidden rounded-xl border border-cyan-300/20 bg-black/60 shadow-[0_0_40px_rgba(34,211,238,0.08)]"
+						className="overflow-hidden rounded-xl border border-zinc-100/20 bg-black/60 shadow-[0_0_40px_rgba(244,244,245,0.06)]"
 					>
 						<video src={final} controls className="mx-auto max-h-[70vh] w-full object-contain" />
 					</div>
@@ -537,9 +540,9 @@ export function ExportStage({
 					{/* 多平台分发：已有版本切换 + 其他画幅导出（复用现有镜头/配音，仅重跑剪辑） */}
 					<div className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
 						<div className="mb-2.5 flex items-center gap-2">
-							<MonitorSmartphone className="size-3.5 text-cyan-300" />
+							<MonitorSmartphone className="size-3.5 text-zinc-400" />
 							<span className="text-xs tracking-wide text-zinc-400">多平台分发</span>
-							<span className="text-[10px] text-zinc-600">一次拍摄，多画幅交付（复用现有镜头与配音）</span>
+							<span className="text-[10px] text-zinc-500">一次拍摄，多画幅交付（复用现有镜头与配音）</span>
 						</div>
 						<div className="flex flex-wrap items-center gap-2">
 							{versions.length > 0 ? (
@@ -552,7 +555,7 @@ export function ExportStage({
 										className={cn(
 											"cursor-pointer rounded-full border px-3 py-1 text-[11px] transition-colors",
 											final === v.url
-												? "border-cyan-300/50 bg-cyan-400/10 text-cyan-200"
+												? "border-zinc-100/40 bg-white/[0.08] text-zinc-100"
 												: "border-white/10 text-zinc-400 hover:border-white/25 hover:text-zinc-200",
 										)}
 									>
@@ -561,7 +564,7 @@ export function ExportStage({
 									</button>
 								))
 							) : (
-								<span className="text-[11px] text-zinc-600">暂无分发版</span>
+								<span className="text-[11px] text-zinc-500">暂无分发版</span>
 							)}
 							<span className="mx-1 h-4 w-px bg-white/10" />
 							{ASPECT_OPTIONS.map((opt) => (

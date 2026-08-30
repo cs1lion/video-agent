@@ -1,0 +1,21 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"documentary",
+		"realistic",
+		"coastal",
+		"lifestyle",
+		"naturalistic",
+		"authentic"
+	],
+	"palette": [
+		"#1B3A4B",
+		"#6E8B9E",
+		"#C69C6D",
+		"#F5D49A",
+		"#4A5568",
+		"#8B7D6B"
+	],
+	"lighting": "Soft, diffused pre-dawn ambient light that gradually transitions to warm, low-angle golden sunrise glow as the small boat clears the breakwater.",
+	"grade": "Muted, desaturated cool color palette for the pre-sunrise segments, with a subtle warm lift in the midtones and highlights during the sunrise to highlight the quiet dignity of the daily routine."
+}

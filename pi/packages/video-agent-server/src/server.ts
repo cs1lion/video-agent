@@ -21,7 +21,7 @@
  *   POST /api/runs/:id/keyframes/review        关键帧出图审核（帧 vs 锚定的设计定稿）
  *   POST /api/runs/:id/keyframes/adjust        分镜关键帧单镜重绘
  *   GET  /api/runs/:id/versions                每镜视频/音频版本清单（组合出片用）
- *   POST /api/runs/:id/compose                 按勾选版本装配交付版 cut-N.mp4（限 2 次）
+ *   POST /api/runs/:id/compose                 按勾选版本装配交付版 cut{N}.mp4（限 2 次）
  *   GET  /api/runs/:id/cutvariants             审议候选清单（compose 产物 + 节奏变体）
  *   POST /api/runs/:id/cutvariants             L1 节奏变体（整片等比变速，本地 ffmpeg）
  *   GET  /api/runs/:id/deliberations           审议历史
@@ -47,7 +47,7 @@ import {
 	type Question,
 	resolveGenerationOptions,
 } from "../../video-agent/src/index.ts";
-import { loadServerContext, type ServerContext, VIDEO_QUOTA_POOL } from "./config.ts";
+import { loadServerContext, type ServerContext } from "./config.ts";
 import { checkConsistency, getConsistency } from "./consistency.ts";
 import { reviewDesignBible, reviewKeyframes } from "./design-review.ts";
 import {
@@ -61,7 +61,8 @@ import {
 import { chat, chatJson } from "./llm.ts";
 import { estimateRunCost as pricingEstimateRun } from "./pricing.ts";
 import { kitchenFeedback, kitchenSummary, producerObserve, applySuggestion, readBudgetAlerts, applyPriorityInstruction, readPriorityInstructions } from "./producer.ts";
-import { computeRunMetrics, type MetricsInput } from "./metrics.ts";
+import { activeQueueOf, buildKitchenSnapshot } from "./kitchen.ts";
+import { computeRunMetrics, shotSeconds, type MetricsInput } from "./metrics.ts";
 import {
 	availableVoices,
 	composeCut,
@@ -78,6 +79,7 @@ import {
 	rettsRun,
 	runSummary,
 	runView,
+	readArtifact,
 	type StageId,
 	startRun,
 	subscribeRun,
@@ -1129,6 +1131,11 @@ function createApp(ctx: ServerContext) {
 		res.json({ voices: availableVoices(ctx) });
 	});
 
+	// 能力清单：e2e 预检校验目标服务与当前代码库一致（防打进旧代码服务白烧配额）
+	app.get("/api/health", (_req, res) => {
+		res.json({ ok: true, features: ["kitchen", "kitchen-snapshot", "priority", "budget-alerts", "metrics"] });
+	});
+
 	// ---- B2 只读制片主任：observe_kitchen → 建议（绝不自动执行） ----
 
 	app.post("/api/runs/:id/kitchen/observe", async (req, res) => {
@@ -1151,6 +1158,18 @@ function createApp(ctx: ServerContext) {
 			return;
 		}
 		res.json(await kitchenSummary(run));
+	});
+
+	// 轻量厨房快照（纯函数折叠，无 LLM/无落盘）：前端烤炉条 5s 轮询令牌呼吸用
+	app.get("/api/runs/:id/kitchen/snapshot", (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		const pools = ctx.quota?.snapshot() ?? [];
+		const jobs = activeQueueOf(run.id)?.list() ?? [];
+		res.json(buildKitchenSnapshot(pools, jobs));
 	});
 
 	app.post("/api/runs/:id/kitchen/feedback", async (req, res) => {
@@ -1225,6 +1244,16 @@ function createApp(ctx: ServerContext) {
 		}
 	});
 
+	// B4 读路径：镜头优先级指令列表（段控状态回显用）
+	app.get("/api/runs/:id/director/priority", async (req, res) => {
+		const run = runStore.get(req.params.id);
+		if (!run) {
+			notFoundRun(res, req.params.id);
+			return;
+		}
+		res.json({ instructions: await readPriorityInstructions(run) });
+	});
+
 	// B5 A/B 度量：配额利用率 / 有效吞吐 / P0 延迟 P95 / 浪费率 / 被拒率
 	app.get("/api/runs/:id/metrics", async (req, res) => {
 		const run = runStore.get(req.params.id);
@@ -1233,8 +1262,8 @@ function createApp(ctx: ServerContext) {
 			return;
 		}
 		try {
-			// 配额消耗
-			const consumedSec = ctx.quota?.consumedSec(VIDEO_QUOTA_POOL) ?? 0;
+			// 配额消耗：不传 poolId = 多池汇总（多 key 场景只看单池会漏账）
+			const consumedSec = ctx.quota?.consumedSec() ?? 0;
 			// 被拒率（来自 kitchen 汇总）
 			const summary = await kitchenSummary(run);
 			// P0 指令 + clip 完成时间（从 assets 文件 mtime 推断）
@@ -1249,21 +1278,30 @@ function createApp(ctx: ServerContext) {
 					// clip 未完成，跳过
 				}
 			}
-			// clip 完成数（文件存在 = 完成）
+			// clip 完成数（文件存在 = 完成）+ 真实秒数（script.json 镜长求和，缺失回落 5s/镜）
 			let completedCount = 0;
+			const completedIds: string[] = [];
 			try {
 				const files = await fs.promises.readdir(assetsDir);
-				completedCount = files.filter((f) => f.startsWith("clip-") && f.endsWith(".mp4")).length;
+				completedIds.push(
+					...files.filter((f) => f.startsWith("clip-") && f.endsWith(".mp4")).map((f) => f.slice(5, -4)),
+				);
+				completedCount = completedIds.length;
 			} catch {
 				// assets 目录不存在
 			}
 			// 尝试从 shotAttempts 推断尝试总数
 			const attemptedCount = Object.keys(run.shotAttempts ?? {}).length;
 			const failedCount = Math.max(0, attemptedCount - completedCount);
-			// 秒数估算：每镜默认 5s（精确值需读 script.json，此处近似）
-			const estimateSec = 5;
-			const effectiveSec = completedCount * estimateSec;
-			const wastedSec = failedCount * estimateSec;
+			let effectiveSec = completedCount * 5;
+			let wastedSec = failedCount * 5;
+			try {
+				const script = await readArtifact<{ shots: { id: string; durationSec?: number }[] }>(run, "script.json");
+				const failedIds = Object.keys(run.shotAttempts ?? {}).filter((id) => !completedIds.includes(id));
+				({ effectiveSec, wastedSec } = shotSeconds(script, completedIds, failedIds));
+			} catch {
+				// script 缺失（老 run）保留 5s/镜近似
+			}
 			// 运行时长（从事件首末时间戳推断）
 			const events = run.events ?? [];
 			const firstAt = events.length > 0 ? Date.parse(events[0]!.at) : 0;

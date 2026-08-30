@@ -107,7 +107,7 @@ export function ImageUploader({
 						}}
 						className={cn(
 							"flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-zinc-500 transition-colors",
-							dragging ? "border-cyan-300/70 bg-cyan-400/10 text-cyan-200" : "border-white/20 hover:border-white/40 hover:text-zinc-300",
+							dragging ? "border-zinc-100/70 bg-white/[0.08] text-zinc-100" : "border-white/20 hover:border-white/40 hover:text-zinc-300",
 						)}
 					>
 						{busy ? (

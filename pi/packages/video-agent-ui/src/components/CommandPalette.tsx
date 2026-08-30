@@ -150,13 +150,13 @@ export function CommandPalette({
 									}
 								}}
 								placeholder="跳阶段、跑动作，或直接对导演说点什么…"
-								className="h-12 min-w-0 flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
+								className="h-12 min-w-0 flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
 							/>
 							<kbd className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[9px] text-zinc-500">ESC</kbd>
 						</div>
 						<div className="max-h-[46vh] overflow-y-auto p-1.5">
 							{items.length === 0 && (
-								<p className="px-3 py-6 text-center text-xs text-zinc-600">没有匹配的命令</p>
+								<p className="px-3 py-6 text-center text-xs text-zinc-500">没有匹配的命令</p>
 							)}
 							{items.map((item) => {
 								const enabledIdx = item.disabled ? -1 : enabled.indexOf(item);
@@ -181,12 +181,12 @@ export function CommandPalette({
 											<CornerDownLeft className="size-3.5 shrink-0 text-zinc-500" />
 										)}
 										<span className="min-w-0 flex-1 truncate">{item.label}</span>
-										{item.hint && <span className="shrink-0 font-mono text-[10px] text-zinc-600">{item.hint}</span>}
+										{item.hint && <span className="shrink-0 font-mono text-[10px] text-zinc-500">{item.hint}</span>}
 									</button>
 								);
 							})}
 						</div>
-						<div className="flex items-center gap-3 border-t border-white/[0.07] px-4 py-2 font-mono text-[9px] text-zinc-600">
+						<div className="flex items-center gap-3 border-t border-white/[0.07] px-4 py-2 font-mono text-[9px] text-zinc-500">
 							<span>↑↓ 移动</span>
 							<span>Enter 执行</span>
 							<span>Esc 关闭</span>

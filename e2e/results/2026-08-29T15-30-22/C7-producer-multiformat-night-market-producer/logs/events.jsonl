@@ -1,0 +1,38 @@
+{"id":"ev-19b7b853","at":"2026-08-29T16:18:36.208Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实真人短片：凌晨一点的夜市，摊主收摊、洗刷、熄灯，最后推着车走进巷子。旁白只有…」已确认，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。"}
+{"id":"ev-a7d9f3f2","at":"2026-08-29T16:18:36.208Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 5 镜叙事骨架。"}
+{"id":"ev-d505749e","at":"2026-08-29T16:19:01.432Z","from":"writer","to":"art","kind":"handoff","text":"剧本《城市收尾人》完成：5 镜，25s。Logline：短片记录凌晨一点夜市摊主收摊熄灯的全过程，展现城市入睡前默默付出的人群，传递品牌温暖陪伴的价值。请据此制定全片视觉规范。"}
+{"id":"ev-8705c751","at":"2026-08-29T16:19:01.432Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-97b312e6","at":"2026-08-29T16:19:26.690Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：5 张概念设计图（人物 1 · 道具 2 · 场景 2）逐张绘制中。"}
+{"id":"ev-49ab1494","at":"2026-08-29T16:19:30.176Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「夜市中年摊主」（人物 CH01）"}
+{"id":"ev-d458c98c","at":"2026-08-29T16:19:33.573Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「三轮餐车」（道具 PR01）"}
+{"id":"ev-ac4a8a89","at":"2026-08-29T16:19:39.037Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「品牌热粥碗」（道具 PR02）"}
+{"id":"ev-f8ef115a","at":"2026-08-29T16:19:42.994Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「凌晨夜市摊区」（场景 SC01）"}
+{"id":"ev-df94547f","at":"2026-08-29T16:19:46.613Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「老城窄巷」（场景 SC02）"}
+{"id":"ev-5367d67d","at":"2026-08-29T16:19:46.614Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 5/5 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-dc03ad0c","at":"2026-08-29T16:19:46.614Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-ad7bb28c","at":"2026-08-29T16:20:08.917Z","from":"reviewer","to":"art","kind":"status","text":"设计图自审通过 ✅ 5 张与设计要点相符（另有 3 张小偏差，可人工复核）。"}
+{"id":"ev-1873940b","at":"2026-08-29T16:20:08.917Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / neorealist / urban documentary / lifestyle / candid / atmospheric / low-key]，色板 #0f0f1a、#ffb347、#6b3a2a、#a8d8ea。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-314b9322","at":"2026-08-29T16:20:08.917Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-271308bf","at":"2026-08-29T16:20:11.692Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-e238155e","at":"2026-08-29T16:20:11.692Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-da4322f5","at":"2026-08-29T16:20:11.692Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-e15be8a1","at":"2026-08-29T16:20:53.388Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：夜市中年摊主(CH01)、凌晨夜市摊区(SC01)。"}
+{"id":"ev-4fca2dc9","at":"2026-08-29T16:20:53.389Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-f1f37f54","at":"2026-08-29T16:20:57.827Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：夜市中年摊主(CH01)、凌晨夜市摊区(SC01)。"}
+{"id":"ev-1c0b039d","at":"2026-08-29T16:20:57.827Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-f772c03e","at":"2026-08-29T16:21:02.347Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：夜市中年摊主(CH01)、凌晨夜市摊区(SC01)。"}
+{"id":"ev-c8ff067b","at":"2026-08-29T16:21:02.347Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-3e6aa2e5","at":"2026-08-29T16:21:08.799Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：夜市中年摊主(CH01)、凌晨夜市摊区(SC01)。"}
+{"id":"ev-95397b63","at":"2026-08-29T16:21:08.800Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-248ba463","at":"2026-08-29T16:21:17.610Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：夜市中年摊主(CH01)、凌晨夜市摊区(SC01)。"}
+{"id":"ev-74078a99","at":"2026-08-29T16:21:17.610Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-b13dc949","at":"2026-08-29T16:21:21.832Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-115c9961","at":"2026-08-29T16:21:21.832Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-bfe30fc4","at":"2026-08-29T16:21:21.894Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「镜头生成」继续，直至成片。"}
+{"id":"ev-4209909a","at":"2026-08-29T16:21:21.898Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic wide 16:9 shot of a middle-aged Asian male stall o…"}
+{"id":"ev-5e9538dc","at":"2026-08-29T16:22:24.807Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/5）"}
+{"id":"ev-c5e5186a","at":"2026-08-29T16:22:24.808Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Handheld tracking 16:9 medium shot of the same middle-aged A…"}
+{"id":"ev-92bf01cf","at":"2026-08-29T16:23:33.498Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/5）"}
+{"id":"ev-40f64355","at":"2026-08-29T16:23:33.500Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Moderate slow pan upward 16:9 medium full-body shot of the s…"}
+{"id":"ev-017cd3ce","at":"2026-08-29T16:26:44.069Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/5）"}
+{"id":"ev-5c39e877","at":"2026-08-29T16:26:44.071Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Static locked-off 16:9 wide shot of the same middle-aged Asi…"}

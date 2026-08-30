@@ -1,0 +1,22 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:03.92,Sub,三十年的货，今天最后一趟。
+Dialogue: 0,0:00:03.97,0:00:07.06,Sub,出城的路，走了几千遍。
+Dialogue: 0,0:00:07.46,0:00:11.04,Sub,服务区的泡面，还是老味道。
+Dialogue: 0,0:00:11.04,0:00:15.09,Sub,暴雨夜的路，看不清尽头。
+Dialogue: 0,0:00:15.49,0:00:17.68,Sub,该换人开一段了。
+Dialogue: 0,0:00:18.08,0:00:21.19,Sub,山边的花，开了三十回。
+Dialogue: 0,0:00:21.59,0:00:24.34,Sub,货到了，人也没跑丢。
+Dialogue: 0,0:00:24.74,0:00:27.94,Sub,钥匙给你，路接着走。
+Dialogue: 0,0:00:28.34,0:00:32.27,Sub,路会记得每一个跑完它的人。
+Dialogue: 0,0:00:32.37,0:00:35.35,Sub,好车，陪你跑完每段路。

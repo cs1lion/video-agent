@@ -1,0 +1,40 @@
+{
+	"totalMs": 120447,
+	"stages": [
+		{
+			"id": "script",
+			"status": "failed",
+			"ms": 120415
+		},
+		{
+			"id": "visual",
+			"status": "pending",
+			"ms": 120415
+		},
+		{
+			"id": "prompts",
+			"status": "pending",
+			"ms": 120415
+		},
+		{
+			"id": "keyframes",
+			"status": "pending",
+			"ms": 120415
+		},
+		{
+			"id": "clips",
+			"status": "pending",
+			"ms": 120415
+		},
+		{
+			"id": "audio",
+			"status": "pending",
+			"ms": 120415
+		},
+		{
+			"id": "export",
+			"status": "pending",
+			"ms": 120415
+		}
+	]
+}

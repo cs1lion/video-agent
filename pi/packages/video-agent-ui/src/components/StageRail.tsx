@@ -190,7 +190,7 @@ export function StageRail({
 						onClick={() => onSelect(stage.id)}
 						className={cn(
 							"relative flex size-10 cursor-pointer items-center justify-center rounded-xl transition-colors disabled:cursor-not-allowed",
-							isActive ? "text-zinc-50" : open ? "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-200" : "text-zinc-700",
+							isActive ? "text-zinc-50" : open ? "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-200" : "text-zinc-600",
 						)}
 					>
 						{isActive && (
@@ -200,7 +200,7 @@ export function StageRail({
 									"absolute inset-0 rounded-xl border",
 									isRedoOrigin || isRedoAffected
 										? "rail-redo border-amber-300/50 bg-amber-400/10"
-										: "border-amber-300/40 bg-amber-400/[0.08]",
+										: "border-zinc-100/35 bg-white/[0.08]",
 								)}
 								transition={{ type: "spring", stiffness: 400, damping: 32 }}
 							/>
@@ -217,13 +217,13 @@ export function StageRail({
 							className={cn(
 								"relative z-10 size-4 shrink-0",
 								(isRedoOrigin || isRedoAffected) && "text-amber-300",
-								isActive && !isRedoOrigin && !isRedoAffected && "text-amber-200",
+								isActive && !isRedoOrigin && !isRedoAffected && "text-zinc-50",
 							)}
 						/>
 						{/* 右下角状态点：锁 / 进度环 / 完成 / 失败 */}
 						<span className="absolute -bottom-0.5 -right-0.5 z-10">
 							{!open ? (
-								<Lock className="size-2.5 text-zinc-700" />
+								<Lock className="size-2.5 text-zinc-600" />
 							) : running ? (
 								<MiniProgressRing
 									value={run.stages.find((s) => s.id === stage.backend)?.progress ?? 0}

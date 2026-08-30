@@ -44,7 +44,7 @@ export function TimelineBar({
 
 	return (
 		<div className="relative z-10 flex shrink-0 items-center gap-2 border-t border-white/[0.07] px-4 py-2">
-			<span className="shrink-0 font-mono text-[9px] tracking-[0.25em] text-zinc-600">TIMELINE</span>
+			<span className="shrink-0 font-mono text-[9px] tracking-[0.25em] text-zinc-500">TIMELINE</span>
 			<div className="flex min-w-0 flex-1 gap-[3px]">
 				{shots.map((shot) => {
 					const status = statusOf(shot.id);
@@ -82,13 +82,13 @@ export function TimelineBar({
 									status === "pending" && "bg-zinc-600/60",
 								)}
 							/>
-							{/* A7：台词镜口型驱动标记（右上角声波角标） */}
+							{/* A7：台词镜口型驱动标记（§5-G：「口」字角标，♪ 只留给 SFX） */}
 							{isDialogue && (
 								<span
 									title="台词镜：口型由台词音频驱动"
-									className="absolute right-0.5 top-0.5 rounded bg-violet-500/70 px-1 py-px text-[8px] leading-none text-white"
+									className="absolute right-0.5 top-0.5 rounded bg-amber-400/80 px-1 py-px text-[8px] font-semibold leading-none text-zinc-950"
 								>
-									♪
+									口
 								</span>
 							)}
 							{/* 镜头号 + 时长 */}

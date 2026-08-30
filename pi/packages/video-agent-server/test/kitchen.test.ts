@@ -22,6 +22,7 @@ function pool(overrides: Partial<PoolSnapshot> = {}): PoolSnapshot {
 	return {
 		id: "video",
 		keyType: "tokenplan",
+		rpmCap: 5,
 		rpmTokens: 2,
 		rpmWaitMs: 0,
 		remainingQuotaSec: 312,
@@ -59,6 +60,7 @@ describe("buildKitchenSnapshot（B2 厨房快照契约）", () => {
 		);
 		assert.equal(snap.ovens.length, 2);
 		assert.equal(snap.ovens[0]!.tokens, 2);
+		assert.equal(snap.ovens[0]!.rpmCap, 5, "令牌桶容量必须投影（前端令牌点分母）");
 		assert.equal(snap.ovens[0]!.remainingQuotaSec, 312);
 		assert.equal(snap.ovens[1]!.remainingQuotaSec, null, "无每日配额池必须投影为 null");
 		assert.equal(snap.ovens[1]!.keyType, "free");

@@ -412,7 +412,7 @@ async function rettsDialogueCascade(
 				const referenceParams = videoSubmitParamsForDialogue(ctx, audioUrl!, shot.durationSec);
 				if (referenceParams) {
 					const job = sc.queue.submit(
-						{ roleName: "video-agent", kind: "video", prompt, params: referenceParams, outputName: `clip-${shot.id}` },
+						{ roleName: "video-agent", kind: "video", prompt, params: referenceParams, outputName: `clip-${shot.id}`, adapterId: reservation?.adapterId },
 						run.dir,
 					);
 					run.metrics.mediaCalls += 1;
@@ -434,6 +434,8 @@ async function rettsDialogueCascade(
 				{
 					roleName: "video-agent",
 					kind: "video",
+					// 多 key 并发：任务投给预留所在池绑定的 adapter（不传则走默认解析）
+					adapterId: reservation?.adapterId,
 					prompt,
 					params: videoSubmitParams(ctx, opts, 0, 0, kfDataUrl, shot.durationSec),
 					outputName: `clip-${shot.id}`,
@@ -453,6 +455,8 @@ async function rettsDialogueCascade(
 				{
 					roleName: "video-agent",
 					kind: "video",
+					// 多 key 并发：任务投给预留所在池绑定的 adapter（不传则走默认解析）
+					adapterId: reservation?.adapterId,
 					prompt,
 					params: videoSubmitParams(ctx, opts, 0, 0, null, shot.durationSec),
 					outputName: `clip-${shot.id}`,

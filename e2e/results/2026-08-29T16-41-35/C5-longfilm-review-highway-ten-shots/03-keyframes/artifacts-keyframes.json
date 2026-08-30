@@ -1,0 +1,224 @@
+{
+	"frames": [
+		{
+			"shotId": "SH01",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH01-sheet.png",
+			"file": "assets\\key-SH01.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH01.png"
+		},
+		{
+			"shotId": "SH02",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH02-sheet.png",
+			"file": "assets\\key-SH02.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物应为全身正面站立视角，帧上为驾驶室内中景；场景应为清晨货运场装货场景，帧上为高速公路收费站场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH02.png"
+		},
+		{
+			"shotId": "SH03",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH03-sheet.png",
+			"file": "assets\\key-SH03.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景应为清晨货运场装货场景，帧上为公路驾驶场景（含1200KM里程标志）"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH03.png"
+		},
+		{
+			"shotId": "SH04",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH04-sheet.png",
+			"file": "assets\\key-SH04.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物应为全身正面站立视角，帧上为坐姿；场景应为清晨货运场装货场景，帧上为卡车旁台阶就餐场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH04.png"
+		},
+		{
+			"shotId": "SH05",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH05-sheet.png",
+			"file": "assets\\key-SH05.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景应为清晨货运场装货场景，帧上为雨天高速公路驾驶场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH05.png"
+		},
+		{
+			"shotId": "SH06",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH06-sheet.png",
+			"file": "assets\\key-SH06.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景应为清晨货运场装货场景，帧上为雨天高速公路驾驶场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH06.png"
+		},
+		{
+			"shotId": "SH07",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH07-sheet.png",
+			"file": "assets\\key-SH07.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物应为全身正面站立视角，帧上为坐姿；场景应为清晨货运场装货场景，帧上为港口/货运场驾驶座场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH07.png"
+		},
+		{
+			"shotId": "SH08",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH08-sheet.png",
+			"file": "assets\\key-SH08.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景应为清晨货运场装货场景，帧上为停车场交接钥匙场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH08.png"
+		},
+		{
+			"shotId": "SH09",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH09-sheet.png",
+			"file": "assets\\key-SH09.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景应为清晨货运场装货场景，帧上为公路挥手告别场景；驾驶室内出现非定稿人物"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH09.png"
+		},
+		{
+			"shotId": "SH10",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH10-sheet.png",
+			"file": "assets\\key-SH10.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"场景应为清晨货运场装货场景，帧上为公路旁大型车辆旁场景"
+				],
+				"checkedAt": "2026-08-29T17:09:59.485Z"
+			},
+			"url": "/api/runs/run-mtely9wb-28/files/assets/key-SH10.png"
+		}
+	],
+	"confirmedShotIds": [
+		"SH01",
+		"SH02",
+		"SH03",
+		"SH04",
+		"SH05",
+		"SH06",
+		"SH07",
+		"SH08",
+		"SH09",
+		"SH10"
+	]
+}

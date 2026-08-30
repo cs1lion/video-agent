@@ -20,6 +20,8 @@ export interface KitchenOven {
 	keyType: string;
 	/** 当前可用 RPM 令牌 */
 	tokens: number;
+	/** 令牌桶容量 = 每分钟最大提交数（前端令牌点渲染的分母） */
+	rpmCap: number;
 	/** 距下一个令牌可用的毫秒数（0 = 现在就能提交） */
 	rpmWaitMs: number;
 	/** 今日剩余秒数（null = 无明确配额，只受 RPM 约束） */
@@ -85,6 +87,7 @@ export function buildKitchenSnapshot(pools: PoolSnapshot[], jobs: QueueJob[], no
 		id: p.id,
 		keyType: p.keyType,
 		tokens: p.rpmTokens,
+		rpmCap: p.rpmCap,
 		rpmWaitMs: p.rpmWaitMs,
 		remainingQuotaSec: Number.isFinite(p.remainingQuotaSec) ? p.remainingQuotaSec : null,
 		reservedSec: p.reservedSec,

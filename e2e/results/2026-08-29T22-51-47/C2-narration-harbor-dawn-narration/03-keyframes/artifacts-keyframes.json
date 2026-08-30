@@ -1,0 +1,114 @@
+{
+	"frames": [
+		{
+			"shotId": "SH01",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH01-sheet.png",
+			"file": "assets\\key-SH01.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-29T23:16:58.833Z"
+			},
+			"url": "/api/runs/run-mtez6csi-32/files/assets/key-SH01.png"
+		},
+		{
+			"shotId": "SH02",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH02-sheet.png",
+			"file": "assets\\key-SH02.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物未采用全身镜头（full-body shot），当前为中景；人物位于船上而非定稿要求的磨损混凝土码头（worn concrete dock）上；画面非宽全景（wide panoramic shot）"
+				],
+				"checkedAt": "2026-08-29T23:16:58.833Z"
+			},
+			"url": "/api/runs/run-mtez6csi-32/files/assets/key-SH02.png"
+		},
+		{
+			"shotId": "SH03",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH03-sheet.png",
+			"file": "assets\\key-SH03.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物未采用全身镜头（full-body shot），当前为中景；人物位于船上而非定稿要求的磨损混凝土码头（worn concrete dock）上；画面非宽全景（wide panoramic shot）"
+				],
+				"checkedAt": "2026-08-29T23:16:58.833Z"
+			},
+			"url": "/api/runs/run-mtez6csi-32/files/assets/key-SH03.png"
+		},
+		{
+			"shotId": "SH04",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH04-sheet.png",
+			"file": "assets\\key-SH04.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物未采用全身镜头（full-body shot），当前为中景；人物位于船上而非定稿要求的磨损混凝土码头（worn concrete dock）上；画面非宽全景（wide panoramic shot）；画面整体色调偏暖（天空呈现橙黄色），与定稿要求的冷调蓝灰色（cool muted blue-gray）不符"
+				],
+				"checkedAt": "2026-08-29T23:16:58.833Z"
+			},
+			"url": "/api/runs/run-mtez6csi-32/files/assets/key-SH04.png"
+		},
+		{
+			"shotId": "SH05",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"refs": [
+				"CH01",
+				"SC01"
+			],
+			"refSheet": ".refs\\key-SH05-sheet.png",
+			"file": "assets\\key-SH05.png",
+			"confirmed": true,
+			"review": {
+				"verdict": "fail",
+				"issues": [
+					"人物未采用全身镜头（full-body shot），当前为近景；人物位于船上而非定稿要求的磨损混凝土码头（worn concrete dock）上；画面非宽全景（wide panoramic shot）；画面整体色调偏暖（天空呈现橙黄色），与定稿要求的冷调蓝灰色（cool muted blue-gray）不符"
+				],
+				"checkedAt": "2026-08-29T23:16:58.833Z"
+			},
+			"url": "/api/runs/run-mtez6csi-32/files/assets/key-SH05.png"
+		}
+	],
+	"confirmedShotIds": [
+		"SH01",
+		"SH02",
+		"SH03",
+		"SH04",
+		"SH05"
+	]
+}

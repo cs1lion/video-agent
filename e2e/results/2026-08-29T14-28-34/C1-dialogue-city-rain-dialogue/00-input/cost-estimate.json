@@ -1,0 +1,53 @@
+{
+	"total": 28.47,
+	"currency": "CNY",
+	"lines": [
+		{
+			"label": "剧本 LLM",
+			"amount": 0.65,
+			"note": "约 2k 输入 + 1.5k 输出 token"
+		},
+		{
+			"label": "美术设计 LLM",
+			"amount": 0.65
+		},
+		{
+			"label": "分镜提示词 LLM",
+			"amount": 0.97,
+			"note": "按 shotCount 翻倍"
+		},
+		{
+			"label": "EDL 转场 LLM",
+			"amount": 0.65
+		},
+		{
+			"label": "配音指导 LLM",
+			"amount": 0.65
+		},
+		{
+			"label": "审片多模 LLM",
+			"amount": 0.65,
+			"note": "含抽帧多模输入"
+		},
+		{
+			"label": "设计稿概念图",
+			"amount": 1.5,
+			"note": "3 张"
+		},
+		{
+			"label": "分镜关键帧",
+			"amount": 2.5,
+			"note": "5 张"
+		},
+		{
+			"label": "视频生成",
+			"amount": 20,
+			"note": "5 段 × 5s"
+		},
+		{
+			"label": "TTS 配音",
+			"amount": 0.25,
+			"note": "每镜粗估 1k 字符"
+		}
+	]
+}

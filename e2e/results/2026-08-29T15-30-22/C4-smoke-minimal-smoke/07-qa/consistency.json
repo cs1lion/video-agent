@@ -1,0 +1,22 @@
+{
+	"checkedAt": "2026-08-29T15:36:53.300Z",
+	"model": "step-3.7-flash",
+	"overall": "三个镜头主角外观、画风与场景连续性一致，无可见跳变",
+	"shots": [
+		{
+			"shotId": "SH01",
+			"appearance": "白色衬衫（卷袖口）、黑色围裙、黑色短发",
+			"issues": []
+		},
+		{
+			"shotId": "SH02",
+			"appearance": "白色衬衫（卷袖口）、黑色围裙、黑色短发",
+			"issues": []
+		},
+		{
+			"shotId": "SH03",
+			"appearance": "白色衬衫（卷袖口）、黑色围裙、黑色短发",
+			"issues": []
+		}
+	]
+}

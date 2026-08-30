@@ -1,0 +1,30 @@
+{
+	"designReview": null,
+	"keyframeReview": null,
+	"reshotShots": [
+		"SH03"
+	],
+	"rettsShots": [
+		"SH01"
+	],
+	"composeCuts": [
+		"cut-1"
+	],
+	"portraitExports": [],
+	"kitchen": null,
+	"applied": [],
+	"metrics": null,
+	"errors": [],
+	"reshotResults": [
+		{
+			"shotId": "SH03",
+			"status": "failed"
+		}
+	],
+	"rettsResults": [
+		{
+			"shotId": "SH01",
+			"status": "done"
+		}
+	]
+}

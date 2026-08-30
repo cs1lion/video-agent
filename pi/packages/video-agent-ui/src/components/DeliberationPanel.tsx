@@ -44,14 +44,14 @@ import { cn } from "@/lib/utils";
 const VERDICT_LABEL = { base: "保留 A", challenger: "换成 B", neither: "都不选" } as const;
 
 const LAYER_STYLE: Record<DeliberationLayer, string> = {
-	edit: "border-cyan-300/40 bg-cyan-400/10 text-cyan-200",
+	edit: "border-zinc-100/40 bg-white/[0.08] text-zinc-100",
 	asset: "border-rose-300/40 bg-rose-400/10 text-rose-200",
-	prompt: "border-violet-300/40 bg-violet-400/10 text-violet-200",
+	prompt: "border-zinc-400/40 bg-zinc-400/10 text-zinc-300",
 	audio: "border-emerald-300/40 bg-emerald-400/10 text-emerald-200",
 };
 
 const ACTION_STYLE: Record<DeliberationAction, string> = {
-	reedit: "border-cyan-300/40 bg-cyan-400/10 text-cyan-200",
+	reedit: "border-zinc-100/40 bg-white/[0.08] text-zinc-100",
 	reshot: "border-amber-300/40 bg-amber-400/10 text-amber-200",
 	retts: "border-emerald-300/40 bg-emerald-400/10 text-emerald-200",
 	rescript: "border-rose-300/40 bg-rose-400/10 text-rose-200",
@@ -99,7 +99,7 @@ function StepDots({ step }: { step: number }) {
 		<div className="flex flex-wrap items-center gap-2">
 			{steps.map((label, i) => (
 				<span key={label} className="flex items-center gap-2">
-					{i > 0 && <span className={cn("h-px w-6", i <= step ? "bg-violet-300/50" : "bg-white/10")} />}
+					{i > 0 && <span className={cn("h-px w-6", i <= step ? "bg-amber-300/50" : "bg-white/10")} />}
 					<span className="flex items-center gap-1.5">
 						<span
 							className={cn(
@@ -107,11 +107,11 @@ function StepDots({ step }: { step: number }) {
 								i < step
 									? "bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.6)]"
 									: i === step
-										? "bg-violet-300 shadow-[0_0_10px_rgba(167,139,250,0.9)]"
+										? "bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.9)]"
 										: "bg-zinc-600",
 							)}
 						/>
-						<span className={cn("text-[10px]", i === step ? "text-violet-200" : "text-zinc-600")}>{label}</span>
+						<span className={cn("text-[10px]", i === step ? "text-amber-200" : "text-zinc-500")}>{label}</span>
 					</span>
 				</span>
 			))}
@@ -161,14 +161,14 @@ function ComparePlayer({
 	variant: CutVariant | null;
 	runId: string;
 }) {
-	const accent = side === "A" ? "border-cyan-300/40" : "border-violet-300/40";
+	const accent = side === "A" ? "border-zinc-100/40" : "border-zinc-400/40";
 	return (
 		<div className={cn("overflow-hidden rounded-xl border bg-black/60", accent)}>
 			<div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-1.5">
 				<span
 					className={cn(
 						"rounded-md border px-1.5 py-px font-mono text-[10px]",
-						side === "A" ? "border-cyan-300/50 bg-cyan-400/10 text-cyan-200" : "border-violet-300/50 bg-violet-400/10 text-violet-200",
+						side === "A" ? "border-zinc-100/50 bg-white/[0.08] text-zinc-100" : "border-zinc-400/50 bg-zinc-400/10 text-zinc-200",
 					)}
 				>
 					候选 {side}
@@ -179,13 +179,13 @@ function ComparePlayer({
 						<span className="ml-auto shrink-0 font-mono text-[10px] text-zinc-500">{variant.durationSec.toFixed(1)}s</span>
 					</>
 				) : (
-					<span className="text-[11px] text-zinc-600">未选择</span>
+					<span className="text-[11px] text-zinc-500">未选择</span>
 				)}
 			</div>
 			{variant ? (
 				<video src={variantUrl(runId, variant)} controls className="max-h-[38vh] w-full object-contain" />
 			) : (
-				<div className="flex h-40 items-center justify-center text-xs text-zinc-600">在上方选择对比候选</div>
+				<div className="flex h-40 items-center justify-center text-xs text-zinc-500">在上方选择对比候选</div>
 			)}
 		</div>
 	);
@@ -258,17 +258,17 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 		);
 	}
 	return (
-		<div className="space-y-3 rounded-xl border border-violet-300/25 bg-violet-400/[0.05] p-4">
+		<div className="space-y-3 rounded-xl border border-amber-300/25 bg-amber-400/[0.05] p-4">
 			<div className="flex items-center gap-2">
-				<WandSparkles className="size-4 text-violet-300" />
+				<WandSparkles className="size-4 text-amber-300" />
 				<span className="text-xs tracking-wide text-zinc-300">导演归因 · 第 {round.at.slice(11, 16)} 的审议</span>
-				<span className="ml-auto rounded-full border border-violet-300/40 bg-violet-400/10 px-2 py-0.5 text-[10px] text-violet-200">
+				<span className="ml-auto rounded-full border border-amber-300/40 bg-amber-400/10 px-2 py-0.5 text-[10px] text-amber-200">
 					{VERDICT_LABEL[round.verdict]} · {round.tags.join("、") || "无标签"}
 				</span>
 			</div>
 
-			<div className="rounded-lg border border-violet-300/30 bg-gradient-to-r from-violet-500/15 to-cyan-500/10 px-3.5 py-2.5">
-				<div className="text-[10px] tracking-widest text-violet-300/80">主因判断</div>
+			<div className="rounded-lg border border-amber-300/30 bg-gradient-to-r from-amber-500/15 to-zinc-500/10 px-3.5 py-2.5">
+				<div className="text-[10px] tracking-widest text-amber-300/80">主因判断</div>
 				<p className="mt-1 text-[13px] leading-relaxed text-zinc-100">{doc.rootCause}</p>
 			</div>
 
@@ -298,7 +298,7 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 							<span className={cn("rounded border px-1.5 py-px text-[10px]", ACTION_STYLE[p.action])}>
 								{DELIBERATION_ACTION_LABEL[p.action]}
 							</span>
-							<span className="font-mono text-[11px] text-cyan-300">{p.target}</span>
+							<span className="font-mono text-[11px] text-zinc-300">{p.target}</span>
 							{/* P2+闸门 2：置信度色点。high 不着色、medium 琥珀、low 玫红 */}
 							<ConfidenceDot level={p.confidence} />
 							<span className="min-w-0 flex-1 basis-56 text-[11px] leading-snug text-zinc-400">{p.reason}</span>
@@ -315,7 +315,7 @@ function ProposalCard({ round, runId }: { round: DeliberationRound; runId: strin
 									<span className="text-[10px] text-zinc-500">{p.cost.note}</span>
 								</span>
 							) : (
-								<span className="text-[10px] text-zinc-600">{p.estimatedCost}</span>
+								<span className="text-[10px] text-zinc-500">{p.estimatedCost}</span>
 							)}
 							{adopted === key ? (
 								<span className="inline-flex items-center gap-1 text-[11px] text-emerald-300">
@@ -452,13 +452,13 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 	};
 
 	return (
-		<div className="space-y-4 rounded-2xl border border-violet-300/20 bg-violet-400/[0.04] p-5">
+		<div className="space-y-4 rounded-2xl border border-amber-300/20 bg-amber-400/[0.04] p-5">
 			{/* 标题行 */}
 			<div className="flex flex-wrap items-center gap-2">
-				<Scale className="size-4 text-violet-300" />
+				<Scale className="size-4 text-amber-300" />
 				<span className="text-sm font-semibold tracking-wide text-zinc-100">审议优化 · 对比工作台</span>
 				<span className="text-[11px] text-zinc-500">双版对比 → 说出不满 → 导演出归因提案 → 你批准才执行</span>
-				<span className="ml-auto rounded-full border border-violet-300/40 bg-violet-400/10 px-2.5 py-0.5 font-mono text-[10px] text-violet-200">
+				<span className="ml-auto rounded-full border border-amber-300/40 bg-amber-400/10 px-2.5 py-0.5 font-mono text-[10px] text-amber-200">
 					审议 {rounds.length}/{3} 轮
 				</span>
 			</div>
@@ -472,7 +472,7 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 
 			{/* ① 候选选择区 */}
 			<div className="flex flex-wrap items-center gap-2">
-				<Gauge className="size-3.5 shrink-0 text-violet-300" />
+				<Gauge className="size-3.5 shrink-0 text-amber-300" />
 				<span className="shrink-0 text-[11px] text-zinc-500">候选 A（基准）</span>
 				<Segmented
 					value={base.id}
@@ -499,7 +499,7 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 			</div>
 			{others.length > 0 && (
 				<div className="flex flex-wrap items-center gap-2">
-					<Swords className="size-3.5 shrink-0 text-violet-300" />
+					<Swords className="size-3.5 shrink-0 text-amber-300" />
 					<span className="shrink-0 text-[11px] text-zinc-500">候选 B（对比）</span>
 					{others.map((v) => (
 						<button
@@ -509,7 +509,7 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 							className={cn(
 								"cursor-pointer rounded-full border px-3 py-1 text-[11px] transition-colors",
 								challengerId === v.id
-									? "border-violet-300/50 bg-violet-400/15 text-violet-100 shadow-[0_0_14px_rgba(167,139,250,0.25)]"
+									? "border-amber-300/50 bg-amber-400/15 text-amber-100 shadow-[0_0_14px_rgba(251,191,36,0.25)]"
 									: "border-white/10 text-zinc-400 hover:border-white/25 hover:text-zinc-200",
 							)}
 						>
@@ -552,7 +552,7 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 							className={cn(
 								"cursor-pointer rounded-full px-3 py-1 text-[11px] transition-all",
 								tags.includes(t)
-									? "border border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_14px_rgba(34,211,238,0.2)]"
+									? "border border-zinc-100/50 bg-white/[0.08] text-zinc-100 shadow-[0_0_14px_rgba(244,244,245,0.12)]"
 									: "border border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/25 hover:text-zinc-200",
 							)}
 						>
@@ -563,7 +563,7 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 						value={note}
 						onChange={(e) => setNote(e.target.value)}
 						placeholder="补充一句（可空），如「后半段有点拖」"
-						className="min-w-48 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-cyan-300/40"
+						className="min-w-48 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-zinc-200 outline-none placeholder:text-zinc-500 focus:border-amber-300/40"
 					/>
 				</div>
 				<div className="flex items-center gap-3">
@@ -572,16 +572,16 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 						{challenger ? "发起审议" : "发起审议（单版诊断）"}
 					</GlowButton>
 					{!challenger && tags.length === 0 && !note.trim() && (
-						<span className="text-[11px] text-zinc-600">点选标签或写一句反馈即可发起；也可先生成 B 候选做 A/B 对比</span>
+						<span className="text-[11px] text-zinc-500">点选标签或写一句反馈即可发起；也可先生成 B 候选做 A/B 对比</span>
 					)}
 					{(challenger || tags.length > 0 || note.trim()) && !challenger && (
 						<span className="text-[11px] text-zinc-500">单版诊断：导演直接针对当前成片归因你的反馈</span>
 					)}
 					{challenger && tags.length === 0 && !note.trim() && (
-						<span className="text-[11px] text-zinc-600">点选至少一个标签或写一句反馈</span>
+						<span className="text-[11px] text-zinc-500">点选至少一个标签或写一句反馈</span>
 					)}
 					{deliberating && (
-						<span className="text-[11px] text-violet-200">
+						<span className="text-[11px] text-amber-200">
 							导演正在{challenger ? "对比两版成片、" : ""}查看镜头帧…（约 1-3 分钟）
 						</span>
 					)}
@@ -602,14 +602,14 @@ export function DeliberationPanel({ run }: { run: RunView }) {
 					>
 						<History className="size-3.5 text-zinc-500" />
 						<span className="text-[11px] text-zinc-400">审议历史</span>
-						<span className="font-mono text-[10px] text-zinc-600">{rounds.length} 轮</span>
+						<span className="font-mono text-[10px] text-zinc-500">{rounds.length} 轮</span>
 						<span className="ml-auto text-[11px] text-zinc-500">{showHistory ? "收起" : "展开"}</span>
 					</button>
 					{showHistory && (
 						<div className="space-y-1.5 border-t border-white/[0.06] px-4 py-3">
 							{rounds.map((r) => (
 								<div key={r.id} className="flex items-start gap-2 text-[11px]">
-									<span className="shrink-0 font-mono text-zinc-600">{r.at.slice(5, 16).replace("T", " ")}</span>
+									<span className="shrink-0 font-mono text-zinc-500">{r.at.slice(5, 16).replace("T", " ")}</span>
 									{r.doc ? (
 										<BadgeCheck className="mt-0.5 size-3 shrink-0 text-emerald-300" />
 									) : (

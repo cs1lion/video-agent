@@ -192,13 +192,13 @@ export function OptionsForm({
 								onClick={() => onChange({ detailBoost: !options.detailBoost })}
 								className={cn(
 									"relative h-8 w-14 cursor-pointer rounded-full border transition-colors",
-									options.detailBoost ? "border-cyan-300/50 bg-cyan-400/25" : "border-white/15 bg-white/[0.05]",
+									options.detailBoost ? "border-zinc-100/50 bg-white/[0.2]" : "border-white/15 bg-white/[0.05]",
 								)}
 							>
 								<span
 									className={cn(
 										"absolute top-1/2 size-6 -translate-y-1/2 rounded-full bg-zinc-200 shadow transition-all",
-										options.detailBoost ? "left-7 shadow-[0_0_10px_rgba(34,211,238,0.6)]" : "left-1",
+										options.detailBoost ? "left-7 shadow-[0_0_10px_rgba(244,244,245,0.5)]" : "left-1",
 									)}
 								/>
 							</button>

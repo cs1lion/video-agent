@@ -67,8 +67,8 @@ type LastAction = NonNullable<RunView["lastActions"]>[number];
 
 const ACTION_META = {
 	reshot: { icon: RotateCcw, cls: "text-amber-300", label: "补拍镜头" },
-	retts: { icon: Mic, cls: "text-sky-300", label: "重录旁白" },
-	reexport: { icon: Video, cls: "text-violet-300", label: "重新导出" },
+	retts: { icon: Mic, cls: "text-zinc-300", label: "重录旁白" },
+	reexport: { icon: Video, cls: "text-zinc-300", label: "重新导出" },
 	compose: { icon: Scissors, cls: "text-emerald-300", label: "混剪合成" },
 } as const;
 
@@ -118,7 +118,7 @@ function EventItem({
 			<div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
 				<Icon className={cn("size-3", meta.cls, event.kind === "redo" && "animate-[spin_3s_linear_infinite]")} />
 				<span className={cn("font-medium", meta.cls)}>{ROLE_LABEL[event.from]}</span>
-				<ArrowRight className="size-2.5 text-zinc-600" />
+				<ArrowRight className="size-2.5 text-zinc-500" />
 				<span>{toLabel(event.to)}</span>
 				{event.kind !== "status" && (
 					<span className={cn("rounded-full border border-white/10 px-1.5 py-px text-[9px]", meta.cls)}>
@@ -159,7 +159,7 @@ function ActionItem({ action }: { action: LastAction }) {
 							{action.shotId}
 						</span>
 					)}
-					<span className="ml-auto shrink-0 font-mono text-[9px] text-zinc-600">{timeOf(action.at)}</span>
+					<span className="ml-auto shrink-0 font-mono text-[9px] text-zinc-500">{timeOf(action.at)}</span>
 				</div>
 				<p className="mt-0.5 break-words text-[11px] leading-relaxed text-zinc-400">{action.label}</p>
 			</div>
@@ -353,9 +353,9 @@ export function DirectorChat({
 				{tab === "team" ? (
 					<AnimatePresence initial={false}>
 						{events.length === 0 ? (
-							<p className="pt-8 text-center text-xs text-zinc-600">团队尚未开工</p>
+							<p className="pt-8 text-center text-xs text-zinc-500">团队尚未开工</p>
 						) : teamEvents.length === 0 ? (
-							<p className="pt-8 text-center text-xs text-zinc-600">该类型暂无事件</p>
+							<p className="pt-8 text-center text-xs text-zinc-500">该类型暂无事件</p>
 						) : (
 							<>
 								{hiddenCount > 0 && (
@@ -377,8 +377,8 @@ export function DirectorChat({
 				) : tab === "actions" ? (
 					actions.length === 0 ? (
 						<div className="space-y-2 pt-8 text-center">
-							<History className="mx-auto size-5 text-zinc-700" />
-							<p className="text-xs leading-relaxed text-zinc-600">
+							<History className="mx-auto size-5 text-zinc-600" />
+							<p className="text-xs leading-relaxed text-zinc-500">
 								还没有执行过重做
 								<br />
 								补拍镜头 / 重录旁白 / 重新导出后会在此留痕
@@ -386,7 +386,7 @@ export function DirectorChat({
 						</div>
 					) : (
 						<div className="space-y-1.5">
-							<p className="px-0.5 pb-0.5 text-[10px] text-zinc-600">
+							<p className="px-0.5 pb-0.5 text-[10px] text-zinc-500">
 								最近 {actions.length} 条 · 最新在前
 							</p>
 							{actions.map((a) => (
@@ -398,7 +398,7 @@ export function DirectorChat({
 					<div className="space-y-3">
 						{dialog.length === 0 && (
 							<div className="space-y-3 pt-6">
-								<p className="text-center text-xs leading-relaxed text-zinc-600">
+								<p className="text-center text-xs leading-relaxed text-zinc-500">
 									直接提调整诉求，导演会识别并安排对应重做：
 									<br />
 									补拍镜头 / 重录旁白 / 重新导出成片
