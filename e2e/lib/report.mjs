@@ -56,17 +56,25 @@ export function assertCase({ expect, run, collected, finalBytes, audioForm, post
 	// 5) 音频形态
 	const tts = (collected.assets ?? []).filter((a) => /^tts-[A-Za-z0-9_-]+\.mp3$/.test(a.name) && !isVersioned(a.name));
 	const bgm = (collected.assets ?? []).find((a) => /^bgm\./.test(a.name));
-	if (expect.requireNarrationAudio) check(tts.length > 0, "旁白音轨存在", `${tts.length} 条`);
+	if (expect.requireTtsAudio) check(tts.length > 0, "TTS 音轨存在（台词/旁白）", `${tts.length} 条`);
 	if (expect.requireBgm) check(Boolean(bgm), "BGM 已入时间线");
 	if (expect.requireDialogueShots) check(run.dialogueShotCount > 0, "台词镜存在", `${run.dialogueShotCount ?? 0} 镜`);
-	if (audioForm === "dialogue" && !expect.requireNarrationAudio) {
+	if (audioForm === "dialogue" && !expect.requireTtsAudio) {
 		// 台词镜若被降级为旁白，这里不判失败，但要留痕
 		if ((run.dialogueShotCount ?? 0) === 0) passed.push("注意：台词镜为 0（可能已降级为旁白，见事件日志）");
 	}
 
-	// 6) 质检结论
+	// 6) 质检结论 + 物理/文字审核轴
 	if (run.verdict) {
-		check(run.verdict.axes?.length > 0, "五轴质检有分", `综合 ${run.verdict.score}（${run.verdict.overall}）`);
+		check(run.verdict.axes?.length > 0, "质检有分", `综合 ${run.verdict.score}（${run.verdict.overall}）`);
+		const axisOf = (id) => run.verdict.axes?.find((a) => a.id === id);
+		const phys = axisOf("physicalAccuracy");
+		const text = axisOf("textQuality");
+		check(
+			Boolean(phys) && Boolean(text),
+			"物理/文字审核轴齐备",
+			`物理 ${phys?.score ?? "缺"} / 文字 ${text?.score ?? "缺"}`,
+		);
 	} else {
 		failed.push("缺少质检结论（verdict）");
 	}
@@ -174,6 +182,26 @@ export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates
 	if (assert.failed.length === 0) lines.push("- 无");
 	for (const f of assert.failed) lines.push(`- ❌ ${f}`);
 	lines.push("");
+
+	// 物理/文字审核明细：轴分 + 逐镜 warn/fail 理由（物理:/文字: 前缀由 QA 提示词约定）
+	if (run.verdict) {
+		lines.push("## 审核（物理错误 / 文字乱码）");
+		lines.push("");
+		const axisRows = (run.verdict.axes ?? []).map((a) => [a.id, String(a.score)]);
+		if (axisRows.length) lines.push(mdTable(axisRows, ["审核轴", "分数"]));
+		const flagged = (run.verdict.shots ?? []).filter((s) => s.verdict !== "ok");
+		lines.push("");
+		if (flagged.length === 0) lines.push("- 逐镜审核：全部 ok（无物理/文字问题被标记）");
+		else
+			lines.push(
+				mdTable(
+					flagged.map((s) => [s.id, s.verdict, s.reason]),
+					["镜头", "裁决", "问题（物理:/文字: 前缀标类别）"],
+				),
+			);
+		lines.push("");
+	}
+
 	lines.push("## 产物清单");
 	lines.push("");
 	lines.push(mdTable(

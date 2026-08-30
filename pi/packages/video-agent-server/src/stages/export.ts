@@ -327,23 +327,27 @@ export async function stageExport(
 		{ stage: "export", focus: "final", label: "播放成片" },
 	);
 
-	// ---- 质检：逐镜抽帧（新时间轴中点） → 视觉模型评分 ----
+	// ---- 质检：逐镜双帧抽检（新时间轴中点 + 后段 85% 处） → 视觉模型评分 ----
 	// 抽帧位置必须与实际成片时间轴一致：xfade 路径的 shotStart 按转场重叠递减累计；
 	// 降级 concat 是无重叠硬拼（总长 = ΣshotDur），若仍用旧 shotStart 会系统性偏早，
 	// 累积几镜后（每处转场 0.3-0.8s）抽到前一镜画面，QA 评分失真。
+	// 后段帧专治瞬时缺陷（多指/形变/乱码字形常只在一瞬间出现），单中点帧会漏。
 	const qaMidpoints: number[] = [];
+	const qaLateTimes: number[] = [];
 	if (degraded) {
 		let acc = 0;
 		for (let k = 0; k < keptShots.length; k += 1) {
 			qaMidpoints.push(acc + shotDur[k]! / 2);
+			qaLateTimes.push(acc + shotDur[k]! * 0.85);
 			acc += shotDur[k]!;
 		}
 	} else {
 		for (let k = 0; k < keptShots.length; k += 1) {
 			qaMidpoints.push(shotStart[k]! + shotDur[k]! / 2);
+			qaLateTimes.push(shotStart[k]! + shotDur[k]! * 0.85);
 		}
 	}
-	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, qaMidpoints);
+	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, qaMidpoints, qaLateTimes);
 	doneSteps += 1;
 	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
 

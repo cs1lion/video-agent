@@ -35,7 +35,7 @@ export interface RunStage {
 	progress: number;
 }
 
-export type AxisId = "briefFit" | "visualConsistency" | "pacing" | "audioSync" | "textQuality";
+export type AxisId = "briefFit" | "visualConsistency" | "pacing" | "physicalAccuracy" | "audioSync" | "textQuality";
 
 /** 审片员对单镜头的三态标注（镜头级重做依据） */
 export interface QaShotVerdict {

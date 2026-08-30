@@ -110,7 +110,7 @@ const STAGE_IDS: readonly StageId[] = [
 /** 文本阶段（可单独 refine 重塑） */
 const TEXT_STAGES: readonly StageId[] = ["script", "visual", "prompts"];
 
-export type AxisId = "briefFit" | "visualConsistency" | "pacing" | "audioSync" | "textQuality";
+export type AxisId = "briefFit" | "visualConsistency" | "pacing" | "physicalAccuracy" | "audioSync" | "textQuality";
 
 export interface RunStage {
 	id: StageId;

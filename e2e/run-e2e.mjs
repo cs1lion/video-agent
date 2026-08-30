@@ -112,9 +112,12 @@ function pickWorstShot(run, script) {
 	return shots[0]?.id ?? null;
 }
 
-/** 挑一个适合重录旁白的镜头（有旁白文本的第一镜） */
-function pickNarrationShot(script) {
-	return script?.shots?.find((s) => (s.narrationZh ?? "").trim().length > 0)?.id ?? script?.shots?.[0]?.id ?? null;
+/** 挑一个适合重录的镜头：优先台词镜（走台词级联：重 TTS + 口型重生成），否则旁白镜 */
+function pickRettsShot(script) {
+	const shots = script?.shots ?? [];
+	const dialogue = shots.find((s) => (s.dialogue?.lines?.zh ?? "").trim().length > 0);
+	if (dialogue) return dialogue.id;
+	return shots.find((s) => (s.narrationZh ?? "").trim().length > 0)?.id ?? shots[0]?.id ?? null;
 }
 
 /**
@@ -174,12 +177,12 @@ async function runPostActions({ testCase, base, runId, args, caseDir, script, lo
 					break;
 				}
 				case "retts": {
-					const shotId = action.shotId ?? pickNarrationShot(script);
+					const shotId = action.shotId ?? pickRettsShot(script);
 					if (!shotId) throw new Error("无可重录镜头");
 					const r = await api.retts(base, runId, shotId, action.instruction ?? "", action.voice);
 					if (!r.ok) throw new Error(r.error ?? "retts 被拒");
 					facts.rettsShots.push(shotId);
-					log(`${testCase.id} 重录 ${shotId} 旁白已派发，等待完成…`);
+					log(`${testCase.id} 重录 ${shotId} 台词/旁白已派发，等待完成…`);
 					const after = await waitIdle(base, runId, args, log);
 					facts.rettsResults = [...(facts.rettsResults ?? []), { shotId, status: after.status }];
 					break;

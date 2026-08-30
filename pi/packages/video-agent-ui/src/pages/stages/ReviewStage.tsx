@@ -1,5 +1,5 @@
 /**
- * REVIEW 阶段：审片员 QA 裁决 —— 总分环 + 五轴评分条 + 跨镜一致性预检 + 逐镜三态标注与重做。
+ * REVIEW 阶段：审片员 QA 裁决 —— 总分环 + 六轴评分条（含物理正确性/文字质量审核）+ 跨镜一致性预检 + 逐镜三态标注与重做。
  */
 
 import { useEffect, useState } from "react";
@@ -16,8 +16,9 @@ const AXIS_LABEL: Record<AxisId, string> = {
 	briefFit: "简报契合",
 	visualConsistency: "视觉一致性",
 	pacing: "节奏",
+	physicalAccuracy: "物理正确性",
 	audioSync: "声画同步",
-	textQuality: "文案质量",
+	textQuality: "文字质量",
 };
 
 const OVERALL: Record<QaVerdict["overall"], { label: string; cls: string }> = {
