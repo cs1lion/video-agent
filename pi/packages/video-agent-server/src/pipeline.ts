@@ -2252,10 +2252,13 @@ export function normalizeScript(script: ScriptDoc, opts: GenerationOptions): Scr
 				// 台词子结构清洗失败 → 整镜回落旁白语义，不留"台词态却无台词"的悬空状态
 				const dialogue = baseMode === "dialogue" ? sanitizeDialogue(s.dialogue) : null;
 				const audioMode: AudioMode = baseMode === "dialogue" && dialogue === null ? "narration" : baseMode;
+				// 一镜一主语音（深审发现）：台词镜的旁白字段必须为空——LLM 会把收尾旁白塞进
+				// 台词镜的 narrationZh，导致该镜旁白被 A3 语义丢弃、收尾旁白"消失"
+				const isDialogue = audioMode === "dialogue";
 				return {
 					id: typeof s.id === "string" && s.id ? s.id : `SH${String(i + 1).padStart(2, "0")}`,
-					narrationZh: typeof s.narrationZh === "string" ? s.narrationZh : "",
-					narrationEn: typeof s.narrationEn === "string" ? s.narrationEn : "",
+					narrationZh: isDialogue ? "" : typeof s.narrationZh === "string" ? s.narrationZh : "",
+					narrationEn: isDialogue ? "" : typeof s.narrationEn === "string" ? s.narrationEn : "",
 					visual: s.visual,
 					durationSec: opts.clipDurationSec,
 					audioMode,

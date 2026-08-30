@@ -204,6 +204,8 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 	}
 
 	// 3.6 A4 时长对齐·过短分支：尾部补静音到镜长（留白让口型自然闭合）
+	// 原始人声时长（停顿后、垫尾前）先落袋——export 的镜头节奏用它，垫尾静音不进镜长
+	dialogue.rawDurationSec = synth.durationSec;
 	if (synth.durationSec < targetSec - 0.05) {
 		const paddedRel = `assets/tts-dialogue-${shot.id}-pad.mp3`;
 		try {

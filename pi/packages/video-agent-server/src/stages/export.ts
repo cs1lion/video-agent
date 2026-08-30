@@ -84,8 +84,11 @@ export async function stageExport(
 	for (const shot of keptShots) {
 		const i = scriptDoc.shots.indexOf(shot);
 		const audioRel = audios![i] ? path.relative(run.dir, audios![i]!) : null;
-		// 台词镜无旁白 TTS 文件，用回写的实测台词时长做节奏锚点（A2 落盘 audioDurationSec）
-		const dur = audioRel ? await probeDuration(audioRel, run.dir) : (shot.dialogue?.audioDurationSec ?? null);
+		// 台词镜无旁白 TTS 文件：节奏锚点用「原始台词人声时长」（垫尾静音不算镜长——
+		// 2026-08-30 反馈：pad 版把 2s 台词垫到 5s，成片后半段大段死寂被听成"没声音"）
+		const dur = audioRel
+			? await probeDuration(audioRel, run.dir)
+			: (shot.dialogue?.rawDurationSec ?? shot.dialogue?.audioDurationSec ?? null);
 		narrDur.push(dur);
 		shotDur.push(
 			dur === null
@@ -246,9 +249,14 @@ export async function stageExport(
 		if (keptShots[i]!.audioMode === "dialogue") {
 			// 台词镜：字幕=台词，起点=本镜切点、覆盖约整镜（与口型/铺入的 TTS 同步；
 			// 2026-08-30 反馈"台词几乎看不到"——此前只有旁白上字幕）。
-			// 终点收进下一镜切点（转场重叠区提前撤字幕，防叠字——结构审核实测抓到过 0.2s 重叠）
+			// 终点三重收束：≤镜长-0.3、≤下一镜切点-0.1、≤台词人声时长+0.8s
+			// （深审发现：按整镜停留 4.7s，台词 1.7s 说完后字幕挂着不走）
 			const nextShotStart = i + 1 < keptShots.length ? shotStart[i + 1]! : Number.POSITIVE_INFINITY;
-			const dur = Math.max(0.8, Math.min(shotDur[i]! - 0.3, nextShotStart - shotStart[i]! - 0.1));
+			const speechSec = keptShots[i]!.dialogue?.rawDurationSec ?? keptShots[i]!.dialogue?.audioDurationSec ?? shotDur[i]!;
+			const dur = Math.max(
+				0.8,
+				Math.min(shotDur[i]! - 0.3, nextShotStart - shotStart[i]! - 0.1, speechSec + 0.8),
+			);
 			subtitles.push({ start: shotStart[i]!, duration: dur, text: narrationTexts[i]! });
 			continue;
 		}

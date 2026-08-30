@@ -41,6 +41,9 @@ export interface ShotDialogue {
 	/** 跟读校验未过 → dubOver 模式：口型视频保留、export 用 TTS 原声覆盖其音轨
 	 *  （模型模仿节奏说乱语是 agnes reference 的模型级行为，声音正确性优先于口型同步） */
 	dubOver?: boolean;
+	/** 原始台词人声时长（停顿插入后、垫尾前；生成链路回写）——镜头节奏锚点，
+	 *  避免 export 把「垫尾静音段」算进镜长造成成片大段死寂 */
+	rawDurationSec?: number;
 	/** CloudBase 托管公开 URL（生成链路回写，可复用避免重复上传） */
 	audioUrl?: string;
 }
