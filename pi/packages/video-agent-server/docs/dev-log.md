@@ -1274,3 +1274,15 @@ SH03 i2v 失败自动降级 t2v、SH04 reference 失败自动降旁白，两条�
   下一步可查 reference 提交失败的具体 4xx 原因（是否与 key 有关）。
 - physicalAccuracy 65 的 C4 伪影是"审核抓到"而非"生成修复"——重做闭环（reshot 带
   「物理:」理由自动派发）留给下一轮。
+
+## 2026-08-30（续四）：批次收尾——坏 key 探针实锤 + summary 字段补齐
+
+- **agnes-video-3 key 失效实锤**：批次 6/7 套出现认证失效事件；用免费状态端点探针
+  （`agnesapi?video_id=<不存在>`，不创建任务不烧配额）：key1 对照 404「task not found」=
+  认证通过；key3 401「无效的令牌」。→ 运维换 key（人手）。系统侧观察：失败任务被制片主任
+  改投空闲池，7/7 仍全 PASS——多池容错的真实价值兑现。可选后续（记录未做）：连续 401
+  的池做进程内隔离，省掉每轮一次失败提交。
+- **harness 小修**：批次 summary.json 条目补 `productionShots` / `dialogueShotCount`
+  （此前只在用例 report.md，跨批次对比需要翻子目录）。
+- **共享包 video-agent 39/39**（vitest）通过——至此本次大修涉及的三层（共享包/server/UI）
+  测试全部亲跑为绿。

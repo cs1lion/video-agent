@@ -443,7 +443,7 @@ async function runCase(testCase, args, batchDir) {
 		title: testCase.title,
 		audioForm: testCase.audioForm,
 		dir: path.basename(caseDir),
-		run: { id: runId, status: run.status, verdict: run.verdict, stages: run.stages },
+		run: { id: runId, status: run.status, verdict: run.verdict, stages: run.stages, productionShots, dialogueShotCount },
 		assert,
 		timings,
 		collected: { files: collected.files },
