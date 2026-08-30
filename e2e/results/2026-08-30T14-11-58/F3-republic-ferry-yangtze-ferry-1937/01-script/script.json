@@ -1,0 +1,77 @@
+{
+	"title": "《船往上游》",
+	"logline": "1937年冬长江夜航江轮上，船员夫妻巡查时局、汽笛声中并肩望江，邀你共溯长江旧梦",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "On the worn wooden deck of a 1937 winter Yangtze night ferry, Xiuzhen counts lined-up life rings under a kerosene hanging lamp, clutching a tattered old handkerchief.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "秀珍",
+				"lines": {
+					"zh": "这救生圈又少了俩，世道不太平啊",
+					"en": "Two life rings are missing again, these are troubled times."
+				},
+				"emotion": "忧虑",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 4.776,
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfwjlw8-3/tts-SH01.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "声线沉郁微哑，语速缓滞，气息带江风滞重感，每字稍留气口，衬出冬夜江轮的冷寂肃杀"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Chen Haisheng, the 45-year-old boatswain with tanned skin and stubbly white beard, checks thick mooring ropes tied to the bollard, wearing a worn dark blue uniform.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "陈海生",
+				"lines": {
+					"zh": "缆绳绑得牢，咱这船稳得很",
+					"en": "The mooring ropes are tied tight, our ship is steady as can be."
+				},
+				"emotion": "宽慰",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 3.216,
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfwjlw8-3/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "声线粗粝带暖，语速平稳，重音落在劳作惯有的顿挫处，气息沉实，衬出水手长的风霜与可靠"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "这班船连夜西行，送人渡乱世",
+			"narrationEn": "This ferry sails west through the night, carrying people through troubled times.",
+			"visual": "The camera pans across the ferry deck, showing rows of life rings, wooden bollards, and flickering river lights visible through the misty Yangtze air.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "声线克制沉缓，语速稍慢，‘连夜’‘乱世’重读，‘渡’字稍拖长带叹息，尾音轻收，藏住时局愁绪"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "船往上游走，人往心里回",
+			"narrationEn": "The ship sails upstream, while people drift back to their hearts.",
+			"visual": "Chen and Xiuzhen stand side by side at the deck railing, looking out at the distant river lights, Yangtze mist swirling around them as a distant ferry horn sounds.",
+			"durationSec": 5,
+			"audioMode": "silent",
+			"ttsDirection": "声线放缓放柔，语速轻缓，‘往心里回’重读带暖意，‘回’字尾音稍扬，气息轻浮，像望着江面轻轻喟叹"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "邀你登船，共溯长江旧梦",
+			"narrationEn": "Board the ship and revisit the old dreams of the Yangtze together.",
+			"visual": "The vintage 1930s Yangtze ferry sails through the misty night river, warm lights glowing from its deck, with text 'Yangtze Memory Vintage Ferry Night Cruise' displayed on screen.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "声线温润带笑，语速稍快上扬，‘共溯长江旧梦’重读，尾音轻扬带邀约感，气息舒展，衬出旧梦暖意与邀约诚心"
+		}
+	]
+}

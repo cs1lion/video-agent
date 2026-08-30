@@ -1,0 +1,56 @@
+{
+	"overall": "pass",
+	"score": 85,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 95
+		},
+		{
+			"id": "visualConsistency",
+			"score": 90
+		},
+		{
+			"id": "pacing",
+			"score": 92
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 95
+		},
+		{
+			"id": "characterConsistency",
+			"score": 92
+		},
+		{
+			"id": "audioSync",
+			"score": 33
+		},
+		{
+			"id": "textQuality",
+			"score": 95
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "深巷面馆夜景氛围到位，招牌文字清晰，旁白字幕完整，物理与人物无明显异常"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "老板形象与设定吻合，对白字幕完整，室内光线与表情自然，无物理或文字问题"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "女代驾司机吃面场景符合剧情，制服与短发造型一致，字幕完整，面条物理特性正常"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 3,
+		"issues": []
+	}
+}

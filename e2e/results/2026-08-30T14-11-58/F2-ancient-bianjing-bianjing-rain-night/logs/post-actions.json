@@ -1,0 +1,31 @@
+{
+	"designReview": {
+		"count": 6,
+		"fail": 0,
+		"warn": 0
+	},
+	"keyframeReview": {
+		"count": 5,
+		"fail": 0,
+		"warn": 0
+	},
+	"reshotShots": [],
+	"rettsShots": [],
+	"composeCuts": [],
+	"portraitExports": [],
+	"kitchen": null,
+	"applied": [],
+	"metrics": {
+		"quotaUtilization": null,
+		"effectiveThroughput": 0.69,
+		"p0LatencyP95": null,
+		"wasteRate": null,
+		"rejectionRate": null,
+		"consumedSec": 0,
+		"effectiveSec": 25,
+		"wastedSec": 0,
+		"completedClips": 5,
+		"failedClips": 0
+	},
+	"errors": []
+}

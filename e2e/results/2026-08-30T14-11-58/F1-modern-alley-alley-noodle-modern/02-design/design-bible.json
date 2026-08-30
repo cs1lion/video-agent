@@ -1,0 +1,89 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "面馆老板",
+			"design": "55-year-old male noodle shop owner with graying crew cut, wearing dark gray knit vest with rolled-up sleeves, white towel draped over his shoulder, warm tungsten lighting highlights his weathered skin texture and relaxed expression, realistic cinematic style, front full-body shot suitable for close-up interaction scene with the driver",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "代驾司机小周",
+			"design": "28-year-old female designated driver with short black hair, wearing dark blue reflective driving vest, neat and brisk demeanor after a night of work, warm tungsten lighting softens her slightly tired facial features, realistic cinematic style, front full-body shot for key interaction scene with the shop owner",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "旧窗边方桌",
+			"design": "Weathered old square wooden table placed by the shop window, surface has faint water stains and chopstick marks, warm yellow bulb light casts soft shadows on it, realistic worn wood texture, side angle shot to show its placement in the intimate shop environment",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "红辣子罐",
+			"design": "Small matte ceramic chili jar filled with bright red chili flakes, placed on the counter near the boss, warm lighting highlights the vivid red color of the chili, realistic ceramic texture, close-up shot available for key interaction scene when the driver asks for extra chili",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "白瓷盛面碗",
+			"design": "Plain white ceramic noodle bowl filled with steaming hot noodles, chopsticks resting on the edge, warm steam diffused under the tungsten bulb, realistic ceramic and food texture, close-up shot to show the warmth and comfort of the noodle",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "深夜深巷面馆内景",
+			"design": "Interior of the late-night noodle shop in a deep city alley, warm yellow tungsten bulb as the main light source, white tiled walls, steaming stove in the background, faint cool ambient light from the alley entrance outside the window, low-saturation medium-high contrast color grade, wide shot to show the whole warm interior space",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "面馆门口深巷外景",
+			"design": "Deep alley outside the noodle shop at midnight, dim warm light from the shop's weathered sign illuminates the narrow alley, cold blue-gray tone for the night environment, faint ambient night sounds implied, realistic urban night atmosphere, medium shot to show the contrast between the cold alley and the warm shop interior",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png"
+		},
+		{
+			"id": "SC03",
+			"category": "scene",
+			"name": "面馆灶台区域",
+			"design": "Stove area inside the noodle shop, steam rising steadily from the boiling noodle pot, warm light reflects off the stainless steel pot surface, tiled wall behind with faint oil stains, realistic texture, close-up shot to capture the steam and warm working atmosphere of the late-night shop",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC03.png"
+		}
+	],
+	"generatedAt": "2026-08-30T14:12:56.226Z"
+}

@@ -1,0 +1,183 @@
+{
+	"id": "run-mtfw1qb6-1",
+	"dir": "C:\\Users\\18712\\OneDrive\\桌面\\piagent-glm\\.pi-studio\\video-agent-runs\\2026-08-30-14-11-写实真人剧情短片：现代中国某城市的深夜深巷面馆。-run-mtfw1qb6-1",
+	"brief": {
+		"creative": {
+			"logline": "写实真人剧情短片：现代中国某城市的深夜深巷面馆。两句旁白开场与收尾（交代这条巷子二十年只卖一碗面），中间是老板与刚收车的女代驾司机小周的一来一往对白——「还是老位置？」「老位置，多加一勺辣」。旁白与对白交织，讲一碗面的默契。",
+			"keyMessage": "深巷里的灯，为晚归的人留着。"
+		},
+		"intent": {},
+		"generationDirectives": {
+			"script": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"visual": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"clips": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"audio": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"export": {
+				"promptFragment": "",
+				"sources": []
+			}
+		},
+		"interviewLog": [],
+		"generationOptions": {
+			"resolution": "720p",
+			"aspectRatio": "16:9",
+			"shotCount": 3,
+			"clipDurationSec": 5,
+			"fps": 24,
+			"motionIntensity": "low",
+			"detailBoost": true,
+			"promptLanguage": "zh",
+			"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+			"audioDrive": "dialogue"
+		},
+		"coSpace": {
+			"characters": [
+				{
+					"name": "老板",
+					"description": "55 岁男性面馆老板，花白寸头，深灰色毛线背心配白毛巾搭肩，袖口卷起"
+				},
+				{
+					"name": "小周",
+					"description": "28 岁女性代驾司机，短黑发，深蓝色代驾反光背心，说话利落"
+				}
+			],
+			"scenes": [
+				{
+					"name": "深巷面馆",
+					"description": "写实深夜小面馆：暖黄灯泡、瓷砖墙、灶台蒸汽、窗边两张旧方桌"
+				}
+			],
+			"ideas": [],
+			"musicBrief": "无音乐，只留灶台蒸汽与巷子夜声。"
+		}
+	},
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 18,
+		"retries": 0,
+		"perAdapter": {
+			"step-tts": 3,
+			"agnes-video-3": 1,
+			"agnes-video-2": 1,
+			"agnes-video-1": 1
+		},
+		"cost": {
+			"spent": 21.16,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 85,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 95
+			},
+			{
+				"id": "visualConsistency",
+				"score": 90
+			},
+			{
+				"id": "pacing",
+				"score": 92
+			},
+			{
+				"id": "physicalAccuracy",
+				"score": 95
+			},
+			{
+				"id": "characterConsistency",
+				"score": 92
+			},
+			{
+				"id": "audioSync",
+				"score": 33
+			},
+			{
+				"id": "textQuality",
+				"score": 95
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "深巷面馆夜景氛围到位，招牌文字清晰，旁白字幕完整，物理与人物无明显异常"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "老板形象与设定吻合，对白字幕完整，室内光线与表情自然，无物理或文字问题"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "女代驾司机吃面场景符合剧情，制服与短发造型一致，字幕完整，面条物理特性正常"
+			}
+		],
+		"subtitles": {
+			"present": true,
+			"lines": 3,
+			"issues": []
+		}
+	},
+	"videoUrl": "/api/runs/run-mtfw1qb6-1/files/assets/final.mp4",
+	"images": [],
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"redoActive": null,
+	"finalFile": "final.mp4"
+}

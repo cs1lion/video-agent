@@ -1,0 +1,59 @@
+{
+	"title": "深巷的灯",
+	"logline": "深夜深巷面馆里，代驾司机小周与老板二十年不变的默契，用一碗热面暖慰所有晚归人。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "这条深巷，二十年只卖一碗面",
+			"narrationEn": "This dark alley has only served one bowl of noodles for twenty years",
+			"visual": "A warm yellow bulb illuminates the weathered sign of the small noodle shop at the mouth of the dark alley, steam curls out from the shop's stove, the narrow alley is quiet and dim.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "沉静感慨，语速偏慢，『深巷』后稍作停顿，『二十年』重读，气息平稳带暖意，尾音轻缓落下"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The 55-year-old boss with a graying crew cut, dark gray knit vest and white towel draped over his rolled-up sleeves, wipes the counter with a cloth and looks up at Zhou who just pushed open the shop door, the shop has tiled walls and two old square tables by the window, warm yellow light fills the space.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "老板",
+				"lines": {
+					"zh": "还是老位置？",
+					"en": "Same old seat?"
+				},
+				"emotion": "温和",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 1.536,
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfw1qb6-1/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "熟稔放松，语速平稳适中，尾音带暖的笑意，气息自然带烟火气，像刚掀开蒸笼的随意"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The 28-year-old Zhou with short black hair and a dark blue reflective driving vest sits down at the old square table by the window, a steaming bowl of noodles topped with extra chili is placed in front of her, the warm yellow light of the shop glows softly.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "小周",
+				"lines": {
+					"zh": "老位置，多加一勺辣",
+					"en": "Same old seat, extra chili please"
+				},
+				"emotion": "利落",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 1.848,
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtfw1qb6-1/tts-SH03.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "卸下疲惫的轻快，语速稍快，『多加一勺辣』重读带笑意，气息轻缓，尾音上扬，满是收工后吃上热饭的满足"
+		}
+	]
+}

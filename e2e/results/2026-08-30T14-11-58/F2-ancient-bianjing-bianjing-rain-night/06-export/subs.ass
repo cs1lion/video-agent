@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.07,Sub,,0,0,0,,初更时分，汴京夜雨初歇。
+Dialogue: 0,0:00:04.47,0:00:08.32,Sub,,0,0,0,,三次秋闱，皆名落孙山。
+Dialogue: 0,0:00:08.62,0:00:13.32,Sub,,0,0,0,,我打三十年更，听遍全城梦话。
+Dialogue: 0,0:00:13.62,0:00:17.30,Sub,,0,0,0,,这灯火哪问功名，照人一样亮。
+Dialogue: 0,0:00:17.40,0:00:21.35,Sub,,0,0,0,,灯火不问功名，照人一样亮。

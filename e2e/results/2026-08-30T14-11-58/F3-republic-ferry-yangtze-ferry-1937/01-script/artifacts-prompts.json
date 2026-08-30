@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic medium close-up of Xiuzhen, 42-year-old female with short gray-black bob hair, wearing dark blue cloth shirt and plain apron, holding a crumpled old handkerchief, counting lined life rings on the worn wooden deck of a 1937 winter Yangtze night ferry, low warm side light from a flickering kerosene hanging lantern mixed with cool diffused ambient light from river fog, slow dolly push-in to emphasize her worried expression, gritty realistic period drama style with desaturated cool blue-green celluloid film tone and fine grain, 16:9 composition. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium shot of Chen Haisheng, 45-year-old male Yangtze ferry boatswain with tanned skin, stubbly white beard, wearing worn dark blue old uniform coat with rough work-worn texture and faint stains, dark work trousers and sturdy leather boots, checking thick mooring ropes tied to wooden bollards on the 1937 winter Yangtze night ferry deck, low warm key light from a kerosene lantern highlighting his weathered hands, cool rim light from distant shore lights, slow handheld follow shot tracking his hand movement then holding on his calm expression, gritty realistic period drama style with desaturated cool blue-green celluloid film tone and fine grain, 16:9 composition. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic wide environmental slow pan left shot across the 1937 winter Yangtze night ferry deck, showing weathered textured wood planks, rows of neatly lined worn rubber life rings with faint scuff marks, weathered wooden bollards with thick mooring ropes, flickering warm kerosene lanterns, blurred distant shore lights visible through swirling river fog, mixed warm lantern glow and cool diffused fog ambient light, slow pan left to show full spatial depth of the ferry, gritty realistic period drama style with desaturated cool blue-green celluloid film tone and fine grain, 16:9 composition. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic medium shot of Chen Haisheng, 45-year-old male Yangtze ferry boatswain with tanned skin, stubbly white beard, wearing worn dark blue old uniform coat with rough work-worn texture and faint stains, dark work trousers and sturdy leather boots, and Xiuzhen, 42-year-old female with short gray-black bob hair, wearing dark blue cloth shirt and plain apron, holding a crumpled old handkerchief, standing side by side at the ferry deck railing looking out at distant river lights, swirling Yangtze mist around their ankles, distant ferry horn sounding faintly in the background, low warm side light from kerosene lanterns rim-lighting their silhouettes, cool ambient light from fog and shore lights, slow dolly pull-back from their backs to reveal the misty river view, gritty realistic period drama style with desaturated cool blue-green celluloid film tone and fine grain, 16:9 composition. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic wide shot of the vintage 1930s Yangtze ferry sailing upstream through the misty night river, warm golden glow spilling from its wooden deck windows and kerosene lanterns, blurred distant shore lights visible through swirling river fog, cool blue-green ambient light from the fog, slow crane shot ascending alongside the ferry to show its hull cutting through the dark water, gritty realistic period drama style with desaturated cool blue-green celluloid film tone and fine grain, 16:9 composition. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

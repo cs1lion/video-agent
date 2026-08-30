@@ -1,0 +1,17 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide shot of a weathered noodle shop sign illuminated by a warm tungsten bulb at the mouth of a dim deep city alley, thin steam curling out from the shop's boiling noodle pot, the narrow alley is quiet with faint cool ambient night light seeping from the alley entrance, slow dolly push-in movement towards the sign to highlight its worn texture, low-saturation medium-high contrast neo-noir color grade with warm yellow lit areas and cool blue-gray shadow zones, realistic urban night atmosphere. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium shot of the 55-year-old male noodle shop owner with graying crew cut, wearing dark gray knit vest with rolled-up sleeves, white towel draped over his shoulder, wiping the counter with a cloth and looking up gently at the person entering the shop, white tiled walls, two old square tables by the window and faint steam from the stove area in the background, warm tungsten side light highlights his weathered skin texture, subtle handheld drift movement to match his relaxed expression, low-saturation medium-high contrast realistic lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic medium shot of the 28-year-old female designated driver with short black hair, wearing dark blue reflective driving vest, sitting neatly at the old square table by the window, a steaming bowl of noodles topped with extra chili placed in front of her, warm tungsten light glows softly over the scene, faint steam from the stove area visible in the background, slow dolly push-in movement towards the bowl to capture the warm working atmosphere, low-saturation medium-high contrast realistic slice-of-life style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

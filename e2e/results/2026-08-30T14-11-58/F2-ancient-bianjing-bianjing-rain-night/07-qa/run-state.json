@@ -1,0 +1,194 @@
+{
+	"id": "run-mtfw8p4e-2",
+	"dir": "C:\\Users\\18712\\OneDrive\\桌面\\piagent-glm\\.pi-studio\\video-agent-runs\\2026-08-30-14-17-写实真人剧情短片：北宋汴京，虹桥边的夜市落着细雨-run-mtfw8p4e-2",
+	"brief": {
+		"creative": {
+			"logline": "写实真人剧情短片：北宋汴京，虹桥边的夜市落着细雨。落魄书生沈砚之在灯笼摊前与更夫老周避雨对饮，书生叹科举三度落第，更夫讲自己打了三十年更「听遍全城的梦话」。三句旁白交代时辰与雨势，对白朴素见心。写实宋代市井：油纸灯笼、湿石板路、酒旗、乌篷檐滴雨。",
+			"keyMessage": "灯火不问功名，照人一样亮。"
+		},
+		"intent": {},
+		"generationDirectives": {
+			"script": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"visual": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"clips": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"audio": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"export": {
+				"promptFragment": "",
+				"sources": []
+			}
+		},
+		"interviewLog": [],
+		"generationOptions": {
+			"resolution": "720p",
+			"aspectRatio": "16:9",
+			"shotCount": 5,
+			"clipDurationSec": 5,
+			"fps": 24,
+			"motionIntensity": "low",
+			"detailBoost": true,
+			"promptLanguage": "zh",
+			"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+			"audioDrive": "dialogue"
+		},
+		"coSpace": {
+			"characters": [
+				{
+					"name": "沈砚之",
+					"description": "32 岁男性书生，洗旧的天青色直裰，束发戴小冠，眉目清瘦，手指有茧"
+				},
+				{
+					"name": "老周",
+					"description": "58 岁男性更夫，灰褐色短褐衣，腰挂铜锣与灯笼，花白胡须，脚步稳"
+				}
+			],
+			"scenes": [
+				{
+					"name": "虹桥夜市",
+					"description": "写实北宋夜市：油纸灯笼串、湿漉漉石板路反光、酒旗、木檐滴雨、远处桥影"
+				}
+			],
+			"ideas": [],
+			"musicBrief": "雨声环境音，远处隐约更锣，收尾一声琴。"
+		}
+	},
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 21,
+		"retries": 1,
+		"perAdapter": {
+			"step-tts": 5,
+			"agnes-video-3": 1,
+			"agnes-video-1": 2,
+			"agnes-video-2": 1,
+			"agnes-video-4": 1
+		},
+		"cost": {
+			"spent": 29.35,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 88,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 92
+			},
+			{
+				"id": "visualConsistency",
+				"score": 95
+			},
+			{
+				"id": "pacing",
+				"score": 90
+			},
+			{
+				"id": "physicalAccuracy",
+				"score": 100
+			},
+			{
+				"id": "characterConsistency",
+				"score": 100
+			},
+			{
+				"id": "audioSync",
+				"score": 40
+			},
+			{
+				"id": "textQuality",
+				"score": 100
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH04",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH05",
+				"verdict": "ok",
+				"reason": "通过"
+			}
+		],
+		"subtitles": {
+			"present": true,
+			"lines": 5,
+			"issues": []
+		}
+	},
+	"videoUrl": "/api/runs/run-mtfw8p4e-2/files/assets/final.mp4",
+	"images": [],
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"redoActive": null,
+	"finalFile": "final.mp4"
+}

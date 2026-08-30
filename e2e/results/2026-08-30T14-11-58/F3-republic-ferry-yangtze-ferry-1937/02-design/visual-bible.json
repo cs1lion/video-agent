@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"period drama",
+		"realistic",
+		"atmospheric",
+		"historical",
+		"location-based",
+		"gritty",
+		"noir-tinged"
+	],
+	"palette": [
+		"#1a2f3a",
+		"#8b5a2b",
+		"#ffcc66",
+		"#4a5568",
+		"#2d3748",
+		"#d4a373"
+	],
+	"lighting": "Soft warm kerosene lantern glow as key light, mixed with cool diffused ambient light from river fog and distant shore lights, subtle rim lighting on the couple to separate them from the dark background.",
+	"grade": "Desaturated cool blue-green base tone with lifted warm midtones, fine grain added to emulate 1930s celluloid film stock, gentle highlight roll-off to match period cinematography."
+}
