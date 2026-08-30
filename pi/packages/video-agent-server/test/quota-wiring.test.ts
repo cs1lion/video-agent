@@ -36,16 +36,24 @@ let probeSec: number | null = 3.6;
 class FakeQueue {
 	submitCalls = 0;
 	failVideo = false;
+	/** 只让第 1 次视频提交失败（降级重试链路拨杆：重试应重新选池+换 key） */
+	failFirstVideo = false;
 	/** 每次提交收到的 adapterId（多 key 并发：账本选池 → 执行走对应 key 的账实相符锁） */
 	adapterIds: (string | undefined)[] = [];
 	private seq = 0;
+	private videoSeq = 0;
 	private readonly jobs = new Map<string, unknown>();
 	submit(input: { kind: "image" | "video" | "tts" | "music"; outputName: string; adapterId?: string }, projectDir: string) {
 		this.submitCalls += 1;
 		this.adapterIds.push(input.adapterId);
 		const id = `J${this.seq++}`;
+		let videoSeq = 0;
+		if (input.kind === "video") {
+			this.videoSeq += 1;
+			videoSeq = this.videoSeq;
+		}
 		const relative = path.posix.join("assets", `${input.outputName}.mp4`);
-		if (input.kind === "video" && this.failVideo) {
+		if (input.kind === "video" && (this.failVideo || (this.failFirstVideo && videoSeq === 1))) {
 			const job = { id, status: "failed" as const, filePath: undefined, relativePath: relative, attemptLog: [] as unknown[] };
 			this.jobs.set(id, job);
 			return job;
@@ -75,30 +83,37 @@ class FakeQueue {
 
 type JsonFixture = Record<string, unknown>;
 
-const SCRIPT_FIXTURE: JsonFixture = {
-	title: "深夜气泡水",
-	logline: "疲惫插画师靠一口冰爽回神",
-	shots: [
-		{
-			id: "SH01",
-			narrationZh: "凌晨一点，小林灌下最后一口冰爽。",
-			narrationEn: "1 a.m., Lin downs the last icy sip.",
-			visual: "小林在深夜办公室敲键盘，仰头喝一口气泡水",
-			durationSec: 4,
-		},
-		{
-			id: "SH02",
-			narrationZh: "窗外的城市仍在降温。",
-			narrationEn: "Outside, the city keeps cooling.",
-			visual: "小林在冷色落地窗前转身",
-			durationSec: 2,
-		},
-	],
+const SHOT_FIXTURES: Record<string, JsonFixture> = {
+	SH01: {
+		id: "SH01",
+		narrationZh: "凌晨一点，小林灌下最后一口冰爽。",
+		narrationEn: "1 a.m., Lin downs the last icy sip.",
+		visual: "小林在深夜办公室敲键盘，仰头喝一口气泡水",
+		durationSec: 4,
+	},
+	SH02: {
+		id: "SH02",
+		narrationZh: "窗外的城市仍在降温。",
+		narrationEn: "Outside, the city keeps cooling.",
+		visual: "小林在冷色落地窗前转身",
+		durationSec: 2,
+	},
 };
+
+/** 本轮脚本的镜头清单（按用例拨动；默认两镜） */
+let scriptShotIds = ["SH01", "SH02"];
+
+function scriptFixture(): JsonFixture {
+	return {
+		title: "深夜气泡水",
+		logline: "疲惫插画师靠一口冰爽回神",
+		shots: scriptShotIds.map((id) => SHOT_FIXTURES[id]!),
+	};
+}
 
 function llmStub(user: unknown): JsonFixture {
 	const text = (typeof user === "string" ? user : JSON.stringify(user)).replace(/\\/g, "");
-	if (text.includes("narrationZh")) return SCRIPT_FIXTURE;
+	if (text.includes("narrationZh")) return scriptFixture();
 	return {};
 }
 
@@ -293,6 +308,75 @@ describe("B1 配额接线（stageClips 层）", () => {
 		assert.equal(queue.submitCalls, 4);
 		assert.ok(Math.abs(quota.remainingSec(VIDEO_QUOTA_POOL)! - 500) < 1e-6, `失败必须全额退还，实际剩 ${quota.remainingSec(VIDEO_QUOTA_POOL)}`);
 		assert.equal(quota.snapshot()[0]!.inFlight, 0);
+	});
+
+	it("多 key 账实相符：两镜分投两池，各池按实测独立结算", async () => {
+		probeSec = 3.6;
+		const quota = new QuotaLedger([
+			{ id: "agnes-video-1", keyType: "enterprise", rpmCap: 2, dailyQuotaSec: 500, adapterId: "agnes-video-1" },
+			{ id: "agnes-video-2", keyType: "enterprise", rpmCap: 2, dailyQuotaSec: 500, adapterId: "agnes-video-2" },
+		]);
+		const ctx = makeCtx(quota);
+		const record = await bootRun(ctx);
+		const queue = new FakeQueue();
+		const result = await clips.stageClips(makeSc(record, ctx, queue));
+		assert.equal(result.clipFiles.length, 2);
+		assert.ok(result.clipFiles.every((f) => f !== null), "两镜都应出片");
+		assert.deepEqual(
+			queue.adapterIds,
+			["agnes-video-1", "agnes-video-2"],
+			"两镜应分别投给两池绑定的 key（pickPool 分池 → 不同 key 并行）",
+		);
+		assert.ok(Math.abs(quota.remainingSec("agnes-video-1")! - 496.4) < 1e-6, `池1 应按实测结算剩 496.4，实际 ${quota.remainingSec("agnes-video-1")}`);
+		assert.ok(Math.abs(quota.remainingSec("agnes-video-2")! - 496.4) < 1e-6, `池2 应按实测结算剩 496.4，实际 ${quota.remainingSec("agnes-video-2")}`);
+		assert.deepEqual(
+			quota.snapshot().map((p) => p.inFlight),
+			[0, 0],
+		);
+	});
+
+	it("降级重试换池：新预留落另一池 → 重试提交跟着换 key（不得沿用旧池 adapter）", async () => {
+		probeSec = 3.6;
+		const quota = new QuotaLedger([
+			{ id: "agnes-video-1", keyType: "enterprise", rpmCap: 2, dailyQuotaSec: 500, adapterId: "agnes-video-1" },
+			{ id: "agnes-video-2", keyType: "enterprise", rpmCap: 2, dailyQuotaSec: 500, adapterId: "agnes-video-2" },
+		]);
+		const ctx = makeCtx(quota);
+		// 单镜（须在 bootRun 前拨动：script.json 由 bootRun 的脚本阶段生成）：
+		// attempt0 只消耗池1 的令牌，重试 pickPool 必然换到池2（多镜时令牌占用对齐会让换池不确定）
+		scriptShotIds = ["SH01"];
+		const record = await bootRun(ctx);
+		const queue = new FakeQueue();
+		queue.failFirstVideo = true;
+		try {
+			await clips.stageClips(makeSc(record, ctx, queue));
+		} finally {
+			scriptShotIds = ["SH01", "SH02"];
+		}
+		assert.deepEqual(
+			queue.adapterIds,
+			["agnes-video-1", "agnes-video-2"],
+			"重试的新预留落在另一池，提交必须跟着换 key（闭包捕获旧预留 = 账实不符）",
+		);
+		// 旧池预留已全额退还；新池按实测结算
+		assert.ok(Math.abs(quota.remainingSec("agnes-video-1")! - 500) < 1e-6, `池1 应退还后剩 500，实际 ${quota.remainingSec("agnes-video-1")}`);
+		assert.ok(Math.abs(quota.remainingSec("agnes-video-2")! - 496.4) < 1e-6, `池2 应按实测结算剩 496.4，实际 ${quota.remainingSec("agnes-video-2")}`);
+	});
+
+	it("多池预检：所有池都不够一镜 → 零派发，预算告警口径 = 各池剩余之和", async () => {
+		probeSec = 3.6;
+		const quota = new QuotaLedger([
+			{ id: "agnes-video-1", keyType: "enterprise", rpmCap: 5, dailyQuotaSec: 2, adapterId: "agnes-video-1" },
+			{ id: "agnes-video-2", keyType: "enterprise", rpmCap: 5, dailyQuotaSec: 2, adapterId: "agnes-video-2" },
+		]);
+		const ctx = makeCtx(quota);
+		const record = await bootRun(ctx);
+		const queue = new FakeQueue();
+		await assert.rejects(() => clips.stageClips(makeSc(record, ctx, queue)), /配额不足/);
+		assert.equal(queue.submitCalls, 0, "任一池都不够一镜时不许任何请求进队列（宁停勿撞 429）");
+		const alert = record.events.find((e) => e.text.includes("预算告警"));
+		assert.ok(alert, "必须留预算告警事件");
+		assert.ok(alert!.text.includes("剩 4s"), `告警剩余应为两池之和 4s（此前硬编码单池会显示 0s），实际：${alert!.text}`);
 	});
 
 	it("RPM 暂缺 → 等令牌补充后重试成功（而不是立即失败）", async () => {

@@ -1172,3 +1172,50 @@ prompt——免费期瓶颈是 RPM，少一次误判重做 = 省一个 30s 提�
 - **C1 台词镜 0 不是产品回归**：该批次 script.json 无 `audioMode` 字段 = 打进了
   不含 A1/A2 的旧代码服务（9 个批次全部 base=8787），与 C7 同根因，已被
   F1 预检（`/api/health` features）阻断。
+
+## 2026-08-30（续二）：多 key 并发接线收尾 —— 重试换 key、多池口径统一、观察面补全
+
+**起因**：`68502d5` 把「一 key 一池 + 批量提交」接上了主干，但复盘发现三处
+半成品/缺陷，本轮补完（目标：多 key 并发从"账本会记"到"请求真的走不同 key 且全链口径一致"）。
+
+### 修复 1：降级重试沿用旧池 adapter（账实不符，最重）
+
+`stageClips` Phase-2 的降级重试会重新 `reserveShotQuota` → `pickPool` 可能换池，
+但 `submitClip` 闭包捕获的是 Phase-1 的预留——**配额记在 B 池、请求烧 A key**。
+修复：`submitClip(mode, withImage, at)` 改为调用时传入当前预留，重试提交带
+新预留的 `adapterId`。回归锁：单镜 + 双池 + 首败用例，断言 `adapterIds === [a1, a2]`
+（变异：把参数改回闭包捕获 → 变红）。
+reshot/retts 复查无此问题（它们的 `reservation` 是 `let`，重预留后 submit 读到新值）。
+
+### 修复 2：预检与预算告警硬编码单池 id
+
+自动建池后池 id 是 adapter id（`agnes-video-1`…），`remainingSec(VIDEO_QUOTA_POOL)`
+恒为 null → 预检被 `poolIds().length <= 1` 条件整体架空（多池下不再提前 escalate，
+白烧关键帧成本）、预算告警恒显示「剩 0s」、`buildBudgetAlert.remainingSec` 失真。
+修复：预检改「**任一池够一镜就继续**」（`snapshot().some(p => p.remainingQuotaSec >= estimate)`，
+单池即原行为，限免期 Infinity 永不触发）；告警剩余 = **各池剩余之和**（告警只在全部池
+都不够一镜时触发，此时必为有限值）。回归锁：双池各 2s → 零派发 + 告警含「剩 4s」。
+
+### 修复 3：观察面多池口径
+
+- `kitchen.ts` `budget.remainingSec` 只读 `pools[0]` → 多池求和；
+  任一池 `Infinity`（无每日配额）= 总量无明确上限 → null（限免期语义）。
+- `KitchenOven` 投影 `adapterId`（quota.ts 快照早有此字段，观察视图漏投）——
+  代理/运维终于能看到「池↔key」对应关系；客户端 `KitchenOven` 类型同步（可选字段，加法式）。
+
+### 修复 4：自动建池容错
+
+models.json 出现**重复 id 的 video adapter** 时，`QuotaLedger` 构造会抛「池 id 重复」
+直接炸掉服务启动。与 `VIDEO_AGENT_QUOTA_POOLS` 同一容错哲学：整份丢弃回退单池 +
+console.warn（宁可退化单 key 也不起不来）。
+
+### 验证
+
+- 新增 10 用例：quota-wiring 3（多 key 账实相符 / 重试换池换 key / 多池预检+告警口径）、
+  quota 5（POOLS adapterId 绑定与重复绑定非法、自动建池 4 态：多 adapter / 单 adapter /
+  POOLS 优先 / id 重复回退）、kitchen 2（多池预算汇总 + Infinity 语义、ovens adapterId 投影）。
+- **离线实测**（不烧配额）：真实 models.json 加载 → 4 池各绑 4 key，keyType=enterprise、
+  rpmCap=2（合计 8 RPM）。
+- `tsc --noEmit` clean（server + UI）；`npm test` **256/256**（57 suite，0 失败 0 跳过，约 76s）。
+- **未验证（如实记录）**：多 key 真实并发提交需付费跑片（与 U1 同批，建议下次 e2e 批次
+  观察 `queue.stats().adapters` 四个 adapter 均有 done 分布 + OvenChips 显示 4 炉呼吸）。

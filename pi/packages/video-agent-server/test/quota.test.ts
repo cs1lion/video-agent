@@ -442,4 +442,87 @@ describe("多池配置解析（VIDEO_AGENT_QUOTA_POOLS）", () => {
 		const snap = loadQuotaLedger().snapshot(T0);
 		assert.equal(snap[0]!.remainingQuotaSec, Number.POSITIVE_INFINITY);
 	});
+
+	it("POOLS 可绑定 adapterId；同一 adapter 重复绑定视为非法（一对一才账实相符）", () => {
+		setPools(
+			JSON.stringify([
+				{ id: "k1", keyType: "enterprise", rpmCap: 2, adapterId: "agnes-video-1" },
+				{ id: "k2", keyType: "enterprise", rpmCap: 2, adapterId: "agnes-video-2" },
+			]),
+		);
+		const snap = loadQuotaLedger().snapshot(T0);
+		assert.deepEqual(
+			snap.map((p) => p.adapterId),
+			["agnes-video-1", "agnes-video-2"],
+		);
+		setPools(
+			JSON.stringify([
+				{ id: "k1", keyType: "enterprise", rpmCap: 2, adapterId: "same" },
+				{ id: "k2", keyType: "enterprise", rpmCap: 2, adapterId: "same" },
+			]),
+		);
+		const fallback = loadQuotaLedger().snapshot(T0);
+		assert.equal(fallback.length, 1, "adapterId 重复绑定 → 整份丢弃回退单池");
+		assert.equal(fallback[0]!.id, "video");
+	});
+});
+
+describe("loadQuotaLedger 自动建池（models.json 多 video adapter → 一 key 一池）", () => {
+	const KEYS = ["VIDEO_AGENT_QUOTA_POOLS", "VIDEO_AGENT_QUOTA_DAILY_SEC"] as const;
+	const saved = new Map<string, string | undefined>(KEYS.map((k) => [k, process.env[k]]));
+	process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT = "1";
+
+	after(() => {
+		for (const [k, v] of saved) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+	});
+
+	function videoMedia(ids: string[]): Parameters<typeof loadQuotaLedger>[0] {
+		return { media: ids.map((id) => ({ id, kind: "video", model: "agnes-video-2.5-flash" })) } as Parameters<
+			typeof loadQuotaLedger
+		>[0];
+	}
+
+	it("多个 video adapter → 自动一 key 一池（adapterId 绑定透出）", () => {
+		delete process.env.VIDEO_AGENT_QUOTA_POOLS;
+		process.env.VIDEO_AGENT_QUOTA_DAILY_SEC = "0";
+		const snap = loadQuotaLedger(videoMedia(["agnes-video-1", "agnes-video-2"])).snapshot(T0);
+		assert.deepEqual(
+			snap.map((p) => p.id),
+			["agnes-video-1", "agnes-video-2"],
+		);
+		assert.deepEqual(
+			snap.map((p) => p.adapterId),
+			["agnes-video-1", "agnes-video-2"],
+			"池必须绑定 adapter：选池后提交才有真实 key 可走",
+		);
+	});
+
+	it("单 video adapter → 单池（旧行为，不绑定 adapter）", () => {
+		delete process.env.VIDEO_AGENT_QUOTA_POOLS;
+		process.env.VIDEO_AGENT_QUOTA_DAILY_SEC = "0";
+		const snap = loadQuotaLedger(videoMedia(["agnes-video"])).snapshot(T0);
+		assert.equal(snap.length, 1);
+		assert.equal(snap[0]!.id, "video");
+		assert.equal(snap[0]!.adapterId, undefined);
+	});
+
+	it("显式 POOLS 优先于自动探测", () => {
+		process.env.VIDEO_AGENT_QUOTA_POOLS = JSON.stringify([{ id: "k1", keyType: "enterprise", rpmCap: 3 }]);
+		const snap = loadQuotaLedger(videoMedia(["a1", "a2"])).snapshot(T0);
+		assert.deepEqual(
+			snap.map((p) => p.id),
+			["k1"],
+		);
+	});
+
+	it("video adapter id 重复 → 整份丢弃回退单池（不崩溃）", () => {
+		delete process.env.VIDEO_AGENT_QUOTA_POOLS;
+		process.env.VIDEO_AGENT_QUOTA_DAILY_SEC = "0";
+		const snap = loadQuotaLedger(videoMedia(["dup", "dup"])).snapshot(T0);
+		assert.equal(snap.length, 1, "id 重复无法一 key 一池，宁可退化单池也不得起不来");
+		assert.equal(snap[0]!.id, "video");
+	});
 });

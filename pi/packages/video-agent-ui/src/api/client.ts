@@ -533,6 +533,8 @@ export type SuggestionType = "submit" | "defer" | "downgrade" | "escalate" | "si
 export interface KitchenOven {
 	id: string;
 	keyType: "free" | "enterprise" | "tokenplan" | string;
+	/** 绑定的媒体适配器 ID（多 key：池↔key 对应关系；未绑定的单池缺省） */
+	adapterId?: string;
 	/** 当前可用 RPM 令牌 */
 	tokens: number;
 	/** 令牌桶容量（= 每分钟最大提交数；令牌点渲染的分母） */

@@ -18,6 +18,8 @@ import type { PoolSnapshot } from "./quota.ts";
 export interface KitchenOven {
 	id: string;
 	keyType: string;
+	/** 绑定的媒体适配器 ID（多 key：池↔key 对应关系；未绑定的单池缺省） */
+	adapterId?: string;
 	/** 当前可用 RPM 令牌 */
 	tokens: number;
 	/** 令牌桶容量 = 每分钟最大提交数（前端令牌点渲染的分母） */
@@ -86,6 +88,7 @@ export function buildKitchenSnapshot(pools: PoolSnapshot[], jobs: QueueJob[], no
 	const ovens: KitchenOven[] = pools.map((p) => ({
 		id: p.id,
 		keyType: p.keyType,
+		...(p.adapterId ? { adapterId: p.adapterId } : {}),
 		tokens: p.rpmTokens,
 		rpmCap: p.rpmCap,
 		rpmWaitMs: p.rpmWaitMs,
@@ -121,11 +124,16 @@ export function buildKitchenSnapshot(pools: PoolSnapshot[], jobs: QueueJob[], no
 			at: j.finishedAt ?? j.createdAt,
 		}));
 
-	// 预算：当前单视频池（多池是 B2+ 的事）。PoolSnapshot 不带日配额总量——
-	// 剩余/预留/超支三值已足够推理（"还剩多少"比"用了多少"更贴决策）。
+	// 预算：多池下剩余 = 各池剩余之和（此前只读第一池，多 key 下漏算其余池且首池无配额时误报 null）；
+	// 任一池无每日配额（Infinity）= 总量无明确上限 → null（限免期语义）。
+	// PoolSnapshot 不带日配额总量——剩余/预留/超支三值已足够推理（"还剩多少"比"用了多少"更贴决策）。
+	const finitePools = pools.filter((p) => Number.isFinite(p.remainingQuotaSec));
 	const budget: KitchenBudget = {
 		totalSec: null,
-		remainingSec: pools.length > 0 && Number.isFinite(pools[0]!.remainingQuotaSec) ? pools[0]!.remainingQuotaSec : null,
+		remainingSec:
+			pools.length > 0 && finitePools.length === pools.length
+				? Math.round(finitePools.reduce((s, p) => s + p.remainingQuotaSec, 0) * 1000) / 1000
+				: null,
 		reservedSec: pools.reduce((s, p) => s + p.reservedSec, 0),
 		overrunSec: pools.reduce((s, p) => s + p.overrunSec, 0),
 		day: new Date(now).toISOString().slice(0, 10),

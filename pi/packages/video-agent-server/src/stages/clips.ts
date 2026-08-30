@@ -22,9 +22,8 @@ import {
 import { fileDataUrl } from "../asset-version.ts";
 import { trackMediaCost } from "../pricing.ts";
 import { probeDuration } from "../ffmpeg.ts";
-import { dialogueDerivedSec, estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue, withReferenceAudioInstruction } from "../redo-adapters.ts";
-import { VIDEO_QUOTA_POOL } from "../config.ts";
-import type { ReserveResult } from "../quota.ts";
+	import { dialogueDerivedSec, estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue, withReferenceAudioInstruction } from "../redo-adapters.ts";
+	import type { ReserveResult } from "../quota.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
 import { prepareDialogueAudio } from "./dialogue-audio.ts";
 import { buildBudgetAlert, PRIORITY_QUEUE_VALUES, type PriorityLevel } from "../director-contract.ts";
@@ -65,7 +64,10 @@ export async function stageClips(
 	const budgetAlert = (fromIndex: number): void => {
 		quotaShortfall = true;
 		for (let j = fromIndex; j < productionShots.length; j += 1) clipFiles.push(null);
-		const remaining = quota?.remainingSec(VIDEO_QUOTA_POOL) ?? 0;
+		// 多 key：展示口径 = 各池剩余之和（告警只在全部池都不够一镜时触发，此时必为有限值；
+		// 任一池无每日配额时该告警根本不会走到这里）
+		const snaps = quota?.snapshot() ?? [];
+		const remaining = snaps.reduce((s, p) => s + (Number.isFinite(p.remainingQuotaSec) ? p.remainingQuotaSec : 0), 0);
 		const skipped = productionShots.length - fromIndex;
 		appendSpan(
 			run,
@@ -117,7 +119,7 @@ export async function stageClips(
 		useReference: boolean;
 		referenceParams: ReturnType<typeof videoSubmitParamsForDialogue> | null;
 		reservation: ShotReservation;
-		submitClip: (mode: "reference" | "normal", withImage: boolean) => ReturnType<typeof sc.queue.submit>;
+		submitClip: (mode: "reference" | "normal", withImage: boolean, at: ShotReservation) => ReturnType<typeof sc.queue.submit>;
 		initialJob: ReturnType<typeof sc.queue.submit>;
 		t0: number;
 	}
@@ -127,8 +129,10 @@ export async function stageClips(
 	for (const [i, shot] of productionShots.entries()) {
 		throwIfAborted(signal);
 		const prompt = shotPrompts.prompts.find((p) => p.shotId === shot.id)?.prompt ?? shot.visual;
-		// 预检：配额明确不足 → 提前 escalate，连关键帧成本都不烧
-		if (quota && (quota.remainingSec(VIDEO_QUOTA_POOL) ?? 0) < estimateSec && quota.poolIds().length <= 1) {
+		// 预检：配额明确不足 → 提前 escalate，连关键帧成本都不烧。
+		// 多 key 口径：「任一池还够一镜」就继续派发（单池即原行为）；
+		// 全部无每日配额（限免）时 remainingQuotaSec 为 Infinity，永不触发。
+		if (quota && !quota.snapshot().some((p) => p.remainingQuotaSec >= estimateSec)) {
 			budgetAlert(i);
 			break;
 		}
@@ -180,12 +184,14 @@ export async function stageClips(
 		}
 		pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 提交生成（${opts.resolution} · ${shot.durationSec}s · ${useReference ? "台词音频驱动口型" : imageDataUrl ? "关键帧+提示词 图生视频" : "文生视频"}）：${prompt.slice(0, 60)}…`);
 		const t0 = Date.now();
-		const submitClip = (mode: "reference" | "normal", withImage: boolean) =>
+		// adapterId 取调用时传入的预留：降级重试会重新选池（可能换池），任务必须跟着
+		// 新预留的 key 走——闭包捕获 Phase-1 预留会造成「配额记在 B 池、请求烧 A key」的账实不符
+		const submitClip = (mode: "reference" | "normal", withImage: boolean, at: ShotReservation) =>
 			sc.queue.submit(
 				{
 					roleName: "video-agent",
 					kind: "video",
-					adapterId: reservation?.adapterId,
+					adapterId: at?.adapterId,
 					prompt: mode === "reference" ? withReferenceAudioInstruction(prompt) : prompt,
 					params: mode === "reference" && referenceParams ? referenceParams : videoSubmitParams(sc.ctx, opts, width, height, withImage && imageDataUrl ? imageDataUrl : null, shot.durationSec),
 					outputName: `clip-${shot.id}`,
@@ -195,14 +201,14 @@ export async function stageClips(
 			);
 		run.metrics.mediaCalls += 1;
 		// 提交到队列（pump 自动按 adapterId 分发到对应 key 并行执行）
-		const initialJob = submitClip(useReference ? "reference" : "normal", Boolean(imageDataUrl));
+		const initialJob = submitClip(useReference ? "reference" : "normal", Boolean(imageDataUrl), reservation);
 		pending.push({ shot, index: i, prompt, imageDataUrl, useReference, referenceParams, reservation, submitClip, initialJob, t0 });
 	}
 
 	// Phase 2: 批量等待出片（队列的 awaitJob 在 job 完成时 resolve；多 key 并行时多个 job 同时在途）
 	for (const pc of pending) {
 		throwIfAborted(signal);
-		const { shot, index: i, imageDataUrl, useReference, referenceParams, reservation, submitClip, initialJob, t0 } = pc;
+		const { shot, index: i, imageDataUrl, useReference, reservation, submitClip, initialJob, t0 } = pc;
 		let attemptSeq = 0;
 		let finished: { status: string; filePath?: string };
 		let currentReservation: ShotReservation | null = reservation;
@@ -221,7 +227,7 @@ export async function stageClips(
 				attemptSeq += 1;
 				currentReservation = await reserveShotQuota(sc, shot.id, estimateClipSeconds(sc.ctx, opts, shot.durationSec), attemptSeq);
 				if (!currentReservation) { budgetAlert(i); clipFiles.push(null); continue; }
-				const retryJob = submitClip("normal", Boolean(imageDataUrl));
+				const retryJob = submitClip("normal", Boolean(imageDataUrl), currentReservation);
 				finished = await sc.queue.awaitJob(retryJob.id, undefined, signal);
 			}
 			// 通用：图生视频整单失败 → 退还本次预留，降级文生视频重新预留（新 attempt = 新幂等键）
@@ -232,7 +238,7 @@ export async function stageClips(
 				attemptSeq += 1;
 				currentReservation = await reserveShotQuota(sc, shot.id, estimateClipSeconds(sc.ctx, opts, shot.durationSec), attemptSeq);
 				if (!currentReservation) { budgetAlert(i); clipFiles.push(null); continue; }
-				const retryJob = submitClip("normal", false);
+				const retryJob = submitClip("normal", false, currentReservation);
 				finished = await sc.queue.awaitJob(retryJob.id, undefined, signal);
 			}
 		} catch (error) {

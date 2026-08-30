@@ -58,9 +58,12 @@ export function loadQuotaLedger(mediaConfig?: MediaModelsFile): QuotaLedger {
 	// ② 自动探测：从 models.json 的 video adapter 自动建多池（一 key 一池 + adapterId 绑定）。
 	// 这样配了 4 个 adapter 就自动有 4 个池，pickPool 会自动选最早可用的池，submit 时走绑定的 adapter。
 	// 单 adapter 时不走这条（回退③单池，保持旧行为不破坏）。
+	// 容错与 ① 同 philosophy：adapter id 重复 = 配置坏了（账本无法建池、队列解析也会错位），
+	// 整份丢弃回退单池，宁可退化单 key 也不让服务起不来。
 	if (mediaConfig) {
 		const videoAdapters = mediaConfig.media.filter((m) => m.kind === "video");
-		if (videoAdapters.length > 1) {
+		const uniqueIds = new Set(videoAdapters.map((a) => a.id));
+		if (videoAdapters.length > 1 && uniqueIds.size === videoAdapters.length) {
 			return new QuotaLedger(
 				videoAdapters.map((a) => ({
 					id: a.id,
@@ -70,6 +73,9 @@ export function loadQuotaLedger(mediaConfig?: MediaModelsFile): QuotaLedger {
 					adapterId: a.id,
 				})),
 			);
+		}
+		if (videoAdapters.length > 1 && uniqueIds.size !== videoAdapters.length && process.env.VIDEO_AGENT_SILENCE_QUOTA_HINT !== "1") {
+			console.warn("[video-agent] models.json 存在重复 id 的 video adapter，无法一 key 一池，回退单池配置。请修正 adapter id 后重启。");
 		}
 	}
 	// ③ 回退单池（旧行为）

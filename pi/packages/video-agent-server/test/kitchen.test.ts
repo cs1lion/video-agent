@@ -124,6 +124,33 @@ describe("buildKitchenSnapshot（B2 厨房快照契约）", () => {
 		assert.equal(free.budget.remainingSec, null);
 	});
 
+	it("budget 多池：剩余 = 各池之和；任一池无配额 = 总量无明确上限 → null", () => {
+		const multi = buildKitchenSnapshot(
+			[pool({ id: "k1", remainingQuotaSec: 312, reservedSec: 6, overrunSec: 1 }), pool({ id: "k2", remainingQuotaSec: 100, reservedSec: 4, overrunSec: 3 })],
+			[],
+			NOW,
+		);
+		assert.equal(multi.budget.remainingSec, 412, "多 key 下剩余必须汇总全部池（此前只读第一池）");
+		assert.equal(multi.budget.reservedSec, 10);
+		assert.equal(multi.budget.overrunSec, 4);
+		const mixed = buildKitchenSnapshot(
+			[pool({ remainingQuotaSec: 312 }), pool({ id: "k2", remainingQuotaSec: Number.POSITIVE_INFINITY })],
+			[],
+			NOW,
+		);
+		assert.equal(mixed.budget.remainingSec, null, "任一池无每日配额 → 剩余无从谈起（限免期语义）");
+	});
+
+	it("ovens 投影 adapterId：多 key 的池↔key 对应关系透出，未绑定的单池缺省", () => {
+		const snap = buildKitchenSnapshot(
+			[pool({ id: "agnes-video-1", adapterId: "agnes-video-1" }), pool()],
+			[],
+			NOW,
+		);
+		assert.equal(snap.ovens[0]!.adapterId, "agnes-video-1");
+		assert.equal("adapterId" in snap.ovens[1]!, false, "未绑定不得投影出 undefined 字段（缺省语义）");
+	});
+
 	it("活跃队列注册表：注册可见、注销后消失", () => {
 		const src: QueueJobSource = {
 			list: () => [],
