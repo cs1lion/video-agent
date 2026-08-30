@@ -27,6 +27,8 @@ import { probeDuration } from "../ffmpeg.ts";
 import { pixelDimensions } from "../../../video-agent/src/index.ts";
 import { prepareDialogueAudio } from "./dialogue-audio.ts";
 import { buildBudgetAlert, PRIORITY_QUEUE_VALUES, type PriorityLevel } from "../director-contract.ts";
+import { REFERENCE_FOLLOW_THRESHOLD, referenceFollows } from "../qa/audio-follow.ts";
+import { ASR_OVERLAP_THRESHOLD, referenceIntelligible } from "../qa/asr-check.ts";
 import { readPriorityInstructions } from "../producer.ts";
 
 /** 镜头生成阶段：图生视频（含 i2v→t2v 退降） */
@@ -118,6 +120,10 @@ export async function stageClips(
 		imageDataUrl: string | null;
 		useReference: boolean;
 		referenceParams: ReturnType<typeof videoSubmitParamsForDialogue> | null;
+		/** 台词参考音频（本地相对路径）——跟读校验的比对源 */
+		referenceAudioPath: string | null;
+		/** 台词原文（zh）——ASR 字面重合校验的预期文本 */
+		dialogueLine: string | null;
 		reservation: ShotReservation;
 		submitClip: (mode: "reference" | "normal", withImage: boolean, at: ShotReservation) => ReturnType<typeof sc.queue.submit>;
 		initialJob: ReturnType<typeof sc.queue.submit>;
@@ -138,6 +144,8 @@ export async function stageClips(
 		}
 		// A2 台词分支（准备逻辑不变）
 		let dialogueReadyUrl: string | null = null;
+		let referenceAudioPathForShot: string | null = null;
+		let dialogueLineForShot: string | null = null;
 		if (opts.audioDrive === "dialogue" && shot.audioMode === "dialogue" && shot.dialogue) {
 			scriptDirty = true;
 			const outcome = await prepareDialogueAudio(sc, shot);
@@ -151,6 +159,8 @@ export async function stageClips(
 				pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 台词托管失败 ⚠️（${outcome.reason}），降级为旁白：先出视频，台词按画外音贴上。`, { stage: "generate", focus: shot.id });
 			} else {
 				dialogueReadyUrl = outcome.audioUrl;
+				referenceAudioPathForShot = outcome.localAudioRelPath ?? null;
+				dialogueLineForShot = shot.dialogue?.lines.zh ?? null;
 				if (typeof outcome.audioDurationSec === "number" && outcome.audioDurationSec > 0) {
 					const derived = dialogueDerivedSec(outcome.audioDurationSec);
 					if (derived !== shot.durationSec) {
@@ -202,33 +212,91 @@ export async function stageClips(
 		run.metrics.mediaCalls += 1;
 		// 提交到队列（pump 自动按 adapterId 分发到对应 key 并行执行）
 		const initialJob = submitClip(useReference ? "reference" : "normal", Boolean(imageDataUrl), reservation);
-		pending.push({ shot, index: i, prompt, imageDataUrl, useReference, referenceParams, reservation, submitClip, initialJob, t0 });
+		pending.push({ shot, index: i, prompt, imageDataUrl, useReference, referenceParams, referenceAudioPath: referenceAudioPathForShot, dialogueLine: dialogueLineForShot, reservation, submitClip, initialJob, t0 });
 	}
 
 	// Phase 2: 批量等待出片（队列的 awaitJob 在 job 完成时 resolve；多 key 并行时多个 job 同时在途）
 	for (const pc of pending) {
 		throwIfAborted(signal);
-		const { shot, index: i, imageDataUrl, useReference, reservation, submitClip, initialJob, t0 } = pc;
+		const { shot, index: i, imageDataUrl, useReference, referenceAudioPath, dialogueLine, reservation, submitClip, initialJob, t0 } = pc;
 		let attemptSeq = 0;
 		let finished: { status: string; filePath?: string };
 		let currentReservation: ShotReservation | null = reservation;
 		try {
 			// 等待 Phase 1 已提交的 job 出片（不重复提交）
 			finished = await sc.queue.awaitJob(initialJob.id, undefined, signal);
-			// 台词镜：音频驱动提交失败 → 降级普通图生视频（新 attempt 新预留），台词转旁白
-			if (!(finished.status === "done" && finished.filePath) && useReference) {
-				releaseReservation(sc, currentReservation);
-				pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 音频驱动提交未成功，降级为普通图生视频，台词转旁白轨。`);
-				pc.useReference = false;
-				shot.audioMode = "narration";
-				if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
-				if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
-				run.metrics.mediaCalls += 1;
-				attemptSeq += 1;
-				currentReservation = await reserveShotQuota(sc, shot.id, estimateClipSeconds(sc.ctx, opts, shot.durationSec), attemptSeq);
-				if (!currentReservation) { budgetAlert(i); clipFiles.push(null); continue; }
-				const retryJob = submitClip("normal", Boolean(imageDataUrl), currentReservation);
-				finished = await sc.queue.awaitJob(retryJob.id, undefined, signal);
+			// 台词跟读校验（audio-follow）：出片成功 ≠ 跟读成功——模型自行配音（不可懂人声）
+			// 是 reference 模式的已知失败模式（包络相关 -0.227 vs 跟读成功 +0.990，可分性极强），
+			// 不抓的话 export 的 keepSourceAudio 会把垃圾音轨原样烧进成片。
+			let referenceFollowed = true;
+			const followSpan = (check: { follows: boolean; correlation: number }, tag: string, extra = "") =>
+				appendSpan(
+					run,
+					{
+						stage: "clips",
+						name: `镜头 ${shot.id} 台词跟读校验${tag}`,
+						kind: "qa",
+						status: check.follows ? "ok" : "semantic-fail",
+						output: `包络相关 ${check.correlation.toFixed(2)}（阈值 ${REFERENCE_FOLLOW_THRESHOLD}）${extra}`,
+					},
+					Date.now(),
+				);
+			if (finished.status === "done" && finished.filePath && pc.useReference && referenceAudioPath) {
+				const first = await referenceFollows(run.dir, path.relative(run.dir, finished.filePath), referenceAudioPath, signal);
+				// 双关卡：包络证"节奏像"，ASR 转写证"说的是这句台词"。
+				// 2026-08-30 批次实证：包络 0.78-0.91 的"跟读"ASR 字面重合仅 0.07-0.14——
+				// 模型在**模仿节奏说乱语**（口型动、有吐字、不是人话）。这是 agnes reference
+				// 的模型级行为，重试无用（重试相关值仍 0.6 上下）。
+				let asrNote = "";
+				if (first.follows && dialogueLine) {
+					const asr = await referenceIntelligible(run.dir, path.relative(run.dir, finished.filePath), dialogueLine, {
+						apiKey: sc.ctx.llm.apiKey ?? "",
+						signal,
+					}).catch(() => null);
+					if (asr) {
+						asrNote = `；ASR 重合 ${asr.overlap.toFixed(2)}「${asr.transcribed.slice(0, 16)}」`;
+						first.follows = asr.intelligible;
+					}
+				}
+				followSpan(first, "", asrNote);
+				if (first.follows) {
+					referenceFollowed = true;
+				} else {
+					// 跟读未过 → **dubOver 模式**：口型视频保留（嘴在动），音轨在 export 被
+					// TTS 原声覆盖——声音永远是人话，不再降级 i2v（画面无话）也不再重试
+					// （乱语是模型级行为，重试 0.6 上下过不了内容关，白烧配额）。
+					settleReservation(sc, currentReservation, estimateClipSeconds(sc.ctx, opts, shot.durationSec));
+					shot.dialogue = { ...shot.dialogue!, dubOver: true };
+					referenceFollowed = false;
+					pushEvent(
+						run,
+						"tech",
+						"producer",
+						"status",
+						`镜头 ${shot.id} 台词跟读未过关${asrNote}——口型视频保留，音轨改用 TTS 原声配音（dubOver）。`,
+						{ stage: "generate", focus: shot.id },
+					);
+				}
+			}
+			// 台词镜：音频驱动提交失败**或跟读未过** → 降级普通图生视频（新 attempt 新预留），台词转旁白。
+			// 差别在配额语义：提交失败 = 供应商没消耗（release）；跟读未过 = 片已真实生成（settle 按预留消耗）。
+			const dubOverDone = shot.dialogue?.dubOver === true;
+			if ((!(finished.status === "done" && finished.filePath) || (!referenceFollowed && !dubOverDone)) && pc.useReference) {
+				if (referenceFollowed) {
+					releaseReservation(sc, currentReservation);
+					pushEvent(run, "tech", "producer", "status", `镜头 ${shot.id} 音频驱动提交未成功，降级为普通图生视频，台词转旁白轨。`);
+					pc.useReference = false;
+					shot.audioMode = "narration";
+					if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
+					if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;
+					run.metrics.mediaCalls += 1;
+					attemptSeq += 1;
+					currentReservation = await reserveShotQuota(sc, shot.id, estimateClipSeconds(sc.ctx, opts, shot.durationSec), attemptSeq);
+					if (!currentReservation) { budgetAlert(i); clipFiles.push(null); continue; }
+					const retryJob = submitClip("normal", Boolean(imageDataUrl), currentReservation);
+					finished = await sc.queue.awaitJob(retryJob.id, undefined, signal);
+				}
+				// dubOver：预留已结算、口型视频已就位，直接进 clipFiles
 			}
 			// 通用：图生视频整单失败 → 退还本次预留，降级文生视频重新预留（新 attempt = 新幂等键）
 			if (!(finished.status === "done" && finished.filePath) && imageDataUrl) {
@@ -319,12 +387,15 @@ export async function reserveShotQuota(
 			if (r.reason === "rpm_exhausted") continue;
 			return null;
 		}
-		// 无可用池：区分「令牌暂缺（等待可恢复）」与「额度不足（等也没用）」
+		// 无可用池：区分「令牌暂缺（等待可恢复）」与「额度不足/全部隔离（等也没用）」。
+		// 隔离池（key 认证失效）不参与等待——等 30 分钟不如早点 escalate。
+		const now = Date.now();
 		const snaps = quota.snapshot();
-		if (!snaps.some((p) => p.remainingQuotaSec >= estimateSec)) {
-			return null; // insufficient_quota → 预算告警由调用方处理
+		const active = snaps.filter((p) => !(p.quarantinedUntil && now < p.quarantinedUntil));
+		if (!active.some((p) => p.remainingQuotaSec >= estimateSec)) {
+			return null; // insufficient_quota / 全部隔离 → 预算告警由调用方处理
 		}
-		const soonest = snaps.reduce((min, p) => Math.min(min, p.rpmWaitMs), Number.POSITIVE_INFINITY);
+		const soonest = active.reduce((min, p) => Math.min(min, p.rpmWaitMs), Number.POSITIVE_INFINITY);
 		const waitMs = Number.isFinite(soonest) && soonest > 0 ? soonest : 1000;
 		await sleepAbortable(Math.min(waitMs + 100, 65_000), sc.signal);
 	}

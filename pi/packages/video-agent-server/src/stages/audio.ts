@@ -6,9 +6,10 @@
 
 import * as path from "node:path";
 import { fallbackVoiceDirection, narrationFor, type ScriptDoc } from "../prompts.ts";
-import { appendSpan, ensureVoiceDirections, optionsOf, pushEvent, readArtifact, setStage, throwIfAborted, type StageCtx } from "../pipeline.ts";
+import { appendSpan, availableVoices, ensureVoiceDirections, optionsOf, pushEvent, readArtifact, readKeyframes, setStage, throwIfAborted, writeJson, type StageCtx } from "../pipeline.ts";
 import { ttsAdapterOf } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
+import { assignCastVoices, narratorVoiceFor } from "../voice-cast.ts";
 
 /** 配音阶段（独立 stage，每镜 TTS 旁白） */
 export async function stageAudio(
@@ -26,12 +27,46 @@ export async function stageAudio(
 		"status",
 		`声音设计开工：配音导演逐镜撰写表演指导，按 ${opts.promptLanguage === "en" ? "英文" : "中文"}旁白录制有情绪起伏的 TTS。`,
 	);
+	// 配音选角：旁白音色必须避开全部角色已绑定的音色（否则旁白开场和人物开口一个声音）。
+	// 角色音色在剧本阶段已按人物设计注入 dialogue.voiceId——这里读现成绑定算旁白位。
+	const catalog = availableVoices(sc.ctx);
+	const assignment = assignCastVoices(
+		(run.brief.coSpace?.characters ?? []).map((c) => ({ name: c.name, description: c.description, voiceId: c.voiceId })),
+		catalog,
+	);
+	const narratorVoiceId =
+		assignment.narratorVoiceId ??
+		// 兜底：共创卡缺角色时也按「避开台词镜绑定」选旁白位
+		narratorVoiceFor(catalog, scriptDoc.shots.map((s) => s.dialogue?.voiceId));
+	const idToLabel = new Map(Object.entries(catalog).map(([label, id]) => [id, label]));
+	const narratorLabel = narratorVoiceId ? (idToLabel.get(narratorVoiceId) ?? narratorVoiceId) : "适配器默认";
+	// 配音选角留痕（e2e 断言 + 运维排查的依据）
+	await writeJson(run, "voice-cast.json", {
+		narratorVoiceId,
+		characters: assignment.byCharacter,
+		notes: assignment.notes,
+	});
+	const castSummary = Object.entries(assignment.byCharacter)
+		.map(([name, id]) => `${name}→${idToLabel.get(id) ?? id}`)
+		.join("、");
+	pushEvent(
+		run,
+		"sound",
+		"editor",
+		"status",
+		`配音选角：旁白＝${narratorLabel}${castSummary ? `；角色 ${castSummary}` : ""}${assignment.notes.length ? `（注意：${assignment.notes[0]}）` : "；与角色声线全部错开"}。`,
+	);
+	const narratorParams = narratorVoiceId ? { voice: narratorVoiceId } : {};
 	const directions = await ensureVoiceDirections(sc, scriptDoc);
+	// 部分确认（闸门 B）：只为放行镜头烧 TTS；返回数组仍与全量脚本对齐
+	// （export 按 scriptDoc.shots.indexOf 取音轨，索引空间不能变）。
+	const keyframes = await readKeyframes(run);
+	const confirmedIds = Array.isArray(keyframes.confirmedShotIds) ? new Set(keyframes.confirmedShotIds) : null;
 	const audioFiles: (string | null)[] = [];
 	for (const [i, shot] of scriptDoc.shots.entries()) {
 		throwIfAborted(signal);
 		const text = narrationFor(shot, opts.promptLanguage).trim();
-		if (!text) {
+		if (!text || (confirmedIds && !confirmedIds.has(shot.id))) {
 			audioFiles.push(null);
 			setStage(run, "audio", "running", Math.round(((i + 1) / scriptDoc.shots.length) * 100));
 			continue;
@@ -43,7 +78,7 @@ export async function stageAudio(
 				roleName: "video-agent",
 				kind: "tts",
 				prompt: text,
-				params: { instruction },
+				params: { instruction, ...narratorParams },
 				outputName: `tts-${shot.id}`,
 			},
 			run.dir,

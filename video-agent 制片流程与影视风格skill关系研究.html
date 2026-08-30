@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>video-agent 制片流程与影视风格 skill 关系研究</title>
+<style>
+:root{--bg:#ffffff;--surface:#faf9f7;--line:#e6e3dd;--line2:#d3d1c7;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--purple:#EEEDFE;--purple-l:#534AB7;--purple-d:#3C3489;--teal:#E1F5EE;--teal-l:#0F6E56;--teal-d:#085041;--amber:#FAEEDA;--amber-l:#854F0B;--amber-d:#633806;--blue:#E6F1FB;--blue-l:#185FA5;--blue-d:#0C447C;--red:#FCEBEB;--red-l:#A32D2D;--red-d:#791F1F;--gray:#F1EFE8;}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;padding:48px 24px 120px;background:var(--bg);color:var(--tx);font:400 15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}.wrap{max-width:940px;margin:0 auto}h1{font:500 29px/1.32 inherit;margin:0 0 10px;letter-spacing:-.015em}.sub{color:var(--tx2);font-size:16px;margin:0 0 8px}.meta{color:var(--tx3);font-size:13px;margin:0 0 36px;padding-bottom:24px;border-bottom:1px solid var(--line)}h2{font:500 21px/1.45 inherit;margin:56px 0 14px;padding-top:26px;border-top:1px solid var(--line);scroll-margin-top:20px}h2:first-of-type{border-top:none;padding-top:0}h3{font:500 17px/1.5 inherit;margin:30px 0 10px;scroll-margin-top:20px}h4{font:500 15px/1.5 inherit;margin:22px 0 8px;color:var(--tx2)}p{margin:0 0 14px}ul,ol{margin:0 0 14px;padding-left:22px}li{margin:0 0 7px}code{font:400 13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--gray);padding:1.5px 5px;border-radius:4px;color:var(--tx)}pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:0 0 18px}pre code{background:none;padding:0;font-size:12.5px;line-height:1.7;color:var(--tx)}table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}th{text-align:left;font-weight:500;color:var(--tx2);font-size:13px;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--surface)}td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}tr:last-child td{border-bottom:none}.lead{background:var(--purple);border:1px solid var(--purple-l);border-radius:12px;padding:22px 24px;margin:0 0 32px}.lead p{margin:0 0 10px;color:var(--purple-d);font-size:15px}.lead p:last-child{margin:0}.lead strong{font-weight:500}.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap}.t-purple{background:var(--purple);color:var(--purple-d);border:1px solid var(--purple-l)}.t-teal{background:var(--teal);color:var(--teal-d);border:1px solid var(--teal-l)}.t-amber{background:var(--amber);color:var(--amber-d);border:1px solid var(--amber-l)}.t-red{background:var(--red);color:var(--red-d);border:1px solid var(--red-l)}.t-blue{background:var(--blue);color:var(--blue-l);border:1px solid var(--blue-l)}.note{border-left:3px solid var(--amber-l);background:var(--amber);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--amber-d)}.note p{margin:0 0 8px}.note p:last-child{margin:0}.warn{border-left:3px solid var(--red-l);background:var(--red);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--red-d)}.warn p{margin:0 0 8px}.warn p:last-child{margin:0}.warn strong{font-weight:500}.ok{border-left:3px solid var(--teal-l);background:var(--teal);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--teal-d)}.ok p{margin:0 0 8px}.ok p:last-child{margin:0}.ok strong{font-weight:500}.find{border-left:3px solid var(--purple-l);background:var(--purple);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--purple-d)}.find p{margin:0 0 8px}.find p:last-child{margin:0}.find strong{font-weight:500}.ref{color:var(--tx3);font-size:12.5px}.toc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:0 0 44px}.toc h4{margin:0 0 12px;color:var(--tx2);font-size:13px}.toc ol{margin:0;padding-left:20px;columns:2;column-gap:36px;font-size:14px}@media(max-width:720px){.toc ol{columns:1}}.toc li{margin:0 0 6px}.toc a{color:var(--tx);text-decoration:none;border-bottom:1px solid var(--line2)}.toc a:hover{border-bottom-color:var(--tx2)}.flow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:0 0 20px;font-size:13.5px;line-height:1.8}.flow code{font-size:12.5px}.gap{background:var(--red);border:1px solid var(--red-l);border-radius:12px;padding:18px 22px;margin:0 0 20px}.gap h4{margin:0 0 8px;color:var(--red-d)}.gap p{margin:0 0 8px;color:var(--red-d);font-size:14px}.gap p:last-child{margin:0}.gap code{background:#fde8e8;color:var(--red-d)}.skill{background:var(--teal);border:1px solid var(--teal-l);border-radius:12px;padding:18px 22px;margin:0 0 20px}.skill h4{margin:0 0 8px;color:var(--teal-d)}.skill p{margin:0 0 8px;color:var(--teal-d);font-size:14px}.skill p:last-child{margin:0}.skill code{background:#d8f3ed;color:var(--teal-d)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>制片流程与影视风格 skill 关系研究</h1>
+<p class="sub">video-agent 确定性流水线 × 风格表达能力的张力与缺口</p>
+<p class="meta">2026-08-30 · 数据来源：pipeline.ts / prompts.ts / deliberation.ts / qa/review.ts / consistency.ts + director-agent.md + dev-log</p>
+
+<div class="lead">
+<p><strong>核心判断：当前制片流程把"风格"当作静态规格说明书来用，而不是当作动态可演化的 skill。</strong></p>
+<p>管线确实有风格入口（15 维意图 → VisualBible → prompt 注入）和风格出口（QA 的 visualConsistency 轴），但两者之间是<strong>单向、静态、无反馈</strong>的。风格在 visual 阶段定稿后，就只是一个被传递的 JSON，不再被质疑、比较、学习。</p>
+<p>这意味着：<strong>制片流程的能力边界，就是风格 skill 的天花板。</strong></p>
+</div>
+
+<div class="toc">
+<h4>目录</h4>
+<ol>
+<li><a href="#s1">制片流程的"风格时刻"全景</a></li>
+<li><a href="#s2">风格信息的流动与损耗</a></li>
+<li><a href="#s3">五个核心缺口</a></li>
+<li><a href="#s4">影视风格 skill 的四种形态</a></li>
+<li><a href="#s5">关系模式：约束、放大、反馈、演化</a></li>
+<li><a href="#s6">skill 提案：六项新能力</a></li>
+<li><a href="#s7">与现有能力的映射与冲突</a></li>
+<li><a href="#s8">落地路径与优先级</a></li>
+<li><a href="#s9">风险与不做的边界</a></li>
+</ol>
+</div>
+
+<h2 id="s1">一、制片流程的"风格时刻"全景</h2>
+
+<p>先用一张表把"风格"在当前制片流程里<strong>什么时候被创造、什么时候被消费、什么时候被评价</strong>全部列出来。</p>
+
+<table>
+<thead><tr><th style="width:14%">阶段</th><th style="width:22%">风格动作</th><th style="width:28%">输入</th><th style="width:18%">产出</th><th style="width:18%">下游消费方式</th></tr></thead>
+<tbody>
+<tr><td><strong>访谈</strong></td><td>采集 15 维意图</td><td>用户选择</td><td><code>Intent</code> + <code>GenerationDirectives</code></td><td>按阶段注入 prompt</td></tr>
+<tr><td><strong>script</strong></td><td>剧本生成</td><td>brief + directives.script</td><td><code>script.json</code></td><td>每镜 visual 字段被后续消费</td></tr>
+<tr><td><strong>visual</strong></td><td>美术设计定稿</td><td>brief + directives.visual + script</td><td><code>visual-bible.json</code></td><td><strong>全下游的视觉基准</strong></td></tr>
+<tr><td><strong>prompts</strong></td><td>逐镜 prompt 生成</td><td>bible + script + designBible</td><td><code>prompts.json</code></td><td>注入 bible 全量 JSON</td></tr>
+<tr><td><strong>keyframes</strong></td><td>关键帧出图</td><td>prompt + referenceImage + bible</td><td><code>keyframes.json</code></td><td>首帧锚定 + 自审</td></tr>
+<tr><td><strong>clips</strong></td><td>视频生成</td><td>prompt + keyframe + reference</td><td><code>assets/clip-*.mp4</code></td><td>无风格消费，只读 prompt</td></tr>
+<tr><td><strong>audio</strong></td><td>旁白/台词合成</td><td>script + directives.audio</td><td><code>tts-*.mp3</code></td><td>无风格消费</td></tr>
+<tr><td><strong>export</strong></td><td>合成出片</td><td>clips + audio + grade</td><td><code>final.mp4</code></td><td>grade 来自 bible</td></tr>
+<tr><td><strong>QA</strong></td><td>视觉质检</td><td>final.mp4 + brief</td><td><code>QaVerdict</code></td><td>visualConsistency 轴</td></tr>
+<tr><td><strong>deliberation</strong></td><td>A/B 审议</td><td>两个 final.mp4</td><td><code>DeliberationDoc</code></td><td>用户选 base/challenger</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p><strong>观察：风格在 visual 阶段定稿后，直到 QA 阶段才被"评价"——中间整整 4 个阶段（prompts → keyframes → clips → audio）只做"传递"，不做"判断"。</strong></p>
+<p>这不是坏事（确定性流水线的优势就是不做多余判断），但它意味着：<strong>如果 visual 阶段的风格定歪了，要等 export 后 QA 才能发现，纠错成本是一次完整重做。</strong></p>
+</div>
+
+<h2 id="s2">二、风格信息的流动与损耗</h2>
+
+<p>追踪 <code>VisualBible</code> 从创建到消费的完整路径，看风格信息在哪些环节被压缩、丢失或扭曲。</p>
+
+<pre><code>VisualBible (visual-bible.json)
+├─ styleKeywords: string[]     ← 5-8 个英文关键词
+├─ palette: string[]           ← 4-6 个颜色
+├─ lighting: string            ← 一句光线方案
+└─ grade: string               ← 一句调色方案
+
+流动路径：
+  stageVisual (生成)
+    ↓
+  writeJson("visual-bible.json")
+    ↓
+  stagePrompts: readArtifact → JSON.stringify(bible) → 注入 prompt
+    ↓
+  stageKeyframes: readArtifact → keyframePrompt(bible) → 首帧锚定
+    ↓
+  stageClips: readArtifact → prompt 已含 bible → 视频生成
+    ↓
+  stageExport: grade 字段 → ffmpeg 调色（如有）
+    ↓
+  runQa: 抽帧 → visualConsistency 轴 → 0-100 分</code></pre>
+
+<h3>2.1 损耗点清单</h3>
+
+<table>
+<thead><tr><th style="width:20%">损耗点</th><th style="width:40%">表现</th><th style="width:40%">后果</th></tr></thead>
+<tbody>
+<tr><td><strong>prompt 序列化压缩</strong></td><td><code>prompts.ts:202</code> 把整个 bible 做 <code>JSON.stringify(bible)</code> 塞进 prompt——4 个字段变成一段 JSON，LLM 读到的是一堆字符串，不是结构化的"风格语言"</td><td>LLM 可能只关注前几个关键词，忽略 palette/lighting/grade 的细节</td></tr>
+<tr><td><strong>无风格中间验证</strong></td><td>从 visual 定稿到 QA 打分，中间没有任何"风格是否正确传递"的检查点</td><td>prompt 注入错误、bible 被忽略、grade 未生效——这些问题只能在 QA 阶段被动发现</td></tr>
+<tr><td><strong>visualConsistency 是黑盒</strong></td><td><code>qa/review.ts:46</code> 的 visualConsistency 轴是视觉模型给的 0-100 分，<strong>不解释"为什么不一致"</strong></td><td>导演知道"风格不一致"但不知道"哪镜偏离了、偏离了什么"</td></tr>
+<tr><td><strong>无风格回写</strong></td><td>QA 发现风格问题 → 只能 reshot/retts 重做 → 但重做仍读同一份 bible → <strong>无法修正风格本身</strong></td><td>风格问题是系统性的，但纠错方式是局部的（重做某镜），治标不治本</td></tr>
+<tr><td><strong>审议不分析风格</strong></td><td>DeliberationProposal 的 <code>AttributionLayer</code> 有 edit/asset/prompt/audio，<strong>没有 style 层</strong></td><td>用户说"这版风格不对"，agent 只能归因到 prompt 或 asset，无法定位到"美术设计本身有偏差"</td></tr>
+</tbody>
+</table>
+
+<div class="gap">
+<h4>🔴 最严重的损耗：审议没有 style 归因层</h4>
+<p><code>AttributionLayer = "edit" | "asset" | "prompt" | "audio"</code>——四层里没有 style。</p>
+<p>这意味着：<strong>如果用户对成片的风格不满意，审议 agent 永远无法说"是美术设计阶段定错了"</strong>。它只能建议"重做某镜"或"改 prompt"，而无法追溯到"visual-bible.json 需要修订"——这是系统性修复的唯一入口。</p>
+</div>
+
+<h2 id="s3">三、五个核心缺口</h2>
+
+<h3>缺口 1：风格是规格，不是 skill</h3>
+
+<p>当前 <code>VisualBible</code> 是 4 个字段的自由文本描述。它像一份"技术规格书"——写了 styleKeywords、palette、lighting、grade，但：</p>
+<ul>
+<li>没有"风格DNA"（一套可复用的风格配置）</li>
+<li>没有"风格指纹"（生成后与设计稿的差异度量）</li>
+<li>没有"风格演化"（同一 run 内风格修正的历史）</li>
+</ul>
+
+<p>对比：一个"影视风格 skill"应该能做的是——<strong>保存、比较、推荐、演化风格</strong>。当前系统只能"写一次、读多次"。</p>
+
+<h3>缺口 2：风格校验在出口，不在过程</h3>
+
+<p>风格一致性检查只在两个时刻发生：</p>
+<ol>
+<li><code>autoReviewDesign</code>（美术设计自审）——检查 design-bible 与 brief 的匹配度，<strong>不检查风格内部的一致性</strong></li>
+<li><code>runQa</code>（出口质检）——visualConsistency 轴，<strong>只有 0-100 分，没有定位</strong></li>
+</ol>
+
+<p>中间过程（prompts → keyframes → clips）没有任何风格校验。风格错误要等成片后才能发现。</p>
+
+<h3>缺口 3：审议没有风格归因</h3>
+
+<p>如上所述，<code>AttributionLayer</code> 缺 style 层。用户说"风格不对"时，agent 的归因能力被截断在 prompt/asset 层，无法触及美术设计本身。</p>
+
+<h3>缺口 4：风格偏好没有结构化</h3>
+
+<p><code>preferences.jsonl</code> 记录的是审议的 base/challenger/neither 选择，但没有记录<strong>风格维度</strong>的偏好：</p>
+<ul>
+<li>用户选了 challenger，是因为节奏更快，还是因为色调更暖？</li>
+<li>用户对某类 styleKeywords 有持续偏好吗？</li>
+<li>用户是否经常推翻某类 lighting 方案？</li>
+</ul>
+
+<p>这些信息散落在 deliberations 的 tags 和 note 里，没有结构化提取。</p>
+
+<h3>缺口 5：风格与流程的解耦不足</h3>
+
+<p>当前流程是严格线性 DAG：visual → prompts → keyframes → clips → export。风格一旦定稿，后续阶段只能被动消费。</p>
+<p>但真实制片中，风格经常是<strong>迭代演化</strong>的：</p>
+<ul>
+<li>关键帧出图后，发现"这个色调在实际渲染里偏灰"→ 回调美术设计调整 grade</li>
+<li>剪辑完成后，发现"节奏和风格不搭"→ 调整 pacing 或重剪</li>
+<li>旁白录制后，发现"声音气质和画面风格冲突"→ 调整 lighting 或 voice</li>
+</ul>
+
+<p>当前流程<strong>没有"回调修正"的机制</strong>——所有修正都通过 reshot/retts/reexport 重做整条链，成本极高。</p>
+
+<h2 id="s4">四、影视风格 skill 的四种形态</h2>
+
+<p>基于以上缺口，定义"影视风格 skill"在当前项目里的四种可能形态——从轻量到重量，从现成到新增。</p>
+
+<table>
+<thead><tr><th style="width:16%">形态</th><th style="width:28%">名字</th><th style="width:28%">做什么</th><th style="width:28%">与流程的关系</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-teal">S1</span></td><td><strong>风格指纹</strong><br>Style Fingerprint</td><td>从 VisualBible + 成片抽帧，生成可比较的风格向量</td><td>QA 阶段自动计算，与 briefFit 并列</td></tr>
+<tr><td><span class="tag t-purple">S2</span></td><td><strong>风格归因</strong><br>Style Attribution</td><td>用户说"风格不对"时，定位到具体维度（色调/光线/节奏/构图）</td><td>审议 agent 新增 style 归因层</td></tr>
+<tr><td><span class="tag t-amber">S3</span></td><td><strong>风格推荐</strong><br>Style Recommendation</td><td>基于 logline + 历史偏好，推荐 VisualBible 初始值</td><td>visual 阶段的前置 skill</td></tr>
+<tr><td><span class="tag t-blue">S4</span></td><td><strong>风格演化</strong><br>Style Evolution</td><td>同一 run 内或跨 run 的风格迭代记忆</td><td>贯穿全流程的上下文 skill</td></tr>
+</tbody>
+</table>
+
+<h3>4.1 S1 风格指纹（最轻量，最先做）</h3>
+
+<p><strong>做什么</strong>：从 <code>VisualBible</code> 生成一个结构化指纹，从成片抽帧生成另一个指纹，两者做余弦相似度比对。</p>
+
+<pre><code>export interface StyleFingerprint {
+  /** 设计意图指纹（来自 VisualBible） */
+  design: {
+    styleKeywords: string[];     // 归一化后的关键词
+    paletteHex: string[];        // 标准化的 #hex 色值
+    lightingFamily: string;      // "warm" / "cool" / "neutral" / "mixed"
+    gradeFamily: string;         // "cinematic" / "flat" / "vintage" / "high-contrast"
+  };
+  /** 实际成片指纹（从 QA 抽帧 + 色彩分析提取） */
+  actual: {
+    dominantHues: number[];      // 主色调 HSL
+    contrastRatio: number;       // 对比度
+    brightness: number;          // 平均亮度
+    saturation: number;          // 饱和度
+  };
+  /** 差异度量 */
+  delta: {
+    keywordOverlap: number;      // 0..1，设计关键词在实际 prompt 中出现的比例
+    hueShift: number;            // 色调偏差（度）
+    contrastGap: number;         // 对比度差距
+  };
+}</code></pre>
+
+<p><strong>价值</strong>：把"风格一致"从黑盒 0-100 分变成可解释的度量。QA 报告不再说"visualConsistency: 72"，而是说"风格关键词覆盖率 80%，色调偏差 15°，对比度差距 0.2"。</p>
+
+<h3>4.2 S2 风格归因（中量，需要 deliberation 改造）</h3>
+
+<p><strong>做什么</strong>：在 <code>AttributionLayer</code> 里新增 <code>"style"</code> 层，让审议 agent 能把问题归因到风格维度。</p>
+
+<pre><code>// 扩展 AttributionLayer
+export type AttributionLayer 
+  = "edit" 
+  | "asset" 
+  | "prompt" 
+  | "audio" 
+  | "style";  // ← 新增
+
+// 风格归因的具体维度
+export interface StyleAttribution {
+  layer: "style";
+  dimension: "palette" | "lighting" | "grade" | "pacing" | "cameraLanguage";
+  currentValue: string;   // 当前 VisualBible 的值
+  suggestedValue: string; // 建议修正值
+  evidence: string;       // 证据（如"SH02 画面偏冷，与 lighting:warm golden hour 不符"）
+}</code></pre>
+
+<p><strong>价值</strong>：用户说"风格不对"时，agent 能说"SH02 的光线偏冷，与设计稿的 warm golden hour 不符，建议调整 lighting 或重做该镜"——这是系统性修复的入口。</p>
+
+<h3>4.3 S3 风格推荐（中量，需要历史数据）</h3>
+
+<p><strong>做什么</strong>：基于 brief + 历史 episode 的风格选择，推荐 VisualBible 初始值。</p>
+
+<p>实现路径：</p>
+<ol>
+<li>从历史 <code>DeliberationDoc</code> 提取"被采纳的提案对应的风格参数"</li>
+<li>从历史 <code>QaVerdict</code> 提取"高 visualConsistency 分的 run 的 VisualBible"</li>
+<li>构建一个轻量推荐器：<code>logline → 推荐 styleKeywords/palette/lighting/grade</code></li>
+</ol>
+
+<p><strong>冷启动</strong>：先人工标注 20-30 组"logline → VisualBible"的映射，再逐步用历史数据替换。</p>
+
+<h3>4.4 S4 风格演化（重量，需要跨 run 记忆）</h3>
+
+<p><strong>做什么</strong>：同一 run 内的风格迭代记忆 + 跨 run 的风格偏好学习。</p>
+
+<p>两种演化：</p>
+<ul>
+<li><strong>run 内演化</strong>：用户/agent 对某镜做了风格修正 → 记录修正前后对比 → 生成"风格修正事件"</li>
+<li><strong>跨 run 演化</strong>：用户在不同 run 中持续选择某类风格 → 学习用户的风格偏好 profile</li>
+</ul>
+
+<pre><code>export interface StyleEvolutionEvent {
+  episodeId: string;
+  at: string;
+  trigger: "qa-feedback" | "deliberation" | "director-chat" | "user-edit";
+  /** 修正前的风格指纹 */
+  beforeFingerprint: StyleFingerprint;
+  /** 修正后的风格指纹（如有） */
+  afterFingerprint?: StyleFingerprint;
+  /** 修正的具体维度 */
+  changedDimensions: Array<{
+    field: keyof VisualBible;
+    from: string;
+    to: string;
+  }>;
+  /** 修正是否提升了 QA 分 */
+  qaImprovement?: number;
+}</code></pre>
+
+<h2 id="s5">五、关系模式：约束、放大、反馈、演化</h2>
+
+<p>制片流程与风格 skill 之间不是单向的"流程消费风格"，而是四种关系模式的组合。</p>
+
+<table>
+<thead><tr><th style="width:18%">模式</th><th style="width:30%">制片流程对风格的约束</th><th style="width:52%">风格 skill 对流程的放大</th></tr></thead>
+<tbody>
+<tr><td><strong>约束</strong></td><td>线性 DAG + 只写一次 → 风格在 visual 阶段定稿后不可变</td><td>S1 风格指纹：在出口度量"设计 vs 实际"的偏差，把隐性约束显性化</td></tr>
+<tr><td><strong>放大</strong></td><td>bible 被 JSON.stringify 塞进 prompt → 细节可能被 LLM 忽略</td><td>S3 风格推荐：在 visual 阶段前置"推荐 + 确认"，放大风格决策的质量</td></tr>
+<tr><td><strong>反馈</strong></td><td>QA 的 visualConsistency 是黑盒 0-100 分 → 不知道哪里不一致</td><td>S2 风格归因 + S1 指纹：把"风格不一致"变成"色调偏差 15°、关键词覆盖率 80%"，可操作的反馈</td></tr>
+<tr><td><strong>演化</strong></td><td>无跨 run 记忆 → 每次从零开始</td><td>S4 风格演化：跨 run 学习用户偏好，越用越准</td></tr>
+</tbody>
+</table>
+
+<h3>5.1 核心矛盾：确定性 vs 风格的主观性</h3>
+
+<div class="warn">
+<p><strong>制片流程的设计哲学是"确定性优先"——每个阶段有明确的输入输出 JSON，不做多余判断。</strong></p>
+<p>但风格是主观的：</p>
+<ul>
+<li>"cinematic" 对 A 用户 = 宽银幕+低饱和度，对 B 用户 = 手持+高对比</li>
+<li>"warm lighting" 在不同镜头里可能被 LLM 理解为 2700K 或 3500K</li>
+<li>visualConsistency 85 分 vs 72 分——差在哪里？不知道</li>
+</ul>
+<p><strong>风格 skill 的核心价值，就是在确定性流程里引入"可解释的主观性"</strong>——不是破坏确定性，而是给主观判断一个可度量、可追溯、可学习的载体。</p>
+</div>
+
+<h2 id="s6">六、skill 提案：六项新能力</h2>
+
+<h3>SKILL-A：风格指纹自动比对</h3>
+
+<p><strong>触发时机</strong>：QA 阶段，与 runQa 并行</p>
+<p><strong>输入</strong>：<code>VisualBible</code> + 成片抽帧</p>
+<p><strong>产出</strong>：<code>style-fingerprint.json</code>（设计指纹 vs 实际指纹 + delta）</p>
+<p><strong>与流程的关系</strong>：纯旁路，不改变任何现有行为。QA 报告增加一行风格指纹摘要。</p>
+
+<h3>SKILL-B：审议风格归因层</h3>
+
+<p><strong>触发时机</strong>： deliberations 的 propose 工具</p>
+<p><strong>输入</strong>：<code>QaVerdict</code> + <code>style-fingerprint.json</code> + 用户 note</p>
+<p><strong>产出</strong>：<code>DeliberationProposal</code> 新增 <code>styleAttribution</code> 字段</p>
+<p><strong>与流程的关系</strong>：扩展 <code>AttributionLayer</code>，不改变 deliberation 循环本身。</p>
+
+<pre><code>export interface DeliberationProposal {
+  // ... 现有字段 ...
+  styleAttribution?: StyleAttribution;  // ← 新增
+}</code></pre>
+
+<h3>SKILL-C：风格推荐前置</h3>
+
+<p><strong>触发时机</strong>：visual 阶段之前，用户确认环节</p>
+<p><strong>输入</strong>：<code>EnrichedBrief</code> + 历史风格偏好（如有）</p>
+<p><strong>产出</strong>：推荐版 <code>VisualBible</code> + 用户确认/修改</p>
+<p><strong>与流程的关系</strong>：在 stageVisual 之前插入一个"风格确认"节点。用户不确认就继续用默认值——不阻塞流程。</p>
+
+<h3>SKILL-D：风格修正事件</h3>
+
+<p><strong>触发时机</strong>：用户/agent 对成片做风格相关修正时</p>
+<p><strong>输入</strong>：修正前后的 <code>VisualBible</code> + 修正触发源</p>
+<p><strong>产出</strong>：<code>style-evolution.ndjson</code> 追加一行</p>
+<p><strong>与流程的关系</strong>：纯旁路记录，不改变任何执行逻辑。</p>
+
+<h3>SKILL-E：风格一致性巡检</h3>
+
+<p><strong>触发时机</strong>：prompts 阶段完成后（关键帧出图之前）</p>
+<p><strong>输入</strong>：<code>VisualBible</code> + <code>prompts.json</code></p>
+<p><strong>产出</strong>：一致性报告（每个 prompt 是否覆盖了 bible 的关键元素）</p>
+<p><strong>与流程的关系</strong>：纯只读检查，不阻断流程。发现问题只推事件，不自动修正。</p>
+
+<pre><code>export interface StyleConsistencyCheck {
+  passed: boolean;
+  issues: Array<{
+    shotId: string;
+    missingKeywords: string[];   // bible.styleKeywords 在该 prompt 中缺失的
+    missingElements: string[];   // palette/lighting/grade 未提及的
+    severity: "warn" | "fail";
+  }>;
+}</code></pre>
+
+<h3>SKILL-F：跨 episode 风格画像</h3>
+
+<p><strong>触发时机</strong>：run 完成时，与 episode.json 汇总同步</p>
+<p><strong>输入</strong>：历史 <code>style-evolution.ndjson</code> + <code>preferences.jsonl</code></p>
+<p><strong>产出</strong>：<code>user-style-profile.json</code>（用户风格偏好 + 被推翻的风格维度）</p>
+<p><strong>与流程的关系</strong>：离线分析产物，供 S3 风格推荐使用。</p>
+
+<h2 id="s7">七、与现有能力的映射与冲突</h2>
+
+<h3>7.1 已有能力可以直接复用的</h3>
+
+<table>
+<thead><tr><th style="width:30%">现有能力</th><th style="width:70%">可复用于</th></tr></thead>
+<tbody>
+<tr><td><code>VisualBible</code></td><td>S1 指纹的设计侧输入、S3 推荐的输出格式、S4 演化的变更基线</td></tr>
+<tr><td><code>GenerationDirectives</code></td><td>S3 推荐的输入（已有意图维度可映射到 styleKeywords）</td></tr>
+<tr><td><code>QaVerdict.axes</code></td><td>S1 指纹的实际侧输入（visualConsistency 轴已量化）</td></tr>
+<tr><td><code>preferences.jsonl</code></td><td>S4 跨 episode 画像的原始数据（已记录采纳/未采纳）</td></tr>
+<tr><td><code>deliberation.ts</code></td><td>S2 风格归因层的宿主（AttributionLayer 扩展点已存在）</td></tr>
+<tr><td><code>consistency.ts</code></td><td>S5 风格一致性巡检的模板（已有跨镜一致性检查的经验）</td></tr>
+</tbody>
+</table>
+
+<h3>7.2 需要新增但无冲突的</h3>
+
+<table>
+<thead><tr><th style="width:30%">新增能力</th><th style="width:70%">无冲突原因</th></tr></thead>
+<tbody>
+<tr><td><code>style-fingerprint.json</code></td><td>旁路产物，QA 阶段追加写入，不影响 run-state.json</td></tr>
+<tr><td><code>style-evolution.ndjson</code></td><td>追加式 ndjson，与 events.ndjson 同构，坏行容忍</td></tr>
+<tr><td><code>user-style-profile.json</code></td><td>离线分析产物，不参与管线执行</td></tr>
+<tr><td><code>AttributionLayer</code> 扩展</td><td>只加一个枚举值，已有 "style" 未使用，零冲突</td></tr>
+</tbody>
+</table>
+
+<h3>7.3 需要注意的冲突</h3>
+
+<table>
+<thead><tr><th style="width:30%">潜在冲突</th><th style="width:70%">缓解</th></tr></thead>
+<tbody>
+<tr><td>S3 风格推荐改变 visual 阶段入口</td><td>默认值不变，推荐是"可选项"——用户跳过则走原有逻辑</td></tr>
+<tr><td>S2 风格归因改变 deliberation prompt</td><td>只在 propose 工具的 system prompt 里加一段"如果问题是风格，用 style 层"，不改变 ReAct 循环</td></tr>
+<tr><td>S5 风格巡检增加延迟</td><td>纯函数 prompt 检查，不调 LLM，亚秒级完成</td></tr>
+<tr><td>S4 风格演化的隐私风险</td><td>画像只存风格统计，不带原始 brief；本地存储，不上云</td></tr>
+</tbody>
+</table>
+
+<h2 id="s8">八、落地路径与优先级</h2>
+
+<p>与制片流程的阶段对齐，建议按"旁路先做、介入后做"的顺序：</p>
+
+<table>
+<thead><tr><th style="width:12%">阶段</th><th style="width:22%">做什么</th><th style="width:22%">产出</th><th style="width:44%">价值</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td>S1 风格指纹 + S5 风格巡检</td><td><code>style-fingerprint.json</code> + 巡检报告</td><td>零成本旁路，把风格从黑盒变成可度量</td></tr>
+<tr><td><strong>2</strong></td><td>S2 审议风格归因</td><td><code>AttributionLayer</code> 扩展 + propose prompt 更新</td><td>让审议 agent 能定位风格问题，是系统性修复的入口</td></tr>
+<tr><td><strong>3</strong></td><td>S4 风格修正事件 + D 风格画像</td><td><code>style-evolution.ndjson</code> + <code>user-style-profile.json</code></td><td>积累风格演化数据，为推荐器铺路</td></tr>
+<tr><td><strong>4</strong></td><td>S3 风格推荐</td><td>visual 阶段前置推荐 + 用户确认</td><td>降低风格定稿的认知负担，提升首次准确率</td></tr>
+<tr><td><strong>5</strong></td><td>闭环：推荐 → 指纹 → 归因 → 演化 → 推荐</td><td>完整风格 skill 循环</td><td>风格能力自我迭代</td></tr>
+</tbody>
+</table>
+
+<div class="ok">
+<p><strong>阶段 1 可以立刻做，不需要任何代码改动审批</strong>——纯旁路产物，不影响现有行为。阶段 2 需要 deliberation prompt 更新，但仍是加法。阶段 3-5 需要数据积累，前期只建数据结构不跑逻辑。</p>
+</div>
+
+<h2 id="s9">九、风险与不做的边界</h2>
+
+<table>
+<thead><tr><th style="width:24%">风险</th><th style="width:48%">说明</th><th style="width:28%">应对</th></tr></thead>
+<tbody>
+<tr><td><strong>风格指纹的度量不准</strong></td><td>从成片抽帧算色调/对比度/饱和度，与"主观风格感受"可能不一致</td><td>指纹只做辅助参考，不替代 QA 的 visualConsistency；初期只记录不干预</td></tr>
+<tr><td><strong>风格推荐的冷启动</strong></td><td>没有历史数据时，推荐器等于随机</td><td>冷启动用人工标注的 20-30 组映射，不依赖机器学习</td></tr>
+<tr><td><strong>风格演化的时间成本</strong></td><td>积累足够数据需要数月</td><td>阶段 3 只建数据结构，不跑分析；分析逻辑在数据够时再加</td></tr>
+<tr><td><strong>与 director-agent.md 冲突</strong></td><td>"不做多 agent"——风格 skill 不是新 agent，是现有 pipeline 的增强层</td><td>所有 skill 都以纯函数 / 旁路记录的形式存在，不引入新 agent</td></tr>
+<tr><td><strong>过度工程</strong></td><td>如果用户对风格没有精细化需求，整套 skill 是浪费</td><td>阶段 1 的指纹只记录不展示，确认有用户需求后再做 UI</td></tr>
+</tbody>
+</table>
+
+<div class="warn">
+<p><strong>不做的事（本轮确认）：</strong></p>
+<ul>
+<li>不改动 VisualBible  schema（4 字段是稳定契约）</li>
+<li>不引入新 agent（导演 agent 已是唯一真 agent）</li>
+<li>不改变 pipeline 的线性 DAG 结构</li>
+<li>不做风格自动修正（只定位，不改自动改 bible）</li>
+<li>不上传风格数据到云端</li>
+</ul>
+</div>
+
+<h2>十、一句话总结</h2>
+
+<div class="fin">
+<p><strong>制片流程把风格当"静态规格"，影视风格 skill 把风格当"可度量、可归因、可推荐、可演化的动态能力"。</strong></p>
+<p>两者的关系不是"流程用 skill"，而是"skill 给流程的可观测性和可进化性装上一组传感器和记忆系统"——流程本身不变，但它第一次知道自己"风格做得怎么样、哪里有问题、以后怎么改进"。</p>
+<p>最值得先做的是 <strong>S1 风格指纹</strong>（旁路度量，零风险）和 <strong>S2 风格归因</strong>（扩展 deliberation 的归因层，让"风格不对"变成可操作的诊断）。</p>
+</div>
+
+</div>
+</body>
+</html>

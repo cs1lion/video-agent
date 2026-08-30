@@ -1,0 +1,62 @@
+{"id":"ev-653e305b","at":"2026-08-30T13:03:36.776Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实真人剧情短片：北宋汴京，虹桥边的夜市落着细雨。落魄书生沈砚之在灯笼摊前与更夫…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"}
+{"id":"ev-3d86a5d7","at":"2026-08-30T13:03:36.778Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 5 镜叙事骨架。"}
+{"id":"ev-f2315318","at":"2026-08-30T13:03:57.411Z","from":"writer","to":"art","kind":"handoff","text":"剧本《虹桥灯火》完成：5 镜，25s。Logline：北宋雨夜虹桥夜市，落第书生与更夫檐下对饮，悟灯火不问功名的暖意。请据此制定全片视觉规范。"}
+{"id":"ev-49c21cfb","at":"2026-08-30T13:03:57.412Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-84465fd6","at":"2026-08-30T13:04:36.607Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：6 张概念设计图（人物 2 · 道具 3 · 场景 1）逐张绘制中。"}
+{"id":"ev-d1ccf898","at":"2026-08-30T13:04:43.073Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「沈砚之」（人物 CH01）"}
+{"id":"ev-513c49d1","at":"2026-08-30T13:04:48.346Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「老周」（人物 CH02）"}
+{"id":"ev-7ec67c47","at":"2026-08-30T13:04:51.670Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「油纸灯笼」（道具 PR01）"}
+{"id":"ev-4395569a","at":"2026-08-30T13:04:55.118Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「小陶瓷酒坛」（道具 PR02）"}
+{"id":"ev-bc05ad54","at":"2026-08-30T13:04:58.285Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「青铜铜锣」（道具 PR03）"}
+{"id":"ev-9ab8bdaa","at":"2026-08-30T13:05:01.677Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「虹桥雨夜夜市」（场景 SC01）"}
+{"id":"ev-ec256e00","at":"2026-08-30T13:05:01.678Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-eb5c3865","at":"2026-08-30T13:05:01.679Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-e0a1fb85","at":"2026-08-30T13:05:24.034Z","from":"reviewer","to":"art","kind":"status","text":"设计图自审通过 ✅ 6 张与设计要点相符。"}
+{"id":"ev-3d39cd5a","at":"2026-08-30T13:05:24.035Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / historical realism / Song Dynasty period / ambient lifestyle / soft atmospheric lighting / detailed set design / naturalistic performance / rainy noir]，色板 #2C1B18、#D4A017、#8FA3B0、#4A5D3E。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-6a8eec29","at":"2026-08-30T13:05:24.035Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-9df4cbec","at":"2026-08-30T13:05:27.050Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-e5745e9c","at":"2026-08-30T13:05:27.051Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-cb4eba11","at":"2026-08-30T13:05:27.051Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-97d273b2","at":"2026-08-30T13:06:12.860Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：沈砚之(CH01)、虹桥雨夜夜市(SC01)。"}
+{"id":"ev-701ee336","at":"2026-08-30T13:06:12.862Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-c87fe1c8","at":"2026-08-30T13:06:17.023Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：沈砚之(CH01)、虹桥雨夜夜市(SC01)。"}
+{"id":"ev-4c135ccb","at":"2026-08-30T13:06:17.024Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-03247edb","at":"2026-08-30T13:06:21.302Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：沈砚之(CH01)、虹桥雨夜夜市(SC01)。"}
+{"id":"ev-3096ce10","at":"2026-08-30T13:06:21.304Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-2c78013e","at":"2026-08-30T13:06:28.484Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：沈砚之(CH01)、虹桥雨夜夜市(SC01)。"}
+{"id":"ev-e2ec0310","at":"2026-08-30T13:06:28.485Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-72fa5308","at":"2026-08-30T13:06:32.992Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：沈砚之(CH01)、虹桥雨夜夜市(SC01)。"}
+{"id":"ev-561d10c0","at":"2026-08-30T13:06:32.993Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-c97c3e6a","at":"2026-08-30T13:06:37.118Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-049f47fd","at":"2026-08-30T13:06:37.119Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-7544200e","at":"2026-08-30T13:06:37.220Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「音频」继续，直至成片。"}
+{"id":"ev-88c3c518","at":"2026-08-30T13:06:37.222Z","from":"sound","to":"editor","kind":"status","text":"声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"}
+{"id":"ev-25c5b937","at":"2026-08-30T13:06:37.225Z","from":"sound","to":"editor","kind":"status","text":"配音选角：旁白＝播音男声；角色 沈砚之→自信男声、老周→深沉男音；与角色声线全部错开。"}
+{"id":"ev-bb16ca98","at":"2026-08-30T13:06:50.050Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH01（指导：清冷寥落感，语速舒缓，重音落于「三更」「汴京」，气息下沉带叹…）"}
+{"id":"ev-1a782b01","at":"2026-08-30T13:06:53.127Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH05（指导：温和亲切感，前半句语速缓、重音落「不问功名」「一样亮」，后半…）"}
+{"id":"ev-f795dbc2","at":"2026-08-30T13:06:53.128Z","from":"sound","to":"editor","kind":"handoff","text":"旁白轨交付：2/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"}
+{"id":"ev-8ed2f23d","at":"2026-08-30T13:06:53.133Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 wide shot of realistic Song Dynasty Hong Brid…"}
+{"id":"ev-93c0e4c3","at":"2026-08-30T13:06:56.110Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH02 台词 5.0s 短于镜长，尾部补静音到 5s。"}
+{"id":"ev-7beac6e6","at":"2026-08-30T13:06:56.837Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH02 台词音频就绪 ✅（5.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-aca8b9b3","at":"2026-08-30T13:06:56.840Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 5s · 台词音频驱动口型）：Cinematic 16:9 medium shot, Shen Yanzhi, 32-year-old thin So…"}
+{"id":"ev-551ff2a4","at":"2026-08-30T13:07:00.036Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH03 台词 5.0s 短于镜长，尾部补静音到 5s。"}
+{"id":"ev-d1cbc952","at":"2026-08-30T13:07:00.382Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH03 台词音频就绪 ✅（5.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-af9884da","at":"2026-08-30T13:07:00.385Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 5s · 台词音频驱动口型）：Cinematic 16:9 medium shot, Shen Yanzhi in worn light blue s…"}
+{"id":"ev-4059ca7d","at":"2026-08-30T13:07:03.708Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH04 台词 5.0s 短于镜长，尾部补静音到 5s。"}
+{"id":"ev-201f9f7a","at":"2026-08-30T13:07:03.985Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH04 台词音频就绪 ✅（5.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-38e55d09","at":"2026-08-30T13:07:03.988Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 5s · 台词音频驱动口型）：Cinematic 16:9 medium close-up shot, old Zhou in grey-brown …"}
+{"id":"ev-f6f12469","at":"2026-08-30T13:07:03.993Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic 16:9 wide shot, Shen Yanzhi in worn light blue str…"}
+{"id":"ev-9d922ab7","at":"2026-08-30T13:09:02.545Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/5）"}
+{"id":"ev-536128d8","at":"2026-08-30T13:09:02.732Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-39d49006","at":"2026-08-30T13:09:02.872Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/5）"}
+{"id":"ev-9bc0c9ae","at":"2026-08-30T13:09:03.702Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 台词跟读未过关；ASR 重合 0.21「三尺雨，三尺雪地，三尺雪地」——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-8d15c235","at":"2026-08-30T13:09:03.841Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/5）"}
+{"id":"ev-b488da7b","at":"2026-08-30T13:09:47.691Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-e0b096ed","at":"2026-08-30T13:09:47.827Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH04 生成完成 ✅（4/5）"}
+{"id":"ev-7537539e","at":"2026-08-30T13:10:01.773Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH05 生成完成 ✅（5/5）"}
+{"id":"ev-0d58d3e6","at":"2026-08-30T13:10:01.776Z","from":"tech","to":"editor","kind":"handoff","text":"镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"}
+{"id":"ev-cf73cdad","at":"2026-08-30T13:10:01.777Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-02566636","at":"2026-08-30T13:10:27.770Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 23.9s · 720p 16:9，转场：白闪 0.3s、叠化 0.5s，音效：低频冲击、嗖声，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-6bcc3f00","at":"2026-08-30T13:11:17.787Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 2 处异常：SH04（浅蓝色交领长袍（女性角色）、女性发髻；灰袍老人手持灯笼）、SH05（浅蓝色长袍、束发戴冠（发簪）、正面站立；随从持铜锣）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-719e47f8","at":"2026-08-30T13:11:17.789Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：通过 ✅（综合 85）。最短板 audioSync 40 分。另有 2 处跨镜一致性异常请关注。"}
+{"id":"ev-53454502","at":"2026-08-30T13:11:17.918Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}

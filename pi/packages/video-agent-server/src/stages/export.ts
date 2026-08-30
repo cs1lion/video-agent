@@ -6,7 +6,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { edlPrompt, narrationFor, type EdlDoc, type ScriptDoc } from "../prompts.ts";
+import { dialogueFor, edlPrompt, narrationFor, type EdlDoc, type ScriptDoc } from "../prompts.ts";
 import {
 	appendSpan,
 	optionsOf,
@@ -77,7 +77,8 @@ export async function stageExport(
 
 	// ---- 节奏 trim：按旁白实际时长定每镜时长（旁白 + 尾留白，剪掉空转） ----
 	const NARR_TAIL_PAD = 0.7; // 旁白结束后画面留白
-	const JCUT_LEAD = 0.35; // J-cut：下一镜旁白较画面切点提前进入
+	// J-cut 已移除（2026-08-30 反馈"声音与画面抢"）：旁白与画面切点同步进入——
+	// 提前 0.35s 的旁白会叠在上一镜画面尾巴上，观感是"声音抢画面"。
 	const shotDur: number[] = [];
 	const narrDur: (number | null)[] = [];
 	for (const shot of keptShots) {
@@ -100,12 +101,19 @@ export async function stageExport(
 		const out = `shot-${shot.id}.mp4`;
 		const t0 = Date.now();
 		try {
+			// dubOver 镜（跟读校验未过）：口型视频保留，片源乱语音轨在归一化时即被
+			// TTS 原声替换——成片里的每一句人话都是真台词
+			const dubTtsRel = shot.dialogue?.dubOver
+				? ([`assets/tts-dialogue-${shot.id}-pad.mp3`, `assets/tts-dialogue-${shot.id}.mp3`].find((rel) =>
+						fs.existsSync(path.join(run.dir, rel)),
+					) ?? null)
+				: null;
 			await normalizeShot({
 				cwd: run.dir,
 				clipPath: path.relative(run.dir, clips![i]!),
-				audioPath: audios![i] ? path.relative(run.dir, audios![i]!) : null,
+				audioPath: dubTtsRel ?? (audios![i] ? path.relative(run.dir, audios![i]!) : null),
 				// 台词镜的对白在镜头自带音轨里：归一化时保留，降级 concat 路径才不丢声音（A3）
-				keepSourceAudio: shot.audioMode === "dialogue",
+				keepSourceAudio: shot.audioMode === "dialogue" && !dubTtsRel,
 				outPath: path.join("assets", out),
 				width,
 				height,
@@ -214,7 +222,7 @@ export async function stageExport(
 	let cursor = 0;
 	for (let i = 0; i < keptShots.length; i += 1) {
 		shotStart.push(cursor);
-		narrStart.push(i > 0 ? Math.max(0, cursor - JCUT_LEAD) : 0);
+		narrStart.push(cursor); // 旁白与本镜画面同步进入（无 J-cut）
 		const t = i < transitions.length ? transitions[i]! : undefined;
 		const overlap = t && t.type !== "cut" ? t.durationSec : 0;
 		if (t?.sfxType) {
@@ -228,9 +236,22 @@ export async function stageExport(
 		}
 		cursor += shotDur[i]! - overlap;
 	}
-	const narrationTexts = keptShots.map((s) => narrationFor(s, opts.promptLanguage).trim());
+	const narrationTexts = keptShots.map((s) =>
+		s.audioMode === "dialogue"
+			? dialogueFor(s, opts.promptLanguage).trim() || narrationFor(s, opts.promptLanguage).trim()
+			: narrationFor(s, opts.promptLanguage).trim(),
+	);
 	for (let i = 0; i < keptShots.length; i += 1) {
 		if (!narrationTexts[i]) continue;
+		if (keptShots[i]!.audioMode === "dialogue") {
+			// 台词镜：字幕=台词，起点=本镜切点、覆盖约整镜（与口型/铺入的 TTS 同步；
+			// 2026-08-30 反馈"台词几乎看不到"——此前只有旁白上字幕）。
+			// 终点收进下一镜切点（转场重叠区提前撤字幕，防叠字——结构审核实测抓到过 0.2s 重叠）
+			const nextShotStart = i + 1 < keptShots.length ? shotStart[i + 1]! : Number.POSITIVE_INFINITY;
+			const dur = Math.max(0.8, Math.min(shotDur[i]! - 0.3, nextShotStart - shotStart[i]! - 0.1));
+			subtitles.push({ start: shotStart[i]!, duration: dur, text: narrationTexts[i]! });
+			continue;
+		}
 		const nextStart = i + 1 < keptShots.length ? narrStart[i + 1] : cursor;
 		const dur = Math.max(0.8, Math.min((narrDur[i] ?? 1.5) + 0.3, nextStart - narrStart[i]));
 		subtitles.push({ start: narrStart[i]!, duration: dur, text: narrationTexts[i]! });
@@ -238,7 +259,8 @@ export async function stageExport(
 
 	// ---- 合成：xfade 转场链 + 旁白 J-cut 定位 + BGM 闪避 + SFX 音效层（失败降级 concat） ----
 	const assPath = path.join("assets", "subs.ass");
-	await fs.promises.writeFile(path.join(run.dir, assPath), buildAssSubtitles(subtitles, width, height), "utf-8");
+	const assText = buildAssSubtitles(subtitles, width, height);
+	await fs.promises.writeFile(path.join(run.dir, assPath), assText, "utf-8");
 	const finalPath = path.join("assets", finalName);
 	const BGM_EXTS = [".mp3", ".wav", ".m4a", ".ogg", ".flac"];
 	const bgmPath =
@@ -347,7 +369,10 @@ export async function stageExport(
 			qaLateTimes.push(shotStart[k]! + shotDur[k]! * 0.85);
 		}
 	}
-	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, qaMidpoints, qaLateTimes);
+	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, qaMidpoints, qaLateTimes, {
+		assText,
+		expectedLines: narrationTexts.filter((t) => t.trim()).length,
+	});
 	doneSteps += 1;
 	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
 

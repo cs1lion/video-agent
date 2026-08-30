@@ -414,6 +414,13 @@ async function runCase(testCase, args, batchDir) {
 	}
 
 	// 6) 断言 + 报告
+	// 配音选角留痕（voice-cast.json）：旁白音色与角色音色的区分是硬断言的依据
+	let voiceCast = null;
+	try {
+		voiceCast = JSON.parse(fs.readFileSync(path.join(caseDir, "05-audio", "voice-cast.json"), "utf-8"));
+	} catch {
+		voiceCast = null;
+	}
 	const assert = assertCase({
 		expect: testCase.expect,
 		run,
@@ -421,6 +428,7 @@ async function runCase(testCase, args, batchDir) {
 		finalBytes,
 		audioForm: testCase.audioForm,
 		postFacts,
+		voiceCast,
 	});
 	const timings = {
 		totalMs: Date.now() - t0,
@@ -435,7 +443,7 @@ async function runCase(testCase, args, batchDir) {
 	writeJson(path.join(logsDir, "api.log.json"), apiLog);
 	writeJson(path.join(logsDir, "run-final.json"), run);
 
-	writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts });
+	writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts, voiceCast });
 	log(`${testCase.id} 结论 ${assert.verdict}（失败项 ${assert.failed.length}）`);
 
 	return {

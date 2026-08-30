@@ -69,6 +69,22 @@ export function runFfmpegCapture(
 	});
 }
 
+/**
+ * 解码任意媒体的单声道 PCM（s16le），供音频比对类校验（台词跟读包络相关性）使用。
+ * 8kHz 足够包络分析且体积小（1 分钟 ≈ 960KB）。
+ */
+export async function decodeMonoPcm(cwd: string, mediaPath: string, sampleRate = 8000, signal?: AbortSignal): Promise<Int16Array> {
+	const { stdout } = await runFfmpegCapture(
+		["-v", "error", "-i", mediaPath, "-vn", "-ac", "1", "-ar", String(sampleRate), "-f", "s16le", "-"],
+		cwd,
+		signal,
+	);
+	const buf = Buffer.from(stdout, "binary");
+	const samples = new Int16Array(buf.length >> 1);
+	for (let i = 0; i < samples.length; i += 1) samples[i] = buf.readInt16LE(i * 2);
+	return samples;
+}
+
 // ============================================================================
 // 台词停顿插入（A2 · 静音段是表演的一部分）
 // ============================================================================
@@ -194,7 +210,11 @@ export function buildAssSubtitles(entries: SubtitleEntry[], width: number, heigh
 		.map((entry) => {
 			const start = assTime(entry.start);
 			const end = assTime(entry.start + entry.duration);
-			return `Dialogue: 0,${start},${end},Sub,${assText(entry.text)}`;
+			// ⚠️ Dialogue 字段数必须与下方 Events Format 声明（10 字段）一致：
+			// 此前只写 5 字段，字幕文本落进 Name 列、Text 渲染列为空——libass 按 Format
+			// 定位解析，渲染出来是空行，烧录字幕从未真正出现在成片里（e2e 抽帧实锤 2026-08-30）。
+			// Text 是最后一段（含逗号安全，assText 已转义换行与花括号）。
+			return `Dialogue: 0,${start},${end},Sub,,0,0,0,,${assText(entry.text)}`;
 		})
 		.join("\n");
 	return [
@@ -620,6 +640,9 @@ export async function assembleTimeline(options: {
 	let prev = "st0";
 	let cum = shots[0]!.durationSec;
 	let used = 0;
+	// 转场预算（2026-08-30 反馈"画面抢戏"）：花哨转场超过切点 1/3 就喧宾夺主——
+	// 超出预算一律硬切，让内容而非特效承担节奏
+	const maxTransitions = Math.max(1, Math.ceil(shots.length / 3));
 	for (let i = 1; i < shots.length; i += 1) {
 		const t = transitionOf(i - 1);
 		const dur = t?.durationSec ?? 0;
@@ -627,7 +650,8 @@ export async function assembleTimeline(options: {
 			t !== undefined &&
 			t.type !== "cut" &&
 			dur >= 0.05 &&
-			dur <= 1.2 &&
+			dur <= 0.8 &&
+			used < maxTransitions &&
 			cum - dur >= 0.25 &&
 			shots[i]!.durationSec > dur;
 		const out = `v${i}`;

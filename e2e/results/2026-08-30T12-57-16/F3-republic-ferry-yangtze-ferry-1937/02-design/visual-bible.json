@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"period drama",
+		"noir",
+		"atmospheric",
+		"vintage",
+		"wartime",
+		"16:9 aspect ratio"
+	],
+	"palette": [
+		"#3E2723",
+		"#1A237E",
+		"#FFB74D",
+		"#90A4AE",
+		"#FF7043",
+		"#0D1B2A"
+	],
+	"lighting": "Warm yellow kerosene lamp light illuminates the main deck area, with soft side-backlight from the distant riverbank lights, and diffused glow from river fog creating a hazy atmosphere.",
+	"grade": "Low-saturation cool base tone, with local warm yellow highlights to retain the sense of the era, and subtle film grain to enhance the realistic retro texture."
+}

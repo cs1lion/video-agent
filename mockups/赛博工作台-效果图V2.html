@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AD://FORGE — COCKPIT V2（激进驾驶舱）</title>
+<style>
+  :root {
+    --void: #000000;
+    --panel: #070708;
+    --amber: #ffb000;
+    --amber-hi: #ffd25e;
+    --emerald: #2eea9d;
+    --rose: #ff4d6a;
+    --t1: #d7d7dc;
+    --t2: #7d7d85;
+    --t3: #3f3f46;
+    --line: rgba(255, 176, 0, 0.16);
+    --line-dim: rgba(255, 255, 255, 0.06);
+    --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--void);
+    color: var(--t1);
+    font-family: var(--mono);
+    overflow: hidden;
+    display: flex;
+    text-transform: none;
+  }
+  ::selection { background: rgba(255,176,0,.3); }
+
+  /* ===== 全屏网格 + 视口外框（驾驶舱框） ===== */
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,176,0,0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,176,0,0.028) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .frame { position: fixed; pointer-events: none; z-index: 50; }
+  .frame i { position: absolute; width: 22px; height: 22px; border: 2px solid var(--amber); }
+  .frame.tl { left: 6px; top: 6px; } .frame.tl i { border-right: 0; border-bottom: 0; }
+  .frame.tr { right: 6px; top: 6px; } .frame.tr i { right: 0; border-left: 0; border-bottom: 0; }
+  .frame.bl { left: 6px; bottom: 6px; } .frame.bl i { bottom: 0; border-right: 0; border-top: 0; }
+  .frame.br { right: 6px; bottom: 6px; } .frame.br i { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+
+  /* ===== 左侧：系统条（边栏读数） ===== */
+  .sysbar {
+    width: 44px; flex: none; background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 34px 0 12px; gap: 14px; z-index: 5;
+  }
+  .sysbar .logo { color: var(--amber); font-size: 15px; text-shadow: 0 0 10px rgba(255,176,0,.7); }
+  .sys-dot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sys-dot .n { font-size: 9px; color: var(--t3); }
+  .sys-dot .d { width: 7px; height: 7px; border: 1px solid var(--t3); transform: rotate(45deg); }
+  .sys-dot.done .d { background: var(--emerald); border-color: var(--emerald); box-shadow: 0 0 7px rgba(46,234,157,.8); }
+  .sys-dot.done .n { color: rgba(46,234,157,.7); }
+  .sys-dot.act .d { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 9px rgba(255,176,0,.9); animation: blink 1.2s steps(2) infinite; }
+  .sys-dot.act .n { color: var(--amber); }
+  @keyframes blink { 50% { opacity: .35; } }
+  .sysbar .vlabel {
+    writing-mode: vertical-rl; font-size: 9px; letter-spacing: .4em;
+    color: var(--t3); margin-top: auto; margin-bottom: auto;
+  }
+  .sysbar .vlabel b { color: var(--amber); font-weight: 400; }
+
+  /* ===== 主列 ===== */
+  .col { flex: 1; min-width: 0; display: flex; flex-direction: column; z-index: 4; }
+
+  /* 终端标题栏 */
+  .titlebar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 26px 20px 8px;
+    font-size: 12px; color: var(--t2); letter-spacing: .06em;
+  }
+  .titlebar .path { color: var(--t3); }
+  .titlebar .run { color: var(--t1); }
+  .titlebar .stat { color: var(--amber); text-shadow: 0 0 8px rgba(255,176,0,.55); }
+  .titlebar .cursor { width: 8px; height: 14px; background: var(--amber); animation: blink 1s steps(2) infinite; }
+  .titlebar .right { margin-left: auto; display: flex; gap: 18px; font-size: 11px; color: var(--t3); }
+  .titlebar .right b { color: var(--t2); font-weight: 400; }
+  .titlebar .right .live { color: var(--emerald); }
+
+  /* ===== 系统总线（DAG 原理图化） ===== */
+  .bus { padding: 10px 20px 14px; border-bottom: 1px solid var(--line-dim); }
+  .bus .cap { font-size: 9px; letter-spacing: .35em; color: var(--t3); margin-bottom: 10px; }
+  .bus-track { display: flex; align-items: center; }
+  .bnode { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 86px; flex: none; }
+  .bnode .diamond {
+    width: 13px; height: 13px; transform: rotate(45deg);
+    border: 1.5px solid var(--t3); background: var(--void);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bnode.done .diamond { border-color: var(--emerald); background: var(--emerald); box-shadow: 0 0 10px rgba(46,234,157,.6); }
+  .bnode.act .diamond { border-color: var(--amber); background: var(--amber); box-shadow: 0 0 16px rgba(255,176,0,.9); animation: blink 1.4s steps(2) infinite; }
+  .bnode .bn { font-size: 9px; color: var(--t3); letter-spacing: .1em; }
+  .bnode.done .bn { color: rgba(46,234,157,.75); }
+  .bnode.act .bn { color: var(--amber); text-shadow: 0 0 8px rgba(255,176,0,.5); }
+  .bnode .bs { font-size: 8px; color: var(--t3); }
+  .bnode.act .bs { color: rgba(255,176,0,.65); }
+  .bwire { flex: 1; height: 1px; min-width: 12px; background: var(--t3); position: relative; overflow: visible; }
+  .bwire.hot { background: repeating-linear-gradient(90deg, var(--amber) 0 6px, transparent 6px 13px); animation: wire .6s linear infinite; opacity: .8; }
+  .bwire.cold-done { background: rgba(46,234,157,.4); }
+  @keyframes wire { to { background-position-x: 13px; } }
+
+  /* ===== 中段 ===== */
+  .mid { flex: 1; min-height: 0; display: flex; }
+
+  /* 监视器墙 */
+  .deck { flex: 1; min-width: 0; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .deck-head { display: flex; align-items: baseline; gap: 14px; font-size: 10px; letter-spacing: .25em; color: var(--t3); }
+  .deck-head .t { color: var(--t1); font-size: 12px; letter-spacing: .15em; }
+  .deck-head .t b { color: var(--amber); font-weight: 400; }
+  .deck-head .note { margin-left: auto; color: rgba(255,176,0,.6); letter-spacing: .1em; }
+
+  .wall { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.6fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
+  .mon {
+    position: relative; background: #020202;
+    border: 1px solid rgba(255,255,255,.09);
+    overflow: hidden;
+  }
+  .mon.main { grid-row: 1 / 3; }
+  .mon .screen { position: absolute; inset: 0; }
+  .mon .scan {
+    position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.22) 2px 3px);
+  }
+  .mon .vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%); }
+  /* 监视器 HUD 角标 */
+  .xh { position: absolute; width: 14px; height: 14px; z-index: 6; }
+  .xh::before, .xh::after { content: ""; position: absolute; background: var(--amber); }
+  .xh::before { width: 100%; height: 1.5px; top: 6px; }
+  .xh::after { width: 1.5px; height: 100%; left: 6px; }
+  .xh.tl { left: 6px; top: 6px; } .xh.tr { right: 6px; top: 6px; }
+  .xh.bl { left: 6px; bottom: 6px; } .xh.br { right: 6px; bottom: 6px; }
+  /* 遥测读数 */
+  .tele {
+    position: absolute; z-index: 7; font-size: 9px; line-height: 1.7; letter-spacing: .05em;
+    color: rgba(255,255,255,.75); background: rgba(0,0,0,.55); padding: 3px 7px;
+  }
+  .tele b { color: var(--amber); font-weight: 400; }
+  .tele.tl { left: 26px; top: 8px; }
+  .tele.br { right: 26px; bottom: 8px; text-align: right; }
+  .tele .ok { color: var(--emerald); }
+  .tele .warn { color: var(--amber); }
+  .rec-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 8px rgba(255,77,106,.9); animation: blink 1s steps(2) infinite; margin-right: 4px; }
+  .mon .bigstat {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px; z-index: 5;
+  }
+  .mon .bigstat .pct { font-size: 34px; color: var(--amber); text-shadow: 0 0 22px rgba(255,176,0,.6); letter-spacing: .04em; }
+  .mon .bigstat .what { font-size: 10px; letter-spacing: .3em; color: var(--t2); }
+  .mon .progline { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--amber); box-shadow: 0 0 12px rgba(255,176,0,.8); z-index: 6; }
+  .skel { position: absolute; inset: 0; background: rgba(255,255,255,.025); overflow: hidden; }
+  .skel::after { content: ""; position: absolute; top: 0; bottom: 0; width: 36%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.07), transparent); animation: shim 1.5s linear infinite; }
+  @keyframes shim { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+  /* 假画面 */
+  .f1 { background: linear-gradient(140deg, #16283a, #080e16 55%, #101c2a); }
+  .f2 { background: linear-gradient(140deg, #2c1630, #100812 55%, #1e1024); }
+  .f3 { background: linear-gradient(140deg, #123324, #071209 55%, #0e2216); }
+  .f4 { background: linear-gradient(140deg, #38240f, #160e04 55%, #241806); }
+
+  /* 右：COMMS 终端 */
+  .comms {
+    width: 330px; flex: none; border-left: 1px solid var(--line);
+    background: var(--panel); display: flex; flex-direction: column;
+  }
+  .comms .chead {
+    padding: 10px 14px; border-bottom: 1px solid var(--line-dim);
+    font-size: 9px; letter-spacing: .3em; color: var(--t3);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .comms .chead .on { color: var(--emerald); }
+  .comms .cbody { flex: 1; min-height: 0; padding: 12px 14px; font-size: 11px; line-height: 1.9; overflow: hidden; }
+  .cl { display: flex; gap: 8px; }
+  .cl .ts { color: var(--t3); flex: none; }
+  .cl .who { flex: none; width: 56px; }
+  .cl .txt { color: var(--t2); }
+  .cl .who.dir { color: var(--amber); }
+  .cl .who.qa { color: var(--emerald); }
+  .cl .who.you { color: var(--t1); }
+  .cl .who.prod { color: var(--amber-hi); }
+  .cl .txt b { color: var(--t1); font-weight: 400; }
+  .cl .txt .hl { color: var(--amber); }
+  .cinput { border-top: 1px solid var(--line-dim); padding: 10px 14px; display: flex; gap: 8px; align-items: center; }
+  .cinput .ps { color: var(--amber); }
+  .cinput .in { flex: 1; background: none; border: none; outline: none; color: var(--t3); font-family: var(--mono); font-size: 11px; }
+  .cinput .cur { width: 7px; height: 13px; background: var(--amber); animation: blink 1s steps(2) infinite; }
+
+  /* ===== 底部：时间码时间线 ===== */
+  .tl { border-top: 1px solid var(--line); background: var(--panel); padding: 8px 18px 12px; }
+  .ruler { display: flex; justify-content: space-between; font-size: 8px; color: var(--t3); padding: 0 0 4px; letter-spacing: .05em; }
+  .tl-cells { position: relative; display: flex; gap: 2px; height: 34px; }
+  .tc { position: relative; border: 1px solid var(--line-dim); background: #050505; overflow: hidden; }
+  .tc .s { position: absolute; left: 5px; bottom: 3px; font-size: 9px; color: var(--t2); }
+  .tc .m { position: absolute; right: 5px; bottom: 3px; font-size: 8px; color: var(--t3); }
+  .tc.done { border-color: rgba(46,234,157,.3); }
+  .tc.done .s { color: rgba(46,234,157,.8); }
+  .tc.act { border-color: var(--amber); box-shadow: inset 0 0 14px rgba(255,176,0,.15), 0 0 10px rgba(255,176,0,.2); }
+  .tc.act .s { color: var(--amber); }
+  .tc .kou { position: absolute; right: 4px; top: 3px; font-size: 8px; color: var(--amber); }
+  .playhead { position: absolute; top: -6px; bottom: -4px; width: 1.5px; background: var(--amber); box-shadow: 0 0 10px rgba(255,176,0,.9); z-index: 8; }
+  .playhead::before { content: "▼"; position: absolute; top: -9px; left: -4.5px; font-size: 8px; color: var(--amber); }
+
+  .flicker { animation: flick .18s steps(2) 1; }
+  @keyframes flick { 0% { opacity: .2; } 100% { opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="frame tl"><i></i></div><div class="frame tr"><i></i></div>
+<div class="frame bl"><i></i></div><div class="frame br"><i></i></div>
+
+<!-- 左：系统条 -->
+<aside class="sysbar">
+  <div class="logo">▲</div>
+  <div class="sys-dot done"><span class="d"></span><span class="n">01</span></div>
+  <div class="sys-dot done"><span class="d"></span><span class="n">02</span></div>
+  <div class="sys-dot done"><span class="d"></span><span class="n">03</span></div>
+  <div class="sys-dot done"><span class="d"></span><span class="n">04</span></div>
+  <div class="sys-dot act"><span class="d"></span><span class="n">05</span></div>
+  <div class="sys-dot"><span class="d"></span><span class="n">06</span></div>
+  <div class="sys-dot"><span class="d"></span><span class="n">07</span></div>
+  <div class="sys-dot"><span class="d"></span><span class="n">08</span></div>
+  <div class="sys-dot"><span class="d"></span><span class="n">09</span></div>
+  <div class="vlabel">AD://FORGE <b>COCKPIT</b></div>
+</aside>
+
+<!-- 主列 -->
+<div class="col">
+  <!-- 终端标题栏 -->
+  <div class="titlebar flicker">
+    <span class="path">AD://FORGE</span><span class="run">/run/fizz25</span>
+    <span class="stat">[RUNNING]</span>
+    <span style="color:#7d7d85">▮▮▮▮▮▮▯░░░ 62%</span>
+    <span class="cursor"></span>
+    <div class="right">
+      <span>RPM <b>2/MIN</b></span>
+      <span>QUOTA <b>∞</b></span>
+      <span>COST <b>¥1.87</b></span>
+      <span class="live">● LIVE</span>
+    </div>
+  </div>
+
+  <!-- 系统总线 -->
+  <div class="bus">
+    <div class="cap">SYS.BUS // PRODUCTION PIPELINE</div>
+    <div class="bus-track">
+      <div class="bnode done"><div class="diamond"></div><span class="bn">剧本</span><span class="bs">WRITER</span></div>
+      <div class="bwire cold-done"></div>
+      <div class="bnode done"><div class="diamond"></div><span class="bn">美术</span><span class="bs">ART</span></div>
+      <div class="bwire cold-done"></div>
+      <div class="bnode done"><div class="diamond"></div><span class="bn">分镜</span><span class="bs">BOARD</span></div>
+      <div class="bwire cold-done"></div>
+      <div class="bnode done"><div class="diamond"></div><span class="bn">关键帧</span><span class="bs">FRAME</span></div>
+      <div class="bwire hot"></div>
+      <div class="bnode act"><div class="diamond"></div><span class="bn">片段</span><span class="bs">OVEN ~18s</span></div>
+      <div class="bwire"></div>
+      <div class="bnode"><div class="diamond"></div><span class="bn">声音</span><span class="bs">AUDIO</span></div>
+      <div class="bwire"></div>
+      <div class="bnode"><div class="diamond"></div><span class="bn">导出</span><span class="bs">EXPORT</span></div>
+    </div>
+  </div>
+
+  <!-- 中段 -->
+  <div class="mid">
+    <!-- 监视器墙 -->
+    <section class="deck">
+      <div class="deck-head">
+        <span class="t">STAGE 05 <b>// 片段生成</b></span>
+        <span>MONITOR WALL</span>
+        <span class="note">SH02·SH05 台词驱动 ▍ENT-1 ⚡⚡▯ ETA 18s ▍ENT-2 ⚡⚡ IDLE</span>
+      </div>
+      <div class="wall">
+        <div class="mon main">
+          <div class="screen f2"></div>
+          <div class="scan"></div>
+          <div class="vig"></div>
+          <span class="xh tl"></span><span class="xh tr"></span><span class="xh bl"></span><span class="xh br"></span>
+          <div class="tele tl"><b>SH02</b> · DIALOGUE-DRIVEN · <span class="ok">LOCKED</span><br>「我以为你走了」· 口型同步 0.62</div>
+          <div class="tele br">PRI <b>P0</b> · 4.0s · v1<br>AUDIO <span class="ok">BURN-IN</span></div>
+        </div>
+        <div class="mon">
+          <div class="screen f1"></div>
+          <div class="scan"></div>
+          <div class="vig"></div>
+          <span class="xh tl"></span><span class="xh tr"></span><span class="xh bl"></span><span class="xh br"></span>
+          <div class="tele tl"><b>SH01</b> · NARRATION</div>
+          <div class="tele br">PRI P1 · 5.0s</div>
+        </div>
+        <div class="mon">
+          <div class="skel"></div>
+          <div class="scan"></div>
+          <span class="xh tl"></span><span class="xh tr"></span><span class="xh bl"></span><span class="xh br"></span>
+          <div class="tele tl"><span class="rec-dot"></span><b>SH03</b> RENDERING</div>
+          <div class="bigstat"><span class="pct">47%</span><span class="what">AGNES-2.5-FLASH · REF</span></div>
+          <div class="progline" style="width:47%"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMS 终端 -->
+    <aside class="comms">
+      <div class="chead">COMMS.LOG <span class="on">● 9 CREW ONLINE</span></div>
+      <div class="cbody">
+        <div class="cl"><span class="ts">14:02</span><span class="who">分镜师</span><span class="txt">6 镜提示词交付 → 技术导演。SH02/SH05 走台词链。</span></div>
+        <div class="cl"><span class="ts">14:11</span><span class="who qa">审片员</span><span class="txt">SH01 <b>PASS</b>。SH03 出片后复查产品-手接触帧。</span></div>
+        <div class="cl"><span class="ts">14:13</span><span class="who prod">制片人</span><span class="txt">ENT-1 令牌回充 <span class="hl">~18s</span>；建议 SH03 投 ENT-2，SH04 催办上游。</span></div>
+        <div class="cl"><span class="ts">14:14</span><span class="who you">你</span><span class="txt">SH02 定 <b>P0</b>，天台碰杯帧必须保住。</span></div>
+        <div class="cl"><span class="ts">14:14</span><span class="who dir">导演</span><span class="txt">收到。P0 已锁，重拍预算向 SH02 倾斜。</span></div>
+      </div>
+      <div class="cinput"><span class="ps">&gt;</span><input class="in" placeholder="对导演下指令（重拍/重录/重导）…" /><span class="cur"></span></div>
+    </aside>
+  </div>
+
+  <!-- 时间线 -->
+  <div class="tl">
+    <div class="ruler"><span>00:00</span><span>00:05</span><span>00:10</span><span>00:15</span><span>00:20</span><span>00:25</span></div>
+    <div class="tl-cells">
+      <div class="tc done" style="flex:5"><span class="s">SH01</span><span class="m">5s</span></div>
+      <div class="tc done" style="flex:4"><span class="s">SH02</span><span class="kou">口</span><span class="m">4s</span></div>
+      <div class="tc act" style="flex:4"><span class="s">SH03</span><span class="m">47%</span></div>
+      <div class="tc" style="flex:3"><span class="s">SH04</span><span class="m">QUE</span></div>
+      <div class="tc" style="flex:5"><span class="s">SH05</span><span class="kou" style="color:#3f3f46">口</span><span class="m">5s</span></div>
+      <div class="tc" style="flex:4"><span class="s">SH06</span><span class="m">4s</span></div>
+      <div class="playhead" style="left:34%"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

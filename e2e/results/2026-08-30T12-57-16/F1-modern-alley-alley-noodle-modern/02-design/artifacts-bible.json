@@ -1,0 +1,20 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"slice-of-life",
+		"realistic",
+		"warm-urban-noir",
+		"intimate",
+		"documentary-style",
+		"gritty-authentic"
+	],
+	"palette": [
+		"#FFD166",
+		"#2B2D42",
+		"#8D99AE",
+		"#E63946",
+		"#1D3557"
+	],
+	"lighting": "Low-key warm key lighting from overhead incandescent shop bulbs, with faint cool ambient spill from distant street lamps, soft steam haze diffusing the light to create an intimate late-night atmosphere.",
+	"grade": "Desaturated cool shadows paired with warm saturated midtones, subtle fine film grain added to enhance gritty authentic urban realism."
+}

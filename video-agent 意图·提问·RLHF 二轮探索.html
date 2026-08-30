@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>video-agent 意图 · 提问 · RLHF 二轮探索</title>
+<style>
+:root{--bg:#ffffff;--surface:#faf9f7;--line:#e6e3dd;--line2:#d3d1c7;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--purple:#EEEDFE;--purple-l:#534AB7;--purple-d:#3C3489;--teal:#E1F5EE;--teal-l:#0F6E56;--teal-d:#085041;--amber:#FAEEDA;--amber-l:#854F0B;--amber-d:#633806;--blue:#E6F1FB;--blue-l:#185FA5;--blue-d:#0C447C;--red:#FCEBEB;--red-l:#A32D2D;--red-d:#791F1F;--gray:#F1EFE8;}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;padding:48px 24px 120px;background:var(--bg);color:var(--tx);font:400 15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}.wrap{max-width:940px;margin:0 auto}h1{font:500 29px/1.32 inherit;margin:0 0 10px;letter-spacing:-.015em}.sub{color:var(--tx2);font-size:16px;margin:0 0 8px}.meta{color:var(--tx3);font-size:13px;margin:0 0 36px;padding-bottom:24px;border-bottom:1px solid var(--line)}h2{font:500 21px/1.45 inherit;margin:56px 0 14px;padding-top:26px;border-top:1px solid var(--line);scroll-margin-top:20px}h2:first-of-type{border-top:none;padding-top:0}h3{font:500 17px/1.5 inherit;margin:30px 0 10px;scroll-margin-top:20px}h4{font:500 15px/1.5 inherit;margin:22px 0 8px;color:var(--tx2)}p{margin:0 0 14px}ul,ol{margin:0 0 14px;padding-left:22px}li{margin:0 0 7px}code{font:400 13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--gray);padding:1.5px 5px;border-radius:4px;color:var(--tx)}pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:0 0 18px}pre code{background:none;padding:0;font-size:12.5px;line-height:1.7;color:var(--tx)}table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px}th{text-align:left;font-weight:500;color:var(--tx2);font-size:13px;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--surface)}td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}tr:last-child td{border-bottom:none}.lead{background:var(--purple);border:1px solid var(--purple-l);border-radius:12px;padding:22px 24px;margin:0 0 32px}.lead p{margin:0 0 10px;color:var(--purple-d);font-size:15px}.lead p:last-child{margin:0}.lead strong{font-weight:500}.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap}.t-purple{background:var(--purple);color:var(--purple-d);border:1px solid var(--purple-l)}.t-teal{background:var(--teal);color:var(--teal-d);border:1px solid var(--teal-l)}.t-amber{background:var(--amber);color:var(--amber-d);border:1px solid var(--amber-l)}.t-red{background:var(--red);color:var(--red-l);border:1px solid var(--red-l)}.t-blue{background:var(--blue);color:var(--blue-l);border:1px solid var(--blue-l)}.note{border-left:3px solid var(--amber-l);background:var(--amber);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--amber-d)}.note p{margin:0 0 8px}.note p:last-child{margin:0}.warn{border-left:3px solid var(--red-l);background:var(--red);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--red-d)}.warn p{margin:0 0 8px}.warn p:last-child{margin:0}.warn strong{font-weight:500}.ok{border-left:3px solid var(--teal-l);background:var(--teal);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--teal-d)}.ok p{margin:0 0 8px}.ok p:last-child{margin:0}.ok strong{font-weight:500}.find{border-left:3px solid var(--purple-l);background:var(--purple);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px;font-size:14px;color:var(--purple-d)}.find p{margin:0 0 8px}.find p:last-child{margin:0}.find strong{font-weight:500}.ref{color:var(--tx3);font-size:12.5px}.toc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:0 0 44px}.toc h4{margin:0 0 12px;color:var(--tx2);font-size:13px}.toc ol{margin:0;padding-left:20px;columns:2;column-gap:36px;font-size:14px}@media(max-width:720px){.toc ol{columns:1}}.toc li{margin:0 0 6px}.toc a{color:var(--tx);text-decoration:none;border-bottom:1px solid var(--line2)}.toc a:hover{border-bottom-color:var(--tx2)}.gap{background:var(--red);border:1px solid var(--red-l);border-radius:12px;padding:18px 22px;margin:0 0 20px}.gap h4{margin:0 0 8px;color:var(--red-d)}.gap p{margin:0 0 8px;color:var(--red-d);font-size:14px}.gap p:last-child{margin:0}.gap code{background:#fde8e8;color:var(--red-d)}.diff{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:0 0 20px}.diff h4{margin:0 0 8px;color:var(--tx2)}.diff table{margin:0}th.w{width:22%}th.n{width:56%}th.s{width:22%}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>意图 · 提问 · RLHF 二轮探索</h1>
+<p class="sub">基于源码实读的增量发现与未覆盖方向</p>
+<p class="meta">2026-08-30 · 数据来源：上一版设计文档 + deliberation.ts / clarify/ 源码实读 + director-agent.md</p>
+
+<div class="lead">
+<p><strong>上一版设计解决了"决策轨迹缺失"——补上 <code>DecisionSpan</code> 这条主线是对的。</strong></p>
+<p>但本轮源码实读发现，<strong>上一版有几个判断与现状不符</strong>：实际候选集上限是 <strong>2 个</strong>（<code>deliberation.ts:635 proposals.slice(0,2)</code>），<code>preferences.jsonl</code> <strong>已在落盘</strong>（<code>deliberation.ts:366</code>），<code>PreferenceRecord</code> <strong>已定义</code>（<code>deliberation.ts:148</code>）。这些不是上一版的错——它们证明项目在快速演进——但意味着"候选集 + 偏好信号"这两条并不像上一版说的那么空白。</p>
+<p>所以本轮的目标是：<strong>在上一版主线上，寻找真正没被覆盖的新价值洼地。</strong></p>
+</div>
+
+<div class="toc">
+<h4>目录</h4>
+<ol>
+<li><a href="#s1">本轮探索的三个视角切换</a></li>
+<li><a href="#s2">家底补正：上一版与现状的偏差</a></li>
+<li><a href="#s3">N1 意图维度语义冲突检测</a></li>
+<li><a href="#s4">N2 反问质量元数据</a></li>
+<li><a href="#s5">N3 重做即对照实验</a></li>
+<li><a href="#s6">N4 跨 episode 用户画像</a></li>
+<li><a href="#s7">N5 候选集差异化保证</a></li>
+<li><a href="#s8">N6 奖励模型精确组合</a></li>
+<li><a href="#s9">N7 用户耐心账本</a></li>
+<li><a href="#s10">N8 低置信自动 A/B 实验</a></li>
+<li><a href="#s11">信号分级利用：立即可做的零训练分析</a></li>
+<li><a href="#s12">数据量门槛的诚实校准</a></li>
+<li><a href="#s13">风险与不做的边界</a></li>
+<li><a href="#s14">落地路径（二轮，无代码）</a></li>
+</ol>
+</div>
+
+<h2 id="s1">一、本轮探索的三个视角切换</h2>
+
+<table>
+<thead><tr><th style="width:28%">视角</th><th style="width:36%">上一版的核心假设</th><th style="width:36%">本轮的新视角</th></tr></thead>
+<tbody>
+<tr><td><strong>意图</strong></td><td>15 维意图是独立正交变量，分别采集、分别注入 prompt</td><td><strong>维度间有语义耦合</strong>——"快节奏"与"舒缓音乐"不是独立选择，冲突检测本身是高信号</td></tr>
+<tr><td><strong>提问</strong></td><td>题库是固定资产，目标是"问得全"</td><td><strong>提问本身是优化对象</strong>——问题的可回答性、表述歧义、用户犹豫，都是数据</td></tr>
+<tr><td><strong>RLHF</strong></td><td>先攒数据，再训模型</td><td><strong>信号本身要先分级</strong>——有些信号（重做对照、澄清失效）零成本就能即时利用，不等训练</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<p><strong>核心立场：本轮不做代码。</strong>所有提案都是"如果做了，价值是什么、落点在哪里、风险是什么"的纯设计探索。</p>
+</div>
+
+<h2 id="s2">二、家底补正：上一版与现状的偏差</h2>
+
+<p>设计之前先纠偏——上一版有几处判断与源码现状不符，修正这些才能避免"重复建设已有能力"或"低估真正缺口"。</p>
+
+<table>
+<thead><tr><th style="width:22%">上一版说法</th><th style="width:22%">源码实况</th><th style="width:22%">影响</th><th style="width:34%">修正后的判断</th></tr></thead>
+<tbody>
+<tr><td>候选集 3–5 个提案</td><td><code>proposals.slice(0, 2)</code>，<strong>硬上限 2 个</strong><span class="ref">deliberation.ts:635</span></td><td class="t-red">高</td><td><strong>候选集缺口比预想更严重</strong>——2 个提案的偏好对只有 1 个 rejected 侧，质量远低于 3–5 个</td></tr>
+<tr><td>preferences 没有</td><td><code>preferences.jsonl</code> 已在落盘，<code>PreferenceRecord</code> 已定义<span class="ref">deliberation.ts:148/366</span></td><td class="t-amber">中</td><td><strong>L3 偏好事件已部分存在</strong>——但只覆盖审议场景（base/challenger/neither），导演对话和重做路径仍空白</td></tr>
+<tr><td>候选集 = 审议 proposals</td><td>proposal 的 <code>confidence</code> 是 high|medium|low（非 0..1 数值）<span class="ref">deliberation.ts:114</span></td><td class="t-amber">中</td><td>置信度是粗粒度，不能直接用于"低于 0.6 就反问"的阈值设计，需要扩展或映射</td></tr>
+<tr><td>动作意图 4 类</td><td><code>ProposalAction = "reedit" | "reshot" | "retts" | "rescript"</code><span class="ref">deliberation.ts:66</span></td><td class="t-blue">低</td><td>实际已有 4 类，且含 <code>rescript</code>（重写剧本）——比上一版列表多一个，但 director-agent.md 的派发只列了 3 个，有缺口</td></tr>
+</tbody>
+</table>
+
+<div class="gap">
+<h4>🔴 最值得关注的家底缺口</h4>
+<p><strong>候选集上限 2 个</strong>是最大的意外发现。上一版说"候选集就是偏好对的 rejected 侧"，但 2 个提案的 rejected 侧只有 1 个，偏好对的质量和数量都远低于设计预期。<strong>如果要做 DPO，候选集扩类是优先级最高的基础设施。</strong></p>
+</div>
+
+<h2 id="s3">三、N1 意图维度语义冲突检测</h2>
+
+<h3>3.1 问题</h3>
+
+<p>现有 15 维意图被当作独立正交变量处理：题库顺序遍历、用户逐题选择、各维度独立注入下游 prompt。但这套假设<strong>没有经过验证</strong>——实际用户可能选"快节奏"+"舒缓音乐"+"平静治愈"，这三者在语义上并不矛盾，但注入 prompt 后会互相打架。</p>
+
+<p>上一版设计把意图视为"输入采集"问题，没有触及"维度间的语义耦合"。这是遗漏，因为<strong>冲突检测不仅能改善生成质量，还能产出高信号训练数据</strong>。</p>
+
+<h3>3.2 设计：三层冲突检测</h3>
+
+<table>
+<thead><tr><th style="width:18%">层</th><th style="width:30%">做什么</th><th style="width:52%">用途</th></tr></thead>
+<tbody>
+<tr><td><strong>logline 预检</strong></td><td>用户输入 logline 后，先用 LLM 或规则推断"隐含意图"，与后续访谈答案做预检</td><td>在访谈开始前就发现明显矛盾（如 logline 说"深夜办公室紧张追 deadline"，用户却选"平静治愈"）</td></tr>
+<tr><td><strong>访谈中软提示</strong></td><td>当用户选了 A 维度的某个值，B 维度的选项列表里对"可能冲突"的选项做弱提示（不阻止，不强行引导）</td><td>不打断访谈流，但降低" unintentional conflict"的概率</td></tr>
+<tr><td><strong>落盘冲突事件</strong></td><td>把检测到的冲突写为 <code>IntentConflictEvent</code>（dimA, valueA, dimB, valueB, severity）</td><td>离线分析"哪些维度对经常冲突"；长期作为负样本训练</td></tr>
+</tbody>
+</table>
+
+<pre><code>/** 意图冲突事件 */
+export interface IntentConflictEvent {
+  episodeId: string;
+  at: string;
+  /** 冲突的维度对 */
+  conflicts: Array&lt;{
+    dimA: IntentKey; valueA: AnswerId;
+    dimB: IntentKey; valueB: AnswerId;
+    severity: "soft" | "hard";  // soft=语义不理想但可接受, hard=互相矛盾
+    source: "logline-inference" | "interview-answer" | "director-override";
+  }&gt;;
+  /** 用户是否知晓冲突（知晓=软提示已展示） */
+  userAcknowledged: boolean;
+}</code></pre>
+
+<div class="note">
+<p><strong>为什么要区分 soft/hard：</strong>很多"冲突"其实是创意张力（"快节奏+舒缓音乐"可能是用户想要的对比手法），不是 bug。硬冲突才需要干预，软冲突只记录、不阻止。</p>
+</div>
+
+<h3>3.3 数据价值</h3>
+
+<ul>
+<li><strong>短期</strong>：降低 unintentional conflict 率，改善生成质量</li>
+<li><strong>中期</strong>：冲突频率报表 → 优化题库选项粒度（如 pacing 是否该拆成"画面节奏"和"音乐节奏"两个维度）</li>
+<li><strong>长期</strong>：冲突事件作为负样本训练"意图一致性"奖励模型</li>
+</ul>
+
+<h2 id="s4">四、N2 反问质量元数据</h2>
+
+<h3>4.1 问题</h3>
+
+<p>现有 <code>InterviewLogEntry</code> 只有 <code>questionId / answerId / ts</code> 三个字段。<strong>一个都没记录"用户是怎么答的"</strong>：</p>
+<ul>
+<li>用户<strong>跳过</strong>了这道题 → 是被动跳过还是主动跳过？</li>
+<li>用户<strong>犹豫</strong>了 8 秒 → 是题目太难还是选项都不对？</li>
+<li>用户选了"其他"或最后一个选项 → 是题库覆盖不全还是有隐式偏好？</li>
+</ul>
+
+<p>上一版设计把题库视为"固定资产，只优化 prompt"，没有把<strong>问题本身</strong>当作优化对象。这是遗漏。</p>
+
+<h3>4.2 设计：InterviewLogEntry 扩展</h3>
+
+<pre><code>export interface InterviewLogEntry {
+  questionId: string;
+  answerId: string;
+  ts: string;
+  // ↓ 新增
+  answerLatencyMs?: number;          // 从题目展示到用户选择的耗时
+  skipped?: boolean;                 // 用户主动跳过（与"未答"区分）
+  hesitationCount?: number;         // 选项变更次数（选了又改 = 犹豫）
+  /** 该题的后续命运 */
+  fate?: {
+    overridden: boolean;             // 后续被导演指令推翻
+    overriddenBy?: string;           // 推翻时的原始指令摘要
+  };
+}</code></pre>
+
+<h3>4.3 问题级元数据</h3>
+
+<p>现有 <code>Question</code> 有 <code>weight: core|refinement|tailored</code>，但没有<strong>影响权重</strong>。建议扩展：</p>
+
+<pre><code>export interface Question {
+  // ... 现有字段 ...
+  /** ↓ 新增 */
+  /** 该维度对最终成片质量的影响权重（人工初始标注，历史数据校准） */
+  impactWeight?: number;             // 0..1
+  /** 这道题假设用户具备的先验知识（用于检测"问题不可答"） */
+  prerequisites?: string[];         // 如 ["知道 xfade 是什么", "理解 CTA"]
+  /** 该题曾被推翻的次数（离线统计，供题库优化） */
+  overrideCount?: number;
+}</code></pre>
+
+<h3>4.4 数据价值</h3>
+
+<ul>
+<li><strong>短期</strong>：跳过率高的题 → 题库表述有问题的信号</li>
+<li><strong>中期</strong>：犹豫时间长的题 → 选项粒度不够细的信号</li>
+<li><strong>长期</strong>：被推翻次数多的题 + 维度 → 前期澄清失效的根因定位</li>
+</ul>
+
+<h2 id="s5">五、N3 重做即对照实验</h2>
+
+<h3>5.1 问题</h3>
+
+<p>上一版设计的"偏好对"来自审议模块的 <code>proposals</code>（用户采纳 vs 未采纳）。但重做路径（reshot / retts / reedit）其实产出<strong>更干净的偏好对</strong>：</p>
+<ul>
+<li>审议提案是"未来要做的事"，带有推测性</li>
+<li>重做产物是"已经做出来的"，用户明确对"上一版 vs 新版"做了评价</li>
+</ul>
+
+<p>更关键的是：<strong>重做产物天然有 before/after 配对</strong>，不需要任何额外标注。这是系统自动产出的高质量训练信号。</p>
+
+<h3>5.2 设计</h3>
+
+<pre><code>/** 重做对照样本（自动归档） */
+export interface RedoPair {
+  episodeId: string;
+  runId: string;
+  shotId: string;
+  kind: "reshot" | "retts" | "reedit";
+  before: {
+    qaScore?: number;
+    qaAxes?: Record&lt;string, number&gt;;
+    consistencyScore?: number;
+    at: string;
+  };
+  after: {
+    qaScore?: number;
+    qaAxes?: Record&lt;string, number&gt;;
+    consistencyScore?: number;
+    at: string;
+  };
+  /** 用户对 after 的评价（如有） */
+  userVerdict?: "better" | "same" | "worse";
+  /** 自动判定：after 是否真的优于 before */
+  autoReward?: number;  // -1..1，基于 QA 分变化
+}</code></pre>
+
+<h3>5.3 为什么这条最值钱</h3>
+
+<div class="find">
+<p><strong>这是二轮探索里 ROI 最高的一条。</strong></p>
+<p>上一版设计的"偏好对"来自审议——用户选了 A 提案 vs B 提案，但 A 和 B 都还没被做出来，比较的是"预期"。</p>
+<p>重做对照样本比较的是<strong>实际产物</strong>，reward 可以直接用 QA 分差计算：</p>
+<pre><code>autoReward = clamp((after.qaScore - before.qaScore) / 100, -1, 1)</code></pre>
+<p>当 <code>autoReward &lt; 0</code> 时，说明重做反而退步了——这是<strong>最强的负样本</strong>："这个动作在这个状态下不应该做"。</p>
+<p>更妙的是：这类数据<strong>不需要用户参与</strong>，系统每次重做自动归档。用户第 1 次用产品时就在积累数据。</p>
+</div>
+
+<h2 id="s6">六、N4 跨 episode 用户画像</h2>
+
+<h3>6.1 问题</h3>
+
+<p>现有系统每个 episode 都从零开始问——用户第 5 次进来，还在被问"你想要什么色调"。这不是技术限制，是<strong>没有记忆</strong>。</p>
+
+<h3>6.2 设计：三层画像</h3>
+
+<table>
+<thead><tr><th style="width:18%">层</th><th style="width:30%">存什么</th><th style="width:52%">用途</th></tr></thead>
+<tbody>
+<tr><td><strong>IntentPrior</strong></td><td>每个 IntentKey 的历史选择分布（如 pacing: fast 3/5, slow 2/5）</td><td>新 episode 预填高置信维度，只确认不追问</td></tr>
+<tr><td><strong>QuestionProfile</strong></td><td>每道题的跳过率、平均犹豫时间、被推翻次数</td><td>对新用户调整题库顺序（跳过率高的题往后排），对老用户直接跳过已知无信息增益的题</td></tr>
+<tr><td><strong>StyleSignature</strong></td><td>该用户选过的 promptTags 的分布（如 "cinematic" 出现 8 次，"cartoon" 0 次）</td><td>logline 预填时的默认风格推断；跨 episode 风格一致性</td></tr>
+</tbody>
+</table>
+
+<h3>6.3 冷启动的三种模式</h3>
+
+<pre><code>type OnboardingMode = "full" | "guided" | "expert";
+
+function pickOnboardingMode(profile: UserProfile | null): OnboardingMode {
+  if (!profile) return "full";                    // 新用户：完整澄清
+  const episodeCount = profile.totalEpisodes;
+  if (episodeCount &lt; 3) return "guided";           // 新手：预填 + 定向确认
+  if (episodeCount &lt; 10) return "guided";         // 熟练：预填高置信 + 只问新增维度
+  return "expert";                                // 专家：极简模式，只问 logline + 新增维度
+}</code></pre>
+
+<h3>6.4 隐私与诚实评估</h3>
+
+<div class="warn">
+<p><strong>画像 = 用户数据，必须可查看、可删除、可导出。</strong></p>
+<p>画像设计原则：</p>
+<ul>
+<li><strong>不带原始内容</strong>：只存分布统计（pacing 选了 3 次 fast），不存具体 logline 原文</li>
+<li><strong>本地优先</strong>：第一版存在 run 目录或用户本地存储，不上云</li>
+<li><strong>可清除</strong>：用户"重置偏好" = 清空画像，不影响已有 episode</li>
+</ul>
+</div>
+
+<h2 id="s7">七、N5 候选集差异化保证</h2>
+
+<h3>7.1 问题</h3>
+
+<p>上一版设计说"要求 3–5 个差异化候选"，但源码实际是 <code>proposals.slice(0, 2)</code>——<strong>硬上限 2 个</strong>。</p>
+
+<p>2 个提案的偏好对只有 1 个 rejected 侧，且两个提案很容易"看起来不同但其实差不多"（如两个 reshot 都改同一个镜头）。候选集退化 = 偏好对噪声。</p>
+
+<h3>7.2 设计：三层保证</h3>
+
+<table>
+<thead><tr><th style="width:28%">层</th><th style="width:36%">做什么</th><th style="width:36%">防什么</th></tr></thead>
+<tbody>
+<tr><td><strong>提案 prompt 约束</strong></td><td>在 propose 工具的 system prompt 里显式要求"覆盖不同维度"（如至少 1 个改画面、1 个改节奏、1 个改声音）</td><td>防止 LLM 偷懒只产出相似提案</td></tr>
+<tr><td><strong>候选集体检</strong></td><td>提案生成后，用一个小模型判断"这 N 个提案是否实质不同"——比较 action/target/layer 的覆盖度</td><td>防止 LLM "按要求"产出但实际上同构</td></tr>
+<tr><td><strong>退化检测</strong></td><td>如果 2 个提案的 action 相同且 target 相同，标记为 <code>candidateDegraded</code>，不计入偏好数据</td><td>防止噪声进入训练管线</td></tr>
+</tbody>
+</table>
+
+<h3>7.3 候选集扩类的路径</h3>
+
+<p>2→3 个提案的扩类不是简单改 slice 上限，需要同步解决：</p>
+<ul>
+<li><strong>prompt 成本</strong>：每多一个提案， deliberation 的 ReAct 循环会更长（LLM 轮次有限）</li>
+<li><strong>用户认知负担</strong>：3 个提案比 2 个更难比较——需要 UI 支持"对比模式"</li>
+<li><strong>闸门 2 联动</strong>：低置信提案（当前 3 个 confidence 级别里只有 low 需要二次确认）在 3+ 提案时会堆叠</li>
+</ul>
+
+<div class="note">
+<p><strong>诚实评估</strong>：2→3 的 ROI 不确定。如果当前 2 个提案的采纳率已经很低（用户经常点"都不满意"），扩类才有意义；如果用户大多在 2 个里选了，扩类只是增加成本。</p>
+</div>
+
+<h2 id="s8">八、N6 奖励模型精确组合</h2>
+
+<h3>8.1 上一版的缺口</h3>
+
+<p>上一版说"QA 多轴分加权"，但没有定义：</p>
+<ul>
+<li>各轴的权重怎么设</li>
+<li>用户反应怎么融入</li>
+<li>跨镜一致性怎么量化</li>
+<li>冷启动时数据不够怎么办</li>
+</ul>
+
+<h3>8.2 五维 reward 组合</h3>
+
+<pre><code>reward = w1 * qa.overall
+        + w2 * (1 - userRedoRate)
+        + w3 * consistencyScore
+        + w4 * (1 - clarifyOverrideRate)
+        + w5 * deliveryPunctuality</code></pre>
+
+<table>
+<thead><tr><th style="width:12%">分项</th><th style="width:22%">来源</th><th style="width:22%">语义</th><th style="width:44%">冷启动策略</th></tr></thead>
+<tbody>
+<tr><td><code>qa.overall</code></td><td><code>QaVerdict.overall</code>（pass/warn/fail）</td><td>机器自评</td><td><strong>直接可用</strong>，但只覆盖"能机器评测的部分"</td></tr>
+<tr><td><code>userRedoRate</code></td><td>run 内重做次数 / 镜头数</td><td>用户是否愿意再花成本</td><td>需要 ≥5 episode 才有统计意义；前期用 0.5 默认</td></tr>
+<tr><td><code>consistencyScore</code></td><td>跨镜一致性报告</td><td>跨镜问题比单镜问题更隐蔽</td><td>已有指纹缓存，直接可用</td></tr>
+<tr><td><code>clarifyOverrideRate</code></td><td>被推翻的澄清答案 / 总答案数</td><td>前期设计是否有效</td><td>需要 ≥10 episode；前期用 0 默认</td></tr>
+<tr><td><code>deliveryPunctuality</code></td><td>实际出片时间 / 预估时间</td><td>是否按时交付</td><td>直接可用</td></tr>
+</tbody>
+</table>
+
+<h3>8.3 冷启动的诚实策略：分项独立回归</h3>
+
+<div class="ok">
+<p><strong>不要一上来就端到端训一个 reward model。</strong>数据不足时，每个分项单独训一个轻量回归器（线性或小 MLP），最后加权组合。好处：</p>
+<ul>
+<li>某个分项数据不足时，只影响它自己，不污染整体</li>
+<li>权重可以先人工设（w1=0.3, w2=0.25, ...），后期用离线分析校准</li>
+<li>每个分项的回归器可以独立评估（MAE、R²）</li>
+</ul>
+<p><strong>端到端 RM 的门槛</strong>：≥300 条带分样本，且每个分项都有 ≥50 条覆盖。在此之前，分项独立回归是唯一诚实的选择。</p>
+</div>
+
+<h2 id="s9">九、N7 用户耐心账本</h2>
+
+<h3>9.1 问题</h3>
+
+<p>B1 的配额账本（<code>QuotaLedger</code>）解决了"供应商配额"的成本感知，但<strong>用户耐心是另一个稀缺资源</strong>，且目前完全没有度量。</p>
+
+<p>一个 30 秒视频如果重做 3 次，配额可能只烧了 15 秒，但用户耐心已经耗尽。配额账本能告诉你"钱够不够"，但无法告诉你"用户会不会走"。</p>
+
+<h3>9.2 设计：与配额账本对称</h3>
+
+<p>用户耐心账本可以复用 <code>QuotaLedger</code> 的结构，只是量纲从"秒"换成"分钟"：</p>
+
+<pre><code>interface PatienceLedger {
+  /** 当前会话剩余耐心（分钟） */
+  remainingPatienceMin: number;
+  /** 各动作的耐心消耗 */
+  actionCost: Record&lt;string, number&gt;;  // reshot=2, retts=1, reedit=0.5, clarifyQuestion=0.2
+  /** 本次会话已消耗 */
+  spentMin: number;
+  /** 耐心耗尽时的动作：warn | degrade | abort */
+  exhaustionPolicy: "warn" | "degrade" | "abort";
+}</code></pre>
+
+<h3>9.3 决策点的成本感知</h3>
+
+<p>每个决策点（澄清选题、审议提案、导演对话分类）都带双重成本：</p>
+
+<pre><code>interface DecisionCandidate {
+  // ... 现有字段 ...
+  estimatedCostSec?: number;     // 配额成本（已有）
+  // ↓ 新增
+  estimatedPatienceMin?: number; // 用户耐心成本
+}</code></pre>
+
+<p>澄清停止条件的扩展：</p>
+<pre><code>// 上一版：剩余题目的预期信息增益低于阈值就停
+// 本轮新增：剩余题目的总耐心消耗超过剩余耐心也停
+function shouldStopClarifying(
+  remainingQuestions: Question[],
+  remainingPatience: number,
+): boolean {
+  const expectedGain = informationGain(remainingQuestions);
+  const expectedCost = sum(q.estimatedPatienceMin for q in remainingQuestions);
+  return expectedGain &lt; STOP_THRESHOLD || expectedCost &gt; remainingPatience;
+}</code></pre>
+
+<h3>9.4 度量来源</h3>
+
+<ul>
+<li><code>InterviewLogEntry.answerLatencyMs</code>（N2 新增）→ 每题的耐心消耗</li>
+<li>会话时长（页面打开到当前）</li>
+<li>用户离开后重进率（用户离开 5 分钟以上算耐心耗尽）</li>
+<li>重做次数（同镜重做 ≥2 次 = 耐心警告）</li>
+</ul>
+
+<h2 id="s10">十、N8 低置信自动 A/B 实验</h2>
+
+<h3>10.1 问题</h3>
+
+<p>上一版提到"反事实重放"，但三种形态都是<strong>用户手动触发</strong>的。实际上有一类反事实可以<strong>系统自动执行</strong>：当导演对某条提案的置信度是 low 时，系统可以并行生成两个版本，用 QA 分自动选优。</p>
+
+<p>这不需要用户参与，直接产出<strong>成对样本</strong>——是 DPO 最贵的输入。</p>
+
+<h3>10.2 设计</h3>
+
+<pre><code>interface AutoABConfig {
+  /** 触发阈值：confidence &lt; 此值才自动 A/B */
+  confidenceThreshold: "low";  // 当前 ProposalAction.confidence 的三档之一
+  /** 单次 A/B 的最大成本（配额秒） */
+  maxCostSec: number;
+  /** 参与实验的决策类型 */
+  eligibleKinds: ProposalAction[];  // 默认 ["reshot", "retts"]，排除 reedit（成本不可控）
+}</code></pre>
+
+<p>执行流程：</p>
+<ol>
+<li>导演生成提案，<code>confidence: "low"</code></li>
+<li>系统自动生成 <strong>对照版</strong>：对同一镜头用不同的 instruction 或参数跑一遍</li>
+<li>两份产物都送 QA</li>
+<li><code>qaScore</code> 高的胜出，归档为 <code>RedoPair</code>（N3）</li>
+<li>用户只看到胜出版，不知道有对照实验发生</li>
+</ol>
+
+<h3>10.3 护栏</h3>
+
+<div class="warn">
+<p><strong>自动 A/B 的三大护栏：</strong></p>
+<ul>
+<li><strong>配额护栏</strong>：单次 A/B 的配额消耗 ≤ 单镜预估的 1.5 倍（不能一次烧掉一天的配额）</li>
+<li><strong>置信度护栏</strong>：只有 <code>confidence: "low"</code> 才触发（medium/high 不值得）</li>
+<li><strong>用户可见护栏</strong>：如果用户对胜出版不满意，实验数据仍归档，但标记为 <code>userRejected</code>——这是"系统以为好，用户以为不好"的负样本</li>
+</ul>
+</div>
+
+<h3>10.4 数据价值</h3>
+
+<ul>
+<li><strong>系统自动产出成对样本</strong>，不需要用户参与</li>
+<li><strong>低置信决策点</strong>天然是"模型不确定"的地方——在这里做 A/B，信息增益最高</li>
+<li><strong>用户无感知</strong>：不增加认知负担，不改变 UX</li>
+</ul>
+
+<h2 id="s11">十一、信号分级利用：立即可做的零训练分析</h2>
+
+<h3>11.1 四种信号的成熟度</h3>
+
+<table>
+<thead><tr><th style="width:16%">信号</th><th style="width:24%">来源</th><th style="width:26%">当前状态</th><th style="width:34%">零训练可做的分析</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-teal">A · 审议偏好</span></td><td><code>preferences.jsonl</code> + <code>DeliberationRound.verdict</code></td><td><span class="tag t-teal">已落盘</span></td><td>提案采纳率、标签分布、A/B 胜率</td></tr>
+<tr><td><span class="tag t-purple">B · 重做对照</span></td><td><code>RedoPair</code>（N3 新增，归档 before/after）</td><td><span class="tag t-purple">需新增归档</span></td><td>重做成功率、退步率、重做 vs 不重做的 QA 分差</td></tr>
+<tr><td><span class="tag t-amber">C · 澄清失效</span></td><td><code>IntentConflictEvent</code> + 被推翻的 <code>InterviewLogEntry.fate</code></td><td><span class="tag t-amber">需新增埋点</span></td><td>高频冲突维度对、被推翻率最高的题、澄清与最终意图的偏差</td></tr>
+<tr><td><span class="tag t-red">D · 隐含负样本</span></td><td>快速重做、脚本编辑否定、静默不采纳</td><td><span class="tag t-red">需新增检测</span></td><td>不采纳率、快速重做触发率、脚本修改频率</td></tr>
+</tbody>
+</table>
+
+<h3>11.2 阶段②（离线分析）的扩展清单</h3>
+
+<p>上一版说"≥50 episode 做离线分析"。扩展后，阶段② 可产出以下报表，<strong>不需要任何训练</strong>，直接改 prompt 和题库：</p>
+
+<ol>
+<li><strong>澄清题库质量报表</strong>：每题的跳过率、平均犹豫时间、被推翻次数 → 识别"表述有歧义"和"选项粒度不够"的题</li>
+<li><strong>意图冲突热力图</strong>：哪些维度对经常冲突 → 优化题库分组或 prompt 注入逻辑</li>
+<li><strong>提案采纳分布</strong>：action 类型、target 类型、confidence 级别的采纳率 → 优化 deliberation prompt</li>
+<li><strong>重做归因</strong>：重做前的 QA 轴分 vs 重做后的 QA 轴分 → 识别"哪类问题最常导致重做"</li>
+<li><strong>用户画像分布</strong>：（N4 落地后）不同用户群体的默认意图偏好 → 个性化 prompt</li>
+</ol>
+
+<h2 id="s12">十二、数据量门槛的诚实校准</h2>
+
+<h3>12.1 上一版 vs 本轮的修正</h3>
+
+<table>
+<thead><tr><th style="width:22%">阶段</th><th style="width:28%">上一版门槛</th><th style="width:50%">本轮诚实评估</th></tr></thead>
+<tbody>
+<tr><td>采集</td><td>立刻可做</td><td>不变——但强调 <strong>采集质量比采集数量重要</strong>（2 个好样本 > 10 个噪声样本）</td></tr>
+<tr><td>离线分析</td><td>≥50 episode</td><td><strong>不变，且这是性价比最高的一步</strong>——不需要训练就能优化 prompt</td></tr>
+<tr><td>奖励模型</td><td>≥300 条带分样本</td><td><strong>分项独立回归的门槛更低</strong>：每项 ≥30 条即可启动；端到端 RM 仍需 ≥300</td></tr>
+<tr><td>偏好微调（DPO）</td><td>≥1000 条偏好对</td><td><strong>候选集质量比数量重要</strong>：如果候选集差异化好、用户标注认真，500 条可能就够；如果候选集退化，10000 条也是噪声</td></tr>
+<tr><td>闭环</td><td>需 A/B 与回滚</td><td>不变——但 <strong>自动 A/B（N8）可以降低人工 A/B 的成本</strong></td></tr>
+</tbody>
+</table>
+
+<h3>12.2 冷启动加速的三个杠杆</h3>
+
+<ol>
+<li><strong>重做对照（N3）</strong>：系统自动产出，不需要用户参与，第一批数据来源</li>
+<li><strong>上一轮偏好复用</strong>：用户上一轮采纳的提案 → 新 episode 的默认意图值（可确认不追问）</li>
+<li><strong>跨用户聚合</strong>：不同用户在同 logline 下的选择对比（隐私脱敏后）→ 通用意图先验</li>
+</ol>
+
+<h2 id="s13">十三、风险与不做的边界</h2>
+
+<table>
+<thead><tr><th style="width:24%">新方向</th><th style="width:48%">风险</th><th style="width:28%">是否做</th></tr></thead>
+<tbody>
+<tr><td><strong>N1 冲突检测</strong></td><td>软冲突判定容易误判（创意张力 vs 真实矛盾）</td><td class="t-teal"><strong>做</strong>——从 soft-only 开始，不阻止用户选择</td></tr>
+<tr><td><strong>N2 反问元数据</strong></td><td>answerLatencyMs 的隐私敏感性低，但用户可能感到被监控</td><td class="t-teal"><strong>做</strong>——只做聚合分析，不单用户追踪</td></tr>
+<tr><td><strong>N3 重做对照</strong></td><td>before 产物归档增加存储成本</td><td class="t-teal"><strong>做</strong>——只归档重做前的最新版，不保留历史中间产物</td></tr>
+<tr><td><strong>N4 用户画像</strong></td><td>隐私风险最高——画像 = 用户数据</td><td class="t-amber"><strong>做，但必须有</strong>：查看/删除/导出入口，本地存储，不上云</td></tr>
+<tr><td><strong>N5 候选集保证</strong></td><td>扩类到 3 个提案的 deliberation 成本不确定</td><td class="t-amber"><strong>先观察</strong>：统计当前 2 提案的采纳率，如果"都不满意"率高才扩类</td></tr>
+<tr><td><strong>N6 RM 分项回归</strong></td><td>分项权重的主观性</td><td class="t-teal"><strong>做</strong>——权重人工初始化，离线分析校准</td></tr>
+<tr><td><strong>N7 耐心账本</strong></td><td>耐心消耗模型可能不准（不同用户耐心差异大）</td><td class="t-teal"><strong>做</strong>——从 coarse 模型开始（每次重做 = 固定消耗），后期个性化</td></tr>
+<tr><td><strong>N8 自动 A/B</strong></td><td>配额消耗翻倍（一次重做 = 两次生成）</td><td class="t-amber"><strong>做，但严格护栏</strong>：只触发 low 置信 + 配额 ≤ 1.5× 单镜预估</td></tr>
+</tbody>
+</table>
+
+<div class="warn">
+<p><strong>不做的事（本轮确认）：</strong></p>
+<ul>
+<li>不改动 deliberation 的 proposals 上限（从 2 改到 3+ 是产品决策，本轮只记录观察）</li>
+<li>不做自动派发采纳的提案（director-agent.md 已决定不做）</li>
+<li>不做多 agent 协作（director-agent.md 已决定不做）</li>
+<li>不训练任何模型（本轮是纯设计探索）</li>
+<li>不上传用户画像到云端（N4 必须是本地优先）</li>
+</ul>
+</div>
+
+<h2 id="s14">十四、落地路径（二轮，无代码）</h2>
+
+<p>与上一版五阶段对齐，本轮扩展为六阶段：</p>
+
+<table>
+<thead><tr><th style="width:10%">阶段</th><th style="width:26%">做什么</th><th style="width:32%">产出</th><th style="width:32%">门槛</th></tr></thead>
+<tbody>
+<tr><td><strong>0</strong></td><td>家底盘点 + 偏差修正（本轮已完成）</td><td>现状基线、已覆盖/未覆盖清单</td><td>无门槛</td></tr>
+<tr><td><strong>1</strong></td><td>信号埋点增强（N2/N3 的数据结构定义）</td><td>InterviewLogEntry 扩展、RedoPair 归档</td><td>无代码改动风险（纯追加字段）</td></tr>
+<tr><td><strong>2</strong></td><td>离线分析报表（N1/N2/N3/N4 的聚合视图）</td><td>题库质量报表、冲突热力图、重做归因</td><td>≥50 episode</td></tr>
+<tr><td><strong>3</strong></td><td>画像与耐心账本（N4/N7）</td><td>用户画像三层结构、PatienceLedger</td><td>N1/N2 埋点已就位</td></tr>
+<tr><td><strong>4</strong></td><td>候选集扩类评估（N5）</td><td>2→3 提案的 A/B 测试 + 采纳率对比</td><td>需产品决策</td></tr>
+<tr><td><strong>5</strong></td><td>自动 A/B + RM 分项回归（N8 + N6）</td><td>系统自动产出的成对样本、分项奖励模型</td><td>N1-N4 就位 + 数据量达标</td></tr>
+</tbody>
+</table>
+
+<div class="ok">
+<p><strong>阶段 0 和阶段 2 是性价比最高的两步。</strong>阶段 0 已经完成（本轮文档本身就是产出）；阶段 2 不需要任何训练，直接改 prompt 和题库就能看到效果。</p>
+</div>
+
+<h2>十五、与上一版设计的差异对照</h2>
+
+<table>
+<thead><tr><th style="width:22%">维度</th><th style="width:38%">上一版</th><th style="width:40%">本轮</th></tr></thead>
+<tbody>
+<tr><td><strong>候选集</strong></td><td>假设 3–5 个，说"候选集就是偏好对的 rejected 侧"</td><td>发现硬上限 2 个；新增"差异化保证"三层机制；强调 2→3 扩类需要产品决策</td></tr>
+<tr><td><strong>偏好信号</strong></td><td>说 preferences 没有</td><td>发现 preferences.jsonl 已落盘、PreferenceRecord 已定义；缺口在"导演对话和重做路径仍空白"</td></tr>
+<tr><td><strong>意图</strong></td><td>15 维正交采集 + 置信度扩展</td><td>新增"维度间语义冲突检测"（soft/hard 两层）——上一版没触及的"维度不是独立变量"问题</td></tr>
+<tr><td><strong>提问</strong></td><td>信息增益驱动选题</td><td>新增"问题本身的质量元数据"（跳答率、犹豫时间、被推翻次数）——把题库从"固定资产"变成"可优化对象"</td></tr>
+<tr><td><strong>RLHF 信号</strong></td><td>四类信号（偏好对/质量分/重做/澄清失效）</td><td>新增"重做即对照实验"（N3）——系统自动产出 before/after 成对样本，零用户参与</td></tr>
+<tr><td><strong>冷启动</strong></td><td>先采集再观测再训练</td><td>强调"阶段② 不训练就有收益"；新增分项独立 RM（数据不足时比端到端更稳）；冷启动三杠杆</td></tr>
+<tr><td><strong>用户侧成本</strong></td><td>只考虑配额成本</td><td>新增"用户耐心账本"（与配额账本对称）——耐心是比配额更稀缺的资源</td></tr>
+<tr><td><strong>反事实</strong></td><td>只读回放 / 分支对比 / 确定性重放</td><td>新增"低置信自动 A/B"（N8）——系统自动生成对照实验，产出成对样本</td></tr>
+</tbody>
+</table>
+
+<div class="fin">
+<h3>本轮最值钱的三条</h3>
+<p><strong>① 重做即对照实验（N3）</strong>：系统每次重做自动产出 before/after 成对样本，不需要用户参与，是 ROI 最高的信号来源。</p>
+<p><strong>② 候选集硬上限 2 个</strong>：这是最大的意外发现。2 个提案的偏好对质量远低于预期，扩类是基础设施，但需要产品决策。</p>
+<p><strong>③ 离线分析先于训练</strong>：阶段②（题库质量报表 + 冲突热力图 + 重做归因）不需要任何训练，直接改 prompt 就能看到效果——这是"零成本有收益"的极致。</p>
+</div>
+
+</div>
+</body>
+</html>

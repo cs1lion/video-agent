@@ -90,6 +90,16 @@ function installMocks(): void {
 	mock.module(new URL("../../coding-agent/examples/extensions/studio/media/queue.ts", import.meta.url).href, {
 		namedExports: { GenerationQueue: FakeQueue },
 	});
+	mock.module(new URL("../src/qa/asr-check.ts", import.meta.url).href, {
+		namedExports: {
+			ASR_OVERLAP_THRESHOLD: 0.5,
+			referenceIntelligible: async (): Promise<{ intelligible: boolean; overlap: number; transcribed: string }> => ({
+				intelligible: true,
+				overlap: 0.9,
+				transcribed: "mock 台词",
+			}),
+		},
+	});
 	mock.module(new URL("../src/ffmpeg.ts", import.meta.url).href, {
 		namedExports: {
 			FfmpegError: class extends Error {},
@@ -102,6 +112,7 @@ function installMocks(): void {
 				wipeleft: "左划",
 				slideup: "上滑",
 			} as Record<string, string>,
+			decodeMonoPcm: async (): Promise<Int16Array> => Int16Array.from({ length: 16000 }, (_, i) => Math.round(10000 * Math.sin(i / 8))),
 			probeDuration: async (): Promise<number | null> =>
 				probeSeq.length > 1 ? (probeSeq.shift() as number | null) : probeSeq[0]!,
 			runFfmpeg: async (): Promise<string> => "",

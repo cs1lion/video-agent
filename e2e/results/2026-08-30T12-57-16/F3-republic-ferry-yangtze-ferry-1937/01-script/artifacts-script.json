@@ -1,0 +1,75 @@
+{
+	"title": "1937长江夜航：安稳归处",
+	"logline": "1937年冬长江夜航客轮上，船员夫妻巡查甲板时的克制互动与相守画面，传递动荡年代里安稳前行的信念，引出长江牌风油精产品。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "On the wooden deck of a 1937 winter Yangtze River night passenger ship, a woman with short gray-black hair, wearing a dark blue cloth shirt and apron, clutching an old handkerchief, counts life rings lined up by the deck, with kerosene hanging lamps swaying and river mist drifting with distant lights.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "秀珍",
+				"lines": {
+					"zh": "这世道，救生圈倒比人安稳。",
+					"en": "In these turbulent times, life rings are safer than people."
+				},
+				"emotion": "忧虑",
+				"voiceId": "jingdiannvsheng",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftx1d8-3/tts-SH01.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "沉缓低语，裹江风凉感气息，语速偏慢，‘冬’‘夜’重读稍停顿，营造战乱前夜的静谧厚重感"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "A middle-aged man with tanned skin, stubbly white-gray hair, wearing a faded dark blue old uniform jacket, squats by a bollard checking the mooring ropes, looking up toward Xiuzhen on the deck.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "陈海生",
+				"lines": {
+					"zh": "缆绳系牢了，船就稳当。",
+					"en": "The mooring ropes are secured, the ship won't sway."
+				},
+				"emotion": "沉稳",
+				"voiceId": "shenchennanyin",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftx1d8-3/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语气沉稳坚毅，语速平稳，『黝黑』『灰白』稍重读，带码头劳作的粗粝感，气息平稳不飘"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "这班船，连夜送人往西去。",
+			"narrationEn": "This ferry carries refugees west through the night.",
+			"visual": "Xiuzhen and Chen Haisheng stand side by side by the deck railing, gazing at the twinkling lights through the river mist, their clothes fluttering in the cold river wind.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "语气克制沉郁，语速稍缓，『连夜』『西去』重读带停顿，气息下沉，透送别的隐忍不舍"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "A long whistle blares from the ship, white steam billowing over the river, Chen Haisheng puts an arm around Xiuzhen's shoulders, both staring at the shimmering lights on the river surface through the fog.",
+			"durationSec": 5,
+			"audioMode": "silent",
+			"ttsDirection": "语气沉凝，语速先快后顿，汽笛后稍留白停顿，气息发颤，带惊心动魄的紧迫感"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "船往上游走，人往心里回。",
+			"narrationEn": "The ship sails upstream, people return to their hearts.",
+			"visual": "The warm glow of a kerosene lamp illuminates an old tin badge printed with a Yangtze River night ferry, with the Chinese slogan '船往上游走，人往心里回' and product name '长江牌风油精' below it.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "语气悠远怅然，语速偏慢，『上游』『心里回』重读拉长尾音，气息绵长，藏无尽乡愁余韵"
+		}
+	]
+}

@@ -13,7 +13,7 @@ export const MIN_FINAL_BYTES = 50 * 1024;
  * 单用例断言。
  * @returns {{passed: string[], failed: string[], verdict: "PASS"|"FAIL"}}
  */
-export function assertCase({ expect, run, collected, finalBytes, audioForm, postFacts = {} }) {
+export function assertCase({ expect, run, collected, finalBytes, audioForm, postFacts = {}, voiceCast = null }) {
 	const passed = [];
 	const failed = [];
 	const check = (ok, label, detail) => (ok ? passed : failed).push(detail ? `${label}（${detail}）` : label);
@@ -64,19 +64,61 @@ export function assertCase({ expect, run, collected, finalBytes, audioForm, post
 		if ((run.dialogueShotCount ?? 0) === 0) passed.push("注意：台词镜为 0（可能已降级为旁白，见事件日志）");
 	}
 
-	// 6) 质检结论 + 物理/文字审核轴
+	// 6) 质检结论 + 物理/人物/文字审核轴 + 字幕结构审核
+	// 已知供应商限制：画面含敏感物（如枪械）时视觉 QA 被 451 内容审核整体拦截——
+	// 此时审核轴缺失不判 FAIL（产品无法对抗供应商审核），降为留痕；字幕结构审核仍可用。
+	const qaCensored = /451|censorship/i.test(run.error ?? "");
 	if (run.verdict) {
-		check(run.verdict.axes?.length > 0, "质检有分", `综合 ${run.verdict.score}（${run.verdict.overall}）`);
+		check(run.verdict.axes?.length > 0 || qaCensored, "质检有分", qaCensored ? "QA 被 451 内容审核拦截" : `综合 ${run.verdict.score}（${run.verdict.overall}）`);
 		const axisOf = (id) => run.verdict.axes?.find((a) => a.id === id);
 		const phys = axisOf("physicalAccuracy");
+		const chars = axisOf("characterConsistency");
 		const text = axisOf("textQuality");
-		check(
-			Boolean(phys) && Boolean(text),
-			"物理/文字审核轴齐备",
-			`物理 ${phys?.score ?? "缺"} / 文字 ${text?.score ?? "缺"}`,
-		);
+		if (qaCensored) {
+			passed.push("注意：视觉 QA 被供应商内容审核拦截（451），物理/人物/文字轴本轮不可用（题材限制，非产品缺陷）");
+		} else {
+			check(
+				Boolean(phys) && Boolean(chars) && Boolean(text),
+				"物理/人物/文字审核轴齐备",
+				`物理 ${phys?.score ?? "缺"} / 人物 ${chars?.score ?? "缺"} / 文字 ${text?.score ?? "缺"}`,
+			);
+		}
 	} else {
 		failed.push("缺少质检结论（verdict）");
+	}
+	if (expect.requireSubtitlesAudit) {
+		const subs = run.verdict?.subtitles;
+		if (!subs) {
+			failed.push("缺少字幕审核结果（verdict.subtitles 未产生）");
+		} else {
+			check(
+				subs.issues.length === 0,
+				"字幕结构审核通过",
+				subs.lines > 0 ? `${subs.lines} 行` : "本片无字幕来源",
+			);
+			for (const issue of subs.issues) failed.push(`字幕问题：${issue}`);
+		}
+	}
+
+	// 7) 配音选角：旁白声线必须与全部角色错开；≥2 角色时角色间不得同声（音色库耗尽的跨池借用除外——留痕在 notes）
+	if (expect.requireVoiceDistinction) {
+		if (!voiceCast) {
+			failed.push("缺少配音选角留痕（voice-cast.json 未产生）");
+		} else {
+			const charVoices = Object.values(voiceCast.characters ?? {});
+			check(
+				Boolean(voiceCast.narratorVoiceId) && !charVoices.includes(voiceCast.narratorVoiceId),
+				"旁白音色与角色错开",
+				`旁白 ${voiceCast.narratorVoiceId ?? "缺"} vs 角色 [${charVoices.join(", ")}]`,
+			);
+			if (charVoices.length >= 2) {
+				check(
+					new Set(charVoices).size === charVoices.length,
+					"角色音色互不相同",
+					`${new Set(charVoices).size}/${charVoices.length}（${charVoices.join(", ")}）`,
+				);
+			}
+		}
 	}
 
 	// 7) 成片之后的动作（按用例要求逐项校验）
@@ -125,7 +167,7 @@ function mdTable(rows, headers) {
 	return `| ${headers.join(" | ")} |\n| ${headers.map(() => "---").join(" | ")} |\n${body}`;
 }
 
-export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts }) {
+export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts, voiceCast }) {
 	const lines = [];
 	lines.push(`# ${testCase.id} · ${testCase.title}`);
 	lines.push("");
@@ -171,6 +213,22 @@ export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates
 		lines.push("");
 	}
 
+	// 配音选角明细：旁白与角色声线的分配结果（音色区分硬断言的依据）
+	if (voiceCast) {
+		lines.push("## 配音选角");
+		lines.push("");
+		const castRows = [
+			["旁白", voiceCast.narratorVoiceId ?? "（适配器默认）"],
+			...Object.entries(voiceCast.characters ?? {}).map(([name, id]) => [name, String(id)]),
+		];
+		lines.push(mdTable(castRows, ["声部", "音色 id"]));
+		if ((voiceCast.notes ?? []).length > 0) {
+			lines.push("");
+			for (const n of voiceCast.notes) lines.push(`- ⚠️ ${n}`);
+		}
+		lines.push("");
+	}
+
 	lines.push("## 断言");
 	lines.push("");
 	lines.push("### 通过");
@@ -183,22 +241,31 @@ export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates
 	for (const f of assert.failed) lines.push(`- ❌ ${f}`);
 	lines.push("");
 
-	// 物理/文字审核明细：轴分 + 逐镜 warn/fail 理由（物理:/文字: 前缀由 QA 提示词约定）
+	// 物理/人物/文字/字幕审核明细：轴分 + 逐镜 warn/fail 理由（前缀类别由 QA 提示词约定）+ 字幕结构审核
 	if (run.verdict) {
-		lines.push("## 审核（物理错误 / 文字乱码）");
+		lines.push("## 审核（物理错误 / 人物不一致 / 文字乱码 / 字幕错误）");
 		lines.push("");
 		const axisRows = (run.verdict.axes ?? []).map((a) => [a.id, String(a.score)]);
 		if (axisRows.length) lines.push(mdTable(axisRows, ["审核轴", "分数"]));
 		const flagged = (run.verdict.shots ?? []).filter((s) => s.verdict !== "ok");
 		lines.push("");
-		if (flagged.length === 0) lines.push("- 逐镜审核：全部 ok（无物理/文字问题被标记）");
+		if (flagged.length === 0) lines.push("- 逐镜审核：全部 ok（无物理/人物/文字/字幕问题被标记）");
 		else
 			lines.push(
 				mdTable(
 					flagged.map((s) => [s.id, s.verdict, s.reason]),
-					["镜头", "裁决", "问题（物理:/文字: 前缀标类别）"],
+					["镜头", "裁决", "问题（物理:/人物:/文字:/字幕: 前缀标类别）"],
 				),
 			);
+		const subs = run.verdict.subtitles;
+		if (subs) {
+			lines.push("");
+			lines.push(
+				subs.issues.length === 0
+					? `- 字幕结构审核：${subs.lines} 行，无重叠/缺口/编码问题`
+					: `- 字幕结构审核：${subs.issues.length} 项问题 — ${subs.issues.join("；")}`,
+			);
+		}
 		lines.push("");
 	}
 

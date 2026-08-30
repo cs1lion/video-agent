@@ -34,6 +34,8 @@ export interface KitchenOven {
 	inFlight: number;
 	/** 累计超支秒数 */
 	overrunSec: number;
+	/** 隔离截止（key 认证失效；期间不会被选池）。未隔离缺省 */
+	quarantinedUntil?: number;
 }
 
 /** 排队 / 在途任务（观察视图 = QueueJob 的投影） */
@@ -96,6 +98,7 @@ export function buildKitchenSnapshot(pools: PoolSnapshot[], jobs: QueueJob[], no
 		reservedSec: p.reservedSec,
 		inFlight: p.inFlight,
 		overrunSec: p.overrunSec,
+		...(p.quarantinedUntil ? { quarantinedUntil: p.quarantinedUntil } : {}),
 	}));
 
 	const project = (job: QueueJob): KitchenTask => ({

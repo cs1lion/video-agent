@@ -11,6 +11,7 @@
  */
 
 import { sanitizeDialogue, type ScriptDoc, type ScriptShot } from "./prompts.ts";
+import { assignCastVoices } from "./voice-cast.ts";
 
 /**
  * A1.4 服务端兜底闸门判定：台词模式只对共创来源开放。
@@ -73,27 +74,37 @@ export function enforceSingleSpeaker(script: ScriptDoc): { script: ScriptDoc; wa
 }
 
 /**
- * A7 音色绑定：把共创角色卡上绑定的 voiceId 写进台词镜。
- * LLM 拿不到 StepFun voice id——音色绑定只能来自 UI（CoCharacter.voiceId），
+ * A7 音色绑定 + 配音选角：把共创角色卡上绑定的 voiceId 写进台词镜；
+ * 未绑定的角色按**人物设计描述**自动分配音色（voice-cast.ts 启发式，同片去重）。
+ * LLM 拿不到 StepFun voice id——显式绑定只能来自 UI（CoCharacter.voiceId），
  * 由剧本落盘前按 characterId 确定性注入；LLM 自带的 voiceId（若有）优先不覆盖。
+ * 自动分配解决「旁白和角色撞声」的前一半：角色不再全部回落同一默认音色。
  * 纯函数：无绑定/无台词镜时原样返回，幂等可重入。
  */
 export function bindCharacterVoices(
 	script: ScriptDoc,
-	coSpace?: { characters?: { name: string; voiceId?: string }[] },
+	coSpace?: { characters?: { name: string; description?: string; voiceId?: string }[] },
+	catalog: Record<string, string> = {},
 ): ScriptDoc {
+	const cast = coSpace?.characters ?? [];
 	const byName = new Map(
-		(coSpace?.characters ?? [])
+		cast
 			.filter((c) => typeof c.voiceId === "string" && c.voiceId.trim())
 			.map((c) => [c.name, (c.voiceId as string).trim()]),
 	);
-	if (byName.size === 0) return script;
+	// 自动分配（显式绑定优先，推导补位，同片去重）；catalog 为空（无音色库配置）时跳过推导
+	const assignment = cast.length > 0 && Object.keys(catalog).length > 0
+		? assignCastVoices(
+				cast.map((c) => ({ name: c.name, description: c.description, voiceId: c.voiceId })),
+				catalog,
+			)
+		: null;
 	return {
 		...script,
 		shots: script.shots.map((shot) => {
 			if (shot.audioMode !== "dialogue" || !shot.dialogue) return shot;
 			if (shot.dialogue.voiceId) return shot;
-			const bound = byName.get(shot.dialogue.characterId);
+			const bound = byName.get(shot.dialogue.characterId) ?? assignment?.byCharacter[shot.dialogue.characterId];
 			return bound ? { ...shot, dialogue: { ...shot.dialogue, voiceId: bound } } : shot;
 		}),
 	};

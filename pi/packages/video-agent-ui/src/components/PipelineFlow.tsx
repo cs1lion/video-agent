@@ -32,8 +32,8 @@ export const PIPELINE_NODES: readonly PipelineNode[] = [
 	{ id: "visual", label: "美术设计", role: "美术指导", icon: Palette },
 	{ id: "prompts", label: "分镜提示词", role: "分镜师", icon: Film },
 	{ id: "keyframes", label: "分镜关键帧", role: "技术导演", icon: Images },
-	{ id: "clips", label: "片段生成", role: "技术导演", icon: Video },
 	{ id: "audio", label: "声音设计", role: "声音设计", icon: Volume2 },
+	{ id: "clips", label: "片段生成", role: "技术导演", icon: Video },
 	{ id: "export", label: "成片导出", role: "剪辑师", icon: Clapperboard },
 ] as const;
 
@@ -50,7 +50,7 @@ export function PipelineFlow({
 	/** 演示模式：阶段循环点亮（首页展示用） */
 	demo?: boolean;
 	className?: string;
-	/** A7：台词驱动模式——clips 节点标注 audio→clips 反向依赖（台词先录、口型后生成） */
+	/** 台词驱动模式——clips 节点标注「台词先录 · 口型后生成」（声音设计已前置于片段生成） */
 	audioDrive?: "off" | "dialogue";
 }) {
 	// demo 游标：0..len 依次 running，len+1 时全部 done，随后归零重来
@@ -139,7 +139,7 @@ export function PipelineFlow({
 								</div>
 								<div className="mt-0.5 pl-[22px] text-[10px] text-zinc-500">
 									{audioDrive === "dialogue" && node.id === "clips" ? (
-										<span className="text-amber-300/80">台词驱动口型 · audio → clips</span>
+										<span className="text-amber-300/80">台词先录 · 口型后生成</span>
 									) : (
 										node.role
 									)}

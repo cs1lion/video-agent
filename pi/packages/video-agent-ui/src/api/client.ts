@@ -35,7 +35,14 @@ export interface RunStage {
 	progress: number;
 }
 
-export type AxisId = "briefFit" | "visualConsistency" | "pacing" | "physicalAccuracy" | "audioSync" | "textQuality";
+export type AxisId =
+	| "briefFit"
+	| "visualConsistency"
+	| "pacing"
+	| "physicalAccuracy"
+	| "characterConsistency"
+	| "audioSync"
+	| "textQuality";
 
 /** 审片员对单镜头的三态标注（镜头级重做依据） */
 export interface QaShotVerdict {
@@ -50,6 +57,8 @@ export interface QaVerdict {
 	axes: { id: AxisId; score: number }[];
 	/** 逐镜标注（旧 run 可能缺失） */
 	shots?: QaShotVerdict[];
+	/** 字幕结构审核（时间轴/覆盖率/编码；旧 run 无此字段） */
+	subtitles?: { present: boolean; lines: number; issues: string[] };
 }
 
 /** 运行追踪 span（Run 即 Trace） */

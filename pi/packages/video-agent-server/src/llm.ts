@@ -42,7 +42,8 @@ async function chatOnce(llm: LlmConfig, messages: ChatMessage[], signal?: AbortS
 		});
 		if (!response.ok) {
 			const text = await response.text().catch(() => "");
-			const retryable = response.status === 429 || response.status >= 500;
+			// 451 内容审核有误伤（同一 prompt 复发概率低），与 429/5xx 一样值得重试
+			const retryable = response.status === 429 || response.status === 451 || response.status >= 500;
 			throw new LlmError(`LLM HTTP ${response.status}: ${text.slice(0, 200)}`, {
 				cause: { retryable },
 			});

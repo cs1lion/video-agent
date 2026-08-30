@@ -80,18 +80,18 @@ export const UI_STAGES: readonly UiStage[] = [
 			hasKeyframes || stageOf(run, "prompts") === "done" || stageOf(run, "clips") !== "pending",
 	},
 	{
-		id: "generate",
-		label: "片段生成",
-		icon: Video,
-		backend: "clips",
-		unlocked: (run, _ar, hasAssets) => hasAssets || stageOf(run, "clips") !== "pending",
-	},
-	{
 		id: "post",
 		label: "声音设计",
 		icon: Volume2,
 		backend: "audio",
 		unlocked: (run, _ar, hasAssets) => hasAssets || stageOf(run, "audio") !== "pending",
+	},
+	{
+		id: "generate",
+		label: "片段生成",
+		icon: Video,
+		backend: "clips",
+		unlocked: (run, _ar, hasAssets) => hasAssets || stageOf(run, "clips") !== "pending",
 	},
 	{
 		id: "review",

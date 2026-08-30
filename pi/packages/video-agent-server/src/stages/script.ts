@@ -6,6 +6,7 @@
 
 import { scriptMessages, type ScriptDoc } from "../prompts.js";
 import {
+	availableVoices,
 	generateDoc,
 	normalizeScript,
 	optionsOf,
@@ -57,7 +58,9 @@ export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
 		}
 	}
 	// A7 音色绑定：共创角色卡上的 voiceId 按 characterId 注入台词镜（LLM 拿不到音色 id）。
-	script = bindCharacterVoices(script, run.brief.coSpace);
+	// A7 音色绑定 + 配音选角：显式绑定优先；未绑定的角色按人物设计自动分配（同片去重）。
+	// catalog 传入音色库——旁白音色错开也依赖这份分配结果。
+	script = bindCharacterVoices(script, run.brief.coSpace, availableVoices(sc.ctx));
 	await writeJson(run, "script.json", script);
 	setStage(run, "script", "done", 100);
 	pushEvent(

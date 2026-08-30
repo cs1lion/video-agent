@@ -17,6 +17,7 @@ const AXIS_LABEL: Record<AxisId, string> = {
 	visualConsistency: "视觉一致性",
 	pacing: "节奏",
 	physicalAccuracy: "物理正确性",
+	characterConsistency: "人物一致性",
 	audioSync: "声画同步",
 	textQuality: "文字质量",
 };

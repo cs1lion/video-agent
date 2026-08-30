@@ -1,0 +1,328 @@
+{
+	"spans": [
+		{
+			"stage": "script",
+			"name": "剧本文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面这支广告撰写剧本。\n一句话需求: 写实真人剧情短片：现代中国某城市的深夜深巷面馆。两句旁白开场与收尾（交代这条巷子二十年只卖一碗面），中间是老板与刚收车的女代驾司机小周的一来一往对白——「还是老位置？」「老位置，多加一勺辣」。旁白与对",
+			"output": "JSON 产物（title,logline,shots）",
+			"spanId": "90a5fe51",
+			"startAt": "2026-08-30T12:57:16.751Z",
+			"durationMs": 42784
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面这支广告制定美术设计（全片决定性的视觉基准：本产物的风格、色彩与光线将直接约束后续所有关键帧和视频素材，必须一次定准）。\n一句话需求: 写实真人剧情短片：现代中国某城市的深夜深巷面馆。两句旁白开场与收尾（交代这条巷子二十年只卖一碗面）",
+			"output": "JSON 产物（styleKeywords,palette,lighting,grade）",
+			"spanId": "c6207e84",
+			"startAt": "2026-08-30T12:57:59.542Z",
+			"durationMs": 7058
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计·实体推导",
+			"kind": "llm",
+			"status": "ok",
+			"input": "巷口那碗面 + 美术设计",
+			"output": "人物 2 / 道具 2 / 场景 2",
+			"spanId": "4199cc19",
+			"startAt": "2026-08-30T12:58:06.616Z",
+			"durationMs": 16937
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 CH01（面馆老板）",
+			"kind": "media",
+			"status": "ok",
+			"input": "A 55-year-old male noodle shop owner with short graying hair, wearing a dark gray knit vest with rolled-up sleeves and a",
+			"output": "design-character-CH01.png",
+			"spanId": "28055a00",
+			"startAt": "2026-08-30T12:58:23.555Z",
+			"durationMs": 8319
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 CH02（代驾司机小周）",
+			"kind": "media",
+			"status": "ok",
+			"input": "A 28-year-old female designated driver with short black hair, wearing a dark blue reflective vest over casual clothes, w",
+			"output": "design-character-CH02.png",
+			"spanId": "942a91e9",
+			"startAt": "2026-08-30T12:58:31.876Z",
+			"durationMs": 3360
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR01（加辣小面）",
+			"kind": "media",
+			"status": "ok",
+			"input": "A steaming bowl of hot noodles topped with an extra spoon of red chili, served in a simple white ceramic bowl with chops",
+			"output": "design-prop-PR01.png",
+			"spanId": "a05ddc30",
+			"startAt": "2026-08-30T12:58:35.239Z",
+			"durationMs": 3329
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 PR02（旧方桌）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Worn wooden square table with faint water stains and scratch marks from years of heavy use, simple unadorned design. Coo",
+			"output": "design-prop-PR02.png",
+			"spanId": "afe98e33",
+			"startAt": "2026-08-30T12:58:38.570Z",
+			"durationMs": 3243
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC01（深夜面馆内景）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Small old urban noodle shop interior at deep night, warm yellow incandescent bulb as the main light source, white tiled ",
+			"output": "design-scene-SC01.png",
+			"spanId": "0cfef5eb",
+			"startAt": "2026-08-30T12:58:41.815Z",
+			"durationMs": 3575
+		},
+		{
+			"stage": "visual",
+			"name": "设计图 SC02（深巷面馆外景）",
+			"kind": "media",
+			"status": "ok",
+			"input": "Narrow dark city alley at night, the noodle shop's warm yellow bulb glowing from the doorway, faint cool ambient light f",
+			"output": "design-scene-SC02.png",
+			"spanId": "0a480e81",
+			"startAt": "2026-08-30T12:58:45.392Z",
+			"durationMs": 3536
+		},
+		{
+			"stage": "visual",
+			"name": "美术设计·出图自审",
+			"kind": "qa",
+			"status": "error",
+			"output": "LLM HTTP 451: {\"error\":{\"message\":\"The content you provided or machine outputted is blocked.\",\"type\":\"censorship_blocked\"}}",
+			"spanId": "ba0bc8b4",
+			"startAt": "2026-08-30T12:58:48.930Z",
+			"durationMs": 33721
+		},
+		{
+			"stage": "prompts",
+			"name": "分镜提示词文档生成",
+			"kind": "llm",
+			"status": "ok",
+			"input": "为下面广告的每个镜头写一段视频生成模型的英文提示词。\n一句话需求: 写实真人剧情短片：现代中国某城市的深夜深巷面馆。两句旁白开场与收尾（交代这条巷子二十年只卖一碗面），中间是老板与刚收车的女代驾司机小周的一来一往对白——「还是老位置？」「老",
+			"output": "JSON 产物（prompts）",
+			"spanId": "f6ceb33b",
+			"startAt": "2026-08-30T12:59:27.092Z",
+			"durationMs": 18733
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH01",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic medium long shot of a 55-year-old male noodle shop owner with short graying hair, wearing a dark gray knit ves",
+			"output": "key-SH01.png",
+			"spanId": "b57a192f",
+			"startAt": "2026-08-30T12:59:45.829Z",
+			"durationMs": 4149
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH02",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic handheld follow shot of a 28-year-old female designated driver Xiao Zhou with short black hair, wearing a dark",
+			"output": "key-SH02.png",
+			"spanId": "133c6038",
+			"startAt": "2026-08-30T12:59:49.979Z",
+			"durationMs": 4147
+		},
+		{
+			"stage": "keyframes",
+			"name": "关键帧 SH03",
+			"kind": "media",
+			"status": "ok",
+			"input": "Cinematic static locked-off medium shot of the same 55-year-old male noodle shop owner with short graying hair, dark gra",
+			"output": "key-SH03.png",
+			"spanId": "6edbdc24",
+			"startAt": "2026-08-30T12:59:54.127Z",
+			"durationMs": 4131
+		},
+		{
+			"stage": "audio",
+			"name": "配音导演·表演指导",
+			"kind": "llm",
+			"status": "ok",
+			"input": "3 镜旁白",
+			"output": "SH01:情绪沉稳带暖意，语速稍缓，『二十年』… SH02:情绪放松带熟稔，语速适中，『老位置』… SH03:情绪温柔有温度，语速放缓，『永远』『…",
+			"spanId": "d3fe1414",
+			"startAt": "2026-08-30T13:00:02.199Z",
+			"durationMs": 6412
+		},
+		{
+			"stage": "audio",
+			"name": "镜头 SH01 配音",
+			"kind": "media",
+			"status": "ok",
+			"input": "[指导] 情绪沉稳带暖意，语速稍缓，『二十年』『一碗』重读，气息平稳带深夜松弛的感慨感｜这条巷子，二十年只卖一碗面",
+			"output": "tts-SH01.mp3",
+			"spanId": "1fbeb5c6",
+			"startAt": "2026-08-30T13:00:08.613Z",
+			"durationMs": 2467
+		},
+		{
+			"stage": "audio",
+			"name": "镜头 SH03 配音",
+			"kind": "media",
+			"status": "ok",
+			"input": "[指导] 情绪温柔有温度，语速放缓，『永远』『晚归』重读，气息柔和带安抚感，余韵轻留｜深巷的灯，永远为晚归的人留着",
+			"output": "tts-SH03.mp3",
+			"spanId": "c039f608",
+			"startAt": "2026-08-30T13:00:11.081Z",
+			"durationMs": 2570
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH02 台词音频",
+			"kind": "media",
+			"status": "ok",
+			"input": "[voice=shenchennanyin] 还是老位置？",
+			"output": "tts-dialogue-SH02-pad.mp3（5.0s → 托管）",
+			"spanId": "c48f276f",
+			"startAt": "2026-08-30T13:00:13.659Z",
+			"durationMs": 4352
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH03 台词音频",
+			"kind": "media",
+			"status": "ok",
+			"input": "[voice=jingdiannvsheng] 老位置，多加一勺辣",
+			"output": "tts-dialogue-SH03-pad.mp3（5.0s → 托管）",
+			"spanId": "1735db53",
+			"startAt": "2026-08-30T13:00:18.014Z",
+			"durationMs": 3326
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH01 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[keyframe+i2v] Cinematic medium long shot of a 55-year-old male noodle shop owner with short graying hair, wearing a dark gray knit ves",
+			"output": "clip-SH01.mp4",
+			"spanId": "c58b47ef",
+			"startAt": "2026-08-30T13:00:13.658Z",
+			"durationMs": 123162
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH02 台词跟读校验",
+			"kind": "qa",
+			"status": "semantic-fail",
+			"output": "包络相关 0.62（阈值 0.7）",
+			"spanId": "286046f3",
+			"startAt": "2026-08-30T13:02:17.008Z",
+			"durationMs": 0
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH02 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[台词驱动+reference] [keyframe+i2v] Cinematic handheld follow shot of a 28-year-old female designated driver Xiao Zhou with short black hair, wearing a dark",
+			"output": "clip-SH02.mp4",
+			"spanId": "4929f67e",
+			"startAt": "2026-08-30T13:00:18.014Z",
+			"durationMs": 119152
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH03 台词跟读校验",
+			"kind": "qa",
+			"status": "semantic-fail",
+			"output": "包络相关 0.42（阈值 0.7）",
+			"spanId": "3f5bcccd",
+			"startAt": "2026-08-30T13:02:17.355Z",
+			"durationMs": 0
+		},
+		{
+			"stage": "clips",
+			"name": "镜头 SH03 生成",
+			"kind": "media",
+			"status": "ok",
+			"input": "[台词驱动+reference] [keyframe+i2v] Cinematic static locked-off medium shot of the same 55-year-old male noodle shop owner with short graying hair, dark gra",
+			"output": "clip-SH03.mp4",
+			"spanId": "3ec9192a",
+			"startAt": "2026-08-30T13:00:21.343Z",
+			"durationMs": 116170
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH01 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH01.mp4（4.0s）",
+			"spanId": "31d23ff3",
+			"startAt": "2026-08-30T13:02:17.818Z",
+			"durationMs": 454
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH02 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH02.mp4（5.0s）",
+			"spanId": "80f28f44",
+			"startAt": "2026-08-30T13:02:18.272Z",
+			"durationMs": 476
+		},
+		{
+			"stage": "export",
+			"name": "镜头 SH03 归一化",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"output": "shot-SH03.mp4（4.3s）",
+			"spanId": "8df202f9",
+			"startAt": "2026-08-30T13:02:18.748Z",
+			"durationMs": 407
+		},
+		{
+			"stage": "export",
+			"name": "剪辑决策（转场 EDL）",
+			"kind": "llm",
+			"status": "ok",
+			"input": "3 镜节奏表",
+			"output": "1:cut 2:fade",
+			"spanId": "ea31ee1b",
+			"startAt": "2026-08-30T13:02:19.155Z",
+			"durationMs": 8328
+		},
+		{
+			"stage": "export",
+			"name": "时间线合成（转场+混音）",
+			"kind": "ffmpeg",
+			"status": "ok",
+			"input": "叠化 0.5s · SFX 嗖声 · 响度 -14 LUFS",
+			"output": "final.mp4（3 镜 · 12.9s · 1 处转场 · 1 处音效）",
+			"spanId": "51354f1d",
+			"startAt": "2026-08-30T13:02:27.488Z",
+			"durationMs": 2021
+		},
+		{
+			"stage": "export",
+			"name": "审片质检（七轴 + 逐镜标注 + 物理/人物/文字/字幕审核）",
+			"kind": "qa",
+			"status": "ok",
+			"input": "3 镜 × 2 帧抽检 · 字幕 3 行",
+			"output": "综合 87（warn）；逐镜 1 ok / 2 warn / 0 fail；人物 80 / 物理 95 / 文字 100 / 字幕问题 1",
+			"spanId": "7baaeeab",
+			"startAt": "2026-08-30T13:02:29.513Z",
+			"durationMs": 31558
+		}
+	]
+}

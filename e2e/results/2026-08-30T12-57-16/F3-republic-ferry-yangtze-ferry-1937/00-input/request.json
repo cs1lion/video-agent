@@ -1,0 +1,37 @@
+{
+	"brief": {
+		"logline": "写实真人剧情短片：1937 年冬，长江夜航客轮的甲板。船员夫妻做最后一遍巡查——妻子清点救生圈念叨时局，丈夫检查缆绳劝她宽心；旁白两句交代这班船连夜送人西去。对白克制，汽笛一声，两人并肩看江面灯火。写实民国江轮：木质甲板、煤油灯、救生圈成排、江雾与灯火。",
+		"keyMessage": "船往上游走，人往心里回。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 5,
+		"fps": 24,
+		"motionIntensity": "low",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "陈海生",
+				"description": "45 岁男性江轮水手长，古铜色皮肤，藏青色旧制服外套，花白胡茬，嗓音沙哑沉稳"
+			},
+			{
+				"name": "秀珍",
+				"description": "42 岁女性，陈海生的妻子，齐耳灰黑短发，深蓝色布衫配围裙，手里攥着一方旧手帕"
+			}
+		],
+		"scenes": [
+			{
+				"name": "江轮甲板",
+				"description": "写实民国夜航江轮：木质甲板、煤油挂灯、救生圈、缆绳桩、江雾里的灯火"
+			}
+		],
+		"musicBrief": "江风与汽笛环境音，一段旧式弦乐低回。"
+	}
+}

@@ -1,0 +1,57 @@
+{
+	"title": "巷口那碗面",
+	"logline": "深夜深巷中，开了二十年的面馆用一碗面的默契，守候晚归的代驾司机。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "这条巷子，二十年只卖一碗面",
+			"narrationEn": "This alley has only sold one bowl of noodles for twenty years",
+			"visual": "A small noodle shop in a deep city alley is lit by a warm yellow bulb at night, the 55-year-old boss with cropped white hair, dark gray knitted vest and white towel over his shoulder wipes the old square table by the window, steam rising from the kitchen stove.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "情绪沉稳带暖意，语速稍缓，『二十年』『一碗』重读，气息平稳带深夜松弛的感慨感"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The 28-year-old female designated driver Xiao Zhou with short black hair and a dark blue reflective vest walks into the shop, the boss looks up and smiles at her.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "老板",
+				"lines": {
+					"zh": "还是老位置？",
+					"en": "Same old seat?"
+				},
+				"emotion": "温和",
+				"voiceId": "shenchennanyin",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftdnsz-1/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "情绪放松带熟稔，语速适中，『老位置』『多加』重读，尾音带收活后的轻快，气息自然"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "深巷的灯，永远为晚归的人留着",
+			"narrationEn": "The light in the deep alley always stays on for those who return late.",
+			"visual": "The boss nods, scoops an extra spoon of chili into the steaming bowl of noodles and places it on Xiao Zhou's usual table by the window, the warm shop light glowing in the dark alley.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "小周",
+				"lines": {
+					"zh": "老位置，多加一勺辣",
+					"en": "Same seat, extra spoon of chili"
+				},
+				"emotion": "利落",
+				"voiceId": "jingdiannvsheng",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftdnsz-1/tts-SH03.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "情绪温柔有温度，语速放缓，『永远』『晚归』重读，气息柔和带安抚感，余韵轻留"
+		}
+	]
+}

@@ -29,6 +29,7 @@ import {
 	appendSpan,
 	computeQaRegressionText,
 	executeStages,
+	availableVoices,
 	optionsOf,
 	persistRun,
 	pushEvent,
@@ -43,6 +44,9 @@ import {
 	writeJson,
 } from "../pipeline.ts";
 import type { ScriptDoc, ScriptShot } from "../prompts.ts";
+import { narratorVoiceFor } from "../voice-cast.ts";
+import { referenceFollows } from "../qa/audio-follow.ts";
+import { referenceIntelligible } from "../qa/asr-check.ts";
 import type { ServerContext } from "../config.ts";
 import type { ServerContext as _ServerContext } from "../config.ts";
 
@@ -59,7 +63,7 @@ export async function rettsRun(
 	instruction: string,
 	voice?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-	const resolvedVoice = resolveVoice(ctx, voice);
+	const explicitVoice = resolveVoice(ctx, voice);
 	const prevStatus = run.status;
 	if (prevStatus === "running") return { ok: false, error: "管线运行中，请稍候" };
 	// 同步占位：在首个 await 前进入运行态，消除双提交竞态窗口；校验失败恢复原状态
@@ -203,7 +207,9 @@ export async function rettsRun(
 			if (isDialogueShot && shot.dialogue) {
 				await rettsDialogueCascade(sc, script, shot, attempts);
 			} else {
-				await rettsNarration(sc, shot, resolvedVoice);
+				// 旁白重录沿用配音选角的旁白音色（显式 voice 参数优先）——否则又会回落默认音色与角色撞声
+				const narratorFallback = narratorVoiceFor(availableVoices(ctx), script.shots.map((sh) => sh.dialogue?.voiceId));
+				await rettsNarration(sc, shot, explicitVoice ?? narratorFallback);
 			}
 
 			// 3. 新音频就位：重跑 export（重新归一化该镜 → 时长随旁白重排 → 装配 → 复审）
@@ -417,9 +423,29 @@ async function rettsDialogueCascade(
 					);
 					run.metrics.mediaCalls += 1;
 					const finished = await sc.queue.awaitJob(job.id, undefined, sc.signal);
-					if (finished.status === "done" && finished.filePath) return path.relative(run.dir, finished.filePath);
-					// reference 失败 → 降级普通图生视频（新 attempt 新预留），台词转旁白
-					if (sc.ctx.quota && reservation!.reservationId) sc.ctx.quota.release(reservation!.reservationId);
+					if (finished.status === "done" && finished.filePath) {
+						// 台词跟读校验（与 clips 主链同款双关卡防线）：自行配音不可懂 → dubOver
+						const refLocal = outcome.kind === "ready" ? outcome.localAudioRelPath : undefined;
+						if (!refLocal) return path.relative(run.dir, finished.filePath);
+						const check = await referenceFollows(run.dir, path.relative(run.dir, finished.filePath), refLocal, sc.signal);
+						let follows = check.follows;
+						if (follows && shot.dialogue?.lines.zh) {
+							const asr = await referenceIntelligible(run.dir, path.relative(run.dir, finished.filePath), shot.dialogue.lines.zh, {
+								apiKey: sc.ctx.llm.apiKey ?? "",
+								signal: sc.signal,
+							}).catch(() => null);
+							if (asr) follows = asr.intelligible;
+						}
+						if (follows) return path.relative(run.dir, finished.filePath);
+						pushEvent(run, "tech", "producer", "redo", `镜头 ${shot.id} 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。`);
+						shot.dialogue = { ...shot.dialogue!, dubOver: true };
+						// 跟读未过：片已真实生成（供应商已消耗）→ 按预留结算，不虚退
+						if (sc.ctx.quota && reservation!.reservationId) sc.ctx.quota.settle(reservation!.reservationId, estimateSec);
+						return path.relative(run.dir, finished.filePath);
+					} else {
+						// reference 失败 → 降级普通图生视频（新 attempt 新预留），台词转旁白
+						if (sc.ctx.quota && reservation!.reservationId) sc.ctx.quota.release(reservation!.reservationId);
+					}
 					shot.audioMode = "narration";
 					if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
 					if (!shot.narrationEn) shot.narrationEn = shot.dialogue!.lines.en;

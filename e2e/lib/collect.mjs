@@ -20,6 +20,7 @@ import { api } from "./api.mjs";
 
 const ARTIFACT_JSON = {
 	"01-script": ["script.json", "voice-directions.json"],
+	"05-audio": ["voice-cast.json"],
 	"07-qa": ["run-state.json", "consistency.json", "traces.ndjson", "cuts.json", "budget-alerts.ndjson"],
 	"06-export": ["transitions.json"],
 	"02-design": ["visual-bible.json", "design-bible.json"],

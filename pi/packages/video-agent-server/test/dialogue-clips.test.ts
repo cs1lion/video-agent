@@ -96,6 +96,16 @@ function installMocks(): void {
 	mock.module(new URL("../../coding-agent/examples/extensions/studio/media/queue.ts", import.meta.url).href, {
 		namedExports: { GenerationQueue: FakeQueue },
 	});
+	mock.module(new URL("../src/qa/asr-check.ts", import.meta.url).href, {
+		namedExports: {
+			ASR_OVERLAP_THRESHOLD: 0.5,
+			referenceIntelligible: async (): Promise<{ intelligible: boolean; overlap: number; transcribed: string }> => ({
+				intelligible: true,
+				overlap: 0.9,
+				transcribed: "mock 台词",
+			}),
+		},
+	});
 	mock.module(new URL("../src/ffmpeg.ts", import.meta.url).href, {
 		namedExports: {
 			FfmpegError: class extends Error {},
@@ -108,6 +118,7 @@ function installMocks(): void {
 				wipeleft: "左划",
 				slideup: "上滑",
 			} as Record<string, string>,
+			decodeMonoPcm: async (): Promise<Int16Array> => Int16Array.from({ length: 16000 }, (_, i) => Math.round(10000 * Math.sin(i / 8))),
 			probeDuration: async (): Promise<number | null> => (probeSeq.length > 1 ? (probeSeq.shift() as number | null) : probeSeq[0]!),
 			runFfmpeg: async (): Promise<string> => "",
 			runFfmpegCapture: async (): Promise<{ stdout: string; stderr: string }> => ({ stdout: "", stderr: "" }),
@@ -300,7 +311,7 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal(submits.length, 2, `应恰好 1 TTS + 1 video，实际 ${JSON.stringify(submits.map((s) => s.kind))}`);
 		assert.equal(submits[0]!.kind, "tts");
 		assert.equal(submits[0]!.prompt, "你好，世界。");
-		assert.deepEqual(submits[0]!.params, { instruction: "兴奋", voice: "v_test" });
+		assert.deepEqual(submits[0]!.params, { instruction: "情绪：兴奋。", voice: "v_test" });
 		assert.equal(submits[1]!.kind, "video");
 		assert.deepEqual(submits[1]!.params, { seconds: "5", mode: "reference", audios: ["https://test-env.tcb.qcloud.la/video-agent/run-dialogue-test/tts-SH01.mp3"] });
 		assert.ok(submits[1]!.prompt.includes("<Audio 1>"), "reference 模式 prompt 必须含 <Audio 1> 占位符");
@@ -439,7 +450,7 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal(ttsSubmits.length, 2, "首版 + 精简重录各一次 TTS");
 		assert.equal(ttsSubmits[0]!.prompt, "你好，世界。");
 		assert.equal(ttsSubmits[1]!.prompt, "短句", "第二次 TTS 必须用精简后的文本");
-		assert.deepEqual(ttsSubmits[1]!.params, { instruction: "兴奋", voice: "v_test" }, "重录保持同一音色与指导（跨镜一致性）");
+		assert.deepEqual(ttsSubmits[1]!.params, { instruction: "情绪：兴奋。", voice: "v_test" }, "重录保持同一音色与指导（跨镜一致性）");
 		const video = submits.find((s) => s.kind === "video")!;
 		assert.deepEqual((video.params as { audios: string[] }).audios.length, 1, "精简重录后仍走 reference");
 		assert.equal(result.script.shots[0]!.audioMode, "dialogue");

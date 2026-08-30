@@ -13,10 +13,16 @@ for (const c of CASES) {
 	if (!c.coSpace) throw new Error(`${c.id} dialogue 缺 coSpace，会被 A1 闸门回落 off`);
 	if (c.coSpace.characters?.length < 2) throw new Error(`${c.id} coSpace 应有 ≥2 个角色（对白需要说话人）`);
 	if (!/写实|真人|纪录/.test(c.brief.logline)) throw new Error(`${c.id} brief 未钉死写实话术`);
+	if (!/旁白/.test(c.brief.logline)) throw new Error(`${c.id} brief 应要求旁白+对白交织（保证字幕来源）`);
+	if (!c.coSpace.characters.every((ch) => /男|女/.test(ch.description))) {
+		throw new Error(`${c.id} 角色描述应写明性别（配音选角与人物一致性依赖）`);
+	}
 	if (!/anime|cartoon/.test(c.options.negativePrompt)) throw new Error(`${c.id} 负向词缺非写实排除项`);
 	if (!/garbled text/.test(c.options.negativePrompt)) throw new Error(`${c.id} 负向词缺乱码文字排除项`);
 	if (!c.expect.requireDialogueShots) throw new Error(`${c.id} 必须断言台词镜存在（全台词方案）`);
 	if (!c.expect.requireTtsAudio) throw new Error(`${c.id} 必须断言 TTS 音轨存在`);
+	if (!c.expect.requireSubtitlesAudit) throw new Error(`${c.id} 必须断言字幕结构审核通过`);
+	if (!c.expect.requireVoiceDistinction) throw new Error(`${c.id} 必须断言配音选角区分`);
 	if (c.options.shotCount < 3 || c.options.shotCount > 30) throw new Error(`${c.id} 镜头数越界`);
 	if (c.options.clipDurationSec < 3 || c.options.clipDurationSec > 12) throw new Error(`${c.id} 镜长越界`);
 }
@@ -38,28 +44,29 @@ const dataUrl = fileToDataUrl(tmp);
 if (!/^data:audio\/wav;base64,/.test(dataUrl)) throw new Error("dataUrl MIME 不合法");
 console.log("dataUrl ok:", `${dataUrl.slice(0, 32)}...`);
 
-const stages = ["script", "visual", "prompts", "keyframes", "clips", "audio", "export"].map((id) => ({
+const stages = ["script", "visual", "prompts", "keyframes", "audio", "clips", "export"].map((id) => ({
 	id,
 	status: "done",
 	progress: 100,
 }));
-/** 六轴 verdict 夹具（与服务端 foldQaAxes 的轴集一致） */
-function healthyVerdict(score) {
+/** 七轴 verdict 夹具（与服务端 foldQaAxes 的轴集一致）+ 健康字幕审核 */
+function healthyVerdict(score, subtitleIssues = []) {
 	return {
 		score,
-		overall: score >= 80 ? "pass" : "warn",
+		overall: score >= 80 && subtitleIssues.length === 0 ? "pass" : "warn",
 		axes: [
 			{ id: "briefFit", score },
 			{ id: "visualConsistency", score: score - 2 },
 			{ id: "pacing", score: score - 4 },
 			{ id: "physicalAccuracy", score: score - 3 },
+			{ id: "characterConsistency", score: score - 1 },
 			{ id: "audioSync", score: 100 },
 			{ id: "textQuality", score: score - 1 },
 		],
 		shots: [{ id: "SH01", verdict: "ok", reason: "通过" }],
+		subtitles: { present: true, lines: 2, issues: subtitleIssues },
 	};
 }
-/** 造一份"健康"的资产清单：全镜齐备（关键帧 + 片段 + TTS + 成片） */
 function healthyAssets({ shots = 5, withBgm = false } = {}) {
 	const list = [];
 	for (let i = 1; i <= shots; i += 1) {
@@ -70,54 +77,93 @@ function healthyAssets({ shots = 5, withBgm = false } = {}) {
 	if (withBgm) list.push({ name: "bgm.mp3" });
 	return list;
 }
-const dialogueRun = (score, shotCount) => ({
+const healthyVoiceCast = {
+	narratorVoiceId: "jingdiannvsheng",
+	characters: { "角色A": "cixingnansheng", "角色B": "linjiajiejie" },
+	notes: [],
+};
+const dialogueRun = (score, shotCount, subtitleIssues = []) => ({
 	status: "done",
 	stages,
 	productionShots: shotCount,
 	dialogueShotCount: Math.max(1, shotCount - 1),
-	verdict: healthyVerdict(score),
+	verdict: healthyVerdict(score, subtitleIssues),
 });
-
-// C1：台词形态基准（台词镜 > 0 + TTS 音轨 + 审核轴齐备）
-const c1 = assertCase({
-	expect: CASES[0].expect,
+const baseCase = (extra = {}) => ({
+	voiceCast: healthyVoiceCast,
 	audioForm: "dialogue",
 	finalBytes: 3_000_000,
-	run: dialogueRun(78, 5),
 	collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets() },
+	...extra,
 });
-console.log("dialogue run ->", c1.verdict, "| 失败项:", c1.failed.length ? c1.failed.join("; ") : "无");
-if (c1.verdict !== "PASS") throw new Error("台词用例应判 PASS");
 
-// 审核轴缺失必须 FAIL（物理/文字审核是硬要求）
+// F1：现代都市基准
+const f1 = assertCase({
+	...baseCase(),
+	expect: CASES[0].expect,
+	run: dialogueRun(78, 3),
+	collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: 3 }) },
+});
+console.log("F1 modern ->", f1.verdict, "| 失败项:", f1.failed.length ? f1.failed.join("; ") : "无");
+if (f1.verdict !== "PASS") throw new Error("F1 应判 PASS");
+
+// 审核轴缺失必须 FAIL
 const noAuditAxes = assertCase({
+	...baseCase(),
 	expect: CASES[0].expect,
-	audioForm: "dialogue",
-	finalBytes: 3_000_000,
 	run: {
-		...dialogueRun(78, 5),
-		verdict: { score: 78, overall: "warn", axes: [{ id: "briefFit", score: 78 }] },
+		...dialogueRun(78, 3),
+		verdict: { score: 78, overall: "warn", axes: [{ id: "briefFit", score: 78 }], subtitles: { present: true, lines: 2, issues: [] } },
 	},
-	collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets() },
 });
+if (noAuditAxes.verdict !== "FAIL" || !noAuditAxes.failed.some((f) => f.includes("物理/人物/文字审核轴")))
+	throw new Error("缺审核轴应显式 FAIL");
 console.log("no audit axes ->", noAuditAxes.verdict, "| 失败项:", noAuditAxes.failed.join("; "));
-if (noAuditAxes.verdict !== "FAIL" || !noAuditAxes.failed.some((f) => f.includes("物理/文字审核轴")))
-	throw new Error("缺物理/文字审核轴应显式 FAIL");
 
-// C3：台词 + BGM 形态（tts 与 bgm 都要在）
-const c3 = assertCase({
-	expect: CASES[2].expect,
-	audioForm: "dialogue+bgm",
-	finalBytes: 1_500_000,
-	run: dialogueRun(82, 6),
-	collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: 6, withBgm: true }) },
+// 旁白与角色撞声必须 FAIL（配音选角铁律）
+const sameVoice = assertCase({
+	...baseCase(),
+	voiceCast: { narratorVoiceId: "cixingnansheng", characters: { "角色A": "cixingnansheng", "角色B": "qingchunshaonv" }, notes: [] },
+	expect: CASES[0].expect,
+	run: dialogueRun(78, 3),
 });
-console.log("dialogue+bgm run ->", c3.verdict, "| 失败项:", c3.failed.length ? c3.failed.join("; ") : "无");
-if (c3.verdict !== "PASS") throw new Error("台词+BGM 用例应判 PASS");
+if (sameVoice.verdict !== "FAIL" || !sameVoice.failed.some((f) => f.includes("旁白音色与角色错开")))
+	throw new Error("旁白与角色撞声应显式 FAIL");
+console.log("same narrator voice ->", sameVoice.verdict, "| 失败项:", sameVoice.failed.join("; "));
+
+// 字幕结构问题必须 FAIL 并逐条留痕
+const badSubs = assertCase({
+	...baseCase(),
+	expect: CASES[0].expect,
+	run: dialogueRun(78, 3, ["字幕覆盖缺口：旁白 2 段，字幕只有 1 行"]),
+});
+if (badSubs.verdict !== "FAIL" || !badSubs.failed.some((f) => f.includes("字幕覆盖缺口")))
+	throw new Error("字幕结构问题应显式 FAIL");
+console.log("bad subtitles ->", badSubs.verdict, "| 失败项:", badSubs.failed.join("; "));
+
+// 十套正片逐套断言（特殊覆盖：F2 自审 / F3 BGM；其余标准链路）
+for (const [idx, c] of CASES.entries()) {
+	if (idx === 0) continue; // F1 已断言
+	const postFacts = c.expect.requireDesignReview
+		? { designReview: { count: 4, fail: 0, warn: 1 }, keyframeReview: { count: 5, fail: 0, warn: 2 } }
+		: {};
+	const r = assertCase({
+		...baseCase(),
+		expect: c.expect,
+		audioForm: c.audioForm,
+		finalBytes: 4_000_000,
+		run: dialogueRun(84, c.options.shotCount),
+		collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: c.options.shotCount, withBgm: Boolean(c.bgm) }) },
+		postFacts,
+	});
+	console.log(`${c.id} ->`, r.verdict, "| 失败项:", r.failed.length ? r.failed.join("; ") : "无");
+	if (r.verdict !== "PASS") throw new Error(`${c.id} 应判 PASS`);
+}
+
 
 const bad = assertCase({
+	...baseCase(),
 	expect: CASES[0].expect,
-	audioForm: "dialogue",
 	finalBytes: 1024,
 	run: { status: "failed", stages, dialogueShotCount: 0 },
 	collected: { files: {}, assets: [] },
@@ -125,56 +171,14 @@ const bad = assertCase({
 console.log("broken run ->", bad.verdict, "| 失败项数:", bad.failed.length);
 if (bad.verdict !== "FAIL") throw new Error("异常用例应判 FAIL");
 
-// C5：长片 + 双向出图自审
-const c5 = assertCase({
-	expect: CASES[4].expect,
-	audioForm: "dialogue",
-	finalBytes: 5_000_000,
-	run: dialogueRun(84, 10),
-	collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: 10 }) },
-	postFacts: { designReview: { count: 6, fail: 0, warn: 1 }, keyframeReview: { count: 10, fail: 1, warn: 2 } },
-});
-console.log("longfilm+review ->", c5.verdict, "| 失败项:", c5.failed.length ? c5.failed.join("; ") : "无");
-if (c5.verdict !== "PASS") throw new Error("长片自审用例应判 PASS");
-
-// C6：重做链路（补拍产生 _v1 + 组合出片 cut1；服务端命名无连字符，见 redo/compose.ts）
-const redoAssets = [...healthyAssets(), { name: "clip-SH03_v1.mp4" }, { name: "tts-SH02_v1.mp3" }, { name: "cut1.mp4" }];
-const c6 = assertCase({
-	expect: CASES[5].expect,
-	audioForm: "dialogue",
-	finalBytes: 3_500_000,
-	run: dialogueRun(79, 5),
-	collected: { files: { "06-export": ["final.mp4"] }, assets: redoAssets },
-	postFacts: { reshotShots: ["SH03"], composeCuts: [null] },
-});
-console.log("redo chain ->", c6.verdict, "| 失败项:", c6.failed.length ? c6.failed.join("; ") : "无");
-if (c6.verdict !== "PASS") throw new Error("重做链路用例应判 PASS");
-
-// C7：制片主任 + 竖屏多画幅（含"被守卫合法拒绝"的留痕不应判失败）
-const multiAssets = [...healthyAssets({ withBgm: true }), { name: "final-9x16.mp4" }];
-const c7 = assertCase({
-	expect: CASES[6].expect,
-	audioForm: "dialogue+bgm",
-	finalBytes: 2_800_000,
-	run: dialogueRun(81, 5),
-	collected: { files: { "06-export": ["final.mp4", "final-9x16.mp4"] }, assets: multiAssets },
-	postFacts: {
-		kitchen: { id: "obs-1", suggestionCount: 2, suggestions: [{ id: "s1" }] },
-		portraitExports: [{ aspectRatio: "9:16", status: "done" }],
-		errors: ["kitchenApply: 建议被 L2 守卫拒绝（冷却期内）"],
-	},
-});
-console.log("producer+multiformat ->", c7.verdict, "| 失败项:", c7.failed.length ? c7.failed.join("; ") : "无");
-if (c7.verdict !== "PASS") throw new Error("制片主任/多画幅用例应判 PASS");
-
-// 用例矩阵自检：七套、id 唯一、结构合规
-if (CASES.length !== 7) throw new Error(`用例应为 7 套，实际 ${CASES.length}`);
+// 用例矩阵自检：十套、id 唯一、结构合规
+if (CASES.length !== 10) throw new Error(`用例应为 10 套，实际 ${CASES.length}`);
 if (new Set(CASES.map((c) => c.id)).size !== CASES.length) throw new Error("用例 id 重复");
 for (const c of CASES) {
 	if (!Array.isArray(c.postActions)) throw new Error(`${c.id} 缺 postActions 数组`);
 	if (c.bgm && typeof c.bgm.file !== "string") throw new Error(`${c.id} bgm 缺 file`);
 	if (c.options.audioDrive === "dialogue" && !c.coSpace) throw new Error(`${c.id} dialogue 缺 coSpace`);
 }
-console.log(`cases ok: ${CASES.length} 套（全台词驱动），id 唯一，postActions / bgm / coSpace 结构合规`);
+console.log(`cases ok: ${CASES.length} 套（古今中外 · 全台词驱动 · 分龄音色池），id 唯一，结构合规`);
 
 console.log("SELFCHECK PASS");

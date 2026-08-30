@@ -54,6 +54,8 @@ export interface PoolSnapshot {
 	inFlight: number;
 	/** 累计超支秒数（结算超出预留的部分，预算告警依据） */
 	overrunSec: number;
+	/** 隔离截止（key 认证失效等；期间 pickPool 跳过该池）。未隔离缺省 */
+	quarantinedUntil?: number;
 }
 
 export type ReserveRejectReason = "unknown_pool" | "invalid" | "rpm_exhausted" | "insufficient_quota";
@@ -97,6 +99,8 @@ interface PoolState {
 	bucket: TokenBucket;
 	remainingQuotaSec: number;
 	overrunSec: number;
+	/** key 认证失效隔离（quarantineAdapter 设置；重启即清，运维换 key 后自动恢复） */
+	quarantinedUntil?: number;
 }
 
 /** 浮点比较容差（令牌按毫秒速率补充，累计有舍入误差） */
@@ -358,9 +362,25 @@ export class QuotaLedger {
 	 */
 	pickPool(estimatedSec: number, now: number = Date.now()): string | null {
 		const ready = this.snapshot(now)
+			.filter((p) => !(p.quarantinedUntil && now < p.quarantinedUntil))
 			.filter((p) => p.rpmTokens >= 1 && p.remainingQuotaSec >= estimatedSec)
 			.sort((a, b) => a.rpmWaitMs - b.rpmWaitMs || b.rpmTokens - a.rpmTokens);
 		return ready.length > 0 ? ready[0]!.id : null;
+	}
+
+	/**
+	 * 隔离认证失效的 key（401/403）：按 adapterId（或池 id）找到对应池，
+	 * quarantine 期间 pickPool 不再选它——别再把新任务白白投给已死的 key。
+	 * 进程级内存态：运维换 key 后重启（或到期）自动恢复。上限 60 分钟防永久误标。
+	 */
+	quarantineAdapter(adapterId: string, durationMs: number, _reason = ""): boolean {
+		for (const pool of this.pools.values()) {
+			if (pool.spec.adapterId === adapterId || pool.spec.id === adapterId) {
+				pool.quarantinedUntil = Date.now() + Math.min(Math.max(0, durationMs), 60 * 60_000);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** 池 ID 列表（注册顺序），便于配置校验与运维展示 */

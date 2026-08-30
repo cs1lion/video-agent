@@ -38,6 +38,9 @@ export interface ShotDialogue {
 	pausesSec?: number[];
 	/** TTS 后 ffprobe 实测时长（生成链路回写） */
 	audioDurationSec?: number;
+	/** 跟读校验未过 → dubOver 模式：口型视频保留、export 用 TTS 原声覆盖其音轨
+	 *  （模型模仿节奏说乱语是 agnes reference 的模型级行为，声音正确性优先于口型同步） */
+	dubOver?: boolean;
 	/** CloudBase 托管公开 URL（生成链路回写，可复用避免重复上传） */
 	audioUrl?: string;
 }
@@ -201,7 +204,16 @@ export function shotPromptMessages(
 		"",
 		`美术设计: ${JSON.stringify(bible)}`,
 		characterBlock,
-		`镜头画面描述: ${JSON.stringify(script.shots.map((s) => ({ id: s.id, visual: s.visual })))}`,
+		`镜头画面描述: ${JSON.stringify(
+			script.shots.map((s) => ({
+				id: s.id,
+				visual: s.visual,
+				// 台词镜注入说话信息：分镜为台词服务（画面是"谁在说什么"）
+				...(s.audioMode === "dialogue" && s.dialogue
+					? { speaking: s.dialogue.characterId, lineEn: s.dialogue.lines.en, emotion: s.dialogue.emotion ?? "" }
+					: {}),
+			})),
+		)}`,
 		brief.generationDirectives.clips.promptFragment
 			? `镜头方向约束: ${brief.generationDirectives.clips.promptFragment}`
 			: "",

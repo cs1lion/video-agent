@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AD://FORGE — 赛博工作台效果图（霓虹琥珀方案 A）</title>
+<style>
+  :root {
+    --void: #050505;
+    --panel: #0b0b0d;
+    --panel-2: #101013;
+    --edge: rgba(255, 194, 51, 0.12);
+    --edge-dim: rgba(255, 255, 255, 0.07);
+    --amber: #ffc233;
+    --amber-dim: rgba(255, 194, 51, 0.55);
+    --emerald: #34d399;
+    --rose: #fb7185;
+    --text: #e4e4e7;
+    --text-2: #a1a1aa;
+    --text-3: #5f5f66;
+    --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    --sans: "Inter", "HarmonyOS Sans SC", "PingFang SC", "Segoe UI", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .mono { font-family: var(--mono); }
+
+  /* 全局网格纹理 + 扫描线 */
+  .bg-tex {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .bg-scan {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: .35;
+    background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,0.14) 3px 4px);
+  }
+
+  /* ============ 顶部 header ============ */
+  header {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--edge-dim);
+    background: var(--panel);
+  }
+  .back { color: var(--text-2); font-size: 12px; letter-spacing: .05em; }
+  .back b { color: var(--amber); font-weight: 500; }
+  .vsep { width: 1px; height: 18px; background: var(--edge-dim); }
+  .runid { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+  .badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+    padding: 2px 8px; border: 1px solid;
+  }
+  .badge-live { color: var(--emerald); border-color: rgba(52,211,153,.4); }
+  .pill-status {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    color: var(--amber);
+    animation: breathe 2.2s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100% { opacity: .65; } 50% { opacity: 1; text-shadow: 0 0 12px rgba(255,194,51,.6); } }
+  .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .cost { font-family: var(--mono); font-size: 11px; color: var(--text-3); text-align: right; line-height: 1.5; }
+  .cost b { color: var(--amber); font-weight: 500; }
+  .energy { display: flex; align-items: center; gap: 6px; }
+  .energy .segs { display: flex; gap: 2px; }
+  .energy .seg { width: 6px; height: 14px; background: #1c1c20; }
+  .energy .seg.on { background: var(--amber); box-shadow: 0 0 6px rgba(255,194,51,.5); }
+  .energy .seg.mid { background: rgba(255,194,51,.35); }
+  .energy .pct { font-family: var(--mono); font-size: 10px; color: var(--text-2); }
+  .btn-danger {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+    color: var(--rose); background: none; border: 1px solid rgba(251,113,133,.4);
+    padding: 6px 14px; cursor: pointer;
+  }
+  .btn-danger:hover { background: rgba(251,113,133,.08); }
+
+  /* ============ DAG 流水线条 ============ */
+  .dagbar {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--edge-dim);
+    background: rgba(11,11,13,.6);
+  }
+  .dag { display: flex; align-items: stretch; flex: 1; min-width: 0; }
+  .node {
+    position: relative; flex: 1; min-width: 0;
+    border: 1px solid var(--edge-dim);
+    background: var(--panel);
+    padding: 6px 10px 5px;
+    clip-path: polygon(0 6px, 6px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .node .lbl { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-3); white-space: nowrap; }
+  .node .sub { font-family: var(--mono); font-size: 9px; color: #45454c; margin-top: 2px; letter-spacing: .04em; }
+  .node .dot { width: 5px; height: 5px; border-radius: 50%; background: #3a3a40; margin-left: auto; flex: none; }
+  .node.done { border-color: rgba(52,211,153,.25); }
+  .node.done .lbl { color: var(--text-2); }
+  .node.done .dot { background: var(--emerald); box-shadow: 0 0 6px rgba(52,211,153,.8); }
+  .node.active {
+    border-color: var(--amber-dim);
+    background: rgba(255,194,51,.06);
+    box-shadow: 0 0 18px rgba(255,194,51,.12);
+  }
+  .node.active .lbl { color: var(--amber); }
+  .node.active .dot { background: var(--amber); box-shadow: 0 0 8px rgba(255,194,51,.9); animation: pdot 1.6s ease-in-out infinite; }
+  .node.active .sub { color: var(--amber-dim); }
+  .node.active::before {
+    content: ""; position: absolute; top: 0; left: 8px; right: 8px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    animation: scanx 1.8s ease-in-out infinite;
+  }
+  @keyframes scanx { 0% { transform: translateX(-30%); opacity: 0; } 20%,80% { opacity: 1; } 100% { transform: translateX(30%); opacity: 0; } }
+  @keyframes pdot { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+  .conn { width: 18px; flex: none; align-self: center; height: 1px;
+    background-image: repeating-linear-gradient(90deg, rgba(255,194,51,.8) 0 5px, transparent 5px 12px);
+    animation: flowdash .7s linear infinite;
+  }
+  .conn.dim { background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.14) 0 5px, transparent 5px 12px); animation: none; }
+  @keyframes flowdash { to { background-position-x: 12px; } }
+
+  /* 团队在场灯 */
+  .presence { display: flex; gap: 5px; flex: none; }
+  .pbox {
+    position: relative; width: 26px; height: 26px;
+    border: 1px solid var(--edge-dim); background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9px; color: var(--text-3);
+  }
+  .pbox.work { border-color: var(--amber-dim); color: var(--amber); background: rgba(255,194,51,.07); }
+  .pbox.done { border-color: rgba(52,211,153,.2); color: rgba(52,211,153,.7); }
+  .pbox .pd { position: absolute; right: -2px; bottom: -2px; width: 5px; height: 5px; border-radius: 50%; background: #3a3a40; }
+  .pbox.work .pd { background: var(--amber); box-shadow: 0 0 6px rgba(255,194,51,.9); animation: pdot 1.6s ease-in-out infinite; }
+  .pbox.done .pd { background: var(--emerald); }
+
+  /* ============ 厨房条（制片主任） ============ */
+  .kitchen {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; gap: 12px;
+    padding: 6px 18px;
+    border-bottom: 1px solid var(--edge-dim);
+    background: var(--panel);
+  }
+  .kitchen .title { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-2); }
+  .kitchen .title .chef { color: var(--amber); }
+  .n-badge {
+    font-family: var(--mono); font-size: 9px; color: var(--amber);
+    border: 1px solid rgba(255,194,51,.35); padding: 1px 6px;
+  }
+  .ovens { display: flex; gap: 8px; margin-left: 10px; }
+  .oven {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 10px; color: var(--text-2);
+    border: 1px solid var(--edge-dim); background: var(--panel-2);
+    padding: 3px 9px;
+  }
+  .oven .tks { display: flex; gap: 2px; }
+  .oven .tk { width: 5px; height: 5px; border-radius: 50%; background: #2a2a30; }
+  .oven .tk.on { background: var(--amber); box-shadow: 0 0 5px rgba(255,194,51,.7); }
+  .oven .tk.charge { animation: pdot 1.2s ease-in-out infinite; background: var(--amber); }
+  .oven .meta { color: var(--text-3); }
+  .oven .quota { color: var(--amber); }
+  .btn-obs {
+    margin-left: auto; font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+    color: var(--amber); background: none; border: 1px solid rgba(255,194,51,.35);
+    padding: 4px 12px; cursor: pointer;
+  }
+  .btn-obs:hover { background: rgba(255,194,51,.08); }
+
+  /* ============ awaiting 确认条 ============ */
+  .awaitbar {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 18px;
+    border-bottom: 1px solid rgba(255,194,51,.25);
+    background: rgba(255,194,51,.05);
+    animation: awaitedge 2s ease-in-out infinite;
+  }
+  @keyframes awaitedge { 0%,100% { box-shadow: inset 0 0 0 1px rgba(255,194,51,.06); } 50% { box-shadow: inset 0 0 0 1px rgba(255,194,51,.3), inset 0 0 40px rgba(255,194,51,.05); } }
+  .awaitbar .msg { font-size: 12px; color: #f5e6c4; flex: 1; }
+  .awaitbar .msg .mono { color: var(--amber); }
+  .btn-primary {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+    color: #211303; background: var(--amber); border: none;
+    padding: 7px 16px; cursor: pointer; font-weight: 600;
+    box-shadow: 0 0 16px rgba(255,194,51,.35);
+    clip-path: polygon(0 6px, 6px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .btn-ghost {
+    font-family: var(--mono); font-size: 11px; color: var(--text-2);
+    background: none; border: 1px solid var(--edge-dim); padding: 7px 12px; cursor: pointer;
+  }
+
+  /* ============ 主体三栏 ============ */
+  .main { position: relative; z-index: 4; flex: 1; display: flex; min-height: 0; }
+
+  /* 左 rail */
+  .rail {
+    width: 56px; flex: none; border-right: 1px solid var(--edge-dim);
+    background: var(--panel);
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0;
+  }
+  .rail .ritem {
+    position: relative; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-3); border: 1px solid transparent; cursor: pointer;
+  }
+  .rail .ritem svg { width: 15px; height: 15px; }
+  .rail .ritem.on { color: var(--amber); border-color: var(--amber-dim); background: rgba(255,194,51,.07); }
+  .rail .ritem .rd { position: absolute; right: -1px; bottom: -1px; width: 5px; height: 5px; border-radius: 50%; }
+  .rail .ritem .rd.g { background: var(--emerald); box-shadow: 0 0 5px rgba(52,211,153,.8); }
+  .rail .ritem .rd.a { background: var(--amber); box-shadow: 0 0 5px rgba(255,194,51,.9); animation: pdot 1.6s infinite; }
+  .rail .ritem.lock { color: #35353b; }
+
+  /* 中栏：监视器墙 */
+  .center { flex: 1; min-width: 0; overflow: hidden; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .stage-head { display: flex; align-items: baseline; gap: 12px; }
+  .stage-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: .3em; color: var(--text-3); }
+  .stage-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .stage-note { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--amber); letter-spacing: .06em; }
+
+  .wall { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mon {
+    position: relative; border: 1px solid var(--edge-dim); background: #000;
+    aspect-ratio: 16/9; overflow: hidden;
+  }
+  .mon .corners i { position: absolute; width: 10px; height: 10px; border-color: var(--amber-dim); border-style: solid; border-width: 0; z-index: 3; }
+  .mon .corners i:nth-child(1) { left: -1px; top: -1px; border-left-width: 1.5px; border-top-width: 1.5px; }
+  .mon .corners i:nth-child(2) { right: -1px; top: -1px; border-right-width: 1.5px; border-top-width: 1.5px; }
+  .mon .corners i:nth-child(3) { left: -1px; bottom: -1px; border-left-width: 1.5px; border-bottom-width: 1.5px; }
+  .mon .corners i:nth-child(4) { right: -1px; bottom: -1px; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+  .mon .fakeimg { position: absolute; inset: 0; }
+  .mon .tag {
+    position: absolute; left: 8px; top: 8px; z-index: 4;
+    font-family: var(--mono); font-size: 10px; color: var(--amber);
+    background: rgba(0,0,0,.65); padding: 2px 6px; letter-spacing: .06em;
+  }
+  .mon .dur {
+    position: absolute; right: 8px; bottom: 8px; z-index: 4;
+    font-family: var(--mono); font-size: 9px; color: var(--text-2);
+    background: rgba(0,0,0,.65); padding: 2px 6px;
+  }
+  .mon .vig { position: absolute; inset: 0; z-index: 2; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.5) 100%); }
+  .mon .qact {
+    position: absolute; right: 8px; top: 8px; z-index: 5; display: flex; gap: 4px;
+  }
+  .mon .qact span {
+    font-family: var(--mono); font-size: 9px; color: var(--text-2);
+    border: 1px solid var(--edge-dim); background: rgba(0,0,0,.7); padding: 2px 6px; cursor: pointer;
+  }
+  .mon .qact span:hover { color: var(--amber); border-color: var(--amber-dim); }
+  .mon.rec .tag { color: var(--rose); }
+  .mon.rec .scanbar {
+    position: absolute; left: 0; right: 0; top: 30%; height: 1px; z-index: 3;
+    background: linear-gradient(90deg, transparent, rgba(255,194,51,.8), transparent);
+    animation: scanx 2.2s ease-in-out infinite;
+  }
+  .skel { position: absolute; inset: 0; background: rgba(255,255,255,.03); overflow: hidden; }
+  .skel::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 36%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.08), transparent);
+    animation: shimmer 1.6s linear infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+  .mon .cuing { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 4; }
+  .mon .cuing .t { font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: .2em; }
+
+  /* 右栏：指挥台 */
+  .chat {
+    width: 320px; flex: none; border-left: 1px solid var(--edge-dim);
+    background: var(--panel); display: flex; flex-direction: column;
+  }
+  .chat-tabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--edge-dim); }
+  .chat-tabs .t {
+    flex: 1; text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+    color: var(--text-3); padding: 6px 0; cursor: pointer; border: 1px solid transparent;
+  }
+  .chat-tabs .t.on { color: var(--amber); border-color: var(--amber-dim); background: rgba(255,194,51,.06); }
+  .chat-body { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .ev {
+    position: relative; border: 1px solid var(--edge-dim); background: rgba(255,255,255,.02);
+    padding: 7px 9px 7px 13px; font-size: 11px; line-height: 1.55; color: var(--text-2);
+  }
+  .ev::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: #3a3a40; }
+  .ev.handoff::before { background: rgba(255,194,51,.5); }
+  .ev.qa::before { background: var(--emerald); }
+  .ev.redo { border-color: rgba(255,194,51,.25); background: rgba(255,194,51,.04); }
+  .ev.redo::before { background: var(--amber); box-shadow: 0 0 6px rgba(255,194,51,.8); }
+  .ev .meta { font-family: var(--mono); font-size: 9px; color: var(--text-3); display: flex; gap: 6px; margin-bottom: 3px; }
+  .ev .meta b { font-weight: 500; }
+  .ev.handoff .meta b { color: rgba(255,194,51,.85); }
+  .ev.qa .meta b { color: var(--emerald); }
+  .ev.redo .meta b { color: var(--amber); }
+  .chat-input { border-top: 1px solid var(--edge-dim); padding: 10px; display: flex; gap: 8px; }
+  .chat-input .in {
+    flex: 1; background: rgba(255,255,255,.03); border: 1px solid var(--edge-dim);
+    color: var(--text-3); font-size: 11px; padding: 8px 10px; font-family: var(--sans);
+  }
+  .chat-input .send {
+    width: 38px; border: none; background: var(--amber); color: #211303;
+    font-family: var(--mono); font-size: 12px; cursor: pointer; font-weight: 700;
+    clip-path: polygon(0 6px, 6px 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* ============ 底部时间线 ============ */
+  .tline {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 18px; border-top: 1px solid var(--edge-dim);
+    background: var(--panel);
+  }
+  .tline .cap { font-family: var(--mono); font-size: 9px; letter-spacing: .25em; color: #45454c; flex: none; }
+  .tline .cells { flex: 1; display: flex; gap: 3px; min-width: 0; }
+  .cell {
+    position: relative; height: 40px; min-width: 42px;
+    border: 1px solid var(--edge-dim); background: var(--panel-2); cursor: pointer; overflow: hidden;
+  }
+  .cell:hover { border-color: rgba(255,255,255,.25); }
+  .cell.cur { border-color: var(--amber); box-shadow: 0 0 12px rgba(255,194,51,.3); }
+  .cell .thumb { position: absolute; inset: 0; }
+  .cell .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; }
+  .cell .bar.g { background: var(--emerald); }
+  .cell .bar.a { background: var(--amber); }
+  .cell .bar.z { background: #3a3a40; }
+  .cell .id {
+    position: absolute; left: 5px; bottom: 4px;
+    font-family: var(--mono); font-size: 9px; color: var(--text);
+    background: rgba(0,0,0,.6); padding: 1px 4px;
+  }
+  .cell .sec {
+    position: absolute; right: 5px; bottom: 4px;
+    font-family: var(--mono); font-size: 9px; color: var(--text-3);
+  }
+  .cell .kou {
+    position: absolute; right: 4px; top: 3px;
+    font-family: var(--mono); font-size: 9px; color: var(--amber);
+  }
+  /* 假画面渐变（模拟视频帧） */
+  .f1 { background: linear-gradient(135deg, #1a2a3a, #0d1420 60%, #16202e); }
+  .f2 { background: linear-gradient(135deg, #2a1a2e, #140d18 60%, #201626); }
+  .f3 { background: linear-gradient(135deg, #14301f, #0a1810 60%, #12241a); }
+  .f4 { background: linear-gradient(135deg, #33261a, #1a1209 60%, #261c12); }
+  .f5 { background: linear-gradient(135deg, #101010, #1c1c1c); }
+</style>
+</head>
+<body>
+<div class="bg-tex"></div>
+<div class="bg-scan"></div>
+
+<!-- ===== header ===== -->
+<header>
+  <span class="back">← <b>新项目</b></span>
+  <span class="vsep"></span>
+  <span class="runid">run_20260830_fizz25</span>
+  <span class="badge badge-live">LIVE</span>
+  <span class="pill-status">[RUNNING]</span>
+  <div class="hdr-right">
+    <div class="cost">预估/已花<br><b>¥3.42</b> / ¥1.87</div>
+    <div class="energy">
+      <div class="segs">
+        <span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span>
+        <span class="seg on"></span><span class="seg on"></span><span class="seg mid"></span><span class="seg"></span>
+        <span class="seg"></span><span class="seg"></span>
+      </div>
+      <span class="pct">62%</span>
+    </div>
+    <button class="btn-danger">取消</button>
+  </div>
+</header>
+
+<!-- ===== DAG + 团队在场 ===== -->
+<div class="dagbar">
+  <div class="dag">
+    <div class="node done"><div class="lbl">剧本<span class="dot"></span></div><div class="sub">编剧</div></div>
+    <div class="conn"></div>
+    <div class="node done"><div class="lbl">美术设计<span class="dot"></span></div><div class="sub">美术指导</div></div>
+    <div class="conn"></div>
+    <div class="node done"><div class="lbl">分镜提示词<span class="dot"></span></div><div class="sub">分镜师</div></div>
+    <div class="conn"></div>
+    <div class="node done"><div class="lbl">关键帧<span class="dot"></span></div><div class="sub">技术导演</div></div>
+    <div class="conn"></div>
+    <div class="node active"><div class="lbl">片段生成<span class="dot"></span></div><div class="sub">等烤炉 ~18s</div></div>
+    <div class="conn dim"></div>
+    <div class="node"><div class="lbl">声音设计<span class="dot"></span></div><div class="sub">声音设计</div></div>
+    <div class="conn dim"></div>
+    <div class="node"><div class="lbl">成片导出<span class="dot"></span></div><div class="sub">剪辑师</div></div>
+  </div>
+  <div class="presence">
+    <div class="pbox" title="导演">导<span class="pd"></span></div>
+    <div class="pbox work" title="制片人 · 工作中">制<span class="pd"></span></div>
+    <div class="pbox done" title="编剧 · 已交付">编<span class="pd"></span></div>
+    <div class="pbox done" title="美术指导 · 已交付">美<span class="pd"></span></div>
+    <div class="pbox done" title="分镜师 · 已交付">分<span class="pd"></span></div>
+    <div class="pbox work" title="技术导演 · 工作中">技<span class="pd"></span></div>
+    <div class="pbox" title="声音设计 · 待命">声<span class="pd"></span></div>
+    <div class="pbox" title="剪辑师 · 待命">剪<span class="pd"></span></div>
+    <div class="pbox" title="审片员 · 待命">审<span class="pd"></span></div>
+  </div>
+</div>
+
+<!-- ===== 厨房条 ===== -->
+<div class="kitchen">
+  <div class="title"><span class="chef">♨</span>制片主任<span class="n-badge">3</span></div>
+  <div class="ovens">
+    <div class="oven"><span class="tks"><span class="tk on"></span><span class="tk charge"></span></span>ent-1<span class="meta">在烤2</span><span class="quota">∞</span></div>
+    <div class="oven"><span class="tks"><span class="tk on"></span><span class="tk on"></span></span>ent-2<span class="meta">空闲</span><span class="quota">∞</span></div>
+  </div>
+  <span class="mono" style="font-size:10px;color:#5f5f66">建议: SH04 依赖未就绪 · 催办上游</span>
+  <button class="btn-obs">观察厨房</button>
+</div>
+
+<!-- ===== awaiting 条 ===== -->
+<div class="awaitbar">
+  <span class="msg">▸ 关键帧已就绪：请勾选要进入成片的 <span class="mono">6/6</span> 镜。预计消耗 6 段视频（约 25s）· <span class="mono">Enter</span> 确认并继续</span>
+  <button class="btn-ghost">查看关键帧</button>
+  <button class="btn-primary">6/6 确认并继续</button>
+</div>
+
+<!-- ===== 主体 ===== -->
+<div class="main">
+  <!-- 左 rail -->
+  <nav class="rail">
+    <div class="ritem" title="需求简报"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/></svg></div>
+    <div class="ritem" title="剧本 · 已完成"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/></svg><span class="rd g"></span></div>
+    <div class="ritem" title="美术设计 · 已完成"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="15.5" cy="10" r="1"/></svg><span class="rd g"></span></div>
+    <div class="ritem" title="分镜提示词 · 已完成"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 5v14"/></svg><span class="rd g"></span></div>
+    <div class="ritem" title="关键帧 · 已完成"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L6 21"/></svg><span class="rd g"></span></div>
+    <div class="ritem on" title="片段生成 · 进行中"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg><span class="rd a"></span></div>
+    <div class="ritem" title="声音设计"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/></svg></div>
+    <div class="ritem" title="质量审读"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <div class="ritem" title="成片交付"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg></div>
+  </nav>
+
+  <!-- 中栏：监视器墙 -->
+  <section class="center">
+    <div class="stage-head">
+      <span class="stage-kicker">STAGE 05 · GENERATION</span>
+      <span class="stage-title">片段生成</span>
+      <span class="stage-note">台词驱动：SH02 / SH05 口型由台词音频驱动</span>
+    </div>
+    <div class="wall">
+      <div class="mon">
+        <div class="fakeimg f1"></div>
+        <div class="vig"></div>
+        <div class="corners"><i></i><i></i><i></i><i></i></div>
+        <span class="tag">SH01</span>
+        <div class="qact"><span>↻</span><span>♪</span><span>P1</span><span>⤢</span></div>
+        <span class="dur">5.0s · v1</span>
+      </div>
+      <div class="mon">
+        <div class="fakeimg f2"></div>
+        <div class="vig"></div>
+        <div class="corners"><i></i><i></i><i></i><i></i></div>
+        <span class="tag">SH02 <span class="kou" style="position:static;background:none;padding:0">口</span></span>
+        <div class="qact"><span>↻</span><span>♪</span><span>P0</span><span>⤢</span></div>
+        <span class="dur">4.0s · 台词驱动</span>
+      </div>
+      <div class="mon rec">
+        <div class="skel"></div>
+        <div class="scanbar"></div>
+        <span class="tag">● REC SH03</span>
+        <div class="cuing"><span class="t">生成中…</span></div>
+      </div>
+      <div class="mon">
+        <div class="skel"></div>
+        <span class="tag" style="color:#5f5f66">SH04</span>
+        <div class="cuing"><span class="t">QUEUED · 等烤炉 ~18s</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右栏：指挥台 -->
+  <aside class="chat">
+    <div class="chat-tabs">
+      <div class="t on">团队频道 <span class="n-badge">2</span></div>
+      <div class="t">导演对话</div>
+    </div>
+    <div class="chat-body">
+      <div class="ev handoff"><div class="meta"><b>分镜师</b>→技术导演<span style="margin-left:auto">14:02</span></div>6 镜提示词已交付，SH02/SH05 为台词镜，先走 TTS 再进 reference 生成。</div>
+      <div class="ev qa"><div class="meta"><b>审片员</b>→全组<span style="margin-left:auto">14:11</span></div>SH01 画面通过；建议 SH03 出片后复查产品与手部的接触帧。</div>
+      <div class="ev redo"><div class="meta"><b>制片人</b>→导演<span style="margin-left:auto">14:13</span></div>SH04 关键帧未就绪，已向上游发出催办信号；ent-1 令牌回充中（~18s），建议 SH03 投 ent-2。</div>
+      <div class="ev handoff"><div class="meta"><b>你</b>→导演<span style="margin-left:auto">14:14</span></div>SH02 定 P0，天台碰杯那一帧必须保住。</div>
+    </div>
+    <div class="chat-input">
+      <div class="in">对导演说点什么（支持「重拍/重录/重导」）…</div>
+      <button class="send">→</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ===== 底部时间线 ===== -->
+<div class="tline">
+  <span class="cap">TIMELINE</span>
+  <div class="cells">
+    <div class="cell" style="flex-grow:5"><div class="thumb f1"></div><span class="bar g"></span><span class="id">SH01</span><span class="sec">5s</span></div>
+    <div class="cell" style="flex-grow:4"><div class="thumb f2"></div><span class="bar g"></span><span class="kou">口</span><span class="id">SH02</span><span class="sec">4s</span></div>
+    <div class="cell cur" style="flex-grow:4"><div class="thumb f5"></div><span class="bar a"></span><span class="id">SH03</span><span class="sec">4s</span></div>
+    <div class="cell" style="flex-grow:3"><div class="thumb f5"></div><span class="bar z"></span><span class="id">SH04</span><span class="sec">3s</span></div>
+    <div class="cell" style="flex-grow:5"><div class="thumb f5"></div><span class="bar z"></span><span class="kou" style="color:#5f5f66">口</span><span class="id">SH05</span><span class="sec">5s</span></div>
+    <div class="cell" style="flex-grow:4"><div class="thumb f5"></div><span class="bar z"></span><span class="id">SH06</span><span class="sec">4s</span></div>
+  </div>
+</div>
+
+</body>
+</html>

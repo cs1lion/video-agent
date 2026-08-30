@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot of realistic Song Dynasty Hong Bridge rainy night market, wet polished stone roads reflecting warm oil paper lantern glow, fluttering wine flag, wooden eaves dripping rainwater, blurred Hong Bridge silhouette in distant rain, low warm side light from lanterns mixed with cool rainy ambient light casting gentle highlights on wet surfaces, slow dolly push-in movement with shallow depth of field, desaturated cool shadow tones paired with warm midrange highlights, subtle 35mm film grain, historical realism style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 medium shot, Shen Yanzhi, 32-year-old thin Song Dynasty scholar wearing worn light blue straight robe and small crown on tied hair, callus on fingers, frustrated brows from three failed imperial exams, walks to the lantern stall, old Zhou, 58-year-old Song Dynasty night watchman wearing grey-brown short coarse robe with bronze gong and oil paper lantern hanging at waist, white beard, steady posture, weathered face with gentle smile, gestures to shelter under stall awning, blurred rainy night market background with wet stone roads and hanging lanterns, warm lantern light on both faces mixed with cool rainy ambient side light, handheld follow shot, camera follows Shen Yanzhi to the stall then pans slightly to old Zhou, gentle drift matching the warm eager tone, naturalistic performance, cinematic historical realism, subtle 35mm film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 medium shot, Shen Yanzhi in worn light blue straight robe and small crown, old Zhou in grey-brown short coarse robe with bronze gong and oil paper lantern at waist, sitting on low wooden stools at the lantern stall passing a small ceramic wine jar between them, raindrops falling on wet stone ground beside them, blurred rainy night market background with fluttering wine flag in distance, warm lantern spill lighting both men's faces, cool rainy ambient light from above casting soft highlights on wet surfaces, static locked-off shot with shallow depth of field focusing on their hands and the wine jar, desaturated cool shadows paired with warm midrange highlights, subtle 35mm film grain, naturalistic performance, melancholic tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 medium close-up shot, old Zhou in grey-brown short coarse robe with bronze gong and oil paper lantern at waist, holds up a lit oil paper lantern, warm low side light from the lantern shining on his weathered face with gentle smile, Shen Yanzhi in worn light blue straight robe and small crown, head slightly bowed listening, blurred rainy night market background with wet stone roads and distant Hong Bridge silhouette, cool rainy ambient light filling soft shadows, slow dolly push-in towards old Zhou's face, gentle drift matching his open generous tone, naturalistic performance, cinematic historical realism, soft atmospheric lighting, subtle 35mm film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 wide shot, Shen Yanzhi in worn light blue straight robe and small crown, old Zhou in grey-brown short coarse robe with bronze gong and oil paper lantern at waist, equal warm lantern light illuminating both men equally, blurred Hong Bridge and rainy night market in background, wet stone roads reflecting lantern glow, cool rainy ambient light in distant background, slow dolly pull-back movement to show the full scope of the night market, desaturated cool shadow tones paired with warm midrange highlights, subtle 35mm film grain, warm hopeful tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

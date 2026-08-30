@@ -64,6 +64,7 @@ import {
 } from "./ffmpeg.ts";
 import { chat, chatJson, chatVisionJson } from "./llm.ts";
 import { checkConsistency } from "./consistency.ts";
+import type { SubtitleAudit } from "./qa/subtitles.ts";
 import { shouldGateAudioDrive } from "./audio-mode.ts";
 import { reviewDesignBible, reviewKeyframes } from "./design-review.ts";
 import {
@@ -98,19 +99,28 @@ import {
 // ============================================================================
 
 export type StageId = "script" | "visual" | "prompts" | "keyframes" | "clips" | "audio" | "export";
+// 声音设计在视频生成**之前**（2026-08-30 用户定案）：配音/台词链是"表演设计"，
+// 应先于画面生产定稿——顺序 script → visual → prompts → keyframes → audio → clips → export。
 const STAGE_IDS: readonly StageId[] = [
 	"script",
 	"visual",
 	"prompts",
 	"keyframes",
-	"clips",
 	"audio",
+	"clips",
 	"export",
 ];
 /** 文本阶段（可单独 refine 重塑） */
 const TEXT_STAGES: readonly StageId[] = ["script", "visual", "prompts"];
 
-export type AxisId = "briefFit" | "visualConsistency" | "pacing" | "physicalAccuracy" | "audioSync" | "textQuality";
+export type AxisId =
+	| "briefFit"
+	| "visualConsistency"
+	| "pacing"
+	| "physicalAccuracy"
+	| "characterConsistency"
+	| "audioSync"
+	| "textQuality";
 
 export interface RunStage {
 	id: StageId;
@@ -155,6 +165,8 @@ export interface QaVerdict {
 	axes: { id: AxisId; score: number }[];
 	/** 逐镜标注（质检模型支持时存在；旧 run 无此字段） */
 	shots?: QaShotVerdict[];
+	/** 字幕结构审核（qa/subtitles.ts；旧 run / 旧提示词路径无此字段） */
+	subtitles?: SubtitleAudit;
 }
 
 /** 运行追踪 span（P2：Run 即 Trace，落盘 traces.ndjson） */
@@ -1584,7 +1596,7 @@ export async function executeStages(
 				holdAtDesignGate(run);
 				return;
 			}
-			if (id === "clips" && run.gate === "keyframes") {
+			if ((id === "audio" || id === "clips") && run.gate === "keyframes") {
 				holdAtKeyframeGate(run);
 				return;
 			}
@@ -1598,10 +1610,10 @@ export async function executeStages(
 				await stageKeyframes(stageCtx, script, bible);
 				// 本轮绘制了新的画面原料 → 必须重新过确认闸门
 				run.gate = "keyframes";
-			} else if (id === "clips") {
-				clips = await stageClips(stageCtx, script ?? clips?.script);
 			} else if (id === "audio") {
 				audio = await stageAudio(stageCtx, script ?? clips?.script);
+			} else if (id === "clips") {
+				clips = await stageClips(stageCtx, script ?? clips?.script);
 			} else if (id === "export") {
 				await stageExport(stageCtx, script ?? clips?.script, clips?.clipFiles, audio?.audioFiles);
 			}
@@ -1617,7 +1629,7 @@ export async function executeStages(
 				? `/api/runs/${run.id}/files/assets/${encodeURIComponent(run.finalFile)}`
 				: `/api/runs/${run.id}/video`;
 			run.status = "done";
-			pushEvent(run, "producer", "client", "status", "全片交付 🎉 成片与五轴质检报告已就绪。", {
+			pushEvent(run, "producer", "client", "status", "全片交付 🎉 成片与七轴质检报告已就绪。", {
 				stage: "export",
 				focus: "final",
 				label: "查看成片",

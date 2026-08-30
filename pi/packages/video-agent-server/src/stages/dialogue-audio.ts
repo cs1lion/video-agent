@@ -15,6 +15,7 @@
  */
 
 import * as path from "node:path";
+import * as fs from "node:fs";
 import { appendSpan, optionsOf, pushEvent, type StageCtx } from "../pipeline.ts";
 import { ttsAdapterOf } from "../redo-adapters.ts";
 import { trackMediaCost } from "../pricing.ts";
@@ -25,7 +26,20 @@ import { hostAudioFile, isAudioUrlAlive } from "../hosting/tcb.ts";
 import type { ScriptShot } from "../prompts.ts";
 
 export type DialogueAudioOutcome =
-	| { kind: "ready"; audioUrl: string; audioDurationSec?: number }
+	| {
+			kind: "ready";
+			audioUrl: string;
+			audioDurationSec?: number;
+			/**
+			 * **原始 TTS 音频**（相对 run.dir，未插停顿/未垫尾）——reference 提交与跟读校验都用它。
+			 * 2026-08-30 对照实验实锤：垫尾/插停顿重编码出的 44.1kHz mp3 会让 Agnes 跟读失效
+			 * （相关 0.072 = 模型自行配音、不可懂），原始 24kHz 声 0.568（正常跟读）。
+			 * 处理版仍落盘（export/时长语义不动），但绝不进 reference 提交链。
+			 */
+			localAudioRelPath?: string;
+			/** 处理版（pad/paced）本地路径——备用/审计，不用于提交 */
+			processedAudioRelPath?: string;
+	  }
 	| { kind: "silent"; reason: string }
 	| { kind: "narration"; reason: string };
 
@@ -43,7 +57,18 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 	// 0. 复用：audioUrl 已存在且匿名可达 → 免重传（重做路径的核心省钱点）
 	if (dialogue.audioUrl && (await isAudioUrlAlive(dialogue.audioUrl).catch(() => false))) {
 		pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 台词音频复用已有托管 URL（免重传）。`);
-		return { kind: "ready", audioUrl: dialogue.audioUrl, audioDurationSec: dialogue.audioDurationSec };
+		// 本地参考音频若还在，供跟读校验用（旧 run 找不到也不影响主链）
+		const localAudioRelPath = `assets/tts-dialogue-${shot.id}.mp3`;
+		const processedAudioRelPath = [`assets/tts-dialogue-${shot.id}-pad.mp3`, `assets/tts-dialogue-${shot.id}-paced.mp3`].find((rel) =>
+			fs.existsSync(path.join(run.dir, rel)),
+		);
+		return {
+			kind: "ready",
+			audioUrl: dialogue.audioUrl,
+			audioDurationSec: dialogue.audioDurationSec,
+			...(fs.existsSync(path.join(run.dir, localAudioRelPath)) ? { localAudioRelPath } : {}),
+			...(processedAudioRelPath ? { processedAudioRelPath } : {}),
+		};
 	}
 
 	// 1. TTS：按角色音色合成（voiceId 绑定共创角色卡片；缺省回落适配器默认音色）
@@ -53,8 +78,20 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 		return { kind: "silent", reason: "台词文本为空" };
 	}
 	const paceText = dialogue.pace && dialogue.pace !== "normal" ? `，语速${dialogue.pace === "slow" ? "放慢" : "加快"}` : "";
-	const instruction = [dialogue.emotion ?? "", paceText].filter(Boolean).join("");
+	// 表演指导带人物设计（stepaudio-2.5-tts 的 instruction 控制全局人设与情绪基调，
+	// ≤200 字——让声线气质跟着角色设定走，而不是只给情绪词）
+	const characterDesign = (run.brief.coSpace?.characters ?? []).find((c) => c.name === dialogue.characterId)?.description;
+	const instruction = [
+		characterDesign ? `角色：${characterDesign}。` : "",
+		dialogue.emotion ? `情绪：${dialogue.emotion}。` : "",
+		paceText,
+	]
+		.filter(Boolean)
+		.join("")
+		.slice(0, 200);
 	const voiceParams = dialogue.voiceId ? { voice: dialogue.voiceId } : {};
+	// TTS 参数利用（实测 speed 有效：同文本 1.3 倍速字节数 -15%）：pace → speed
+	const ttsSpeed = dialogue.pace === "slow" ? 0.85 : dialogue.pace === "fast" ? 1.2 : undefined;
 	const pauses = (dialogue.pausesSec ?? []).filter((p) => Number.isFinite(p) && p > 0);
 	const targetSec = opts.clipDurationSec;
 	const adapter = ttsAdapterOf(sc.ctx);
@@ -63,13 +100,13 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 	const synthesizeToPaced = async (
 		speechText: string,
 		tag: string,
-	): Promise<{ srcRel: string; durationSec: number; speechText: string } | null> => {
+	): Promise<{ srcRel: string; durationSec: number; speechText: string; rawRel: string } | null> => {
 		const job = sc.queue.submit(
 			{
 				roleName: "video-agent",
 				kind: "tts",
 				prompt: speechText,
-				params: { instruction, ...voiceParams },
+				params: { instruction, ...(ttsSpeed ? { speed: ttsSpeed } : {}), ...voiceParams },
 				outputName: `tts-dialogue-${shot.id}${tag}`,
 			},
 			run.dir,
@@ -84,6 +121,8 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 			);
 			return null;
 		}
+		// 原始声 = TTS 直接产物（插停顿/垫尾之前的形态）——reference 提交链只用它
+		const rawRel = path.relative(run.dir, done.filePath);
 		if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: speechText });
 		let srcRel = path.relative(run.dir, done.filePath);
 		let durationSec = await probeDuration(srcRel, run.dir);
@@ -101,7 +140,7 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 				pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 停顿插入失败，使用原台词音频继续。`);
 			}
 		}
-		return { srcRel, durationSec, speechText };
+		return { srcRel, durationSec, speechText, rawRel };
 	};
 
 	/** LLM 精简台词（A4 超长分支）。任何失败 → null（调用方接受原时长）。 */
@@ -193,7 +232,7 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 	// 4. CloudBase 托管 → 公开 URL（未配置凭据/上传失败 → 降级 narration）
 	let audioUrl: string;
 	try {
-		audioUrl = await hostAudioFile(sc.ctx.studioRoot, run.id, shot.id, path.join(run.dir, srcRel));
+		audioUrl = await hostAudioFile(sc.ctx.studioRoot, run.id, shot.id, path.join(run.dir, synth.rawRel));
 	} catch (error) {
 		appendSpan(
 			run,
@@ -223,5 +262,11 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 		`镜头 ${shot.id} 台词音频就绪 ✅（${durationSec.toFixed(1)}s，已托管，将驱动口型生成）。`,
 		{ stage: "generate", focus: shot.id, label: "试听台词" },
 	);
-	return { kind: "ready", audioUrl, audioDurationSec: durationSec };
+	return {
+		kind: "ready",
+		audioUrl,
+		audioDurationSec: durationSec,
+		localAudioRelPath: synth.rawRel,
+		...(synth.srcRel !== synth.rawRel ? { processedAudioRelPath: synth.srcRel } : {}),
+	};
 }

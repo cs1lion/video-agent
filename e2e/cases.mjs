@@ -1,25 +1,27 @@
 /**
- * E2E 用例定义 —— 七套，覆盖 video-agent 最新版完整功能面。
+ * E2E 用例定义 —— 十套样片（2026-08-30 第五版 · 古今中外）。
  *
- * **2026-08-30 方案变更：全部用例统一为「台词驱动 + 剧情成片」**——
- * 每套都有人物对白（audioDrive=dialogue + coSpace，走 A1 闸门/D1 拆镜/台词 reference 口型链），
- * 每套都产出剧情短片成片（final.mp4）。此前 C2/C4/C5/C6 的旁白形态、C3 的纯 BGM 形态
- * 不再单独设用例；旁白与静音镜仍会作为剧情内的自然组成出现（脚本层按需混排），
- * BGM 能力由 C3/C7 继续覆盖。
+ * **全部「台词驱动 + 剧情成片 + 写实真人」**，十个时代与地域（现代北京 / 北宋汴京 /
+ * 1937 长江 / 1885 美国西部 / 1941 伦敦 / 盛唐长安 / 1504 佛罗伦萨 / 江户日本 /
+ * 1924 巴黎 / 1985 北京胡同），考核面：
+ *   - 台词链全流程（A1/D1/reference 口型）+ **跟读双关卡**（包络 + ASR 字面重合，自行配音自动降级重试）
+ *   - 配音选角（24 官方音色分龄分性池：旁白与角色错开、角色按人物设计分配、男童女声反串）
+ *   - 字幕烧录 + 结构审核；七轴质检（物理/人物/文字/字幕）
  *
  * 字段说明：
  *  - brief      ：一句话需求 + 关键信息（进 EnrichedBrief.creative）
  *  - options    ：技术参数（走 resolveGenerationOptions 白名单校验）
- *  - coSpace    ：共创空间。**台词模式（audioDrive=dialogue）必须传**，否则 A1 闸门强制回落 off
+ *  - coSpace    ：共创空间。台词模式（audioDrive=dialogue）必须传，否则 A1 闸门强制回落 off
  *  - bgm        ：背景音乐（{file} 优先本地，缺失时脚本合成占位 WAV）
- *  - postActions：成片之后的动作序列（重做 / 自审 / 制片主任 / 多画幅 / 组合出片）
+ *  - postActions：成片之后的动作序列
  *  - expect     ：断言期望（lib/report.mjs 的验收依据）
  *
- * 风格约束：所有 brief 钉死「写实真人」；negativePrompt 排除非写实形态与乱码文字。
+ * 风格约束：brief 钉死「写实真人」；negativePrompt 排除非写实与乱码文字。
+ * 角色描述钉死性别/年龄/发色/服装——人物一致性、配音选角、审核全依赖它。
  * 注意：不要写真实品牌名、真实人名或受版权保护的内容。
  */
 
-/** 写实风格通用负向词（叠加在人物出镜/干净产品预设之上） */
+/** 写实风格通用负向词 */
 const REALISM_NEGATIVE = [
 	"anime", "cartoon", "illustration", "3d render", "cgi plastic skin", "painting",
 	"watermark", "garbled text", "on-screen captions", "UI overlays", "debug frames",
@@ -29,45 +31,44 @@ const REALISM_NEGATIVE = [
 
 export const CASES = [
 	{
-		id: "C1-dialogue",
-		slug: "city-rain-dialogue",
-		title: "《雨夜末班》· 台词驱动 · 写实都市",
+		id: "F1-modern-alley",
+		slug: "alley-noodle-modern",
+		title: "《深巷面馆》· 现代中国都市 · 台词驱动",
 		audioForm: "dialogue",
 		brief: {
 			logline:
-				"写实真人剧情短片：深夜十一点的城郊公交站，末班车迟迟不来。一位跑了一天外卖的中年男人蹲在站台边，把凉掉的包子掰了一半递给同在等车的女儿。父女在雨声里有一小段压着嗓子的对白，最后车灯由远及近——故事讲「抵达本身就已经是团圆」。",
-			keyMessage: "再远的路，也有人等你到站。",
+				"写实真人剧情短片：现代中国某城市的深夜深巷面馆。两句旁白开场与收尾（交代这条巷子二十年只卖一碗面），中间是老板与刚收车的女代驾司机小周的一来一往对白——「还是老位置？」「老位置，多加一勺辣」。旁白与对白交织，讲一碗面的默契。",
+			keyMessage: "深巷里的灯，为晚归的人留着。",
 		},
 		options: {
-			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 5, fps: 24,
-			motionIntensity: "medium", detailBoost: true, promptLanguage: "zh",
+			resolution: "720p", aspectRatio: "16:9", shotCount: 3, clipDurationSec: 5, fps: 24,
+			motionIntensity: "low", detailBoost: true, promptLanguage: "zh",
 			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
 		},
 		coSpace: {
 			characters: [
-				{ name: "老周", description: "46 岁外卖骑手，深蓝旧冲锋衣，胡茬，眼下有疲惫纹路，说话习惯低头" },
-				{ name: "周小雨", description: "11 岁女孩，校服外套偏大，背旧书包，头发被雨打湿贴在额角" },
+				{ name: "老板", description: "55 岁男性面馆老板，花白寸头，深灰色毛线背心配白毛巾搭肩，袖口卷起" },
+				{ name: "小周", description: "28 岁女性代驾司机，短黑发，深蓝色代驾反光背心，说话利落" },
 			],
 			scenes: [
-				{ name: "城郊公交站", description: "深夜写实：褪色广告灯箱、积水倒映暖黄路灯光、远处高架车流是虚焦光斑" },
-				{ name: "末班公交车内", description: "写实车厢：空座、冷白顶灯、车窗雨痕与自己的倒影" },
+				{ name: "深巷面馆", description: "写实深夜小面馆：暖黄灯泡、瓷砖墙、灶台蒸汽、窗边两张旧方桌" },
 			],
-			musicBrief: "低音量钢琴单音 + 雨声环境音，情绪克制，结尾随车灯渐亮微微抬起。",
+			musicBrief: "无音乐，只留灶台蒸汽与巷子夜声。",
 		},
 		bgm: null,
 		postActions: [{ type: "metrics" }],
-		expect: { minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false },
+		expect: { minShots: 3, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
 	},
 
 	{
-		id: "C2-dialogue",
-		slug: "harbor-dawn-dialogue",
-		title: "《开海》· 台词驱动 · 写实渔村",
+		id: "F2-ancient-bianjing",
+		slug: "bianjing-rain-night",
+		title: "《汴河夜雨》· 北宋汴京 · 台词驱动",
 		audioForm: "dialogue",
 		brief: {
 			logline:
-				"写实真人剧情短片：天没亮的渔港，老渔妇林阿桃带第一次跟她出海的孙女小满解开缆绳、检查网眼、发动马达。小船驶出防波堤时太阳正好从海平面抬起来，祖孙俩在甲板上有几段朴素的对白——奶奶讲三十年前的开海日，孙女问「海那么大，鱼认得你吗」——故事讲「日复一日的重复，本身就是一种勇气」。",
-			keyMessage: "日复一日，也是一种远航。",
+				"写实真人剧情短片：北宋汴京，虹桥边的夜市落着细雨。落魄书生沈砚之在灯笼摊前与更夫老周避雨对饮，书生叹科举三度落第，更夫讲自己打了三十年更「听遍全城的梦话」。三句旁白交代时辰与雨势，对白朴素见心。写实宋代市井：油纸灯笼、湿石板路、酒旗、乌篷檐滴雨。",
+			keyMessage: "灯火不问功名，照人一样亮。",
 		},
 		options: {
 			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 5, fps: 24,
@@ -76,124 +77,32 @@ export const CASES = [
 		},
 		coSpace: {
 			characters: [
-				{ name: "林阿桃", description: "58 岁渔妇，古铜色皮肤，蓝布头巾，手上全是常年拉网留下的老茧，笑起来眼角很深" },
-				{ name: "小满", description: "9 岁女孩，穿 oversized 的橙色救生衣，扎两个辫子，第一次出海既兴奋又抓紧船舷" },
+				{ name: "沈砚之", description: "32 岁男性书生，洗旧的天青色直裰，束发戴小冠，眉目清瘦，手指有茧" },
+				{ name: "老周", description: "58 岁男性更夫，灰褐色短褐衣，腰挂铜锣与灯笼，花白胡须，脚步稳" },
 			],
 			scenes: [
-				{ name: "渔港码头", description: "凌晨四点的写实渔港：缆绳桩、泡沫浮球、柴油味、船灯在湿漉漉地面拉出倒影" },
-				{ name: "近海甲板", description: "写实木质渔船甲板：鱼筐、缆绳盘、天光从海平面抬起，防波堤渐远" },
+				{ name: "虹桥夜市", description: "写实北宋夜市：油纸灯笼串、湿漉漉石板路反光、酒旗、木檐滴雨、远处桥影" },
 			],
-			musicBrief: "海浪环境音为主，一两句独奏口琴，克制而温暖。",
+			musicBrief: "雨声环境音，远处隐约更锣，收尾一声琴。",
 		},
 		bgm: null,
-		postActions: [{ type: "keyframeReview" }, { type: "metrics" }],
-		expect: { minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false },
-	},
-
-	{
-		id: "C3-dialogue-bgm",
-		slug: "city-morning-dialogue-bgm",
-		title: "《第一笼蒸汽》· 台词 + BGM · 写实城市清晨",
-		audioForm: "dialogue+bgm",
-		brief: {
-			logline:
-				"写实真人剧情短片：清晨五点半的巷口早餐摊，第一笼包子刚上汽。摊主夫妻一边麻利地擀皮、装袋、找零，一边拌着嘴——丈夫嫌妻子把酱料罐摆歪，妻子笑他记错熟客口味；常客小学生跑来买早餐，一段晨光里的短对话。用镜头的推进讲一座城市醒来前的第一桩买卖。",
-			keyMessage: "城市醒来时，先有一笼蒸汽。",
-		},
-		options: {
-			resolution: "720p", aspectRatio: "16:9", shotCount: 6, clipDurationSec: 4, fps: 24,
-			motionIntensity: "low", detailBoost: true, promptLanguage: "zh",
-			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
-		},
-		coSpace: {
-			characters: [
-				{ name: "陈建国", description: "52 岁早餐摊主，白背心外套深蓝围裙，袖口沾面粉，嗓门大、动作快" },
-				{ name: "秀兰", description: "50 岁摊主妻子，碎花罩衣，围着旧毛线围脖，记账找零麻利，爱笑" },
-			],
-			scenes: [
-				{ name: "巷口早餐摊", description: "写实清晨：竹蒸笼冒汽、煤炉火光、旧玻璃柜里的豆浆杯、路灯与天光交替" },
-			],
-			musicBrief: "轻快的民谣吉他 + 环境人声，音量让位于台词。",
-		},
-		bgm: { file: "assets/bgm.mp3", name: "bgm.mp3", synthIfMissing: true, synthSeconds: 45 },
-		postActions: [{ type: "metrics" }],
-		expect: { minShots: 6, requireDialogueShots: true, requireTtsAudio: true, requireBgm: true },
-	},
-
-	{
-		id: "C4-smoke",
-		slug: "minimal-smoke",
-		title: "最小成本冒烟：3 镜 / 480p / 竖屏 · 台词驱动",
-		audioForm: "dialogue",
-		brief: {
-			logline:
-				"写实竖屏剧情短片：清晨的面馆后厨，老板把一碗面端到窗边熟客面前，熟客说了句「老样子，多放辣」，老板应了一声。三镜讲完「一天从一碗面开始」的对话日常。",
-			keyMessage: "热气升起的时候，一天就开始了。",
-		},
-		options: {
-			resolution: "480p", aspectRatio: "9:16", shotCount: 3, clipDurationSec: 4, fps: 24,
-			motionIntensity: "low", detailBoost: false, promptLanguage: "zh",
-			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
-		},
-		coSpace: {
-			characters: [
-				{ name: "老板", description: "40 多岁面馆老板，灰色汗衫，围裙油亮，手上有烫疤" },
-				{ name: "熟客", description: "60 岁退休老街坊，马褂式外套，坐窗边固定位置，端碗稳" },
-			],
-			scenes: [
-				{ name: "面馆窗边", description: "写实小面馆：灶台热气、老式吊扇、窗边两张方桌" },
-			],
-			musicBrief: "无音乐，只有后厨环境声。",
-		},
-		bgm: null,
-		postActions: [],
-		expect: { minShots: 3, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false },
-	},
-
-	{
-		id: "C5-longfilm-review",
-		slug: "highway-ten-shots",
-		title: "《一千公里》· 10 镜台词长片 + 出图自审 · 写实公路",
-		audioForm: "dialogue",
-		brief: {
-			logline:
-				"写实真人公路剧情短片：退休长途货车司机老崔最后一次跑车，徒弟小江随车。从装货、出城、服务区吃面，到暴雨夜驾驶室里的师徒对话——徒弟劝他退休别跑了，师傅说「方向盘比儿子跟我久」——最后清晨老崔把车钥匙交给徒弟。十镜讲完一段三十年的公路人生，对白克制，结尾留白。",
-			keyMessage: "路会记得每一个把它跑完的人。",
-		},
-		options: {
-			resolution: "720p", aspectRatio: "16:9", shotCount: 10, clipDurationSec: 5, fps: 24,
-			motionIntensity: "medium", detailBoost: true, promptLanguage: "zh",
-			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
-		},
-		coSpace: {
-			characters: [
-				{ name: "老崔", description: "60 岁货车司机，褪色工装夹克，保温杯茶垢，左手搭窗烟不离手" },
-				{ name: "小江", description: "24 岁徒弟，卫衣外罩反光背心，坐在副驾总在记路牌" },
-			],
-			scenes: [
-				{ name: "货车驾驶室", description: "写实重卡驾驶室：挂饰晃动、仪表盘、雨刮与湿挡风玻璃" },
-				{ name: "高速公路与服务区", description: "写实公路：夜间车灯长曝感、服务区白炽灯、蒸汽大锅面摊" },
-			],
-			musicBrief: "低音量公路摇滚起，结尾收在单簧管，情绪克制。",
-		},
-		bgm: null,
-		// 长片最容易暴露「设计卡与关键帧漂移」：成片后跑一次双向自审，结论落 02/03 目录
 		postActions: [{ type: "designReview" }, { type: "keyframeReview" }, { type: "metrics" }],
 		expect: {
-			minShots: 10, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false,
+			minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false,
 			requireDesignReview: true, requireKeyframeReview: true,
+			requireSubtitlesAudit: true, requireVoiceDistinction: true,
 		},
 	},
 
 	{
-		id: "C6-redo-chain",
-		slug: "barber-redo-chain",
-		title: "《最后一剪》· 台词驱动 + 重做链路（补拍/重录/组合出片）· 写实理发店",
-		audioForm: "dialogue",
+		id: "F3-republic-ferry",
+		slug: "yangtze-ferry-1937",
+		title: "《三峡夜航》· 1937 长江客轮 · 台词 + BGM",
+		audioForm: "dialogue+bgm",
 		brief: {
 			logline:
-				"写实真人剧情短片：老城区一家开了三十年的理发店，老板徐师傅最后一次为老街坊赵叔剃头。两人一边剃头一边回忆这条街的旧事——「你还是当年那个毛头小子」「你手艺是街口最稳的」——擦镜子、摘下转灯，讲一门手艺的谢幕。",
-			keyMessage: "有些门关上，是因为它已经完成了。",
+				"写实真人剧情短片：1937 年冬，长江夜航客轮的甲板。船员夫妻做最后一遍巡查——妻子清点救生圈念叨时局，丈夫检查缆绳劝她宽心；旁白两句交代这班船连夜送人西去。对白克制，汽笛一声，两人并肩看江面灯火。写实民国江轮：木质甲板、煤油灯、救生圈成排、江雾与灯火。",
+			keyMessage: "船往上游走，人往心里回。",
 		},
 		options: {
 			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 5, fps: 24,
@@ -202,65 +111,229 @@ export const CASES = [
 		},
 		coSpace: {
 			characters: [
-				{ name: "徐师傅", description: "65 岁理发师，白大褂式工作服，老花镜滑在鼻尖，手稳" },
-				{ name: "赵叔", description: "62 岁老街坊，灰色毛呢中山装，围着旧理发围布坐在转椅上" },
+				{ name: "陈海生", description: "45 岁男性江轮水手长，古铜色皮肤，藏青色旧制服外套，花白胡茬，嗓音沙哑沉稳" },
+				{ name: "秀珍", description: "42 岁女性，陈海生的妻子，齐耳灰黑短发，深蓝色布衫配围裙，手里攥着一方旧手帕" },
 			],
 			scenes: [
-				{ name: "老理发店内", description: "写实老店：转椅、壁挂旧镜、铁皮工具盒、午后斜光里的浮尘" },
+				{ name: "江轮甲板", description: "写实民国夜航江轮：木质甲板、煤油挂灯、救生圈、缆绳桩、江雾里的灯火" },
 			],
-			musicBrief: "老收音机质感的弦乐，若有似无。",
+			musicBrief: "江风与汽笛环境音，一段旧式弦乐低回。",
 		},
-		bgm: null,
-		// 完整的重做链路：补拍最差镜 → 重录一镜台词/旁白 → 组合出片（验证版本化 + 限次台账）
-		postActions: [
-			{ type: "reshot", pick: "worst", instruction: "把老人手部的动作拍清楚，光线再暖一点" },
-			{ type: "retts", pick: "first", instruction: "语气更平静一些，语速放慢" },
-			{ type: "compose" },
-			{ type: "metrics" },
-		],
-		expect: {
-			minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false,
-			requireReshotVersion: true, requireComposeCut: true,
-		},
+		bgm: { file: "assets/bgm.mp3", name: "bgm.mp3", synthIfMissing: true, synthSeconds: 40 },
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: true, requireSubtitlesAudit: true, requireVoiceDistinction: true },
 	},
 
 	{
-		id: "C7-producer-multiformat",
-		slug: "night-market-producer",
-		title: "《夜市收摊》· 台词驱动 + 制片主任 + 多画幅分发 · 写实夜市",
-		audioForm: "dialogue+bgm",
+		id: "F4-western-stagecoach",
+		slug: "dusty-trail-1885",
+		title: "《最后一班马车》· 1885 美国西部 · 台词驱动",
+		audioForm: "dialogue",
 		brief: {
 			logline:
-				"写实真人剧情短片：凌晨一点的夜市，摊主夫妻收摊。妻子数着零钱念叨今天卖了多少，丈夫洗刷铁板应声；隔壁摊主过来收最后一串烤面筋，三两句寒暄；最后两人熄灯推车走进巷子。对白只有几句，讲一个城市背面的人如何结束一天。",
-			keyMessage: "城市睡着前，有人在替它收拾。",
+				"写实真人剧情短片：1885 年美国西部，尘土驿站黄昏。老车夫Cole把最后一班马车停进站，与放下枪多年的老枪手Wade在门廊下对饮咖啡——Cole劝他别再碰枪，Wade说他早就不想听了，但手比脑子诚实。两句旁白交代荒原与黄昏，对白短促见性格。写实西部：黄土主街、木质门廊、马车与马匹、落日长影。",
+			keyMessage: "有些人放下枪，是枪先放下了他。",
 		},
 		options: {
-			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 4, fps: 24,
+			resolution: "720p", aspectRatio: "16:9", shotCount: 4, clipDurationSec: 5, fps: 24,
 			motionIntensity: "medium", detailBoost: true, promptLanguage: "zh",
 			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
 		},
 		coSpace: {
 			characters: [
-				{ name: "阿德", description: "45 岁烧烤摊主，黑色围裙，手臂有烫伤印，嗓音沙哑" },
-				{ name: "阿珍", description: "43 岁摊主妻子，格子衬衫，马尾辫，数钱极快，说话直" },
+				{ name: "Cole", description: "60 岁男性马车夫，灰白络腮胡，宽檐毡帽，土黄色风衣，脸上全是风沙纹" },
+				{ name: "Wade", description: "48 岁男性退休枪手，深棕色皮背心配白衬衫，左腰空枪套，眼神锐利，鬓角花白" },
 			],
 			scenes: [
-				{ name: "夜市烧烤摊", description: "写实夜市收摊时分：铁板余温、塑料凳倒扣、暖黄灯泡串熄灭、蒸汽散尽" },
+				{ name: "驿站门廊", description: "写实西部驿站：黄土主街、木质门廊与摇椅、拴马桩、落日把影子拉得很长" },
 			],
-			musicBrief: "环境人声为主，收尾一句温柔的合成器垫底。",
+			musicBrief: "口琴与风声，克制。",
 		},
-		bgm: { file: "assets/bgm.mp3", name: "bgm.mp3", synthIfMissing: true, synthSeconds: 40 },
-		// 制片主任 observe/apply（B2 只读建议）+ 导演优先级契约 + 竖屏重导出（多平台分发）
-		postActions: [
-			{ type: "kitchenObserve" },
-			{ type: "kitchenApply" },
-			{ type: "reexport", aspectRatio: "9:16" },
-			{ type: "metrics" },
-		],
-		expect: {
-			minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: true,
-			requirePortraitExport: true, requireKitchenObservation: true,
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 4, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
+	},
+
+	{
+		id: "F5-london-1941",
+		slug: "underground-wedding-1941",
+		title: "《防空洞的婚礼》· 1941 伦敦 · 台词驱动",
+		audioForm: "dialogue",
+		brief: {
+			logline:
+				"写实真人剧情短片：1941 年伦敦大轰炸期间，地铁站台防空洞里。即将归队的年轻士兵George与未婚妻Eileen借着烛光交换戒指，周围是裹着毛毯的邻居——旁白两句交代警报与黄昏，两人低声对白讲「明天的婚礼改到今晚」。写实战时伦敦：地铁站台、铁轨、烛光、行李与毛毯、远处闷响。",
+			keyMessage: "警报响的时候，更要说愿意。",
 		},
+		options: {
+			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 5, fps: 24,
+			motionIntensity: "low", detailBoost: true, promptLanguage: "zh",
+			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
+		},
+		coSpace: {
+			characters: [
+				{ name: "George", description: "24 岁男性英军士兵，卡其色军装外套，短棕发，袖口磨白，手里攥着一枚旧戒指" },
+				{ name: "Eileen", description: "22 岁女性，栗色卷发披肩，墨绿色呢子大衣配围巾，眼角有泪光但笑着" },
+			],
+			scenes: [
+				{ name: "地铁站台", description: "写实战时伦敦地铁防空洞：弧形瓷砖墙、铁轨、烛光排、裹毛毯打盹的人群" },
+			],
+			musicBrief: "远处闷响与近处烛光静谧对比，结尾一句口琴。",
+		},
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
+	},
+
+	{
+		id: "F6-tang-lantern",
+		slug: "shangyuan-lanterns-tang",
+		title: "《上元灯市》· 盛唐长安 · 台词驱动",
+		audioForm: "dialogue",
+		brief: {
+			logline:
+				"写实真人剧情短片：盛唐上元夜，长安安化门内灯市如昼。扎灯的少女阿绮与巡夜的书吏裴衍在灯棚下斗嘴——她扎的走马灯转得比他的文书快，他查灯油查了一夜。卖糖的小豆子凑热闹念灯谜。三句旁白交代上元与灯火，对白轻快见性情。写实唐风灯市：花灯连绵、胡商驼队剪影、石板路映光、襦裙与幞头。",
+			keyMessage: "灯是人间的星星，一年落回地面一次。",
+		},
+		options: {
+			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 5, fps: 24,
+			motionIntensity: "medium", detailBoost: true, promptLanguage: "zh",
+			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
+		},
+		coSpace: {
+			characters: [
+				{ name: "阿绮", description: "17 岁女性扎灯匠，杏色襦裙配深红披帛，双环髻缀小绒花，指尖有灯油与茧，笑起来眉眼弯" },
+				{ name: "裴衍", description: "26 岁男性金吾卫书吏，深青色圆领袍配黑色幞头，腰挂木牌与名册，神情严肃但耳根易红" },
+				{ name: "小豆子", description: "8 岁男性卖糖小童，粗布短褐，头上总顶着一撮呆毛，手里糖人从不舍得吃" },
+			],
+			scenes: [
+				{ name: "长安灯市", description: "写实盛唐上元灯市：连绵花灯与走马灯、石板路映暖光、远处城楼灯影、人潮衣袂" },
+			],
+			musicBrief: "市声与 distant 琵琶，热闹但不喧宾夺主。",
+		},
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
+	},
+
+	{
+		id: "F7-florence-fresco",
+		slug: "florence-apprentice-1504",
+		title: "《学徒的壁画》· 1504 佛罗伦萨 · 台词驱动",
+		audioForm: "dialogue",
+		brief: {
+			logline:
+				"写实真人剧情短片：1504 年佛罗伦萨，湿壁画工作室的清晨。老画师Maestro Benci检查学徒Matteo连夜补的穹顶小天使——翅膀的透视歪了一指，Benci没有骂他，反而讲了自己年轻时毁掉整面墙的那个清晨。两句旁白交代时代与颜料味，师徒对白克制而温热。写实文艺复兴工作室：脚手架、石膏灰、颜料罐、天光从高窗斜切。",
+			keyMessage: "大师的第一课，是学会怎么毁掉一面墙。",
+		},
+		options: {
+			resolution: "720p", aspectRatio: "16:9", shotCount: 4, clipDurationSec: 5, fps: 24,
+			motionIntensity: "low", detailBoost: true, promptLanguage: "zh",
+			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
+		},
+		coSpace: {
+			characters: [
+				{ name: "Benci", description: "52 岁男性画师，灰白卷发束在脑后，深蓝色罩衫沾满石膏粉与颜料指印，腰间挂一串小刀" },
+				{ name: "Matteo", description: "16 岁男性学徒，亚麻衬衣挽袖，鼻梁有雀斑，双手指缝全是石膏灰，眼神又怕又亮" },
+			],
+			scenes: [
+				{ name: "湿壁画工作室", description: "写实文艺复兴工作室：木脚手架、未完成的穹顶壁画、颜料罐与刷子、高窗天光斜切灰尘" },
+			],
+			musicBrief: "清晨鸟鸣与远处的钟声，安静克制。",
+		},
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 4, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
+	},
+
+	{
+		id: "F8-edo-snow",
+		slug: "edo-soba-snow-night",
+		title: "《江户雪夜》· 江户日本 · 台词驱动",
+		audioForm: "dialogue",
+		brief: {
+			logline:
+				"写实真人剧情短片：江户深冬雪夜，日本桥边的小荞麦面摊。收摊前的老板娘阿常给躲雪的落拓武士佐久间多添了一勺热汤——他说身无分文，她说雪天里的客人不算客人。三句旁白交代雪与灯火，对白简短，讲一碗热汤的体面。写实江户夜雪：纸灯笼积雪、木摊蒸汽、蓝染暖帘、木屐声与落雪声。",
+			keyMessage: "雪夜里多添的那一勺，是人间还讲理的证据。",
+		},
+		options: {
+			resolution: "720p", aspectRatio: "16:9", shotCount: 4, clipDurationSec: 5, fps: 24,
+			motionIntensity: "low", detailBoost: true, promptLanguage: "zh",
+			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
+		},
+		coSpace: {
+			characters: [
+				{ name: "阿常", description: "54 岁女性荞麦面摊老板娘，靛蓝色和服罩着深色围裙，头发用木簪绾起，手脚麻利，嘴角带笑" },
+				{ name: "佐久间", description: "38 岁男性落拓武士，褪色的深灰羽织，佩一柄旧刀，短发束起，肩上落满雪，坐姿仍旧笔直" },
+			],
+			scenes: [
+				{ name: "桥边面摊", description: "写实江户雪夜面摊：木摊蒸汽、纸灯笼积雪、蓝染暖帘、雪片落进灯光里" },
+			],
+			musicBrief: "落雪声与三味线单音，极简。",
+		},
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 4, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
+	},
+
+	{
+		id: "F9-paris-bookshop",
+		slug: "left-bank-bookshop-1924",
+		title: "《左岸的书店》· 1924 巴黎 · 台词驱动",
+		audioForm: "dialogue",
+		brief: {
+			logline:
+				"写实真人剧情短片：1924 年巴黎左岸，一间穷作家常蹭暖的书店。年轻记者Eli想赊一本诗集被店主Margot指着账本数落——账本上全是没还钱的大人物名字；最后她把书塞给他，说写出手稿再还。两句旁白交代塞纳河的雾与打字机声，对白机智带刺。写实左岸书店：木书架顶到天花板、黄铜台灯、玻璃门雾气、纸页与烟草味。",
+			keyMessage: "书店的账本，记的都是还没写出来的书。",
+		},
+		options: {
+			resolution: "720p", aspectRatio: "16:9", shotCount: 4, clipDurationSec: 5, fps: 24,
+			motionIntensity: "low", detailBoost: true, promptLanguage: "zh",
+			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
+		},
+		coSpace: {
+			characters: [
+				{ name: "Margot", description: "61 岁女性书店主，银灰色发髻别两支钢笔，深绿色针织开衫配长裙，圆框眼镜滑在鼻尖" },
+				{ name: "Eli", description: "25 岁男性记者，深灰色粗花呢外套配围巾，头发乱，怀里总夹着一沓稿纸" },
+			],
+			scenes: [
+				{ name: "左岸书店", description: "写实 1920s 巴黎书店：顶天木书架、黄铜台灯、玻璃门雾气、旧沙发与纸堆" },
+			],
+			musicBrief: "雨刷玻璃声与远处手风琴，轻。",
+		},
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 4, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
+	},
+
+	{
+		id: "F10-beijing-tape",
+		slug: "hutong-cassette-1985",
+		title: "《胡同磁带》· 1985 北京胡同 · 台词驱动",
+		audioForm: "dialogue",
+		brief: {
+			logline:
+				"写实真人剧情短片：1985 年北京深秋的胡同大杂院。返城青年大军用三个月零工钱买了台双卡录音机，母亲一边数落他乱花钱一边凑过去听——磁带里是他在农场自己写的歌；邻居大爷端着茶缸子来串门，被音乐勾起了当年文工团的往事。三句旁白交代年代与鸽哨，对白生活气十足。写实 80 年代北京：灰墙红门、蜂窝煤、搪瓷缸、鸽哨掠过屋顶。",
+			keyMessage: "日子紧巴的时候，歌是自家酿的糖。",
+		},
+		options: {
+			resolution: "720p", aspectRatio: "16:9", shotCount: 5, clipDurationSec: 5, fps: 24,
+			motionIntensity: "medium", detailBoost: true, promptLanguage: "zh",
+			negativePrompt: REALISM_NEGATIVE, audioDrive: "dialogue",
+		},
+		coSpace: {
+			characters: [
+				{ name: "大军", description: "23 岁男性返城青年，蓝色工装外套配白球鞋，寸头，手里宝贝似的捧着一台双卡录音机" },
+				{ name: "母亲", description: "50 岁女性，大军母亲，花白短发别发卡，藏蓝色对襟褂子，围裙没摘，眼角全是笑纹" },
+				{ name: "赵大爷", description: "67 岁男性退休文工团员，灰色中山装扣得整齐，鼻梁架老花镜，端着印花搪瓷茶缸" },
+			],
+			scenes: [
+				{ name: "胡同大杂院", description: "写实 80 年代北京大杂院：灰墙红门、蜂窝煤堆、晾衣绳、搪瓷缸、屋顶鸽群与鸽哨" },
+			],
+			musicBrief: "录音机里的歌声做戏中乐，环境音是鸽哨与自行车铃。",
+		},
+		bgm: null,
+		postActions: [{ type: "metrics" }],
+		expect: { minShots: 5, requireDialogueShots: true, requireTtsAudio: true, requireBgm: false, requireSubtitlesAudit: true, requireVoiceDistinction: true },
 	},
 ];
 

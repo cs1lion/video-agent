@@ -1,0 +1,59 @@
+{"id":"ev-940e7680","at":"2026-08-30T13:12:20.782Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实真人剧情短片：1937 年冬，长江夜航客轮的甲板。船员夫妻做最后一遍巡查——…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"}
+{"id":"ev-813b5f50","at":"2026-08-30T13:12:20.786Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 5 镜叙事骨架。"}
+{"id":"ev-49399e28","at":"2026-08-30T13:12:57.058Z","from":"writer","to":"art","kind":"handoff","text":"剧本《1937长江夜航：安稳归处》完成：5 镜，25s。Logline：1937年冬长江夜航客轮上，船员夫妻巡查甲板时的克制互动与相守画面，传递动荡年代里安稳前行的信念，引出长江牌风油精产品。。请据此制定全片视觉规范。"}
+{"id":"ev-fe5b2533","at":"2026-08-30T13:12:57.060Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-4f425bc1","at":"2026-08-30T13:13:30.559Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：6 张概念设计图（人物 2 · 道具 3 · 场景 1）逐张绘制中。"}
+{"id":"ev-29f3b2e2","at":"2026-08-30T13:13:33.839Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「陈海生」（人物 CH01）"}
+{"id":"ev-e3b7ea44","at":"2026-08-30T13:13:37.245Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「秀珍」（人物 CH02）"}
+{"id":"ev-ff50954e","at":"2026-08-30T13:13:40.617Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「煤油挂灯」（道具 PR01）"}
+{"id":"ev-36c0f3c9","at":"2026-08-30T13:13:48.972Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「救生圈」（道具 PR02）"}
+{"id":"ev-5fbe83fe","at":"2026-08-30T13:13:52.334Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「长江牌风油精铁盒」（道具 PR03）"}
+{"id":"ev-cffc9e20","at":"2026-08-30T13:14:03.324Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「1937冬长江夜航江轮甲板」（场景 SC01）"}
+{"id":"ev-b245c390","at":"2026-08-30T13:14:03.326Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-0a282886","at":"2026-08-30T13:14:03.327Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-ee179821","at":"2026-08-30T13:14:15.056Z","from":"reviewer","to":"art","kind":"status","text":"设计图自审通过 ✅ 6 张与设计要点相符。"}
+{"id":"ev-34fe7851","at":"2026-08-30T13:14:15.057Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / realistic / period drama / noir / atmospheric / vintage / wartime / 16:9 aspect ratio]，色板 #3E2723、#1A237E、#FFB74D、#90A4AE。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-d50617de","at":"2026-08-30T13:14:15.057Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-504de540","at":"2026-08-30T13:14:16.315Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-aa718465","at":"2026-08-30T13:14:16.316Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-079e5658","at":"2026-08-30T13:14:16.317Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-e3e0a6f8","at":"2026-08-30T13:15:02.578Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陈海生(CH01)、1937冬长江夜航江轮甲板(SC01)。"}
+{"id":"ev-427bb7f0","at":"2026-08-30T13:15:02.578Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-0339facf","at":"2026-08-30T13:15:11.636Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陈海生(CH01)、1937冬长江夜航江轮甲板(SC01)。"}
+{"id":"ev-f2fd4693","at":"2026-08-30T13:15:11.637Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-c1fa9e33","at":"2026-08-30T13:15:15.702Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陈海生(CH01)、1937冬长江夜航江轮甲板(SC01)。"}
+{"id":"ev-bdb3e2b2","at":"2026-08-30T13:15:15.703Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-56e1c1fa","at":"2026-08-30T13:15:19.754Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陈海生(CH01)、1937冬长江夜航江轮甲板(SC01)。"}
+{"id":"ev-90ee12d3","at":"2026-08-30T13:15:19.755Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-9fee7d32","at":"2026-08-30T13:15:23.893Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陈海生(CH01)、1937冬长江夜航江轮甲板(SC01)。"}
+{"id":"ev-64343608","at":"2026-08-30T13:15:23.894Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-b8595a5a","at":"2026-08-30T13:15:27.702Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-aa2fe75e","at":"2026-08-30T13:15:27.703Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-58f96671","at":"2026-08-30T13:15:31.473Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「音频」继续，直至成片。"}
+{"id":"ev-fd2a9930","at":"2026-08-30T13:15:31.474Z","from":"sound","to":"editor","kind":"status","text":"声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"}
+{"id":"ev-9df3f260","at":"2026-08-30T13:15:31.477Z","from":"sound","to":"editor","kind":"status","text":"配音选角：旁白＝播音男声；角色 陈海生→深沉男音、秀珍→经典女声；与角色声线全部错开。"}
+{"id":"ev-85979d12","at":"2026-08-30T13:15:44.757Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH03（指导：语气克制沉郁，语速稍缓，『连夜』『西去』重读带停顿，气息下沉…）"}
+{"id":"ev-432e3756","at":"2026-08-30T13:15:47.506Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH05（指导：语气悠远怅然，语速偏慢，『上游』『心里回』重读拉长尾音，气息…）"}
+{"id":"ev-cc3918bd","at":"2026-08-30T13:15:47.506Z","from":"sound","to":"editor","kind":"handoff","text":"旁白轨交付：2/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"}
+{"id":"ev-ddbe2e03","at":"2026-08-30T13:15:51.863Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH01 台词 5.0s 短于镜长，尾部补静音到 5s。"}
+{"id":"ev-bee45010","at":"2026-08-30T13:15:52.660Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH01 台词音频就绪 ✅（5.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-d0a2994b","at":"2026-08-30T13:15:52.662Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 5s · 台词音频驱动口型）：Cinematic medium shot of Xiuzhen, 42-year-old ferry crew wif…"}
+{"id":"ev-c22d3ae1","at":"2026-08-30T13:15:56.222Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH02 台词 5.0s 短于镜长，尾部补静音到 5s。"}
+{"id":"ev-31ff7408","at":"2026-08-30T13:15:56.635Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH02 台词音频就绪 ✅（5.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-2f03b38c","at":"2026-08-30T13:15:56.637Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 5s · 台词音频驱动口型）：Cinematic medium shot of Chen Haisheng, 45-year-old Yangtze …"}
+{"id":"ev-3c43d5a6","at":"2026-08-30T13:15:56.640Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic wide shot of Xiuzhen and Chen Haisheng standing si…"}
+{"id":"ev-47c93185","at":"2026-08-30T13:15:56.647Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic medium shot of Chen Haisheng putting an arm around…"}
+{"id":"ev-c4594e81","at":"2026-08-30T13:15:56.658Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 提交生成（720p · 5s · 关键帧+提示词 图生视频）：Cinematic close-up of an old tin ferry badge illuminated by …"}
+{"id":"ev-0b636877","at":"2026-08-30T13:17:27.041Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-80fec151","at":"2026-08-30T13:17:27.185Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/5）"}
+{"id":"ev-0b4bc512","at":"2026-08-30T13:17:46.543Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-ac2caa6b","at":"2026-08-30T13:17:46.694Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/5）"}
+{"id":"ev-47246693","at":"2026-08-30T13:17:46.843Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/5）"}
+{"id":"ev-42efa954","at":"2026-08-30T13:17:46.996Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH04 生成完成 ✅（4/5）"}
+{"id":"ev-e0dd827d","at":"2026-08-30T13:19:09.371Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH05 生成完成 ✅（5/5）"}
+{"id":"ev-52c92e97","at":"2026-08-30T13:19:09.372Z","from":"tech","to":"editor","kind":"handoff","text":"镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"}
+{"id":"ev-3c7aa0ca","at":"2026-08-30T13:19:09.373Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-3254b185","at":"2026-08-30T13:19:29.774Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 22.6s · 720p 16:9，转场：叠化 0.5s、叠化 0.6s，音效：嗖声、上升音，BGM 铺底，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-41df3f92","at":"2026-08-30T13:20:37.691Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 3 处异常：SH01（灰白中长发、深蓝色上衣、灰色围裙、擦拭救生圈）、SH03（女性黑短发、深蓝色上衣、围裙；男性灰白短发、蓝色中山装）、SH04（女性黑短发、蓝色外套（无围裙）；男性灰白短发、蓝色中山装；背）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-5a037fc7","at":"2026-08-30T13:20:37.692Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：不通过 ❌（综合 88）。最短板 audioSync 40 分。另有 3 处跨镜一致性异常请关注。不合格镜头：SH05（未提供对应帧）。可在质检面板逐镜重做。"}
+{"id":"ev-bd26e17e","at":"2026-08-30T13:20:37.693Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}

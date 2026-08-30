@@ -1,0 +1,87 @@
+{
+	"title": "虹桥灯火",
+	"logline": "北宋雨夜虹桥夜市，落第书生与更夫檐下对饮，悟灯火不问功名的暖意",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "三更雨，打湿汴京的街",
+			"narrationEn": "At the third watch, rain wets the streets of Bianjing.",
+			"visual": "A wide shot of the rain-damp Hong Bridge night market: wet stone roads reflect the glow of hanging oil paper lanterns, wine flags flutter in the breeze, and raindrops drip from wooden eaves.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "清冷寥落感，语速舒缓，重音落于「三更」「汴京」，气息下沉带叹息，如深夜冷雨漫过的清寒"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Shen Yanzhi in a worn light blue straight robe and small crown walks to the lantern stall, where old Zhou with a gray beard and a gong hanging at his waist gestures to the shelter under the stall awning.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "老周",
+				"lines": {
+					"zh": "后生，躲会儿雨吧",
+					"en": "Young man, take shelter from the rain for a while."
+				},
+				"emotion": "热切",
+				"voiceId": "shenchennanyin",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftlt1h-2/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "颓然自嘲感，语速偏慢，重音落于「三度」「落第」，尾音下沉，气息放轻，如失意人的泄气叹息"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The two sit on low wooden stools at the stall, passing a small ceramic wine jar between them, raindrops falling on the ground beside them.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "沈砚之",
+				"lines": {
+					"zh": "三年科举，三次落第",
+					"en": "I took the imperial exam three times in three years, and failed all."
+				},
+				"emotion": "怅然",
+				"voiceId": "zixinnansheng",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftlt1h-2/tts-SH03.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "平和豁达感，语速平稳，重音落于「三十年」「梦话」，带老者淡笑，气息舒缓松弛，如老友闲话随意"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Old Zhou holds up a lit oil paper lantern, the warm light shining on his weathered face, as he speaks to Shen Yanzhi who is bowing his head slightly.",
+			"durationSec": 5,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "老周",
+				"lines": {
+					"zh": "三十年更，听过全城的梦",
+					"en": "I've beaten the night watch for 30 years, heard every dream in the whole city."
+				},
+				"emotion": "豁达",
+				"voiceId": "shenchennanyin",
+				"audioDurationSec": 5,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtftlt1h-2/tts-SH04.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "温暖笃定感，语速缓而稳，重音落于「灯火」「一样」，气息暖柔，像捧出热光的温度感"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "灯火不问功名，照人一样亮，扫码带走同款",
+			"narrationEn": "The lantern cares not for fame, it lights all the same. Scan to buy the same style.",
+			"visual": "The warm lantern light illuminates both men equally, the blurred Hong Bridge and night market are in the background, and the product purchase QR code appears at the bottom of the frame.",
+			"durationSec": 5,
+			"audioMode": "narration",
+			"ttsDirection": "温和亲切感，前半句语速缓、重音落「不问功名」「一样亮」，后半句稍快带笑意，气息轻快自然收束"
+		}
+	]
+}
