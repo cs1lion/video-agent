@@ -1336,3 +1336,16 @@ step-3.7 整片深审 → 对质 → 修复 → 重跑。日志：`e2e/迭代优
 - **多轮对话结论**：S2 五轮对讲 90 分、S1 四轮对讲 85-95——交替说话人的台词/字幕/逻辑
   已稳定；测试工具沉淀：deep-review.mjs（整片直审）、reassert.mjs（断言重算）、
   和弦 BGM 合成（wav.mjs）。全套 279/279。
+
+## 2026-08-31 晨：Round 4 服务端改动补记（G 批次 10/10 的载体）
+
+- **自动质检-修复闭环**（pipeline.ts）：VIDEO_AGENT_AUTO_REPAIR=1 时，对 verdict 中
+  fail / warn（reason 带「人物:|物理:」前缀）镜自动 reshotRun（instruction 自动组装
+  画面设计+问题+人物一致性要求），每 run 一轮（autoRepaired 幂等锁）+ ≤2 镜。
+  默认关闭（改变管线时序，单测保持确定性）。G 批次为 fail 路径实证（4 片 v1 备份）；
+  **warn 覆盖待服务重启后批次实测**（跑批进程为旧码）。
+- **字幕 silencedetect 实测对齐**（ffmpeg.ts parseSpeechSegments/detectSpeechSegments +
+  export.ts）：台词字幕起止改贴 TTS 实测人声段，三重收束回落兜底。
+- **测试**：6 个测试文件补 detectSpeechSegments mock；全套 279/279。
+- **G 批次基线**：十套风格差异化 10/10 PASS（82-88 分，人物一致性最低 55=G3 热血），
+  死寂/乱语/字幕错序 0。详见 `e2e/迭代优化日志-多轮对话压力轮.md` §Round 4。

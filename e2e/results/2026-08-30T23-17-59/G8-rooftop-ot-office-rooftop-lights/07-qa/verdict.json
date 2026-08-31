@@ -1,0 +1,66 @@
+{
+	"overall": "pass",
+	"score": 87,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 98
+		},
+		{
+			"id": "visualConsistency",
+			"score": 95
+		},
+		{
+			"id": "pacing",
+			"score": 95
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 100
+		},
+		{
+			"id": "characterConsistency",
+			"score": 100
+		},
+		{
+			"id": "audioSync",
+			"score": 20
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过。程序员单人镜头，手持关东煮倚靠栏杆，城市夜景背景，字幕清晰显示加班台词。"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "通过。产品经理单人镜头，手持手机倚靠栏杆，夜景背景，字幕正常显示对话。"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过。两人同框天台场景，手持热饮，城市灯火与月亮背景，字幕正常。"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过。两人并排望向远方桥梁，字幕正常显示开旧书店的梦想台词，背景城市夜景一致。"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过。特写栏杆上两杯关东煮，蒸汽袅袅，字幕正常显示收稻子的台词，包装文字清晰。"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 5,
+		"issues": []
+	}
+}

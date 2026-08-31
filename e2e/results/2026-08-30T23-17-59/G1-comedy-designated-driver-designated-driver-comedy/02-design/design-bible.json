@@ -1,0 +1,101 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "代驾司机小马",
+			"design": "26-year-old male designated driver, short black hair, neutral expression with playful glint in eyes, wearing dark blue polyester reflective vest with fluorescent yellow strips, key feature is subtle comedic micro-expressions, suggested medium close-up shot to highlight facial details and vest texture.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T23:19:27.934Z"
+			}
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "客户钱总",
+			"design": "45-year-old slightly tipsy male, slightly messy hair, wearing vertically striped shirt with loosened tie, holding car keys in hand, key feature is tipsy smug expression shifting to full alertness later, suggested medium shot to capture his posture and expression changes.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T23:19:27.934Z"
+			}
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "代驾车钥匙",
+			"design": "Standard metal car key with matte black key fob, subtle brand logo, key feature is Qian spinning it between his fingers, suggested close-up shot to highlight the key's glint under street lamp light.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T23:19:27.934Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "后视镜挂件",
+			"design": "Small fabric lucky charm hanging from rearview mirror, soft texture, warm amber color, key feature is swaying slightly as the car moves, suggested close-up shot to match the comedic beat of Xiao Ma's retort.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T23:19:27.934Z"
+			}
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "夜间代驾车内",
+			"design": "Realistic car interior at night, cool deep blue ambient light from windows mixed with warm amber from dashboard and street lamps, visible steering wheel, rearview mirror with hanging charm, blurred night city traffic outside, high-contrast cool-warm split tone, suggested wide shot to capture the whole interior and character interactions.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-30T23:19:27.934Z"
+			}
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "夜间小区入口",
+			"design": "Night residential community entrance, warm street lamp lighting, parked car at the curb, quiet suburban night atmosphere, high-contrast lighting to highlight the character's sudden alert expression, suggested medium shot to frame the two characters and the entrance background.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"车外角色为女性，与CH02设定的45岁男性客户钱总性别不符"
+				],
+				"checkedAt": "2026-08-30T23:19:27.934Z"
+			}
+		}
+	],
+	"generatedAt": "2026-08-30T23:18:35.083Z"
+}

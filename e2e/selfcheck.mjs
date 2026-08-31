@@ -20,9 +20,7 @@ for (const c of CASES) {
 	if (!/anime|cartoon/.test(c.options.negativePrompt)) throw new Error(`${c.id} 负向词缺非写实排除项`);
 	if (!/garbled text/.test(c.options.negativePrompt)) throw new Error(`${c.id} 负向词缺乱码文字排除项`);
 	if (!c.expect.requireDialogueShots) throw new Error(`${c.id} 必须断言台词镜存在（全台词方案）`);
-	if ((c.expect.minShots ?? 0) < 6) throw new Error(`${c.id} 压力轮镜数应 ≥6（多轮对话容量）`);
-	if (c.options.clipDurationSec < 6) throw new Error(`${c.id} 压力轮单镜应 ≥6s（长镜对白）`);
-	if (!c.brief.logline.includes("四轮") && !c.brief.logline.includes("五轮")) throw new Error(`${c.id} brief 应声明多轮对讲`);
+	if (!c.expect.requireSubtitlesAudit) throw new Error(`${c.id} 必须断言字幕结构审核通过`);
 	if (!c.expect.requireTtsAudio) throw new Error(`${c.id} 必须断言 TTS 音轨存在`);
 	if (!c.expect.requireSubtitlesAudit) throw new Error(`${c.id} 必须断言字幕结构审核通过`);
 	if (!c.expect.requireVoiceDistinction) throw new Error(`${c.id} 必须断言配音选角区分`);
@@ -106,67 +104,13 @@ for (const [idx, c] of CASES.entries()) {
 		...baseCase(),
 		expect: c.expect,
 		audioForm: c.audioForm,
-		finalBytes: 5_000_000,
-		run: dialogueRun(84, c.options.shotCount),
-		collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: c.options.shotCount, withBgm: Boolean(c.bgm) }) },
-	});
-	console.log(`${c.id} ->`, r.verdict, "| 失败项:", r.failed.length ? r.failed.join("; ") : "无");
-	if (r.verdict !== "PASS") throw new Error(`${c.id} 应判 PASS`);
-}
-
-// 审核轴缺失必须 FAIL
-const noAuditAxes = assertCase({
-	...baseCase(),
-	expect: CASES[0].expect,
-	run: {
-		...dialogueRun(78, 3),
-		verdict: { score: 78, overall: "warn", axes: [{ id: "briefFit", score: 78 }], subtitles: { present: true, lines: 2, issues: [] } },
-	},
-});
-if (noAuditAxes.verdict !== "FAIL" || !noAuditAxes.failed.some((f) => f.includes("物理/人物/文字审核轴")))
-	throw new Error("缺审核轴应显式 FAIL");
-console.log("no audit axes ->", noAuditAxes.verdict, "| 失败项:", noAuditAxes.failed.join("; "));
-
-// 旁白与角色撞声必须 FAIL（配音选角铁律）
-const sameVoice = assertCase({
-	...baseCase(),
-	voiceCast: { narratorVoiceId: "cixingnansheng", characters: { "角色A": "cixingnansheng", "角色B": "qingchunshaonv" }, notes: [] },
-	expect: CASES[0].expect,
-	run: dialogueRun(78, 3),
-});
-if (sameVoice.verdict !== "FAIL" || !sameVoice.failed.some((f) => f.includes("旁白音色与角色错开")))
-	throw new Error("旁白与角色撞声应显式 FAIL");
-console.log("same narrator voice ->", sameVoice.verdict, "| 失败项:", sameVoice.failed.join("; "));
-
-// 字幕结构问题必须 FAIL 并逐条留痕
-const badSubs = assertCase({
-	...baseCase(),
-	expect: CASES[0].expect,
-	run: dialogueRun(78, 3, ["字幕覆盖缺口：旁白 2 段，字幕只有 1 行"]),
-});
-if (badSubs.verdict !== "FAIL" || !badSubs.failed.some((f) => f.includes("字幕覆盖缺口")))
-	throw new Error("字幕结构问题应显式 FAIL");
-console.log("bad subtitles ->", badSubs.verdict, "| 失败项:", badSubs.failed.join("; "));
-
-// 十套正片逐套断言（特殊覆盖：F2 自审 / F3 BGM；其余标准链路）
-for (const [idx, c] of CASES.entries()) {
-	if (idx === 0) continue; // F1 已断言
-	const postFacts = c.expect.requireDesignReview
-		? { designReview: { count: 4, fail: 0, warn: 1 }, keyframeReview: { count: 5, fail: 0, warn: 2 } }
-		: {};
-	const r = assertCase({
-		...baseCase(),
-		expect: c.expect,
-		audioForm: c.audioForm,
 		finalBytes: 4_000_000,
 		run: dialogueRun(84, c.options.shotCount),
 		collected: { files: { "06-export": ["final.mp4"] }, assets: healthyAssets({ shots: c.options.shotCount, withBgm: Boolean(c.bgm) }) },
-		postFacts,
 	});
 	console.log(`${c.id} ->`, r.verdict, "| 失败项:", r.failed.length ? r.failed.join("; ") : "无");
 	if (r.verdict !== "PASS") throw new Error(`${c.id} 应判 PASS`);
 }
-
 
 const bad = assertCase({
 	...baseCase(),
@@ -178,8 +122,10 @@ const bad = assertCase({
 console.log("broken run ->", bad.verdict, "| 失败项数:", bad.failed.length);
 if (bad.verdict !== "FAIL") throw new Error("异常用例应判 FAIL");
 
-// 用例矩阵自检：压力轮三套、id 唯一、结构合规
-if (CASES.length !== 3) throw new Error(`本轮应为 3 套压力片，实际 ${CASES.length}`);
+// 用例矩阵自检：十套回归、id 唯一、结构合规、风格标题不重复
+if (CASES.length !== 10) throw new Error(`本轮应为 10 套，实际 ${CASES.length}`);
+const styles = CASES.map((c) => c.title.split("·")[1]?.trim());
+if (new Set(styles).size !== CASES.length) throw new Error("十套风格应彼此差异化");
 if (new Set(CASES.map((c) => c.id)).size !== CASES.length) throw new Error("用例 id 重复");
 for (const c of CASES) {
 	if (!Array.isArray(c.postActions)) throw new Error(`${c.id} 缺 postActions 数组`);

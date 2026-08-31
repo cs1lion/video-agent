@@ -1,0 +1,25 @@
+{
+	"directions": [
+		{
+			"shotId": "SH01",
+			"instruction": "苍凉悠远，语速舒缓，『卷』『漫』重读，气息沉稳如风掠沙丘"
+		},
+		{
+			"shotId": "SH02",
+			"instruction": "落寞疲惫，语速缓沉，气息滞重，尾音微颤如饮闷酒"
+		},
+		{
+			"shotId": "SH03",
+			"instruction": "平和温淡，语速平稳，气息沉静，带安抚暖意"
+		},
+		{
+			"shotId": "SH04",
+			"instruction": "关切温软，语速稍缓，气息轻缓，带暖意"
+		},
+		{
+			"shotId": "SH05",
+			"instruction": "苍凉释然，语速放缓，『锈』『歇』『归人』重读，气息悠长如轻叹"
+		}
+	],
+	"generatedAt": "2026-08-31T00:04:13.106Z"
+}

@@ -411,6 +411,8 @@ export interface RunRecord {
 	status: RunStatus;
 	stages: RunStage[];
 	metrics: RunMetrics;
+	/** 质检-修复自动闭环是否已跑过（每 run 一轮，防 reshot 重导出后递归触发） */
+	autoRepaired?: boolean;
 	verdict?: QaVerdict;
 	videoUrl?: string;
 	error?: string;
@@ -1629,6 +1631,40 @@ export async function executeStages(
 				? `/api/runs/${run.id}/files/assets/${encodeURIComponent(run.finalFile)}`
 				: `/api/runs/${run.id}/video`;
 			run.status = "done";
+			// 质检-修复自动闭环：QA 逐镜发现的重问题镜（fail / 带「人物:」「物理:」前缀的 warn）
+			// 自动派发 reshot（instruction 自动带问题描述与画面设计），每 run 只跑一轮防递归
+			//（reshot 内部会重导出+复审，复审 verdict 覆盖为最终结果）。每轮最多修 2 镜控时长。
+			// 默认关闭（VIDEO_AGENT_AUTO_REPAIR=1 开启）：自动 reshot 会重导出+复审，
+			// 改变管线时序——回归/验收批次显式开启，日常与单测保持确定性。
+			if (!run.autoRepaired && process.env.VIDEO_AGENT_AUTO_REPAIR === "1" && run.verdict?.shots?.length && ctx.quota) {
+				run.autoRepaired = true;
+				const targets = run.verdict.shots
+					.filter(
+						(s) =>
+							s.verdict === "fail" ||
+							(s.verdict === "warn" && /^(人物|物理):/.test(s.reason || "")),
+					)
+					.slice(0, 2);
+				for (const t of targets) {
+					if (run.abort.signal.aborted) break;
+					const shot = (script?.shots ?? clips?.script?.shots ?? []).find((x) => x.id === t.id);
+					const design = shot?.visual?.slice(0, 120) ?? "";
+					const instruction = `${design}。${t.reason ? `修复审核问题：${t.reason}。` : ""}保持人物性别、年龄、服装与发型与设计完全一致。`.slice(0, 220);
+					pushEvent(
+						run,
+						"reviewer",
+						"tech",
+						"status",
+						`自动质检-修复闭环：镜头 ${t.id}（${t.verdict}：${t.reason.slice(0, 40)}）派发补拍重审。`,
+						{ stage: "export", focus: t.id },
+					);
+					try {
+						await reshotRun(ctx, run, t.id, instruction);
+					} catch (error) {
+						pushEvent(run, "tech", "producer", "status", `镜头 ${t.id} 自动补拍失败（${error instanceof Error ? error.message : String(error)}），保留当前版本。`);
+					}
+				}
+			}
 			pushEvent(run, "producer", "client", "status", "全片交付 🎉 成片与七轴质检报告已就绪。", {
 				stage: "export",
 				focus: "final",

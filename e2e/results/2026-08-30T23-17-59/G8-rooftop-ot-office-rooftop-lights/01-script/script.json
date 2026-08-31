@@ -1,0 +1,103 @@
+{
+	"title": "天台的灯",
+	"logline": "深夜加班后的程序员与产品经理在天台吐露真心，借城市灯火与热食慰藉都市人疲惫。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Night office building rooftop, Lu Yiming in dark grey hoodie with work badge lanyard holds a paper cup of hot oden, leaning against the metal railing, blurred city light sea in the background, wind blowing his short messy black hair.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "陆一鸣",
+				"lines": {
+					"zh": "连续三周了，这楼下的灯就没灭过。",
+					"en": "The lights down there haven't gone out for three straight weeks."
+				},
+				"emotion": "疲惫调侃",
+				"voiceId": "zixinnansheng",
+				"rawDurationSec": 3.384,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtghtd2g-18/tts-SH01.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "疲惫又松弛，语速偏缓，尾音带刚喘过气的小停顿，像刚甩掉三周加班包袱的轻快感"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Xia Cheng in oatmeal coat and beige scarf leans on the railing beside Lu Yiming, twirling her phone, long hair blown by the wind, looking at the distant city lights.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "夏澄",
+				"lines": {
+					"zh": "可不嘛，路灯都比我们会摸鱼。",
+					"en": "Sure do, the streetlights are better at slacking off than we are."
+				},
+				"emotion": "轻松调侃",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 3.288,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtghtd2g-18/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "带点俏皮调侃，语速轻快，『想』字轻抬语调，尾音藏不住笑意，像故意逗对方的轻松感"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "城市的灯是给过路人亮的。",
+			"narrationEn": "The city lights are lit for passersby.",
+			"visual": "Medium shot of the two people standing by the metal railing, two paper cups of hot oden placed on the ledge, vast twinkling city lights in the distance, breeze blowing their clothes.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "语气沉静带感慨，语速放缓，『过路人』三字重读且气息稍沉，尾音留半秒停顿，像话里有话的试探"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Close-up of Xia Cheng with a soft smile, gazing at the river bridge below the office building, wind brushing her long hair.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "夏澄",
+				"lines": {
+					"zh": "要真辞职啊，我想在楼下桥边开家旧书店。",
+					"en": "If I really quit, I want to open a used bookstore by the bridge downstairs."
+				},
+				"emotion": "柔软真诚",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 4.704,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtghtd2g-18/tts-SH04.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语气软乎乎带向往，语速偏慢，『桥边』二字轻读带笑意，尾音飘得软，像在说藏了很久的私密愿望"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Close-up of two steaming paper cups of hot oden on the metal railing, city lights glowing in the background, a small convenience store oden logo appears at the bottom right of the frame.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "陆一鸣",
+				"lines": {
+					"zh": "我啊，想回家陪爷爷收一季稻。",
+					"en": "I want to go home and help my grandpa harvest a season of rice."
+				},
+				"emotion": "释然向往",
+				"voiceId": "zixinnansheng",
+				"rawDurationSec": 3.288,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtghtd2g-18/tts-SH05.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语气温温柔柔带暖意，语速平缓，『热』字轻咬带点笑意，气息平稳，像把没说出口的梦都泡在暖里"
+		}
+	]
+}

@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot of gritty county hospital operating room, middle-aged chief surgeon Cheng Yizhou wearing dark green full-coverage surgical scrubs and cap with only eyes exposed and prominent brow scar, young nurse Su Mang in light green full-coverage surgical scrubs and cap with only focused eyes exposed, harsh overhead surgical spotlight illuminates green sterile drapes and arranged surgical instruments with realistic gritty texture, cool dim ambient light from glowing medical monitors, blurred wall clock in deep background, slow subtle dolly push-in movement, desaturated cool color grade with subtle 16mm film grain, tense realistic medical procedural tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 close-up shot, middle-aged chief surgeon Cheng Yizhou wearing dark green full-coverage surgical scrubs and cap with prominent brow scar, his rock-steady hand holding surgical scalpel under harsh overhead surgical spotlight with realistic gritty skin texture, young nurse Su Mang in light green full-coverage surgical scrubs and cap passing the scalpel to him with quick light hands, surgical instrument table with sterile tools visible beside them, cool dim ambient light from medical monitors, slow subtle handheld follow movement tracking precise hand actions, desaturated cool color grade with subtle 16mm film grain, tense focused surgical procedural tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 mid shot, middle-aged chief surgeon Cheng Yizhou wearing dark green full-coverage surgical scrubs and cap, young nurse Su Mang in light green full-coverage surgical scrubs and cap, patient's exposed abdomen on operating table partially covered by green sterile drapes with realistic tissue and fabric texture, harsh overhead surgical spotlight illuminates the surgical field, cool dim ambient light from medical monitors, implied soft beeping of monitor in atmosphere, static locked-off composition focusing on instrument exchange, desaturated cool color grade with subtle 16mm film grain, tense focused medical documentary tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 mid shot, middle-aged chief surgeon Cheng Yizhou wearing dark green full-coverage surgical scrubs and cap with prominent brow scar, peels off surgical gloves and tosses them into medical waste bin with realistic fabric and skin texture, young nurse Su Mang in light green full-coverage surgical scrubs and cap nods with faint smile under her mask, harsh overhead surgical spotlight and cool dim ambient light from medical monitors, slow subtle dolly pull-back movement capturing the quiet interaction between the two, desaturated cool color grade with subtle 16mm film grain, calm restrained character-driven tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 close-up shot, bright surgical lamp casting harsh light over tidy county hospital operating room, green sterile drapes and organized surgical instrument table with realistic texture visible below, cool dim ambient light from medical monitors, blurred wall clock in distant background, static locked-off composition with shallow depth of field, desaturated cool color grade with subtle 16mm film grain, gritty realistic medical documentary tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

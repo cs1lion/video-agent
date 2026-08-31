@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"wuxia",
+		"realistic",
+		"rustic",
+		"moody",
+		"period drama",
+		"desert",
+		"intimate"
+	],
+	"palette": [
+		"#8B4513",
+		"#3A3A3A",
+		"#D4A017",
+		"#E8DFD0",
+		"#A9A9A9",
+		"#2B1B17"
+	],
+	"lighting": "Primary warm low-intensity oil lamp illumination from the table, with soft cool moonlight spilling through the open doorway to illuminate the sand dune outside, creating soft edge contrast between interior and exterior.",
+	"grade": "Low-saturation warm color grade for interior, cool desaturated blue tint for moonlight areas, slight lifted shadows to retain detail in dark corners, with subtle film grain to amplify the rustic, melancholic ancient border atmosphere."
+}

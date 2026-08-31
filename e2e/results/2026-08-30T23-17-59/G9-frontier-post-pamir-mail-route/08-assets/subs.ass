@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:06.00,Sub,,0,0,0,,帕米尔高原，海拔四千米的风，吹了三十年。
+Dialogue: 0,0:00:06.35,0:00:08.10,Sub,,0,0,0,,小杨！等急了吧？
+Dialogue: 0,0:00:09.13,0:00:11.64,Sub,,0,0,0,,艾哥！可算把你盼来了！
+Dialogue: 0,0:00:12.30,0:00:15.18,Sub,,0,0,0,,最上层，你的大学录取通知书。
+Dialogue: 0,0:00:15.28,0:00:17.79,Sub,,0,0,0,,海拔四千米，信照样到。

@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.16,Sub,,0,0,0,,台风刚过境，南海的浪还翻着白沫
+Dialogue: 0,0:00:04.93,0:00:08.78,Sub,,0,0,0,,阿爸，渡轮又停了，今天能上网课不？
+Dialogue: 0,0:00:09.28,0:00:12.29,Sub,,0,0,0,,海花开门，老师把试卷给你送来了！
+Dialogue: 0,0:00:13.02,0:00:16.89,Sub,,0,0,0,,丫头安心考，阿爸给你守着网箱
+Dialogue: 0,0:00:16.99,0:00:19.38,Sub,,0,0,0,,浪再大，课也不能停

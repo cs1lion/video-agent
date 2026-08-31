@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide 16:9 shot of Pamir mountain pass at 4000m altitude, endless snow-capped peaks stretching to horizon, colorful prayer flags fluttering in strong wind, horse hoof prints on thick snow, sky gradient from bright blue to deep dark blue, bright high-altitude direct sunlight with sharp cold shadows, cool desaturated overall tone with warm selective highlights on snow edges, slow dolly push-in movement to emphasize vast rugged terrain, epic realistic documentary landscape style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Handheld follow 16:9 medium shot of 38-year-old male horse-mounted mail carrier Aili with tanned weathered face, wearing worn dark green cotton coat and dark fur hat, mail bag with ice chips slung over shoulder, smiling with white teeth visible, riding horse towards Pamir pass, background endless snow-capped peaks and fluttering prayer flags, bright high-altitude direct sunlight with sharp cold shadows, warm highlight on his skin and coat, camera follows horse movement at gentle pace, realistic documentary naturalistic tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Static locked-off 16:9 medium full-body shot of 20-year-old border soldier Xiao Yang with red cold-chapped face, wearing dark military coat and fleece hat, standing straight with upright posture at Pamir pass, eyes fixed on approaching mail carrier, background snow-capped peaks and fluttering prayer flags, bright high-altitude direct sunlight with sharp cold shadows, warm highlight on his red face, cool desaturated overall tone, realistic rugged documentary style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Medium dolly push-in 16:9 shot of Aili taking off ice-covered mail bag, picking top frost-covered letter, handing to Xiao Yang whose hands tremble while reaching out, both wearing their signature highland outfits, background Pamir pass snow peaks and prayer flags, bright high-altitude direct sunlight with sharp cold shadows, warm selective highlights on skin and fabric, cool desaturated overall tone, naturalistic realistic documentary tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Static locked-off 16:9 close-up shot of Xiao Yang holding university admission letter envelope, smiling with tears in eyes, warm highlight on his red cold-chapped face, sharp cold shadows, background blurred snow-capped Pamir peaks, bright high-altitude direct sunlight, cool desaturated overall tone with warm skin highlight, realistic naturalistic documentary style, envelope surface has no legible text to avoid garbled rendering. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

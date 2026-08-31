@@ -1,0 +1,21 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"retro documentary",
+		"industrial realism",
+		"1990s Chinese state factory",
+		"gritty realism",
+		"period accurate",
+		"muted tone",
+		"cold winter atmosphere"
+	],
+	"palette": [
+		"#1a1a1a",
+		"#2c3e50",
+		"#8b4513",
+		"#d3d3d3",
+		"#b8860b"
+	],
+	"lighting": "Cold diffused skylight from high snow-covered windows mixed with dim warm tungsten workshop lights, soft haze from visible breath in the frigid air.",
+	"grade": "Desaturated cool grade with lifted shadows, subtle warm highlight retention for 1990s period authenticity, muted industrial color palette, slight fine film grain for vintage texture."
+}

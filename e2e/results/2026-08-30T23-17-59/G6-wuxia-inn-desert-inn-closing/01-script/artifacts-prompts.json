@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 long shot of soft undulating desert sand dunes outside a frontier inn, faint camel silhouettes with tinkling bells in the far distance, wind blowing fine sand with subtle motion blur, the inn's wooden door frame forms the foreground to create clear spatial depth. Soft silver moonlight sprinkles on the sand surface, cool desaturated blue tone for the night desert scene. Slow pan left from the door frame towards the distant caravan, realistic wuxia style, desolate melancholic atmosphere, subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 three-quarter body shot of 60-year-old retired escort Qin Wubian wearing a worn dark grey robe with a long grey-white beard and a rusty-sheathed long knife at his waist, sitting on a wooden bench in the shadowy corner of the frontier inn, holding a rough ceramic wine bowl with thick knuckles, melancholy expression on his face. Loess rammed earth wall as background, warm low-intensity flickering oil lamp side light illuminates his face, dim shadow in the corner. Slow dolly push-in towards him to emphasize his desolate emotion, realistic wuxia style, low saturation warm interior tone, subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 half-body environmental portrait of 48-year-old innkeeper Qiu Niang wearing indigo cloth and dark apron with a wooden hairpin in her bun, fine lines at her eye corners, bending at the wooden counter to wipe rough porcelain bowls with her constantly moving hands. Loess rammed earth walls and wooden tables in the background create spatial depth, warm low-intensity oil lamp side light illuminates her face to show rustic simplicity. Slow handheld follow tracking her hand movement as she wipes bowls, realistic wuxia style, intimate warm tone, subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 medium shot of Qiu Niang wearing indigo cloth and dark apron with a wooden hairpin in her bun placing a warmed ceramic wine jar on the rough wooden table in front of Qin Wubian, wearing a worn dark grey robe with a rusty-sheathed long knife at his waist sitting on the bench. Loess rammed earth walls and dim oil lamp light in the background create warm interior spatial depth, low warm oil lamp light glints off the rusty knife sheath, soft cool moonlight spills slightly through the open doorway. Slow rack focus from Qiu Niang to the wine jar then to Qin Wubian's relieved expression, realistic wuxia style, moody warm-cool contrast tone, subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 close-up of the rusty-sheathed long knife resting on the rough wooden table, the weathered rust texture of the sheath is clearly visible, soft moonlight streams through the inn open door onto the sheath, the quiet moonlit desert sand dune is visible outside the doorway as background to create spatial depth. Warm oil lamp glow at the edge of the frame, low saturation cool-warm contrast tone. Slow static shot with subtle rack focus from the knife sheath to the moonlit sand dune outside, realistic wuxia style, melancholic ancient border atmosphere, subtle film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

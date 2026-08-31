@@ -1,0 +1,193 @@
+{
+	"id": "run-mtgfjwh6-11",
+	"dir": "C:\\Users\\18712\\OneDrive\\桌面\\piagent-glm\\.pi-studio\\video-agent-runs\\2026-08-30-23-17-写实轻喜剧短片：代驾司机小马接了一位话痨醉客——-run-mtgfjwh6-11",
+	"brief": {
+		"creative": {
+			"logline": "写实轻喜剧短片：代驾司机小马接了一位话痨醉客——客户一路吹嘘自己当年「差一点就上市」，小马一句接一句地不动声色拆台，最后客户在小区门口清醒了，反过来请教小马「你们公司还招人吗」。两句旁白，快节奏对白与误会反转，节奏明快剪得碎。",
+			"keyMessage": "醉话吹出去，清醒收回来。"
+		},
+		"intent": {},
+		"generationDirectives": {
+			"script": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"visual": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"clips": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"audio": {
+				"promptFragment": "",
+				"sources": []
+			},
+			"export": {
+				"promptFragment": "",
+				"sources": []
+			}
+		},
+		"interviewLog": [],
+		"generationOptions": {
+			"resolution": "720p",
+			"aspectRatio": "16:9",
+			"shotCount": 5,
+			"clipDurationSec": 5,
+			"fps": 24,
+			"motionIntensity": "medium",
+			"detailBoost": true,
+			"promptLanguage": "zh",
+			"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+			"audioDrive": "dialogue"
+		},
+		"coSpace": {
+			"characters": [
+				{
+					"name": "小马",
+					"description": "26 岁男性代驾司机，深蓝色反光背心，短黑发，面无表情但眼里全是戏"
+				},
+				{
+					"name": "钱总",
+					"description": "45 岁男性微醺客户，竖条纹衬衫松领带，头发微乱，手里攥着车钥匙转圈"
+				}
+			],
+			"scenes": [
+				{
+					"name": "夜间车内",
+					"description": "写实代驾夜间车内：方向盘、后视镜挂件、路灯光扫过车内、夜色车流"
+				}
+			],
+			"ideas": [],
+			"musicBrief": "轻快拨弦点缀，卡在拆台句上。"
+		}
+	},
+	"status": "done",
+	"stages": [
+		{
+			"id": "script",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "visual",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "prompts",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "keyframes",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "audio",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "clips",
+			"status": "done",
+			"progress": 100
+		},
+		{
+			"id": "export",
+			"status": "done",
+			"progress": 100
+		}
+	],
+	"metrics": {
+		"llmCalls": 7,
+		"mediaCalls": 23,
+		"retries": 1,
+		"perAdapter": {
+			"step-tts": 7,
+			"agnes-video-3": 1,
+			"agnes-video-2": 2,
+			"agnes-video-1": 2
+		},
+		"cost": {
+			"spent": 30.48,
+			"currency": "CNY"
+		}
+	},
+	"verdict": {
+		"overall": "pass",
+		"score": 82,
+		"axes": [
+			{
+				"id": "briefFit",
+				"score": 95
+			},
+			{
+				"id": "visualConsistency",
+				"score": 90
+			},
+			{
+				"id": "pacing",
+				"score": 92
+			},
+			{
+				"id": "physicalAccuracy",
+				"score": 100
+			},
+			{
+				"id": "characterConsistency",
+				"score": 100
+			},
+			{
+				"id": "audioSync",
+				"score": 0
+			},
+			{
+				"id": "textQuality",
+				"score": 100
+			}
+		],
+		"shots": [
+			{
+				"id": "SH01",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH02",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH03",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH04",
+				"verdict": "ok",
+				"reason": "通过"
+			},
+			{
+				"id": "SH05",
+				"verdict": "ok",
+				"reason": "通过"
+			}
+		],
+		"subtitles": {
+			"present": true,
+			"lines": 5,
+			"issues": []
+		}
+	},
+	"videoUrl": "/api/runs/run-mtgfjwh6-11/files/assets/final.mp4",
+	"images": [],
+	"shotAttempts": {},
+	"shotVersions": {},
+	"ttsAttempts": {},
+	"ttsVersions": {},
+	"redoActive": null,
+	"finalFile": "final.mp4"
+}

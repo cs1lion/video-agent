@@ -112,6 +112,7 @@ function installMocks(): void {
 				wipeleft: "左划",
 				slideup: "上滑",
 			} as Record<string, string>,
+			detectSpeechSegments: async (): Promise<{ start: number; end: number }[]> => [],
 			decodeMonoPcm: async (): Promise<Int16Array> => Int16Array.from({ length: 16000 }, (_, i) => Math.round(10000 * Math.sin(i / 8))),
 			probeDuration: async (): Promise<number | null> =>
 				probeSeq.length > 1 ? (probeSeq.shift() as number | null) : probeSeq[0]!,

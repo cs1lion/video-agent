@@ -1,0 +1,28 @@
+[
+	{
+		"at": "2026-08-31T00:35:06.457Z",
+		"action": "generate",
+		"runId": "run-mtgib2oo-19",
+		"response": {
+			"runId": "run-mtgib2oo-19"
+		}
+	},
+	{
+		"at": "2026-08-31T00:37:41.775Z",
+		"action": "resume",
+		"gate": "design",
+		"failedDesign": 0
+	},
+	{
+		"at": "2026-08-31T00:38:46.931Z",
+		"action": "resume",
+		"gate": "keyframes",
+		"confirmedShotIds": [
+			"SH01",
+			"SH02",
+			"SH03",
+			"SH04",
+			"SH05"
+		]
+	}
+]

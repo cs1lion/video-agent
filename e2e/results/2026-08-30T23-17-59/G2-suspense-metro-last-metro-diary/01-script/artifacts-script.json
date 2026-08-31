@@ -1,0 +1,112 @@
+{
+	"title": "末班车日记",
+	"logline": "27岁加班白领许星然在末班地铁捡到遗落日记，循站寻人后发现这是有人留给地铁线的专属告别礼物。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "末班车到站，她捡到一本陌生日记。",
+			"narrationEn": "The last train arrives, she picks up a stranger's notebook.",
+			"visual": "Empty late-night subway carriage with flickering tunnel lights and dim station sign glow, Xu Xingran in a dark grey coat with an employee lanyard sits down and picks up a leather notebook from the adjacent orange seat.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "语速偏缓，尾音带深夜慵懒倦意，『末班车』轻咬重读，气息稍沉，末尾停顿半秒留白"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Close-up of the notebook's first page with handwritten text 'To whoever finds this', Xu Xingran with low ponytail and tired but bright eyes frowns slightly.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "许星然",
+				"lines": {
+					"zh": "扉页写着，写给捡到它的人。",
+					"en": "The first page says, to whoever finds this."
+				},
+				"emotion": "疑惑",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 3.624,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgfuuhv-12/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语速放缓，带着疑惑的试探感，『写给捡到它的人』重读，气息稍提，末尾轻顿带出好奇"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Xu Xingran stands on the empty subway platform, holding the notebook, facing the station staff on duty.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "许星然",
+				"lines": {
+					"zh": "您好，有没有人找过这本日记？",
+					"en": "Excuse me, has anyone looked for this notebook?"
+				},
+				"emotion": "期待",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 2.904,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgfuuhv-12/tts-SH03.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语速平稳，带着犹豫的探寻感，『站名』二字稍重，气息稍沉，停顿半秒带出纠结"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "The 55-year-old male station staff in navy uniform and cap with graying temples holds a walkie-talkie, shaking his head gently at Xu Xingran.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "值班员",
+				"lines": {
+					"zh": "没印象，这站没乘客丢东西。",
+					"en": "No impression, no passenger has reported lost items at this station."
+				},
+				"emotion": "平和",
+				"voiceId": "shenchennanyin",
+				"rawDurationSec": 3.216,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgfuuhv-12/tts-SH04.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语速平缓，带着见过太多故事的倦怠感，『末班车』重读，气息放轻，末尾轻顿藏悬念"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Xu Xingran sits back in the orange-seated subway carriage, reading the last page of the notebook, the flashing tunnel lights reflect on the window beside her.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "许星然",
+				"lines": {
+					"zh": "原来，这是留给末班车的告别。",
+					"en": "Turns out, this is a farewell to the last train."
+				},
+				"emotion": "恍然",
+				"voiceId": "jingdiannvsheng",
+				"rawDurationSec": 3.024,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgfuuhv-12/tts-SH05.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "语速放缓，带着共情的柔软感，『没说出口』稍重，气息轻缓，末尾带点怅然的停顿"
+		},
+		{
+			"id": "SH06",
+			"narrationZh": "那些没说出口的话，都有人好好收着。",
+			"narrationEn": "All the unspoken words are kept safe by someone.",
+			"visual": "Xu Xingran places the notebook back on the orange seat, the subway pulls into the terminal station, she gets off and glances back at the carriage, then the screen fades to the 'Echo' emotional recording app logo.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "语速放缓，带着释然的温暖感，『好好收着』重读，气息柔和，末尾带点暖意的轻扬停顿"
+		}
+	]
+}

@@ -1,0 +1,36 @@
+{
+	"transitions": [
+		{
+			"afterShotIndex": 0,
+			"type": "cut",
+			"durationSec": 0,
+			"sfxType": null
+		},
+		{
+			"afterShotIndex": 1,
+			"type": "cut",
+			"durationSec": 0,
+			"sfxType": null
+		},
+		{
+			"afterShotIndex": 2,
+			"type": "cut",
+			"durationSec": 0,
+			"sfxType": null
+		},
+		{
+			"afterShotIndex": 3,
+			"type": "fade",
+			"durationSec": 0.5,
+			"sfxType": "riser"
+		}
+	],
+	"shotDur": [
+		6,
+		5.716,
+		5.668,
+		4.588,
+		5.476
+	],
+	"generatedAt": "2026-08-31T00:09:41.978Z"
+}

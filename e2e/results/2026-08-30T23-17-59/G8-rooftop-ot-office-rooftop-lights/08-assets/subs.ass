@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:03.59,Sub,,0,0,0,,连续三周了，这楼下的灯就没灭过。
+Dialogue: 0,0:00:04.53,0:00:07.53,Sub,,0,0,0,,可不嘛，路灯都比我们会摸鱼。
+Dialogue: 0,0:00:08.07,0:00:11.25,Sub,,0,0,0,,城市的灯是给过路人亮的。
+Dialogue: 0,0:00:11.64,0:00:16.05,Sub,,0,0,0,,要真辞职啊，我想在楼下桥边开家旧书店。
+Dialogue: 0,0:00:16.47,0:00:19.72,Sub,,0,0,0,,我啊，想回家陪爷爷收一季稻。

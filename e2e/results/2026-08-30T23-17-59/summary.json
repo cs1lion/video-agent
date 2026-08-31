@@ -1,0 +1,2489 @@
+{
+	"base": "http://127.0.0.1:8790",
+	"startedAt": 1788131879410,
+	"pass": 10,
+	"total": 10,
+	"results": [
+		{
+			"id": "G1-comedy-designated-driver",
+			"title": "《代驾夜话》· 轻喜剧 · 快节奏对白",
+			"audioForm": "dialogue",
+			"dir": "G1-comedy-designated-driver-designated-driver-comedy",
+			"run": {
+				"id": "run-mtgfjwh6-11",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 82,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 90
+						},
+						{
+							"id": "pacing",
+							"score": 92
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 100
+						},
+						{
+							"id": "characterConsistency",
+							"score": 100
+						},
+						{
+							"id": "audioSync",
+							"score": 0
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 5
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（7075KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（11 条）",
+					"台词镜存在（5 镜）",
+					"质检有分（综合 82（pass））",
+					"物理/人物/文字审核轴齐备（物理 100 / 人物 100 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [zixinnansheng, cixingnansheng]）",
+					"角色音色互不相同（2/2（zixinnansheng, cixingnansheng））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 507664,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 15037
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 90188
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 120258
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 140295
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 150326
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 425899
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 506064
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH01-pad.mp3",
+						"tts-dialogue-SH01.mp3",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03-r2.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-r2.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-dialogue-SH05-pad.mp3",
+						"tts-dialogue-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 7244948
+		},
+		{
+			"id": "G2-suspense-metro",
+			"title": "《末班地铁的日记》· 悬疑留白 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G2-suspense-metro-last-metro-diary",
+			"run": {
+				"id": "run-mtgfuuhv-12",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 86,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 90
+						},
+						{
+							"id": "pacing",
+							"score": 88
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 100
+						},
+						{
+							"id": "characterConsistency",
+							"score": 100
+						},
+						{
+							"id": "audioSync",
+							"score": 33
+						},
+						{
+							"id": "textQuality",
+							"score": 95
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH06",
+							"verdict": "ok",
+							"reason": "通过"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 6,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 6,
+				"dialogueShotCount": 4
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（5738KB / 阈值 50KB）",
+					"镜头数达标（6 / 期望 ≥6）",
+					"片段产物存在（6 段）",
+					"关键帧数 ≥ 片段数（6 vs 6）",
+					"TTS 音轨存在（台词/旁白）（10 条）",
+					"台词镜存在（4 镜）",
+					"质检有分（综合 86（pass））",
+					"物理/人物/文字审核轴齐备（物理 100 / 人物 100 / 文字 95）",
+					"字幕结构审核通过（6 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [jingdiannvsheng, shenchennanyin]）",
+					"角色音色互不相同（2/2（jingdiannvsheng, shenchennanyin））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 462685,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 70124
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 160307
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 195379
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 220422
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 240484
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 375770
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 460982
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-dialogue-SH05-pad.mp3",
+						"tts-dialogue-SH05.mp3",
+						"tts-SH01.mp3",
+						"tts-SH06.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"qa-SH06-late.jpg",
+						"qa-SH06.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"shot-SH06.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-prop-PR03.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02.png",
+						"design-scene-SC03.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png",
+						"key-SH06.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4",
+						"clip-SH06.mp4"
+					]
+				}
+			},
+			"finalBytes": 5875320
+		},
+		{
+			"id": "G3-sports-tabletennis",
+			"title": "《凌晨四点的球馆》· 热血训练 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G3-sports-tabletennis-dawn-table-tennis",
+			"run": {
+				"id": "run-mtgg4tua-13",
+				"status": "done",
+				"verdict": {
+					"overall": "fail",
+					"score": 72,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 75
+						},
+						{
+							"id": "visualConsistency",
+							"score": 70
+						},
+						{
+							"id": "pacing",
+							"score": 85
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 90
+						},
+						{
+							"id": "characterConsistency",
+							"score": 55
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 90
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH02",
+							"verdict": "fail",
+							"reason": "人物: 少年球衣颜色由红色突变为蓝色，与前后镜头及角色设定不符"
+						},
+						{
+							"id": "SH03",
+							"verdict": "warn",
+							"reason": "人物: 父亲服装从夹克变为连帽衫，与前序镜头不一致"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（3983KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 72（fail））",
+					"物理/人物/文字审核轴齐备（物理 90 / 人物 55 / 文字 90）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [qingniandaxuesheng, shenchennanyin]）",
+					"角色音色互不相同（2/2（qingniandaxuesheng, shenchennanyin））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 607742,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 50121
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 120251
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 165362
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 190410
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 205435
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 355727
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 606267
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-scene-SC01.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02_v1.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 4078418
+		},
+		{
+			"id": "G4-rural-harvest",
+			"title": "《抢收前的雨》· 南方乡土 · 纪实质感",
+			"audioForm": "dialogue",
+			"dir": "G4-rural-harvest-harvest-before-rain",
+			"run": {
+				"id": "run-mtgghx41-14",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 87,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 90
+						},
+						{
+							"id": "pacing",
+							"score": 92
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 95
+						},
+						{
+							"id": "characterConsistency",
+							"score": 95
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（8459KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 87（pass））",
+					"物理/人物/文字审核轴齐备（物理 95 / 人物 95 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [shenchennanyin, jingdiannvsheng]）",
+					"角色音色互不相同（2/2（shenchennanyin, jingdiannvsheng））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 437562,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 65106
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 165290
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 190362
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 215407
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 240488
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 375750
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 435891
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01_v1.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02_v1.png",
+						"design-scene-SC02.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 8661649
+		},
+		{
+			"id": "G5-hospital-first-op",
+			"title": "《第一台手术》· 医院 · 职业克制",
+			"audioForm": "dialogue",
+			"dir": "G5-hospital-first-op-first-surgery-restraint",
+			"run": {
+				"id": "run-mtggrd23-15",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 87,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 92
+						},
+						{
+							"id": "pacing",
+							"score": 90
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 95
+						},
+						{
+							"id": "characterConsistency",
+							"score": 95
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过。深夜急诊开场，人物造型与设定一致，手术室环境写实，字幕清晰。"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过。手术进行中，医生面部疤痕细节与设定吻合，极简指令\"刀\"符合剧情，人物一致性良好。"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过。手术特写写实，血迹、器械操作符合医疗场景，指令\"纱布\"正确，物理表现准确。"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过。术后场景，医生指令\"明天继续\"符合剧情，人物状态自然，环境光线一致。"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过。收尾镜头，旁白字幕\"专业守护，每一台手术。\"点题，多人手术场景写实，色调光线统一。"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（2724KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 87（pass））",
+					"物理/人物/文字审核轴齐备（物理 95 / 人物 95 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [zixinnansheng, qingchunshaonv]）",
+					"角色音色互不相同（2/2（zixinnansheng, qingchunshaonv））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 502624,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 35050
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 120242
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 165363
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 210472
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 230526
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 425971
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 501146
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-scene-SC01.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 2789618
+		},
+		{
+			"id": "G6-wuxia-inn",
+			"title": "《大漠客栈打烊》· 武侠意境 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G6-wuxia-inn-desert-inn-closing",
+			"run": {
+				"id": "run-mtgh2784-16",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 87,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 92
+						},
+						{
+							"id": "visualConsistency",
+							"score": 95
+						},
+						{
+							"id": "pacing",
+							"score": 90
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 95
+						},
+						{
+							"id": "characterConsistency",
+							"score": 95
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过。大漠月色、沙丘驼影、黄土墙客栈与秋娘洗碗动作符合开场意境，字幕无异常。"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过。秦边老镖头形象（白发长须、粗布褐衣、腰刀）符合设定，室内光影苍凉，字幕无异常。"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过。秋娘与秦边同框互动，洗碗动作与对话场景衔接自然，人物位置符合空间逻辑，字幕无异常。"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过。温酒、饮酒动作符合对白内容，刀置于人物身边暗示主题，光影与前一镜保持统一，字幕无异常。"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过。刀置桌面特写呼应\"刀锈人歇\"主题，秋娘收拾动作连贯，室内陈设与前序镜头一致，字幕无异常。"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（6631KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 87（pass））",
+					"物理/人物/文字审核轴齐备（物理 95 / 人物 95 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [jingdiannvsheng, shenchennanyin]）",
+					"角色音色互不相同（2/2（jingdiannvsheng, shenchennanyin））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 602973,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 60111
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 150299
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 200446
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 230496
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 245557
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 385882
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 601345
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-prop-PR03.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03_v1.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 6790332
+		},
+		{
+			"id": "G7-factory-1998",
+			"title": "《一九九八的车间》· 年代情感 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G7-factory-1998-workshop-1998-farewell",
+			"run": {
+				"id": "run-mtghf6te-17",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 76,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 60
+						},
+						{
+							"id": "pacing",
+							"score": 85
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 80
+						},
+						{
+							"id": "characterConsistency",
+							"score": 70
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "warn",
+							"reason": "蒸汽特效虚假不自然，AI生成痕迹明显，人物风格与后续镜头不一致"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "实拍风格，人物情绪准确，字幕正确"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "年轻徒弟形象符合设定，机床道具准确"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "人物情绪爆发到位，面部无畸形"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "多人场景构图合理，主题升华到位"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（6224KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 76（pass））",
+					"物理/人物/文字审核轴齐备（物理 80 / 人物 70 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [zixinnansheng, cixingnansheng]）",
+					"角色音色互不相同（2/2（zixinnansheng, cixingnansheng））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 658258,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 60128
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 180372
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 210473
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 235517
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 255583
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 450993
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 656504
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01_v1.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-prop-PR03.png",
+						"design-scene-SC01.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05_v1.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 6373396
+		},
+		{
+			"id": "G8-rooftop-ot",
+			"title": "《加班楼的灯》· 都市情感 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G8-rooftop-ot-office-rooftop-lights",
+			"run": {
+				"id": "run-mtghtd2g-18",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 87,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 98
+						},
+						{
+							"id": "visualConsistency",
+							"score": 95
+						},
+						{
+							"id": "pacing",
+							"score": 95
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 100
+						},
+						{
+							"id": "characterConsistency",
+							"score": 100
+						},
+						{
+							"id": "audioSync",
+							"score": 20
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过。程序员单人镜头，手持关东煮倚靠栏杆，城市夜景背景，字幕清晰显示加班台词。"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过。产品经理单人镜头，手持手机倚靠栏杆，夜景背景，字幕正常显示对话。"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过。两人同框天台场景，手持热饮，城市灯火与月亮背景，字幕正常。"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过。两人并排望向远方桥梁，字幕正常显示开旧书店的梦想台词，背景城市夜景一致。"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过。特写栏杆上两杯关东煮，蒸汽袅袅，字幕正常显示收稻子的台词，包装文字清晰。"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 4
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（4572KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（9 条）",
+					"台词镜存在（4 镜）",
+					"质检有分（综合 87（pass））",
+					"物理/人物/文字审核轴齐备（物理 100 / 人物 100 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [zixinnansheng, jingdiannvsheng]）",
+					"角色音色互不相同（2/2（zixinnansheng, jingdiannvsheng））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 823346,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 40088
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 170355
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 210463
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 230501
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 250547
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 420899
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 821779
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH01-pad.mp3",
+						"tts-dialogue-SH01.mp3",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-dialogue-SH05-pad.mp3",
+						"tts-dialogue-SH05.mp3",
+						"tts-SH03.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01_v1.png",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02_v1.png",
+						"design-prop-PR02.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04_v1.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 4682003
+		},
+		{
+			"id": "G9-frontier-post",
+			"title": "《帕米尔邮路》· 边疆 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G9-frontier-post-pamir-mail-route",
+			"run": {
+				"id": "run-mtgib2oo-19",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 88,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 98
+						},
+						{
+							"id": "pacing",
+							"score": 95
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 93
+						},
+						{
+							"id": "characterConsistency",
+							"score": 98
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过，画面呈现帕米尔高原雪景、马背邮递员与经幡，符合开场剧情设定，无物理、人物、文字及字幕问题。"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过，呈现邮递员与士兵在垭口相遇的互动场景，人物状态自然，画面风格与前镜一致，无异常。"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过，呈现大学录取通知书递送的关键情节，人物动作合理，画面无物理或人物异常，字幕正常。"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过，特写呈现邮递员交付信件后的情绪表达，符合剧情收尾，人物形象一致，无异常。"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过，呈现邮路延伸的收尾画面，契合“一条邮路串起牵挂”的主题，无物理、人物、文字及字幕问题。"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（5893KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 88（pass））",
+					"物理/人物/文字审核轴齐备（物理 93 / 人物 98 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [zixinnansheng, qingniandaxuesheng]）",
+					"角色音色互不相同（2/2（zixinnansheng, qingniandaxuesheng））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 683252,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 40082
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 155309
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 180366
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 220463
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 250544
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 400857
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 681485
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02_v1.png",
+						"design-prop-PR02.png",
+						"design-prop-PR03.png",
+						"design-scene-SC01.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02_v1.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 6034496
+		},
+		{
+			"id": "G10-island-exam",
+			"title": "《渔排上的考试》· 海岛日常 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G10-island-exam-fishing-raft-exam",
+			"run": {
+				"id": "run-mtgips84-20",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 86,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 95
+						},
+						{
+							"id": "visualConsistency",
+							"score": 90
+						},
+						{
+							"id": "pacing",
+							"score": 92
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 95
+						},
+						{
+							"id": "characterConsistency",
+							"score": 95
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 95
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH04",
+							"verdict": "ok",
+							"reason": "通过"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "通过"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（5834KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 86（pass））",
+					"物理/人物/文字审核轴齐备（物理 95 / 人物 95 / 文字 95）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [qingchunshaonv, jingdiannvsheng]）",
+					"角色音色互不相同（2/2（qingchunshaonv, jingdiannvsheng））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 588097,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 45102
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 155335
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 180424
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 205497
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 225577
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 471173
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 586459
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-character-CH03.png",
+						"design-prop-PR01_v1.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-prop-PR03.png",
+						"design-scene-SC01.png",
+						"design-scene-SC02.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 5973589
+		}
+	]
+}

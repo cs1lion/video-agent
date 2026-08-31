@@ -19,6 +19,7 @@ import {
 import {
 	assembleTimeline,
 	buildAssSubtitles,
+	detectSpeechSegments,
 	concatWithSubtitles,
 	normalizeShot,
 	probeDuration,
@@ -249,15 +250,28 @@ export async function stageExport(
 		if (keptShots[i]!.audioMode === "dialogue") {
 			// 台词镜：字幕=台词，起点=本镜切点、覆盖约整镜（与口型/铺入的 TTS 同步；
 			// 2026-08-30 反馈"台词几乎看不到"——此前只有旁白上字幕）。
-			// 终点三重收束：≤镜长-0.3、≤下一镜切点-0.1、≤台词人声时长+0.8s
-			// （深审发现：按整镜停留 4.7s，台词 1.7s 说完后字幕挂着不走）
+			// 起止用 silencedetect 实测语音段（词级对齐的低成本替代——直接贴人声起止）；
+			// 实测失败回落三重收束：≤镜长-0.3、≤下一镜切点-0.1、≤台词人声时长+0.8s
 			const nextShotStart = i + 1 < keptShots.length ? shotStart[i + 1]! : Number.POSITIVE_INFINITY;
 			const speechSec = keptShots[i]!.dialogue?.rawDurationSec ?? keptShots[i]!.dialogue?.audioDurationSec ?? shotDur[i]!;
-			const dur = Math.max(
-				0.8,
-				Math.min(shotDur[i]! - 0.3, nextShotStart - shotStart[i]! - 0.1, speechSec + 0.8),
-			);
-			subtitles.push({ start: shotStart[i]!, duration: dur, text: narrationTexts[i]! });
+			const ttsRel =
+				[`assets/tts-dialogue-${keptShots[i]!.id}-pad.mp3`, `assets/tts-dialogue-${keptShots[i]!.id}.mp3`].find((rel) =>
+					fs.existsSync(path.join(run.dir, rel)),
+				) ?? null;
+			let subStart = shotStart[i]!;
+			let subDur = Math.max(0.8, Math.min(shotDur[i]! - 0.3, nextShotStart - shotStart[i]! - 0.1, speechSec + 0.8));
+			if (ttsRel) {
+				try {
+					const segs = await detectSpeechSegments(run.dir, ttsRel, signal);
+					if (segs.length > 0) {
+						subStart = shotStart[i]! + segs[0]!.start;
+						subDur = Math.max(0.8, Math.min(segs[segs.length - 1]!.end - segs[0]!.start + 0.5, nextShotStart - subStart - 0.1));
+					}
+				} catch {
+					// 实测失败用回落值
+				}
+			}
+			subtitles.push({ start: subStart, duration: subDur, text: narrationTexts[i]! });
 			continue;
 		}
 		const nextStart = i + 1 < keptShots.length ? narrStart[i + 1] : cursor;

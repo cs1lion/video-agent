@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot of southern rice paddy SC01, vast field with plump golden rice ears swaying in wind, low dark storm clouds over distant misty mountains, muddy field ridges, sparrows flitting across overcast sky, fine rain dots pattering on rice leaves. Diffused overcast pre-storm light with faint warm golden rim on rice ears, cool blue-gray cast on sky and mountains. Slow pan left across paddy to show full spatial depth, natural handheld documentary feel, rural realism style, low-saturation grade with fine film grain for authentic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Medium 16:9 shot of Uncle Gui, 59-year-old dark-skinned rice farmer with deep facial wrinkles, old army-green raincoat slung over his shoulders, rolled-up trouser legs stepping in muddy field, straw hat strap tight under his chin, worn rubber shoes covered in mud, touching a heavy drooping rice ear with his rough hand in the southern rice paddy. Diffused overcast light with faint warm golden rim on the rice ear, cool ambient shadow fill from stormy sky. Slow dolly push-in to his hand to emphasize his stubborn emotion, cinematic documentary rural realism style, natural earthy tones, fine film grain for authentic labor texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Medium side 16:9 shot of Qiuhe, 26-year-old returning daughter with ponytail, old baseball cap, long-sleeve shirt rolled to elbows, labor insurance gloves holding rice bundles, natural tanned skin, rubber boots stepping in mud, looking up at the gloomy dark sky in the southern rice paddy. Diffused overcast cool light with faint warm rim on her cap from last pre-rain sunlight, fine rain dots falling around her. Handheld follow shot panning up from her mud-covered boots to her face to show her worried emotion, naturalistic rural documentary style, low-saturation earthy grade, fine film grain for authentic texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Medium 16:9 shot of Uncle Gui, 59-year-old dark-skinned rice farmer with deep facial wrinkles, old army-green raincoat slung over his shoulders, rolled-up trouser legs, straw hat strap tight under his chin, worn muddy rubber shoes, straightening his back and lifting his straw hat brim to show a smile in his wrinkles, holding a handful of just-cut rice, dark storm clouds gathering thicker in the distance. Faint warm golden side light from last pre-rain sunlight hitting his face, cool overcast ambient fill from storm clouds. Slow dolly push-in to his face to emphasize his steady emotion, cinematic rural realism documentary tone, natural low-saturation grade with warm golden hues on his face, fine film grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Medium 16:9 wide shot of standardized sealed grain barn SC02, rustic wooden structure with golden rice grains pouring into the barn interior, Uncle Gui in old army-green raincoat slung over his shoulders, rolled-up trouser legs, straw hat under chin, muddy rubber shoes, and Qiuhe in ponytail, old baseball cap, long-sleeve shirt rolled to elbows, labor insurance gloves, rubber boots standing beside the barn brushing grain chaff off their clothes and laughing, rain dots pattering on the tiled roof outside. Diffused overcast light with warm golden rim on pouring rice grains, cool ambient shadow fill from stormy sky. Static locked-off composition to show grain pouring action and the two people, cinematic rural documentary style, natural earthy tones, fine film grain for authentic rural texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

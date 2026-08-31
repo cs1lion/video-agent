@@ -1,0 +1,96 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "海花",
+			"design": "14-year-old South China Sea fishing girl with black ponytail tied by old red hair rope, wearing worn school uniform covered by translucent rainproof plastic cloth, exam papers on her knees, warm expression under natural light, realistic style, front half-body view, highlighting the simple texture of fishing family children.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "林老师",
+			"design": "36-year-old female homeroom teacher with short hair tucked behind ears, wearing dark blue raincoat with dripping water, holding exam bag wrapped by three layers of plastic bags, concerned expression, realistic style, front full-body view, clear details of wet raincoat and wrapped exam bag, warm expression under cool light.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png"
+		},
+		{
+			"id": "CH03",
+			"category": "character",
+			"name": "海花父亲",
+			"design": "Middle-aged South China Sea fisherman in dark waterproof fishing suit, bending down to sort fishing nets, simple and honest figure, realistic style, side environmental view, highlighting the skilled sense of work, realistic details of rain falling on the body.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH03.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "三层包试卷袋",
+			"design": "Ordinary exam bag wrapped by three layers of transparent waterproof plastic bags, bag corners slightly wrinkled by rain, outline of paper exam papers visible, realistic style, close-up view, highlighting the waterproof wrapping details, contrasting texture of plastic and paper.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "warn",
+				"issues": [
+					"设计要点要求三层透明防水塑料袋包裹，画面中可见四层（蓝、红、黄、蓝）包裹内容物；设计要点要求袋角有雨水褶皱，画面中塑料表面光滑无明显雨水褶皱"
+				],
+				"checkedAt": "2026-08-31T00:49:06.330Z"
+			}
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "防雨塑料布",
+			"design": "Translucent light gray rainproof plastic cloth, with worn edges, natural folds when draped on shoulders, realistic style, close-up view, highlighting the translucent texture and worn old texture, cold tone when light passes through.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "渔网浮标",
+			"design": "Nylon fishing nets with colored foam buoys commonly used on South China Sea fish rafts, buoys have sea erosion marks, fishing nets dotted with raindrops, realistic style, environmental view, highlighting the physical characteristics of sea work, natural maritime color matching.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "渔排木板屋内部",
+			"design": "Old wooden plank house on South China Sea fish raft, weathered wooden walls, small window letting in diffused cool light, exam papers on the table, realistic style, interior medium view, highlighting the damp wood texture and rainy light atmosphere, cool blue-green tone with warm highlights.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png"
+		},
+		{
+			"id": "SC02",
+			"category": "scene",
+			"name": "雨中海面渔排全景",
+			"design": "Rainy sea fish raft in South China Sea, wooden plank house supported by floating barrels, fishing nets and buoys floating around, blurred ship shadows in the distant shelter, raindrops hitting the sea surface forming white spots, realistic style, distant environmental view, highlighting the sea wind and rain atmosphere, low-saturation cool blue-green tone, natural sea wave movement.",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC02.png"
+		}
+	],
+	"generatedAt": "2026-08-31T00:47:46.427Z"
+}

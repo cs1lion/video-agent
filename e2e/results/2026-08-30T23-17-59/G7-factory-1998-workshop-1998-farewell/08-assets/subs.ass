@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.60,Sub,,0,0,0,,九八冬，国营机床厂的汽笛刚歇。
+Dialogue: 0,0:00:05.28,0:00:08.06,Sub,,0,0,0,,大刘，你动这转岗名单作甚？
+Dialogue: 0,0:00:08.62,0:00:11.92,Sub,,0,0,0,,我年轻，该我顶上这岗。
+Dialogue: 0,0:00:12.25,0:00:16.46,Sub,,0,0,0,,我五十了你是二十五，厂里养过我全家。
+Dialogue: 0,0:00:16.56,0:00:22.40,Sub,,0,0,0,,机器不停，人就得往前走。我们机床，伴匠人前行。

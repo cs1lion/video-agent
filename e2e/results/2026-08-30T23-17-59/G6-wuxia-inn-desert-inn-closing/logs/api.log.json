@@ -1,0 +1,28 @@
+[
+	{
+		"at": "2026-08-31T00:00:12.821Z",
+		"action": "generate",
+		"runId": "run-mtgh2784-16",
+		"response": {
+			"runId": "run-mtgh2784-16"
+		}
+	},
+	{
+		"at": "2026-08-31T00:02:43.140Z",
+		"action": "resume",
+		"gate": "design",
+		"failedDesign": 0
+	},
+	{
+		"at": "2026-08-31T00:04:03.339Z",
+		"action": "resume",
+		"gate": "keyframes",
+		"confirmedShotIds": [
+			"SH01",
+			"SH02",
+			"SH03",
+			"SH04",
+			"SH05"
+		]
+	}
+]

@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide environmental shot of South China Sea rainy fish raft, weathered wooden plank house supported by floating barrels, fishing nets and buoys swaying with sea waves, raindrops hitting sea surface forming white spots, blurred boat silhouettes in distant typhoon shelter, diffused overcast cool daylight blended with ambient light reflected from rainy sea surface, slow pan left camera movement, low-saturation cool blue-green naturalistic documentary grade, high detail realistic textures of wet wood and sea foam. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 medium close-up shot of 14-year-old South China Sea fishing girl Ha Hua with black ponytail tied by old red hair rope, wearing worn school uniform covered by translucent rainproof plastic cloth, exam papers on her knees, sitting at old wooden table in raft house looking anxiously at swaying raft outside small window, diffused cool daylight seeping through window with warm soft highlight on her face, slow dolly push-in camera movement, naturalistic lifestyle style with realistic weathered wood texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 full-body medium shot of 36-year-old female homeroom teacher Lin with short hair tucked behind ears, wearing dark blue raincoat dripping with water, holding exam bag wrapped by three layers of plastic bags, standing at the door of swaying raft house with raindrops hitting wooden planks, cool ambient light from rainy sea surface, handheld slight sway camera movement matching raft's motion, concerned expression, realistic documentary style with high detail of wet raincoat and plastic wrapped bag. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 environmental wide shot, middle-aged South China Sea fisherman in dark waterproof fishing suit bending down to sort fishing nets beside raft, Ha Hua with black ponytail tied by old red hair rope wearing worn school uniform covered by translucent rainproof plastic cloth and Teacher Lin with short hair tucked behind ears wearing dark blue raincoat dripping with water sitting face to face inside wooden house with exam papers spread on small table between them, whole raft sways slightly with waves, diffused cool daylight blended with warm soft highlight on exam papers, slow pan right camera movement from fisherman to indoor scene, naturalistic nautical lifestyle style with realistic wet fishing suit and weathered wood texture. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 medium close-up static locked-off shot, Ha Hua with black ponytail tied by old red hair rope wearing worn school uniform covered by translucent rainproof plastic cloth and Teacher Lin with short hair tucked behind ears wearing dark blue raincoat dripping with water lowering their heads to write exam, blurred tablet with online class interface placed on table, rain stopped outside with golden sunlight shining on rippling sea surface, low warm side light through window, warm soft highlights on exam papers, realistic emotional documentary grade. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic 16:9 wide shot with dolly push-in movement, showing Jiang Ye, 16-year-old Chinese male ping pong player wearing a red sweat-soaked jersey, white kinesio tape on his wrist, short messy sweat-dripping hair, swinging his paddle on the worn wooden floor of the gritty old training gym, with Jiang Jianjun, 45-year-old man in a worn old sports jacket with frayed shiny cuffs, standing opposite holding a ping pong ball, woven baskets of balls stacked in the corner, faded old honor flags on walls, mixed lighting of cool dawn light seeping through high windows and warm overhead incandescent light highlighting sweat droplets and floor textures, gritty realistic sports documentary tone, low-saturation color grade with warm skin highlights and cool ambient shadows. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic 16:9 medium shot with handheld follow movement tracking the fast ping pong ball smashed by Jiang Jianjun, 45-year-old Chinese man with short cropped hair with visible silver strands, wearing a worn old sports jacket with frayed shiny cuffs, hard defined forearm muscles taut, cool dawn light rim-lighting his silhouette, warm overhead incandescent light highlighting his arm texture, gritty realistic sports documentary tone, raw determined atmosphere. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic 16:9 medium shot with handheld slight shake movement capturing Jiang Ye, 16-year-old Chinese male ping pong player wearing a red sweat-soaked jersey, white kinesio tape on his wrist, short messy sweat-dripping hair, slamming his paddle on the worn wooden floor in frustration, cool dawn light from high windows casting sharp shadows on his face, warm overhead incandescent light highlighting sweat on his skin, gritty realistic tone with raw frustrated emotion. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic 16:9 medium static locked-off shot of Jiang Jianjun, 45-year-old Chinese man with short cropped hair with visible silver strands, wearing a worn old sports jacket with frayed shiny cuffs, neutral expressionless face, pointing at the paddle on the worn wooden floor, mixed lighting of cool dawn light from high windows and warm overhead incandescent light, gritty realistic sports documentary tone, cold hard emotional atmosphere. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic 16:9 sequence, first medium shot of Jiang Ye in red sweat-soaked jersey and Jiang Jianjun in worn old sports jacket standing in silence in the old training gym, then slow dolly push-in tracking the ping pong ball as it grazes the net and drops to the worn wooden floor, cut to extreme close-up of the high-performance ping pong paddle with visible brand logo (no on-screen text, text added in post-production), mixed lighting of cool dawn light seeping through high windows and warm overhead incandescent light highlighting sweat droplets and paddle texture, gritty realistic sports documentary tone, low-saturation color grade, heavy silent emotional atmosphere. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

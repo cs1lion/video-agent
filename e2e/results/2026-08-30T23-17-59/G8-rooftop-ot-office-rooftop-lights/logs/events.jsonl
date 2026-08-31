@@ -1,0 +1,80 @@
+{"id":"ev-20c47a4e","at":"2026-08-31T00:21:20.109Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实都市情感短片：深夜写字楼天台，连续加班三周的程序员陆一鸣和产品经理夏澄上来透…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"}
+{"id":"ev-0785c5f9","at":"2026-08-31T00:21:20.112Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 5 镜叙事骨架。"}
+{"id":"ev-e55439ac","at":"2026-08-31T00:21:59.764Z","from":"writer","to":"art","kind":"handoff","text":"剧本《天台的灯》完成：5 镜，30s。Logline：深夜加班后的程序员与产品经理在天台吐露真心，借城市灯火与热食慰藉都市人疲惫。。请据此制定全片视觉规范。"}
+{"id":"ev-c712c2c5","at":"2026-08-31T00:21:59.765Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-306a8d5b","at":"2026-08-31T00:22:25.924Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：6 张概念设计图（人物 2 · 道具 2 · 场景 2）逐张绘制中。"}
+{"id":"ev-1adae9f3","at":"2026-08-31T00:22:29.258Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「陆一鸣」（人物 CH01）"}
+{"id":"ev-09663ebb","at":"2026-08-31T00:22:32.495Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「夏澄」（人物 CH02）"}
+{"id":"ev-1271c217","at":"2026-08-31T00:22:35.791Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「关东煮纸杯」（道具 PR01）"}
+{"id":"ev-ab771c09","at":"2026-08-31T00:22:39.055Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「智能手机」（道具 PR02）"}
+{"id":"ev-808cdbf8","at":"2026-08-31T00:22:42.408Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「深夜写字楼天台」（场景 SC01）"}
+{"id":"ev-a5c69f8a","at":"2026-08-31T00:22:45.672Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「城市灯海远景」（场景 SC02）"}
+{"id":"ev-bf6dfc94","at":"2026-08-31T00:22:45.675Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-47c74b9d","at":"2026-08-31T00:22:45.676Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-176fb307","at":"2026-08-31T00:23:34.102Z","from":"reviewer","to":"art","kind":"redo","text":"设计图自审发现问题 ⚠️：「陆一鸣」设计要点为无盖关东煮纸杯，画面为带盖带吸管的咖啡杯；「智能手机」画面中出现男性人物，与夏澄（女性）使用的道具设定不符。安排美术指导带意见重绘。"}
+{"id":"ev-24f58b41","at":"2026-08-31T00:23:41.362Z","from":"art","to":"reviewer","kind":"handoff","text":"「陆一鸣」、「智能手机」已按审核意见重绘，提交复审…"}
+{"id":"ev-e8f7dffd","at":"2026-08-31T00:24:08.427Z","from":"art","to":"reviewer","kind":"qa","text":"设计图重绘后审核问题已全部修复 ✅ 卡片 陆一鸣、智能手机 复审通过。"}
+{"id":"ev-8b6f7d54","at":"2026-08-31T00:24:08.428Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / urban nightscape / realistic lifestyle / intimate / warm-toned / character-driven]，色板 #3A3A3A、#FFB84D、#F5F0E6、#D2C4B5。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-36b7a60f","at":"2026-08-31T00:24:08.429Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-bf67de09","at":"2026-08-31T00:24:10.478Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-44c8b29b","at":"2026-08-31T00:24:10.479Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-a4caf1da","at":"2026-08-31T00:24:10.481Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-f31c4e37","at":"2026-08-31T00:24:46.940Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陆一鸣(CH01)、深夜写字楼天台(SC01)。"}
+{"id":"ev-fa0ad0da","at":"2026-08-31T00:24:46.942Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-25883ca8","at":"2026-08-31T00:24:50.837Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陆一鸣(CH01)、深夜写字楼天台(SC01)。"}
+{"id":"ev-c216e88b","at":"2026-08-31T00:24:50.838Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-98de1dcf","at":"2026-08-31T00:24:54.772Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陆一鸣(CH01)、深夜写字楼天台(SC01)。"}
+{"id":"ev-bf08cb39","at":"2026-08-31T00:24:54.773Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-9240a40b","at":"2026-08-31T00:24:58.683Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陆一鸣(CH01)、深夜写字楼天台(SC01)。"}
+{"id":"ev-ea56320d","at":"2026-08-31T00:24:58.684Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-aefdbd2f","at":"2026-08-31T00:25:02.587Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：陆一鸣(CH01)、深夜写字楼天台(SC01)。"}
+{"id":"ev-01ef2ebf","at":"2026-08-31T00:25:02.588Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-7423b3f8","at":"2026-08-31T00:25:06.652Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-861abc6e","at":"2026-08-31T00:25:06.654Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-5765a1dd","at":"2026-08-31T00:25:10.623Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「音频」继续，直至成片。"}
+{"id":"ev-d6e5a0ad","at":"2026-08-31T00:25:10.626Z","from":"sound","to":"editor","kind":"status","text":"声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"}
+{"id":"ev-ca9701df","at":"2026-08-31T00:25:10.630Z","from":"sound","to":"editor","kind":"status","text":"配音选角：旁白＝播音男声；角色 陆一鸣→自信男声、夏澄→经典女声；与角色声线全部错开。"}
+{"id":"ev-76e68bc8","at":"2026-08-31T00:25:26.177Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH03（指导：语气沉静带感慨，语速放缓，『过路人』三字重读且气息稍沉，尾音…）"}
+{"id":"ev-fcf4879e","at":"2026-08-31T00:25:26.178Z","from":"sound","to":"editor","kind":"handoff","text":"旁白轨交付：1/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"}
+{"id":"ev-6dafe389","at":"2026-08-31T00:25:29.714Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH01 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-5729677a","at":"2026-08-31T00:25:30.426Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH01 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-c32b995f","at":"2026-08-31T00:25:30.430Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 6s · 台词音频驱动口型）：16:9 aspect ratio cinematic medium shot of 29-year-old East …"}
+{"id":"ev-1f2382e8","at":"2026-08-31T00:25:33.741Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH02 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-7a73c85b","at":"2026-08-31T00:25:34.100Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH02 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-0d8964cb","at":"2026-08-31T00:25:34.103Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 6s · 台词音频驱动口型）：16:9 aspect ratio cinematic medium shot of 28-year-old East …"}
+{"id":"ev-82923e9a","at":"2026-08-31T00:25:34.108Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 6s · 关键帧+提示词 图生视频）：16:9 aspect ratio cinematic medium wide shot of Lu Yiming in…"}
+{"id":"ev-e9718b1a","at":"2026-08-31T00:25:37.585Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH04 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-3793d610","at":"2026-08-31T00:25:37.929Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH04 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-bc0e6d57","at":"2026-08-31T00:25:37.932Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 6s · 台词音频驱动口型）：16:9 aspect ratio cinematic close-up of 28-year-old East Asi…"}
+{"id":"ev-96540591","at":"2026-08-31T00:25:41.435Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH05 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-bb025672","at":"2026-08-31T00:25:41.759Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH05 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-22c5e77d","at":"2026-08-31T00:25:41.763Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 提交生成（720p · 6s · 台词音频驱动口型）：16:9 aspect ratio cinematic close-up of two steaming paper c…"}
+{"id":"ev-832c9e0e","at":"2026-08-31T00:26:54.706Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-f5185dca","at":"2026-08-31T00:26:54.856Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/5）"}
+{"id":"ev-9fa0183c","at":"2026-08-31T00:26:55.062Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-b6709510","at":"2026-08-31T00:26:55.221Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/5）"}
+{"id":"ev-be1d2801","at":"2026-08-31T00:26:55.394Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/5）"}
+{"id":"ev-56408c49","at":"2026-08-31T00:26:55.578Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-2f1452b1","at":"2026-08-31T00:26:55.714Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH04 生成完成 ✅（4/5）"}
+{"id":"ev-d8ba6812","at":"2026-08-31T00:28:18.845Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-edd17c9c","at":"2026-08-31T00:28:18.988Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH05 生成完成 ✅（5/5）"}
+{"id":"ev-4cbea4d7","at":"2026-08-31T00:28:18.990Z","from":"tech","to":"editor","kind":"handoff","text":"镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"}
+{"id":"ev-ecb5e228","at":"2026-08-31T00:28:18.991Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-cbfead99","at":"2026-08-31T00:29:08.854Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 20.1s · 720p 16:9，转场：叠化 0.5s、叠化 0.5s，音效：嗖声、嗖声，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-ba72b220","at":"2026-08-31T00:31:30.735Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 5 处异常：SH01（男性，深灰色连帽衫，金色短发，面部有胡茬，持一杯咖啡，锈迹栏）、SH02（女性，黑色连帽衫，米色围巾，黑色长发，持一杯咖啡及手机，银色）、SH03（男性（深灰色连帽衫），女性（米色长款大衣、米色围巾），各持一）、SH04（女性，黑色连帽衫，米色围巾，头发被风吹乱，持一杯咖啡，银色栏）、SH05（男性，深灰色连帽衫，黑色短发，持两杯咖啡，锈迹栏杆）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-0f613fed","at":"2026-08-31T00:31:30.737Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：不通过 ❌（综合 83）。最短板 audioSync 20 分。另有 5 处跨镜一致性异常请关注。不合格镜头：SH04（缺失对应帧，无法审核剧情中女主提及开旧书店的相关内容。）；SH05（缺失对应帧，无法审核剧情中男主提及陪爷爷收稻的相关内容。）。可在质检面板逐镜重做。"}
+{"id":"ev-0903c3ad","at":"2026-08-31T00:31:30.738Z","from":"reviewer","to":"tech","kind":"status","text":"自动质检-修复闭环：镜头 SH04（fail：缺失对应帧，无法审核剧情中女主提及开旧书店的相关内容。）派发补拍重审。"}
+{"id":"ev-0cea5c68","at":"2026-08-31T00:31:30.740Z","from":"producer","to":"client","kind":"user","text":"请求重做镜头 SH04：Close-up of Xia Cheng with a soft smile, gazing at the river bridge below the office building, wind brushing her long ha。修复审核问题：缺失对应帧，无法审核剧情中女主提及开旧书店的相关内容。。保持人物性别、年龄、服装与发型与设计完全一致。"}
+{"id":"ev-620f7f56","at":"2026-08-31T00:31:30.741Z","from":"director","to":"tech","kind":"director","text":"安排补拍镜头 SH04（第 1/3 轮）。修复问题：缺失对应帧，无法审核剧情中女主提及开旧书店的相关内容。。旧片段将备份为历史版本，新片段替换主版本后重新装配。"}
+{"id":"ev-42a579fc","at":"2026-08-31T00:31:30.742Z","from":"reviewer","to":"tech","kind":"status","text":"自动质检-修复闭环：镜头 SH05（fail：缺失对应帧，无法审核剧情中男主提及陪爷爷收稻的相关内容。）派发补拍重审。"}
+{"id":"ev-33969857","at":"2026-08-31T00:31:30.743Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}
+{"id":"ev-47b78b5b","at":"2026-08-31T00:31:30.744Z","from":"storyboard","to":"tech","kind":"redo","text":"外观反馈涉及镜头 SH04，先重绘关键帧（Close-up of Xia Cheng with a soft smile, gazing at the river…）再补拍，避免旧首帧锚定导致重做无效。"}
+{"id":"ev-a6a61524","at":"2026-08-31T00:31:30.811Z","from":"storyboard","to":"tech","kind":"status","text":"镜头 SH04 关键帧重绘未成功 ⚠️，本次仍按旧首帧补拍。"}
+{"id":"ev-8b6d4f79","at":"2026-08-31T00:31:30.813Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 重新提交生成（第 1 轮 · 关键帧锚定）。"}
+{"id":"ev-c69f43af","at":"2026-08-31T00:34:05.838Z","from":"tech","to":"editor","kind":"handoff","text":"镜头 SH04 新片段就位 ✅（旧版本备份为 assets/clip-SH04_v1.mp4）。剪辑师重新装配时间线与字幕，随后复审。"}
+{"id":"ev-8f281f18","at":"2026-08-31T00:34:05.839Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-c018a26f","at":"2026-08-31T00:34:26.084Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 20.1s · 720p 16:9，转场：叠化 0.5s、叠化 0.5s，音效：嗖声、嗖声，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-84742efc","at":"2026-08-31T00:35:01.666Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 5 处异常：SH01（男性，深灰色连帽衫，金色短发，面部有胡茬，持一杯咖啡，锈迹栏）、SH02（女性，黑色连帽衫，米色围巾，黑色长发，持一杯咖啡及手机，银色）、SH03（男性（深灰色连帽衫），女性（米色长款大衣、米色围巾），各持一）、SH04（女性，黑色连帽衫，米色围巾，头发被风吹乱，持一杯咖啡，银色栏）、SH05（男性，深灰色连帽衫，黑色短发，持两杯咖啡，锈迹栏杆）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-68e09080","at":"2026-08-31T00:35:01.667Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：通过 ✅（综合 87）。最短板 audioSync 20 分。另有 5 处跨镜一致性异常请关注。"}
+{"id":"ev-dc5f8d0b","at":"2026-08-31T00:35:01.668Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}
+{"id":"ev-8eac87cf","at":"2026-08-31T00:35:01.669Z","from":"producer","to":"client","kind":"redo","text":"重做 SH04 后 QA 评分：镜头裁决 fail→ok"}

@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"documentary",
+		"rural realism",
+		"naturalistic",
+		"earthy",
+		"handheld",
+		"atmospheric",
+		"lifestyle"
+	],
+	"palette": [
+		"#D4AF37",
+		"#2F4F4F",
+		"#8B4513",
+		"#556B2F",
+		"#E74C3C",
+		"#F5F5DC"
+	],
+	"lighting": "Diffused overcast light from thick storm clouds, with faint warm golden rim light on ripe rice ears from the last pre-rain sunlight, and cool ambient shadow fill from the dark sky",
+	"grade": "Natural low-saturation grade with lifted mid-tones, warm golden hues on the rice field, cool blue-gray cast on storm clouds and distant mountains, fine film grain retained for authentic rural texture"
+}

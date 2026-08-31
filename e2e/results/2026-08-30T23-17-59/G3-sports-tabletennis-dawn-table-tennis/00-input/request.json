@@ -1,0 +1,37 @@
+{
+	"brief": {
+		"logline": "写实热血短片：凌晨四点的老球馆，少年江野和当过省队陪练的父亲江建军加练——父亲喂球又狠又准，少年摔拍子吼「我练不动了」，父亲只回一句「捡回来」。三句旁白交代十年晨训，对白短促带火药味，最后一个球擦网落地的瞬间两人都没说话。写实球馆：旧木地板、成筐的球、汗透的球衣、高窗透进的第一缕天光。",
+		"keyMessage": "捡回来的不是球，是不服。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 6,
+		"fps": 24,
+		"motionIntensity": "high",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "江野",
+				"description": "16 岁男性少年球员，红色球服汗透贴背，短碎发滴汗，手腕缠肌效贴，眼神倔"
+			},
+			{
+				"name": "江建军",
+				"description": "45 岁男性父亲兼陪练，旧运动外套袖口磨亮，平头有白发，小臂肌肉线条硬，表情不外露"
+			}
+		],
+		"scenes": [
+			{
+				"name": "老球馆",
+				"description": "写实老训练球馆：磨旧木地板、成筐乒乓球、白炽灯高悬、高窗天光初亮、墙上旧奖旗"
+			}
+		],
+		"musicBrief": "乒乓球击打声为主，收尾一声球鞋摩擦地板。"
+	}
+}

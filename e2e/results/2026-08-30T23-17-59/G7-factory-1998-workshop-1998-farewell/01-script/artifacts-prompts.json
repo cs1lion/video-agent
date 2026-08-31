@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide environmental shot of 1990s Chinese state-owned machine tool workshop, rows of old machine tools lined up, scattered dented iron tool cabinets, frosted high windows with thick snow piled outside, visible breath fog hanging in frigid air, cold diffused skylight from snow-covered high windows mixed with dim warm tungsten workshop lights, slow gentle pan left across the full workshop space, 16:9 wide composition, retro documentary industrial realism style, muted cold desaturated tone, subtle fine film grain for 1990s period authenticity. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium close-up of 52-year-old male veteran lathe operator Gu Changgen wearing dark blue work uniform with matching sleeve covers and a low-pressed dark cap, grease stains on his calloused fingers, sharp stern eyes, holding a crumpled transfer list while standing by a dented iron tool cabinet in the 1990s state-owned workshop, visible breath fog hanging in frigid air around him, cold diffused skylight from high frosted windows mixed with dim warm tungsten side light, slow dolly push-in towards his upper body to highlight facial expression and hand details, 16:9 composition, gritty industrial realism style, muted cold tone with subtle warm highlight retention, fine film grain for 1990s period authenticity. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic medium shot of 26-year-old male apprentice Da Liu wearing same dark blue work uniform with sleeves rolled up, short neat black hair, obvious scar on the back of his hand, Adam's apple bobbing as he holds back restrained words, standing by a running old lathe in the 1990s state-owned workshop, workshop broadcast speaker mounted on the wall behind him, visible breath fog hanging in frigid air, cold diffused skylight from high frosted windows mixed with dim warm tungsten workshop lights, slow handheld follow shot keeping him in frame as he shifts his weight slightly, 16:9 composition, retro documentary industrial realism style, muted cold desaturated tone, fine film grain for 1990s period authenticity. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic close-up of 52-year-old male veteran lathe operator Gu Changgen wearing dark blue work uniform with matching sleeve covers and a low-pressed dark cap, grease stains on his calloused fingers, sharp stern eyes, steps closer to the old lathe where Da Liu stands in the 1990s state-owned workshop, visible breath fogging in the frigid winter air, faint workshop broadcast sound mixing with low machine hum, low warm side light from nearby workshop lamps rim-lighting his face mixed with cold diffused skylight from high frosted windows, slow dolly push-in to a tight close-up on his face as he speaks, 16:9 composition, gritty industrial realism style, muted cold tone with subtle warm highlight retention, fine film grain for 1990s period authenticity. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic wide shot of 1990s Chinese state-owned machine tool workshop, old lathe where Gu Changgen and Da Liu stand in the foreground, brand new CNC machine tool placed at the corner of the workshop, rows of old machine tools and scattered iron tool cabinets in the background, visible breath fog hanging in frigid air, cold diffused skylight from high snow-covered windows mixed with dim warm tungsten workshop lights, slow pan right from the old lathe to the new CNC machine tool in the corner, 16:9 wide composition, retro documentary industrial realism style, muted cold desaturated tone, fine film grain for 1990s period authenticity. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

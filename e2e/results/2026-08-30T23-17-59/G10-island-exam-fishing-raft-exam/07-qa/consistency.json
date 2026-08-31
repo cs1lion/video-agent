@@ -1,0 +1,33 @@
+{
+	"checkedAt": "2026-08-31T00:56:17.151Z",
+	"model": "step-3.7-flash",
+	"fingerprint": "8ad776d37d96c39e",
+	"overall": "主角外观（透明雨衣、马尾辫、内搭深色衣物）及画风（冷色调、阴雨、写实质感）全片保持高度一致，场景在室内外切换自然，未发现明显穿帮或逻辑跳变。",
+	"shots": [
+		{
+			"shotId": "SH01",
+			"appearance": "透明雨衣、金色短发扎马尾、内搭深色衣物",
+			"issues": []
+		},
+		{
+			"shotId": "SH02",
+			"appearance": "透明雨衣、金色短发扎马尾、内搭深色衣物",
+			"issues": []
+		},
+		{
+			"shotId": "SH03",
+			"appearance": "透明雨衣、金色短发扎马尾、内搭深色衣物",
+			"issues": []
+		},
+		{
+			"shotId": "SH04",
+			"appearance": "未出现",
+			"issues": []
+		},
+		{
+			"shotId": "SH05",
+			"appearance": "透明雨衣、金色短发扎马尾、内搭深色衣物",
+			"issues": []
+		}
+	]
+}

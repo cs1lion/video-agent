@@ -1,0 +1,37 @@
+{
+	"brief": {
+		"logline": "写实悬疑短片：末班地铁车厢，加班的女孩许星然捡到一本被人落下的日记，扉页写着「写给捡到它的人」。她按日记里的站名一站站找失主，每站遇到一个线索人物，最后发现日记是留给这条地铁线的告别礼物。旁白三句制造悬念，对白简短克制。写实末班地铁：空荡车厢、隧道灯闪、报站声。",
+		"keyMessage": "有人把想说的话，留在了最后一班车。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 6,
+		"clipDurationSec": 6,
+		"fps": 24,
+		"motionIntensity": "low",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "许星然",
+				"description": "27 岁女性加班白领，深灰色大衣配工牌挂绳，黑长发扎低马尾，眼下有倦容但眼神亮"
+			},
+			{
+				"name": "值班员",
+				"description": "55 岁男性地铁站值班员，藏蓝色制服配制帽，花白鬓角，手里拿着对讲机"
+			}
+		],
+		"scenes": [
+			{
+				"name": "末班地铁",
+				"description": "写实末班地铁：空荡橙色座椅车厢、隧道灯频闪车窗、报站屏微光"
+			}
+		],
+		"musicBrief": "低频隧道轰鸣，悬念处突然安静。"
+	}
+}

@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "16:9 aspect ratio cinematic medium shot of 29-year-old East Asian male programmer Lu Yiming with short slightly messy black hair, wearing dark grey hoodie with work badge lanyard around neck, holding steaming paper oden cup in both hands, leaning against slightly rusted metal railing on realistic late-night high-rise office rooftop with worn cement floor and faint stains, blurred vast city light sea and dark deep blue night sky in background, soft mixed lighting from distant city glow and warm oden lamp with subtle cool side light from upper left, slow subtle dolly push-in to highlight his relaxed late-night expression, naturalistic color grade with lifted shadows and warm highlights, realistic urban lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "16:9 aspect ratio cinematic medium shot of 28-year-old East Asian female product manager Xia Cheng with long loose hair draped over shoulders, wearing oatmeal coat with beige scarf, leaning on metal railing and twirling smartphone in hand, standing on realistic late-night high-rise office rooftop with blurred city light sea in background, soft mixed lighting from warm convenience store glow and cool moonlight from upper left on her face, slow subtle pan left to follow her gaze towards distant city lights, naturalistic color grade with slightly desaturated cool tones and warm highlights, intimate realistic urban nightscape style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "16:9 aspect ratio cinematic medium wide shot of Lu Yiming in dark grey hoodie with work badge lanyard around neck, short slightly messy black hair, holding steaming paper oden cup, and Xia Cheng in oatmeal coat with beige scarf, long loose hair draped over shoulders, both standing by metal railing on realistic late-night high-rise office rooftop, two steaming paper oden cups placed on the railing ledge, blurred vast twinkling city light sea in distant background, gentle wind blowing their clothes, soft mixed lighting from warm oden lamp and cool upper left moonlight, slow subtle handheld drift to capture both characters and the expansive urban night background, naturalistic color grade with lifted shadows and warm highlights, realistic intimate urban nightscape style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "16:9 aspect ratio cinematic close-up of 28-year-old East Asian female product manager Xia Cheng with long loose hair draped over shoulders, wearing oatmeal coat with beige scarf, soft smile while gazing at the river bridge below the office building, wind brushing her hair, leaning on metal railing with blurred city light sea in background, soft mixed lighting from warm convenience store glow and cool upper left moonlight on her face, slow subtle dolly push-in to emphasize her soft sincere expression, naturalistic color grade with warm highlights and slightly desaturated cool tones, realistic intimate urban lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "16:9 aspect ratio cinematic close-up of two steaming paper cups of hot oden placed on slightly rusted metal railing, realistic late-night high-rise office rooftop setting with blurred twinkling city light sea in background, warm convenience store oden lamp light illuminating the cups with subtle cool moonlight from upper left, static locked-off composition with shallow depth of field to keep the oden cups sharp and background softly blurred, naturalistic color grade with warm highlights and lifted shadows, realistic intimate urban lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

@@ -1,0 +1,90 @@
+{
+	"title": "海拔四千米的信",
+	"logline": "帕米尔高原垭口，马背邮递员艾力为边防士兵小杨送来大学录取通知书，一条邮路串起两代人的牵挂。",
+	"shots": [
+		{
+			"id": "SH01",
+			"narrationZh": "帕米尔高原，海拔四千米的风，吹了三十年。",
+			"narrationEn": "The wind of the Pamir Plateau, at 4,000 meters above sea level, has blown for thirty years.",
+			"visual": "A wide shot of the Pamir mountain pass, with snow-capped peaks stretching to the horizon, prayer flags fluttering in the wind, and a horse's hooves stepping on thick snow.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "沉缓厚重，带高原风的粗粝感，语速偏慢，四千米三十年重读，海拔四千米的风后稍作停顿"
+		},
+		{
+			"id": "SH02",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Aili, with a tanned face, wearing a dark green worn cotton coat and a fur hat, rides a horse towards the pass, smiling with white teeth visible, the mail bag on his shoulder covered in ice chips.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "艾力",
+				"lines": {
+					"zh": "小杨！等急了吧？",
+					"en": "Xiao Yang! Have you been waiting anxiously?"
+				},
+				"emotion": "笑着喊",
+				"voiceId": "zixinnansheng",
+				"rawDurationSec": 1.848,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgib2oo-19/tts-SH02.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "沉稳平和，带风霜浸透的松弛感，语速平稳稍缓，三十重读，气息带高原粗粝感"
+		},
+		{
+			"id": "SH03",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Xiao Yang, wearing a military coat and a fleece hat, his face red from the cold wind, stands straight at the pass, eyes fixed on the mail bag on Aili's shoulder.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "小杨",
+				"lines": {
+					"zh": "艾哥！可算把你盼来了！",
+					"en": "Brother Aili! I've been waiting for you!"
+				},
+				"emotion": "激动通红脸",
+				"voiceId": "qingniandaxuesheng",
+				"rawDurationSec": 3.048,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgib2oo-19/tts-SH03.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "带腼腆的急切感，语速稍快，等两个月重读，气息稍促，藏不住盼头"
+		},
+		{
+			"id": "SH04",
+			"narrationZh": "",
+			"narrationEn": "",
+			"visual": "Aili takes off the ice-covered mail bag, picks the top frost-covered letter, and hands it to Xiao Yang, whose hands are trembling as he reaches out.",
+			"durationSec": 6,
+			"audioMode": "dialogue",
+			"dialogue": {
+				"characterId": "艾力",
+				"lines": {
+					"zh": "最上层，你的大学录取通知书。",
+					"en": "The top one is your university admission letter."
+				},
+				"emotion": "温和笑",
+				"voiceId": "zixinnansheng",
+				"rawDurationSec": 2.784,
+				"audioDurationSec": 6,
+				"audioUrl": "https://6d79-myagent-d0glujkt6c30cbe8a-1253451683.cos.ap-shanghai.myqcloud.com/video-agent/run-mtgib2oo-19/tts-SH04.mp3",
+				"dubOver": true
+			},
+			"ttsDirection": "温和带暖意，语速平稳稍缓，递物处气息稍沉，藏不住的喜意"
+		},
+		{
+			"id": "SH05",
+			"narrationZh": "海拔四千米，信照样到。",
+			"narrationEn": "At 4,000 meters above sea level, letters still arrive on time.",
+			"visual": "A close-up of Xiao Yang holding the admission letter, smiling with tears in his eyes, the JD Express logo and slogan 'Deliver Everywhere' appear at the bottom of the frame.",
+			"durationSec": 6,
+			"audioMode": "narration",
+			"ttsDirection": "兴奋上扬，语速稍快，照样到重读并带笑意，气息轻快明亮，藏不住雀跃"
+		}
+	]
+}

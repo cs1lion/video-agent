@@ -1,0 +1,37 @@
+{
+	"brief": {
+		"logline": "写实海岛短片：南海渔排上，初三女孩海花在网箱边的木板屋里上网课，台风预警让回岛的渡轮停航——班主任林老师冒雨坐渔船把试卷送到渔排。师生在摇晃的渔排上完成一场特殊的考试，父亲在旁默默收网。三句旁白交代台风与海，对白带着海风味。写实海上渔排：浮桶、木板屋、渔网与浮标、雨点打在海面。",
+		"keyMessage": "浪再大，课不能停。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 6,
+		"fps": 24,
+		"motionIntensity": "medium",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "海花",
+				"description": "14 岁女性渔家女孩，黑色马尾配旧红发绳，校服外套罩着防雨塑料布，膝上摊着试卷"
+			},
+			{
+				"name": "林老师",
+				"description": "36 岁女性班主任，短发别耳，深蓝色雨衣滴水，怀里抱着用塑料袋裹了三层的试卷袋"
+			}
+		],
+		"scenes": [
+			{
+				"name": "海上渔排",
+				"description": "写实南海渔排：浮桶木板屋、渔网浮标、远处避风港船影、雨点砸在海面起白点"
+			}
+		],
+		"musicBrief": "雨打渔排声与远处海浪。"
+	}
+}

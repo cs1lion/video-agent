@@ -1,0 +1,80 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "艾力",
+			"design": "38-year-old male horse-mounted mail carrier with tanned weathered face, wearing worn dark green cotton coat and dark fur hat, mail bag with ice chips slung over shoulder, showing white teeth when smiling, realistic highland style, warm skin tone under high-altitude direct sunlight with sharp cold shadows, full-body front view, documentary naturalistic texture",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"url": "/api/runs/run-mtgib2oo-19/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "小杨",
+			"design": "20-year-old young border soldier with red face chapped by cold wind, wearing dark military coat and fleece hat, standing straight with upright posture, hands shaking slightly when taking the letter, realistic highland style, cool desaturated overall tone with warm highlight on red face, sharp cold shadows, full-body front view, naturalistic rugged texture",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"url": "/api/runs/run-mtgib2oo-19/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "覆冰邮包",
+			"design": "Worn brown leather mail bag covered with sharp white ice chips, stuffed with letters and small parcels, showing frayed edges and worn straps, realistic leather and frost texture, close-up view to highlight ice details, matching cool desaturated tone with warm brown fabric highlights",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"url": "/api/runs/run-mtgib2oo-19/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "录取通知书",
+			"design": "Official university admission letter with red official seal, paper slightly frosted at edges, clear printed admission text visible, realistic paper texture, close-up view, warm selective highlight on the letter to make it stand out against cold blue background",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-31T00:37:39.192Z"
+			},
+			"url": "/api/runs/run-mtgib2oo-19/files/assets/design-prop-PR02.png"
+		},
+		{
+			"id": "PR03",
+			"category": "prop",
+			"name": "帕米尔军马",
+			"design": "Stocky plateau horse with thick brown fur, white frost on mane and hooves, worn leather saddle with mail bag tied on, realistic animal texture, full-body side view, matching cool desaturated tone with warm fur highlights, suitable for snow-covered highland environment",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR03.png",
+			"url": "/api/runs/run-mtgib2oo-19/files/assets/design-prop-PR03.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "帕米尔高原垭口",
+			"design": "Realistic Pamir mountain pass at 4000m altitude, endless snow-capped peaks stretching to horizon, colorful prayer flags fluttering in strong wind, horse hoof prints on thick snow, sky gradient from bright blue to deep dark blue, bright high-altitude direct sunlight with sharp cold shadows, cool desaturated overall tone with warm skin and fabric highlights, wide panoramic view, epic rugged documentary landscape style",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"url": "/api/runs/run-mtgib2oo-19/files/assets/design-scene-SC01.png"
+		}
+	],
+	"generatedAt": "2026-08-31T00:36:11.573Z"
+}

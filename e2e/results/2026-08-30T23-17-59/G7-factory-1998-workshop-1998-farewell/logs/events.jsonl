@@ -1,0 +1,78 @@
+{"id":"ev-c1fa832d","at":"2026-08-31T00:10:18.822Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实年代短片：1998 年冬，国营机床厂车间。老师傅顾长根收到车间的转岗名单，徒…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"}
+{"id":"ev-f9a4fbca","at":"2026-08-31T00:10:18.825Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 5 镜叙事骨架。"}
+{"id":"ev-1f032bd2","at":"2026-08-31T00:10:47.659Z","from":"writer","to":"producer","kind":"status","text":"⚠️ 剧本对白密度不足（1 镜有对白，brief 要求 ≥3）——强化重写一次。"}
+{"id":"ev-c9a05a0d","at":"2026-08-31T00:11:16.751Z","from":"writer","to":"art","kind":"handoff","text":"剧本《1998冬，机床边的名字》完成：5 镜，30s。Logline：1998年冬国营机床厂，顾长根发现徒弟大刘偷换转岗名单，师徒机床边的争执道出两代工人的坚守，传递机器不停人就得往前的信念。。请据此制定全片视觉规范。"}
+{"id":"ev-274bdc1a","at":"2026-08-31T00:11:16.751Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-f784327c","at":"2026-08-31T00:11:57.269Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：6 张概念设计图（人物 2 · 道具 3 · 场景 1）逐张绘制中。"}
+{"id":"ev-37a82e87","at":"2026-08-31T00:12:00.898Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「顾长根」（人物 CH01）"}
+{"id":"ev-a8f75ebd","at":"2026-08-31T00:12:04.352Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「大刘」（人物 CH02）"}
+{"id":"ev-5bf97012","at":"2026-08-31T00:12:07.961Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「转岗名单」（道具 PR01）"}
+{"id":"ev-c229a06f","at":"2026-08-31T00:12:11.982Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「老式机床」（道具 PR02）"}
+{"id":"ev-01e52e2c","at":"2026-08-31T00:12:15.583Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「车间广播喇叭」（道具 PR03）"}
+{"id":"ev-07ab210c","at":"2026-08-31T00:12:19.045Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「1998冬国营机床车间」（场景 SC01）"}
+{"id":"ev-6f73cc55","at":"2026-08-31T00:12:19.047Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 6/6 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-e2a96c40","at":"2026-08-31T00:12:19.049Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-d35af461","at":"2026-08-31T00:12:42.643Z","from":"reviewer","to":"art","kind":"redo","text":"设计图自审发现问题 ⚠️：「转岗名单」文字为乱码，非真实中文姓名；未见名字被涂改后重写的清晰痕迹。安排美术指导带意见重绘。"}
+{"id":"ev-e66a5414","at":"2026-08-31T00:12:56.403Z","from":"art","to":"reviewer","kind":"handoff","text":"「转岗名单」已按审核意见重绘，提交复审…"}
+{"id":"ev-15540be6","at":"2026-08-31T00:13:15.345Z","from":"art","to":"reviewer","kind":"qa","text":"设计图重绘后仍有问题 ⚠️：「转岗名单」字体风格严重不符：设计要点要求1990年代工厂标准字体，画面呈现为古文/篆书风格，且出现'国尔钍'、'史榜炮'、'贞为升稗'等非正常用字或乱码、缺少官方印章：设计要点要求印有工厂转岗名单印章，画面中未见明显印章痕迹、涂改细节不符：设计要点要求姓名被涂掉后用潦草笔迹覆盖新姓名，画面中仅见涂鸦痕迹，未清晰呈现被覆盖的新姓名。已在帧上标注，确认前请人工定夺（可手动重绘或确认放行）。"}
+{"id":"ev-ed4d84cf","at":"2026-08-31T00:13:15.346Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / retro documentary / industrial realism / 1990s Chinese state factory / gritty realism / period accurate / muted tone / cold winter atmosphere]，色板 #1a1a1a、#2c3e50、#8b4513、#d3d3d3。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-0aefdc3e","at":"2026-08-31T00:13:15.348Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-a55276a5","at":"2026-08-31T00:13:19.212Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-4e70f1d9","at":"2026-08-31T00:13:19.213Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-737a8ed0","at":"2026-08-31T00:13:19.214Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-57a093c5","at":"2026-08-31T00:13:49.290Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：顾长根(CH01)、1998冬国营机床车间(SC01)。"}
+{"id":"ev-5f5e8ed0","at":"2026-08-31T00:13:49.291Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-79ef7657","at":"2026-08-31T00:13:53.373Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：顾长根(CH01)、1998冬国营机床车间(SC01)。"}
+{"id":"ev-e2180104","at":"2026-08-31T00:13:53.375Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-61b23c6a","at":"2026-08-31T00:13:57.760Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：顾长根(CH01)、1998冬国营机床车间(SC01)。"}
+{"id":"ev-ac6e9f41","at":"2026-08-31T00:13:57.761Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-8b0223d0","at":"2026-08-31T00:14:02.060Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：顾长根(CH01)、1998冬国营机床车间(SC01)。"}
+{"id":"ev-dcae2cdb","at":"2026-08-31T00:14:02.062Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-bb94037f","at":"2026-08-31T00:14:06.498Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：顾长根(CH01)、1998冬国营机床车间(SC01)。"}
+{"id":"ev-ee1021db","at":"2026-08-31T00:14:06.499Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-9dadfbfc","at":"2026-08-31T00:14:10.521Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-fbb1a57f","at":"2026-08-31T00:14:10.522Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-1c0aebbc","at":"2026-08-31T00:14:14.362Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「音频」继续，直至成片。"}
+{"id":"ev-789bacf4","at":"2026-08-31T00:14:14.364Z","from":"sound","to":"editor","kind":"status","text":"声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"}
+{"id":"ev-60e9e240","at":"2026-08-31T00:14:14.367Z","from":"sound","to":"editor","kind":"status","text":"配音选角：旁白＝播音男声；角色 顾长根→自信男声、大刘→磁性男声；与角色声线全部错开。"}
+{"id":"ev-fbdb53fa","at":"2026-08-31T00:14:26.699Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH01（指导：沉缓低语，带金属寒意的厚重感，尾音稍沉，「九八冬」轻顿，气息…）"}
+{"id":"ev-97461e68","at":"2026-08-31T00:14:29.842Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH05（指导：沉稳有力，语速放缓，「机器不停」「往前走」重读，气息沉而稳，…）"}
+{"id":"ev-a4a41ad2","at":"2026-08-31T00:14:29.843Z","from":"sound","to":"editor","kind":"handoff","text":"旁白轨交付：2/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"}
+{"id":"ev-79eb56c6","at":"2026-08-31T00:14:29.848Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 6s · 关键帧+提示词 图生视频）：Cinematic wide environmental shot of 1990s Chinese state-own…"}
+{"id":"ev-3e07be93","at":"2026-08-31T00:14:33.156Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH02 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-81233628","at":"2026-08-31T00:14:33.853Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH02 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-095efb0f","at":"2026-08-31T00:14:33.857Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic medium close-up of 52-year-old male veteran lathe …"}
+{"id":"ev-e225ecef","at":"2026-08-31T00:14:37.373Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH03 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-12857cc4","at":"2026-08-31T00:14:37.788Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH03 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-2129aea5","at":"2026-08-31T00:14:37.791Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic medium shot of 26-year-old male apprentice Da Liu …"}
+{"id":"ev-921ed973","at":"2026-08-31T00:14:41.234Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH04 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-d8739b06","at":"2026-08-31T00:14:41.634Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH04 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-097fcaff","at":"2026-08-31T00:14:41.638Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 6s · 台词音频驱动口型）：Cinematic close-up of 52-year-old male veteran lathe operato…"}
+{"id":"ev-e9a8cb26","at":"2026-08-31T00:14:41.643Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 提交生成（720p · 6s · 关键帧+提示词 图生视频）：Cinematic wide shot of 1990s Chinese state-owned machine too…"}
+{"id":"ev-720e9b00","at":"2026-08-31T00:16:34.679Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/5）"}
+{"id":"ev-2bd5c649","at":"2026-08-31T00:16:34.899Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-69fbc4f3","at":"2026-08-31T00:16:35.075Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/5）"}
+{"id":"ev-67ce8a7d","at":"2026-08-31T00:16:35.299Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-7981d4f7","at":"2026-08-31T00:16:35.479Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/5）"}
+{"id":"ev-4d10b839","at":"2026-08-31T00:16:35.699Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-973e6c97","at":"2026-08-31T00:16:35.870Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH04 生成完成 ✅（4/5）"}
+{"id":"ev-ac4668b7","at":"2026-08-31T00:17:47.020Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH05 生成完成 ✅（5/5）"}
+{"id":"ev-5824dda0","at":"2026-08-31T00:17:47.025Z","from":"tech","to":"editor","kind":"handoff","text":"镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"}
+{"id":"ev-4c254963","at":"2026-08-31T00:17:47.026Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-639acfa0","at":"2026-08-31T00:18:01.527Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 22.6s · 720p 16:9，转场：叠化 0.5s，音效：嗖声，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-d8e7d219","at":"2026-08-31T00:19:18.126Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 3 处异常：SH01（深蓝色工装、深蓝色鸭舌帽、老年男性、灰白短发）、SH03（深蓝色工装、深蓝色鸭舌帽、面部特征较年轻（无皱纹））、SH05（深蓝色工装、深蓝色鸭舌帽、两位老年男性）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-5f94694a","at":"2026-08-31T00:19:18.127Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：通过 ✅（综合 82）。最短板 audioSync 40 分。另有 3 处跨镜一致性异常请关注。"}
+{"id":"ev-36a19545","at":"2026-08-31T00:19:18.128Z","from":"reviewer","to":"tech","kind":"status","text":"自动质检-修复闭环：镜头 SH05（warn：人物: 师徒同框时，右侧角色（应为25岁的大刘）形象过于年长，与SH03中年轻徒）派发补拍重审。"}
+{"id":"ev-b0e380d2","at":"2026-08-31T00:19:18.133Z","from":"producer","to":"client","kind":"user","text":"请求重做镜头 SH05：The camera pans from the old lathe where the two stand to a brand new CNC machine tool placed at the corner of the works。修复审核问题：人物: 师徒同框时，右侧角色（应为25岁的大刘）形象过于年长，与SH03中年轻徒弟形象不符，疑似串脸或AI生成年龄偏差。。保持人物性别、年龄、服装与发型与设计完全一致。"}
+{"id":"ev-d023fd54","at":"2026-08-31T00:19:18.134Z","from":"director","to":"tech","kind":"director","text":"安排补拍镜头 SH05（第 1/3 轮）。修复问题：人物: 师徒同框时，右侧角色（应为25岁的大刘）形象过于年长，与SH03中年轻徒弟形象不符，疑似串脸或AI生成年龄偏差。。旧片段将备份为历史版本，新片段替换主版本后重新装配。"}
+{"id":"ev-a1c4adb3","at":"2026-08-31T00:19:18.135Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}
+{"id":"ev-8e9cb00c","at":"2026-08-31T00:19:18.137Z","from":"storyboard","to":"tech","kind":"redo","text":"外观反馈涉及镜头 SH05，先重绘关键帧（The camera pans from the old lathe where the two stand to a …）再补拍，避免旧首帧锚定导致重做无效。"}
+{"id":"ev-64c42969","at":"2026-08-31T00:19:18.203Z","from":"storyboard","to":"tech","kind":"status","text":"镜头 SH05 关键帧重绘未成功 ⚠️，本次仍按旧首帧补拍。"}
+{"id":"ev-29f1e04b","at":"2026-08-31T00:19:18.206Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 重新提交生成（第 1 轮 · 关键帧锚定）。"}
+{"id":"ev-7997c3cc","at":"2026-08-31T00:20:27.460Z","from":"tech","to":"editor","kind":"handoff","text":"镜头 SH05 新片段就位 ✅（旧版本备份为 assets/clip-SH05_v1.mp4）。剪辑师重新装配时间线与字幕，随后复审。"}
+{"id":"ev-9bb41616","at":"2026-08-31T00:20:27.462Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-4eb7b6f8","at":"2026-08-31T00:20:43.317Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 22.6s · 720p 16:9，转场：叠化 0.5s，音效：上升音，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-e94a97dd","at":"2026-08-31T00:21:14.185Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 3 处异常：SH01（深蓝色工装、深蓝色鸭舌帽、老年男性、灰白短发）、SH03（深蓝色工装、深蓝色鸭舌帽、面部特征较年轻（无皱纹））、SH05（深蓝色工装、深蓝色鸭舌帽、两位老年男性）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-0fd35631","at":"2026-08-31T00:21:14.186Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：通过 ✅（综合 76）。最短板 audioSync 40 分。另有 3 处跨镜一致性异常请关注。"}
+{"id":"ev-80b5141f","at":"2026-08-31T00:21:14.188Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}
+{"id":"ev-2cf6ad8b","at":"2026-08-31T00:21:14.189Z","from":"producer","to":"client","kind":"redo","text":"重做 SH05 后 QA 评分：镜头裁决 warn→ok；visualConsistency 85→60 ⚠️ / pacing 90→85 ⚠️ / physicalAccuracy 95→80 ⚠️ / characterConsistency 75→70 ⚠️"}

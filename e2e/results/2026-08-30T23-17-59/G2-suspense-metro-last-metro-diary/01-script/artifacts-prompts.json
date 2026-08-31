@@ -1,0 +1,29 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide 16:9 shot of 27-year-old Chinese woman Xu Xingran with low black ponytail, faint dark circles under eyes but sharp bright gaze, wearing dark grey wool coat with black lanyard holding work ID, sitting in a realistic late-night subway carriage with rows of bright orange empty seats, flickering cool tunnel lights passing through windows and dim station sign glow on the ceiling, low-key ambient lighting with cool underlighting on her face and warm orange seat reflections, slow dolly push-in movement to follow her picking up a leather notebook from the adjacent seat, desaturated cool color grade with boosted orange accents, gritty realistic suspense slice-of-life style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Close-up 16:9 shot of 27-year-old Chinese woman Xu Xingran with low black ponytail, faint dark circles under eyes but sharp bright gaze, wearing dark grey wool coat with black lanyard holding work ID, looking at an open worn leather notebook in the dim empty late-night subway carriage, shallow depth of field blurring the carriage background, low cool underlighting from the carriage ceiling with soft flickering orange light from passing tunnel windows illuminating her face and the notebook, static locked-off composition with subtle handheld drift to match her confused expression, cinematic realistic suspense gritty urban moody style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Medium wide 16:9 shot of 27-year-old Chinese woman Xu Xingran with low black ponytail, faint dark circles under eyes but sharp bright gaze, wearing dark grey wool coat with black lanyard holding work ID, standing on an empty late-night subway platform with dim digital station display lights, cool underlighting from platform edge lights and grey concrete floor with faint wet marks, low cool ambient light from platform displays mixed with soft orange glow from distant carriage lights, handheld follow shot moving slightly with her as she walks toward the station staff then static lock-off when she speaks, cinematic realistic suspense gritty urban slice-of-life style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Medium 16:9 shot of 55-year-old Chinese male station staff with graying temples, wearing navy blue subway uniform and matching peaked cap, holding a black walkie-talkie in hand, standing on the empty late-night subway platform with dim digital station display lights and cool underlighting, dim station ambient light on his face with cool blue underlighting from platform edge, static locked-off composition with shallow depth of field to focus on his calm expression as he shakes his head gently at Xu Xingran off-frame, realistic slice-of-life gritty urban style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Medium 16:9 shot of 27-year-old Chinese woman Xu Xingran with low black ponytail, faint dark circles under eyes but sharp bright gaze, wearing dark grey wool coat with black lanyard holding work ID, sitting in a realistic late-night subway carriage with rows of bright orange empty seats, flickering cool tunnel lights reflected on the carriage window beside her, desaturated cool color grade with boosted orange accents, low-key ambient lighting with flickering cool tunnel light streaks on the window and warm orange seat glow on her face, slow pan left to follow her gaze from the notebook in her hand to the passing tunnel outside the window, cinematic realistic suspense moody urban style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH06",
+			"prompt": "Wide 16:9 shot of 27-year-old Chinese woman Xu Xingran with low black ponytail, faint dark circles under eyes but sharp bright gaze, wearing dark grey wool coat with black lanyard holding work ID, placing a leather notebook back on a bright orange empty seat in the realistic late-night subway carriage as the train pulls into the terminal station, dim station sign glow mixing with warm orange seat reflections and flickering tunnel lights outside the windows, static wide shot with slow dolly pull-back as she walks toward the carriage door and glances back at the carriage before the shot fades to black, cinematic realistic suspense gritty urban slice-of-life style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

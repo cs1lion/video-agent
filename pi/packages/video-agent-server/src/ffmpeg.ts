@@ -69,6 +69,49 @@ export function runFfmpegCapture(
 	});
 }
 
+/** 从 silencedetect 日志解析静音区间，反转为语音段（秒） */
+export function parseSpeechSegments(log: string, totalSec: number, minSilenceSec = 0.25): { start: number; end: number }[] {
+	const silences: { start: number; end: number }[] = [];
+	let cur: { start: number; end: number } | null = null;
+	for (const line of log.split(/\r?\n/)) {
+		const sm = line.match(/silence_start:\s*([\d.]+)/);
+		if (sm) cur = { start: parseFloat(sm[1]!), end: totalSec };
+		const em = line.match(/silence_end:\s*([\d.]+)/);
+		if (em && cur) {
+			cur.end = parseFloat(em[1]!);
+			if (cur.end - cur.start >= minSilenceSec) silences.push(cur);
+			cur = null;
+		}
+	}
+	if (cur) {
+		cur.end = totalSec;
+		if (cur.end - cur.start >= minSilenceSec) silences.push(cur);
+	}
+	// 静音区间取反 → 语音段
+	const speech: { start: number; end: number }[] = [];
+	let pos = 0;
+	for (const si of silences) {
+		if (si.start - pos >= 0.15) speech.push({ start: pos, end: si.start });
+		pos = Math.max(pos, si.end);
+	}
+	if (totalSec - pos >= 0.15) speech.push({ start: pos, end: totalSec });
+	return speech;
+}
+
+/** 实测媒体文件内的人声/有声段（silencedetect -38dB / 0.25s），供字幕精确对齐 */
+export async function detectSpeechSegments(cwd: string, mediaPath: string, signal?: AbortSignal): Promise<{ start: number; end: number }[]> {
+	const { stderr } = await runFfmpegCapture(
+		["-v", "info", "-i", mediaPath, "-af", "silencedetect=noise=-38dB:d=0.25", "-f", "null", "-"],
+		cwd,
+		signal,
+	);
+	const total = (() => {
+		const m = stderr.match(/Duration:\s*(\d+):(\d{2}):(\d{2})\.(\d+)/);
+		return m ? Number(m[1]!) * 3600 + Number(m[2]!) * 60 + Number(m[3]!) + Number(`0.${m[4]}`) : 0;
+	})();
+	return parseSpeechSegments(stderr, total);
+}
+
 /**
  * 解码任意媒体的单声道 PCM（s16le），供音频比对类校验（台词跟读包络相关性）使用。
  * 8kHz 足够包络分析且体积小（1 分钟 ≈ 960KB）。

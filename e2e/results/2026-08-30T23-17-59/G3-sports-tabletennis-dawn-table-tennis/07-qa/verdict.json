@@ -1,0 +1,66 @@
+{
+	"overall": "fail",
+	"score": 72,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 75
+		},
+		{
+			"id": "visualConsistency",
+			"score": 70
+		},
+		{
+			"id": "pacing",
+			"score": 85
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 90
+		},
+		{
+			"id": "characterConsistency",
+			"score": 55
+		},
+		{
+			"id": "audioSync",
+			"score": 40
+		},
+		{
+			"id": "textQuality",
+			"score": 90
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH02",
+			"verdict": "fail",
+			"reason": "人物: 少年球衣颜色由红色突变为蓝色，与前后镜头及角色设定不符"
+		},
+		{
+			"id": "SH03",
+			"verdict": "warn",
+			"reason": "人物: 父亲服装从夹克变为连帽衫，与前序镜头不一致"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 5,
+		"issues": []
+	}
+}

@@ -1,0 +1,37 @@
+{
+	"brief": {
+		"logline": "写实轻喜剧短片：代驾司机小马接了一位话痨醉客——客户一路吹嘘自己当年「差一点就上市」，小马一句接一句地不动声色拆台，最后客户在小区门口清醒了，反过来请教小马「你们公司还招人吗」。两句旁白，快节奏对白与误会反转，节奏明快剪得碎。",
+		"keyMessage": "醉话吹出去，清醒收回来。"
+	},
+	"options": {
+		"resolution": "720p",
+		"aspectRatio": "16:9",
+		"shotCount": 5,
+		"clipDurationSec": 5,
+		"fps": 24,
+		"motionIntensity": "medium",
+		"detailBoost": true,
+		"promptLanguage": "zh",
+		"negativePrompt": "anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects",
+		"audioDrive": "dialogue"
+	},
+	"coSpace": {
+		"characters": [
+			{
+				"name": "小马",
+				"description": "26 岁男性代驾司机，深蓝色反光背心，短黑发，面无表情但眼里全是戏"
+			},
+			{
+				"name": "钱总",
+				"description": "45 岁男性微醺客户，竖条纹衬衫松领带，头发微乱，手里攥着车钥匙转圈"
+			}
+		],
+		"scenes": [
+			{
+				"name": "夜间车内",
+				"description": "写实代驾夜间车内：方向盘、后视镜挂件、路灯光扫过车内、夜色车流"
+			}
+		],
+		"musicBrief": "轻快拨弦点缀，卡在拆台句上。"
+	}
+}

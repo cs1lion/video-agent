@@ -1,0 +1,66 @@
+{
+	"overall": "pass",
+	"score": 88,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 95
+		},
+		{
+			"id": "visualConsistency",
+			"score": 98
+		},
+		{
+			"id": "pacing",
+			"score": 95
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 93
+		},
+		{
+			"id": "characterConsistency",
+			"score": 98
+		},
+		{
+			"id": "audioSync",
+			"score": 40
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过，画面呈现帕米尔高原雪景、马背邮递员与经幡，符合开场剧情设定，无物理、人物、文字及字幕问题。"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "通过，呈现邮递员与士兵在垭口相遇的互动场景，人物状态自然，画面风格与前镜一致，无异常。"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过，呈现大学录取通知书递送的关键情节，人物动作合理，画面无物理或人物异常，字幕正常。"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过，特写呈现邮递员交付信件后的情绪表达，符合剧情收尾，人物形象一致，无异常。"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "通过，呈现邮路延伸的收尾画面，契合“一条邮路串起牵挂”的主题，无物理、人物、文字及字幕问题。"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 5,
+		"issues": []
+	}
+}

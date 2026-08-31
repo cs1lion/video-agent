@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide shot of 26-year-old male designated driver Xiao Ma wearing a dark blue polyester reflective vest with fluorescent yellow strips, short black hair, neutral expression with playful glint in eyes, sitting in the driver's seat of a realistic car interior at night, 45-year-old slightly tipsy male Qian in vertically striped shirt with loosened tie slumps in the back seat twirling car keys, visible steering wheel, rearview mirror with hanging charm, blurred night city traffic outside the car windows, mixed cool deep blue ambient light from windows and warm amber from dashboard and street lamps, slow dolly push-in capturing their interaction, high-contrast cool-warm split tone, realistic comedy lifestyle style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Cinematic medium close-up shot, handheld slow pan left from 45-year-old slightly tipsy male Qian in vertically striped shirt with loosened tie, his tipsy smile freezing, to 26-year-old male designated driver Xiao Ma wearing a dark blue polyester reflective vest with fluorescent yellow strips, short black hair, neutral expression with playful glint in eyes reflected in the rearview mirror, realistic night car interior, street lights sweep across the car, mixed cool deep blue ambient light from windows and warm amber from street lamps, high-contrast cool-warm split tone, fast-paced realistic comedy style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Cinematic medium shot, medium dolly push-in to 45-year-old slightly tipsy male Qian in vertically striped shirt with loosened tie leaning forward waving his hand enthusiastically, car keys glinting in his hand, 26-year-old male designated driver Xiao Ma wearing a dark blue polyester reflective vest with fluorescent yellow strips, short black hair, neutral expression with playful glint in eyes in the driver's seat, realistic car interior at night with blurred night city traffic outside the windows, warm amber street lamp light mixed with cool blue window light, high-contrast cool-warm split tone, snappy realistic comedy tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Cinematic medium shot, handheld follow shot matching the car's turning motion, 45-year-old male Qian in vertically striped shirt with loosened tie, his smile dropping completely, 26-year-old male designated driver Xiao Ma wearing a dark blue polyester reflective vest with fluorescent yellow strips, short black hair, lips twitching subtly with suppressed laughter, rearview mirror pendant sways, realistic night car interior, mixed cool deep blue ambient light from windows and warm amber from dashboard and street lamps, high-contrast cool-warm split tone, comedic realistic style. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Cinematic medium shot, static locked-off framing 26-year-old male designated driver Xiao Ma wearing a dark blue polyester reflective vest with fluorescent yellow strips, short black hair, neutral expression with playful glint in eyes holding out a payment receipt, 45-year-old male Qian in vertically striped shirt with loosened tie sitting up straight looking fully alert, realistic night residential community entrance with warm street lamp lighting, parked car at the curb, quiet suburban night atmosphere, high-contrast warm lighting to highlight Qian's sudden alert expression, snappy realistic comedy tone. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}
