@@ -122,3 +122,83 @@ describe("dialogueDerivedSec（A4b 以音频反推镜长）", () => {
 		assert.equal(dialogueDerivedSec(12.6), 12, "超上限钳 12");
 	});
 });
+
+describe("词级时间戳字幕（TTS timestamp=true 返回 JSON）", () => {
+	it("adapter 应在 TTS JSON 响应里提取 wordTimestamps 并下载音频", async () => {
+		const { createOpenAICompatibleAdapter } = await import("../../coding-agent/examples/extensions/studio/media/openai-compatible.ts");
+		const adapter = createOpenAICompatibleAdapter({
+			id: "step-tts",
+			kind: "tts",
+			type: "openai-compatible",
+			baseUrl: "https://api.stepfun.com",
+			path: "/step_plan/v1/audio/speech",
+			model: "stepaudio-2.5-tts",
+			apiKey: "test",
+		});
+		const payload = {
+			url: "https://cdn.example.com/tts.mp3",
+			words: [
+				{ text: "你好", start: 0.1, end: 0.4 },
+				{ text: "世界", start: 0.5, end: 0.9 },
+			],
+		};
+		const originalFetch = globalThis.fetch;
+		let downloadedUrl = "";
+		globalThis.fetch = async (url: string) => {
+			if (typeof url === "string" && url.startsWith("https://cdn.example.com/tts.mp3")) {
+				downloadedUrl = url;
+				return new Response(new ArrayBuffer(8), { status: 200, headers: { "content-type": "audio/mpeg" } }) as unknown as Response;
+			}
+			return originalFetch(url);
+		};
+		try {
+			const result = await adapter.generate({
+				kind: "tts",
+				prompt: "你好世界",
+				params: { timestamp: true, return_url: true },
+				outputBase: "/tmp/tts-out/tts-test",
+				signal: new AbortController().signal,
+			});
+			assert.ok(result.filePath.endsWith(".mp3"));
+			assert.equal(result.meta?.url, "https://cdn.example.com/tts.mp3");
+			assert.deepEqual(result.meta?.wordTimestamps, [
+				{ text: "你好", start: 0.1, end: 0.4 },
+				{ text: "世界", start: 0.5, end: 0.9 },
+			]);
+			assert.equal(downloadedUrl, "https://cdn.example.com/tts.mp3");
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
+	});
+
+	it("adapter 应在无 audioUrl 但含 words 时仍保留词级时间戳", async () => {
+		const { createOpenAICompatibleAdapter } = await import("../../coding-agent/examples/extensions/studio/media/openai-compatible.ts");
+		const adapter = createOpenAICompatibleAdapter({
+			id: "step-tts",
+			kind: "tts",
+			type: "openai-compatible",
+			baseUrl: "https://api.stepfun.com",
+			path: "/step_plan/v1/audio/speech",
+			model: "stepaudio-2.5-tts",
+			apiKey: "test",
+		});
+		const payload = {
+			words: [
+				{ word: "hello", start_time: 0.0, end_time: 0.3 },
+				{ word: "world", start_time: 0.4, end_time: 0.8 },
+			],
+		};
+		const result = await adapter.generate({
+			kind: "tts",
+			prompt: "hello world",
+			params: { timestamp: true, stream_format: "sse" },
+			outputBase: "/tmp/tts-out/tts-test2",
+			signal: new AbortController().signal,
+		});
+		assert.ok(result.filePath.endsWith(".mp3"));
+		assert.deepEqual(result.meta?.wordTimestamps, [
+			{ text: "hello", start: 0.0, end: 0.3 },
+			{ text: "world", start: 0.4, end: 0.8 },
+		]);
+	});
+});

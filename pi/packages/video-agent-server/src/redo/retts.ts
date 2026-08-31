@@ -382,6 +382,9 @@ async function rettsDialogueCascade(
 			);
 		}
 	}
+	if (outcome.kind === "ready" && outcome.wordTimestamps && shot.dialogue) {
+		shot.dialogue.wordTimestamps = outcome.wordTimestamps;
+	}
 	// 台词回写落盘（audio/export 阶段与重试读同一份）
 	await writeJson(run, "script.json", script);
 

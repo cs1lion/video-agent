@@ -63,6 +63,8 @@ export interface QueueJob {
 	filePath?: string;
 	/** Provider URL of the generated media (set when the adapter reports one). */
 	metaUrl?: string;
+	/** Provider metadata from the generation result (set when the adapter reports one). */
+	meta?: Record<string, unknown>;
 }
 
 /** Aggregate queue statistics (tracking). */
@@ -500,6 +502,7 @@ export class GenerationQueue {
 				job.status = "done";
 				job.filePath = result.filePath;
 				job.metaUrl = typeof result.meta?.url === "string" ? (result.meta.url as string) : undefined;
+				job.meta = result.meta;
 				job.error = undefined;
 				job.finishedAt = Date.now();
 				const stats = this.statsFor(job.adapterId);

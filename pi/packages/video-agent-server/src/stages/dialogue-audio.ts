@@ -39,6 +39,8 @@ export type DialogueAudioOutcome =
 			localAudioRelPath?: string;
 			/** 处理版（pad/paced）本地路径——备用/审计，不用于提交 */
 			processedAudioRelPath?: string;
+			/** TTS 返回的词级时间戳（存在时供字幕精确对齐使用） */
+			wordTimestamps?: { text: string; start: number; end: number }[];
 	  }
 	| { kind: "silent"; reason: string }
 	| { kind: "narration"; reason: string };
@@ -100,7 +102,7 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 	const synthesizeToPaced = async (
 		speechText: string,
 		tag: string,
-	): Promise<{ srcRel: string; durationSec: number; speechText: string; rawRel: string } | null> => {
+	): Promise<{ srcRel: string; durationSec: number; speechText: string; rawRel: string; wordTimestamps?: { text: string; start: number; end: number }[] } | null> => {
 		const job = sc.queue.submit(
 			{
 				roleName: "video-agent",
@@ -124,6 +126,9 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 		// 原始声 = TTS 直接产物（插停顿/垫尾之前的形态）——reference 提交链只用它
 		const rawRel = path.relative(run.dir, done.filePath);
 		if (adapter) trackMediaCost(run, sc.ctx, adapter, { prompt: speechText });
+		const wordTimestamps = (done.meta?.wordTimestamps as { text: string; start: number; end: number }[] | undefined)?.filter(
+			(w) => Number.isFinite(w.start) && Number.isFinite(w.end),
+		);
 		let srcRel = path.relative(run.dir, done.filePath);
 		let durationSec = await probeDuration(srcRel, run.dir);
 		if (durationSec === null) durationSec = targetSec;
@@ -140,7 +145,7 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 				pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 停顿插入失败，使用原台词音频继续。`);
 			}
 		}
-		return { srcRel, durationSec, speechText, rawRel };
+		return { srcRel, durationSec, speechText, rawRel, wordTimestamps };
 	};
 
 	/** LLM 精简台词（A4 超长分支）。任何失败 → null（调用方接受原时长）。 */
@@ -270,5 +275,6 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 		audioDurationSec: durationSec,
 		localAudioRelPath: synth.rawRel,
 		...(synth.srcRel !== synth.rawRel ? { processedAudioRelPath: synth.srcRel } : {}),
+		...(synth.wordTimestamps && synth.wordTimestamps.length > 0 ? { wordTimestamps: synth.wordTimestamps } : {}),
 	};
 }

@@ -158,6 +158,13 @@ export interface MediaGenerateResult {
 	meta?: Record<string, unknown>;
 }
 
+/** Word-level timing data returned by TTS providers that support `timestamp=true`. */
+export interface WordTimestamp {
+	text: string;
+	start: number;
+	end: number;
+}
+
 export interface MediaAdapter {
 	readonly id: string;
 	readonly kind: MediaKind;

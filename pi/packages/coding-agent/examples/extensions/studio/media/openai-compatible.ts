@@ -17,6 +17,7 @@ import type { MediaKind } from "../core/types.ts";
 import {
 	authHeaders,
 	defaultTimeoutMs,
+	downloadToFile,
 	extensionFromContentType,
 	fetchWithTimeout,
 	fileExtensionFor,
@@ -25,6 +26,7 @@ import {
 	type MediaAdapterConfig,
 	type MediaGenerateRequest,
 	type MediaGenerateResult,
+	type WordTimestamp,
 	MediaHttpError,
 	pollUntilDone,
 	resolveDotPath,
@@ -136,6 +138,39 @@ export function createOpenAICompatibleAdapter(config: MediaAdapterConfig): Media
 			const payload = (await response.json().catch(() => undefined)) as unknown;
 			if (payload === undefined) {
 				throw new Error(`${config.id}: 响应不是 JSON 也非二进制媒体流`);
+			}
+
+			// TTS word-timestamp flow: providers that support `timestamp=true` +
+			// `return_url=true` return JSON with an audio URL and optional word-level
+			// timings instead of a binary audio stream.
+			if (request.kind === "tts" && typeof payload === "object" && payload !== null) {
+				const jsonPayload = payload as Record<string, unknown>;
+				const audioUrl = typeof jsonPayload.url === "string" ? jsonPayload.url : undefined;
+				const rawWords = resolveDotPath(payload, "words") ?? resolveDotPath(payload, "data.words");
+				const words: WordTimestamp[] = [];
+				if (Array.isArray(rawWords)) {
+					for (const w of rawWords) {
+						if (typeof w !== "object" || w === null) continue;
+						const rec = w as Record<string, unknown>;
+						const text = typeof rec.text === "string" ? rec.text : typeof rec.word === "string" ? rec.word : "";
+						const start = typeof rec.start === "number" ? rec.start : typeof rec.start_time === "number" ? rec.start_time : NaN;
+						const end = typeof rec.end === "number" ? rec.end : typeof rec.end_time === "number" ? rec.end_time : NaN;
+						if (text && Number.isFinite(start) && Number.isFinite(end)) {
+							words.push({ text, start, end });
+						}
+					}
+				}
+				if (audioUrl) {
+					const extension = fileExtensionFor("tts", config, audioUrl);
+					const filePath = `${request.outputBase}${extension}`;
+					await downloadToFile(audioUrl, filePath, config, request.signal);
+					const meta: Record<string, unknown> = { url: audioUrl };
+					if (words.length > 0) meta.wordTimestamps = words;
+					return { filePath, meta };
+				}
+				if (words.length > 0) {
+					return { filePath: request.outputBase + fileExtensionFor("tts", config), meta: { wordTimestamps: words } };
+				}
 			}
 
 			// Async task flow: create → poll → extract result.

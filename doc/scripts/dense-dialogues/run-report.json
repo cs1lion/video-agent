@@ -1,0 +1,52 @@
+{
+	"generatedAt": "2026-08-31T13:10:22.373Z",
+	"batchDir": "e2e/results/2026-08-31T12-14-22",
+	"runner": "run-scripts-v2.mjs",
+	"results": [
+		{
+			"file": "script-01-cafe-debate.md",
+			"title": "剧本 A · 咖啡馆里的激烈辩论",
+			"logline": "两个老同学在咖啡馆偶遇，因立场不同展开一场密集且层层升级的辩论，最后谁也说服不了谁，但各自留下了思考。",
+			"shotCount": 6,
+			"runId": "run-mth7ac8j-23",
+			"status": "done",
+			"finalFile": "final.mp4"
+		},
+		{
+			"file": "script-02-interrogation.md",
+			"title": "剧本 B · 警局审讯室的对峙",
+			"logline": "一名刑警与一名高智商嫌疑人在审讯室里展开拉锯战，对话密集、真假交织，真相在最后一镜才部分揭晓。",
+			"shotCount": 6,
+			"runId": "run-mth7o89j-24",
+			"status": "done",
+			"finalFile": "final.mp4"
+		},
+		{
+			"file": "script-03-courtroom.md",
+			"title": "剧本 C · 法庭上的交叉询问",
+			"logline": "一名年轻律师在法庭上对证人大律师进行交叉询问，对话如利刃般密集，每一句都在拆穿对方的谎言。",
+			"shotCount": 6,
+			"runId": "run-mth8629q-25",
+			"status": "done",
+			"finalFile": "final.mp4"
+		},
+		{
+			"file": "script-04-phone-breakup.md",
+			"title": "剧本 D · 深夜电话里的分手",
+			"logline": "一对情侣在深夜电话里提出分手，对话密集、情绪起伏，从试探到崩溃，最后以沉默收场。",
+			"shotCount": 6,
+			"runId": "run-mth8i260-26",
+			"status": "done",
+			"finalFile": "final.mp4"
+		},
+		{
+			"file": "script-05-boardroom.md",
+			"title": "剧本 E · 会议室里的权力博弈",
+			"logline": "创业公司 C 轮融资前的董事会，创始人、投资人和技术合伙人之间展开一场密集的权力博弈，对话层层嵌套，每个人都在算自己的筹码。",
+			"shotCount": 6,
+			"runId": "run-mth8vxyw-27",
+			"status": "done",
+			"finalFile": "final.mp4"
+		}
+	]
+}

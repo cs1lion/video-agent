@@ -1,0 +1,203 @@
+/**
+ * CloudBase 音频托管（A2 · 台词链路第 3 步）。
+ *
+ * 台词是视频生成的"驱动源"，2.5-flash 的 `audios` 参数要求**公开可访问的 URL**，
+ * 而 StepFun TTS 只返回二进制——必须自行托管。本模块把 run 目录里的台词 mp3
+ * 上传到 CloudBase 云存储（底层 COS），返回 **COS 直连公开 URL**
+ * （`https://{bucket}.cos.{region}.myqcloud.com/{key}`，匿名可读、支持 Range、长期有效）。
+ *
+ * 2026-08-29 实测定案（dev-log「CloudBase 网关探测结论」）：
+ * - 上传走 node-sdk `getUploadMetadata`（TCB 签发 COS 临时签名）→ PUT 直传；
+ * - 公开读必须在 **COS 桶级 ACL 设 public-read**（CAM 密钥 `putBucketAcl`，
+ *   一次性操作，见 scripts/discover-and-open-bucket.ts）；
+ * - `https://{envId}.tcb.qcloud.la` 前置层有自己的权限规则（418），
+ *   **不走它**——COS 直连域名不受该层影响，实测匿名 Range 206 audio/mpeg。
+ *
+ * 凭据来源（优先级从高到低）：
+ *   1. 环境变量 TCB_ENV_ID / TCB_SECRET_ID / TCB_SECRET_KEY
+ *   2. `<studioRoot>/.pi-studio/.env.cloudbase`
+ *   3. `<包根>/.env.cloudbase`
+ * 文件格式：`KEY=VALUE` 每行一条，`#` 注释，值可带引号。该路径已被 .gitignore
+ * 的 `.env*` 覆盖——密钥严禁进仓库（1.7 教训）。
+ * 可选 TCB_COS_BUCKET / TCB_COS_REGION：显式指定 COS 桶与区域（跳过自动发现）。
+ *
+ * 未配置凭据 → loadHostingConfig 返回 null，调用方走降级链（台词镜降旁白），
+ * 不阻断管线——「降级优于阻断」。
+ */
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+export class HostingError extends Error {
+}
+/** 解析 .env 风格文本（纯函数，可测） */
+export function parseEnvFile(text) {
+    const out = {};
+    for (const rawLine of text.split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("#"))
+            continue;
+        const eq = line.indexOf("=");
+        if (eq <= 0)
+            continue;
+        const key = line.slice(0, eq).trim();
+        let value = line.slice(eq + 1).trim();
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+        }
+        if (key)
+            out[key] = value;
+    }
+    return out;
+}
+/**
+ * COS 直连公开 URL（纯函数，可测）。注意第一参是**桶名**（如
+ * `6d79-myagent-xxx-1253451683`），不是 envId——tcb.qcloud.la 前置层有自己的
+ * 权限规则（匿名 418），COS 直连域名只受桶 ACL 约束（public-read 后匿名可读）。
+ */
+export function publicUrlFor(bucket, region, cloudPath) {
+    return `https://${bucket}.cos.${region}.myqcloud.com/${cloudPath.replace(/^\/+/, "")}`;
+}
+/** 从上传元数据 URL 解析 COS 桶名与区域（纯函数，可测） */
+export function parseCosUploadUrl(uploadUrl) {
+    const m = uploadUrl.match(/https:\/\/([^.]+)\.cos\.([^.]+)\.myqcloud\.com/);
+    return m ? { bucket: m[1], region: m[2] } : null;
+}
+/** 上传落点：按 run/shot 归位，重复上传同路径即覆盖（幂等） */
+export function cloudPathFor(runId, shotId) {
+    return `video-agent/${runId}/tts-${shotId}.mp3`;
+}
+function readEnvFileCandidates(studioRoot) {
+    const candidates = [
+        path.join(studioRoot, ".pi-studio", ".env.cloudbase"),
+        // 包根（src/hosting/tcb.ts 向上两级）；用 fileURLToPath 而非 process.cwd，测试与 dev 均稳
+        path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", ".env.cloudbase"),
+    ];
+    for (const file of candidates) {
+        try {
+            const text = fs.readFileSync(file, "utf-8");
+            const parsed = parseEnvFile(text);
+            if (parsed.TCB_ENV_ID && (parsed.TCB_API_KEY || (parsed.TCB_SECRET_ID && parsed.TCB_SECRET_KEY)))
+                return parsed;
+        }
+        catch {
+            // 文件不存在/不可读 → 试下一个候选
+        }
+    }
+    return {};
+}
+let cachedConfig;
+function configFromEntries(envId, e) {
+    if (!envId || !(e.TCB_API_KEY || (e.TCB_SECRET_ID && e.TCB_SECRET_KEY)))
+        return null;
+    return {
+        envId,
+        ...(e.TCB_SECRET_ID && e.TCB_SECRET_KEY ? { secretId: e.TCB_SECRET_ID, secretKey: e.TCB_SECRET_KEY } : {}),
+        ...(e.TCB_API_KEY ? { apiKey: e.TCB_API_KEY } : {}),
+        ...(e.TCB_COS_BUCKET && e.TCB_COS_REGION ? { cosBucket: e.TCB_COS_BUCKET, cosRegion: e.TCB_COS_REGION } : {}),
+    };
+}
+/** 读取托管配置；未配置返回 null（调用方走降级）。进程内缓存（配置视为静态）。 */
+export function loadHostingConfig(studioRoot) {
+    if (cachedConfig !== undefined)
+        return cachedConfig;
+    cachedConfig = configFromEntries(process.env.TCB_ENV_ID, process.env);
+    if (cachedConfig)
+        return cachedConfig;
+    const fromFile = readEnvFileCandidates(studioRoot);
+    cachedConfig = configFromEntries(fromFile.TCB_ENV_ID, fromFile);
+    return cachedConfig;
+}
+/** 测试注入点：清空进程级缓存 */
+export function resetHostingConfigCache() {
+    cachedConfig = undefined;
+}
+let cachedApp = null;
+async function appOf(config) {
+    const key = `${config.envId}:${config.secretId ?? config.apiKey ?? ""}`;
+    if (cachedApp?.key === key)
+        return cachedApp.app;
+    let mod;
+    try {
+        mod = (await import("@cloudbase/node-sdk"));
+    }
+    catch (error) {
+        throw new HostingError(`CloudBase SDK 加载失败（依赖未安装？）: ${String(error)}`);
+    }
+    // CAM 密钥优先（node-sdk 存储链路的实证路径）；仅 apiKey 时仍传入（兼容旧配置）
+    const app = mod.default.init({
+        env: config.envId,
+        ...(config.secretId && config.secretKey ? { secretId: config.secretId, secretKey: config.secretKey } : {}),
+        ...(config.secretId && config.secretKey ? {} : config.apiKey ? { apiKey: config.apiKey } : {}),
+    });
+    cachedApp = { key, app };
+    return app;
+}
+/** COS 桶/区域自动发现缓存（键 = envId；upload 元数据里带桶名，无需额外请求） */
+const cosEndpointCache = new Map();
+/** 已托管的 URL 是否仍可匿名访问（HEAD 200/206 即认为存活，可复用免重传） */
+export async function isAudioUrlAlive(url, timeoutMs = 5_000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
+    try {
+        const res = await fetch(url, { method: "HEAD", signal: controller.signal });
+        return res.ok || res.status === 206;
+    }
+    catch {
+        return false;
+    }
+    finally {
+        clearTimeout(timer);
+    }
+}
+/**
+ * 上传台词音频到 CloudBase（COS），返回 COS 直连公开 URL。
+ * 流程：getUploadMetadata（TCB 签发）→ PUT 直传 → 从元数据 URL 解析桶/区域 → 公开 URL。
+ * 抛 HostingError（未配置/上传失败）——调用方按降级链处理（台词镜降旁白）。
+ */
+export async function hostAudioFile(studioRoot, runId, shotId, localAbsPath) {
+    const config = loadHostingConfig(studioRoot);
+    if (!config) {
+        throw new HostingError("未配置 CloudBase 托管（TCB_ENV_ID / TCB_SECRET_ID / TCB_SECRET_KEY 或 .env.cloudbase）——台词镜无法获得公开音频 URL");
+    }
+    const cloudPath = cloudPathFor(runId, shotId);
+    const app = await appOf(config);
+    let endpoint = config.cosBucket && config.cosRegion ? { bucket: config.cosBucket, region: config.cosRegion } : cosEndpointCache.get(config.envId);
+    try {
+        const fileContent = await fs.promises.readFile(localAbsPath);
+        const meta = await app.getUploadMetadata({ cloudPath });
+        const inner = (meta.data ?? {});
+        if (!inner.url || !inner.authorization || !inner.token) {
+            throw new HostingError(`上传元数据缺失（url/authorization/token）：${JSON.stringify(Object.keys(meta))}`);
+        }
+        if (!endpoint) {
+            const parsed = parseCosUploadUrl(inner.url);
+            if (!parsed)
+                throw new HostingError(`无法从上传 URL 解析 COS 桶/区域：${inner.url.slice(0, 120)}`);
+            endpoint = parsed;
+            cosEndpointCache.set(config.envId, endpoint);
+        }
+        // 与 node-sdk uploadFile 同一套头（签名覆盖本 key 的本次直传）
+        const res = await fetch(inner.url, {
+            method: "PUT",
+            headers: {
+                Authorization: inner.authorization,
+                Signature: inner.authorization,
+                "x-cos-security-token": inner.token,
+                "x-cos-meta-fileid": inner.cosFileId ?? "",
+                key: encodeURIComponent(cloudPath),
+            },
+            body: new Uint8Array(fileContent),
+        });
+        if (!res.ok) {
+            throw new HostingError(`COS PUT ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        }
+    }
+    catch (error) {
+        if (error instanceof HostingError)
+            throw error;
+        throw new HostingError(`CloudBase 上传失败（${cloudPath}）: ${String(error)}`);
+    }
+    if (!endpoint)
+        throw new HostingError("COS 桶/区域未知（不应发生）");
+    return publicUrlFor(endpoint.bucket, endpoint.region, cloudPath);
+}

@@ -46,6 +46,8 @@ export interface ShotDialogue {
 	rawDurationSec?: number;
 	/** CloudBase 托管公开 URL（生成链路回写，可复用避免重复上传） */
 	audioUrl?: string;
+	/** TTS 词级时间戳（生成链路回写，供字幕精确对齐） */
+	wordTimestamps?: { text: string; start: number; end: number }[];
 }
 
 export interface ScriptShot {
