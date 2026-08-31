@@ -3,7 +3,9 @@
  *
  * 每镜**两帧**（中段 + 后段，按实际时间轴）抽帧 → 视觉模型打 5 个视觉维度分 + 逐镜三态标注；
  * 后段帧专治"瞬时缺陷"：多指/肢体畸形、物体形变、乱码字形常只在中段帧之外出现，单帧抽检会漏。
- * audioSync 由 TTS 成功率确定性算；字幕另有一层**确定性结构审核**（qa/subtitles.ts，
+ * audioSync 由调用方按「全语音镜语音就绪率」确定性算好传入（2026-08-31 口径修正：
+ * 旧口径数旁白 TTS 成功率，台词镜对白走 dialogue-audio 链路恒为 null → G1 0/5=0 假象）；
+ * 字幕另有一层**确定性结构审核**（qa/subtitles.ts，
  * 时间轴重叠/覆盖率/编码错乱是视觉模型看不准的）。质检失败不拖垮成片：给保守 warn 结论并记录。
  */
 
@@ -12,6 +14,7 @@ import * as fs from "node:fs";
 import { type ScriptDoc } from "../prompts.ts";
 import {
 	appendSpan,
+	asQaShotCategory,
 	throwIfAborted,
 	type AxisId,
 	type QaShotVerdict,
@@ -45,7 +48,7 @@ export interface QaSubtitleInput {
 /**
  * 纯函数：把视觉模型返回的维度分折叠成七轴（顺序即 UI 展示顺序）。
  * 非法值（NaN/负数/超界/缺字段）按 0 分保守处理——宁可低分暴露问题也不虚高。
- * audioSync 由调用方按 TTS 成功率确定性算好后传入。
+ * audioSync 由调用方按「全语音镜语音就绪率」确定性算好后传入（口径见 export.ts 调用点）。
  */
 export function foldQaAxes(
 	vision: QaVisionScores,
@@ -63,13 +66,13 @@ export function foldQaAxes(
 	];
 }
 
-/** 视觉质检：每镜两帧（中段+后段） → 模型打分 + 逐镜三态标注；audioSync 由 TTS 成功率算 */
+/** 视觉质检：每镜两帧（中段+后段） → 模型打分 + 逐镜三态标注；audioSync 由调用方确定性传入 */
 export async function runQa(
 	sc: StageCtx,
 	keptShots: ScriptDoc["shots"],
 	opts: GenerationOptions,
 	finalPath: string,
-	audioFiles: (string | null)[],
+	audioSync: number,
 	midpoints: number[],
 	lateTimes: number[] = [],
 	subtitleInput?: QaSubtitleInput,
@@ -122,8 +125,9 @@ export async function runQa(
 			"",
 			"同时逐镜标注：verdict 取 ok（可用）/ warn（勉强）/ fail（明显不合格），reason 用一句话说明",
 			"（ok 可写「通过」；warn/fail 点名具体问题并加前缀：「物理:」「人物:」「文字:」「字幕:」）。",
+			"category 为问题类别，取「人物/物理/文字/字幕/其他」之一：warn/fail 必填且与 reason 前缀保持一致，ok 一律「其他」。",
 			"",
-			`只输出 JSON: {"briefFit": 0, "visualConsistency": 0, "pacing": 0, "physicalAccuracy": 0, "characterConsistency": 0, "textQuality": 0, "shots": [{"id": "${keptShots[0]?.id ?? "SH01"}", "verdict": "ok", "reason": "…"}]}`,
+			`只输出 JSON: {"briefFit": 0, "visualConsistency": 0, "pacing": 0, "physicalAccuracy": 0, "characterConsistency": 0, "textQuality": 0, "shots": [{"id": "${keptShots[0]?.id ?? "SH01"}", "verdict": "ok", "category": "其他", "reason": "…"}]}`,
 		]
 			.filter(Boolean)
 			.join("\n");
@@ -131,7 +135,7 @@ export async function runQa(
 		// 降级为「纯技术审核」重试一次：剥离全部剧情文本，只审画面四类缺陷与评分。
 		const technicalFallback = (error: unknown): boolean =>
 			error instanceof Error && /451|censorship/i.test(error.message);
-		let vision: Awaited<ReturnType<typeof chatVisionJson<QaVisionScores & { shots?: { id?: string; verdict?: string; reason?: string }[] }>>>;
+		let vision: Awaited<ReturnType<typeof chatVisionJson<QaVisionScores & { shots?: { id?: string; verdict?: string; category?: string; reason?: string }[] }>>>;
 		try {
 			vision = await chatVisionJson(ctx.llm, qaPrompt, frames, signal);
 		} catch (error) {
@@ -155,8 +159,8 @@ export async function runQa(
 					"打分（0-100 整数）：briefFit（画面专业完成度）/ visualConsistency（风格色调一致性）/ pacing（节奏层次）/",
 					"physicalAccuracy（肢体手指畸形/面部崩坏/物体形变穿模/重力透视）/ characterConsistency（同一人物跨镜脸型发型服装一致）/",
 					"textQuality（画面内乱码文字/伪中文/变形字形/水印）。底部烧录字幕不算画面文字，但审其乱码/错字/截断。",
-					"逐镜标注 verdict（ok/warn/fail）与一句 reason（前缀「物理:」「人物:」「文字:」「字幕:」）。",
-					`只输出 JSON: {"briefFit": 0, "visualConsistency": 0, "pacing": 0, "physicalAccuracy": 0, "characterConsistency": 0, "textQuality": 0, "shots": [{"id": "${keptShots[0]?.id ?? "SH01"}", "verdict": "ok", "reason": "…"}]}`,
+					"逐镜标注 verdict（ok/warn/fail）、category（人物/物理/文字/字幕/其他，ok 用「其他」）与一句 reason（前缀「物理:」「人物:」「文字:」「字幕:」，须与 category 一致）。",
+					`只输出 JSON: {"briefFit": 0, "visualConsistency": 0, "pacing": 0, "physicalAccuracy": 0, "characterConsistency": 0, "textQuality": 0, "shots": [{"id": "${keptShots[0]?.id ?? "SH01"}", "verdict": "ok", "category": "其他", "reason": "…"}]}`,
 				].filter(Boolean).join("\n"),
 				frames,
 				signal,
@@ -164,24 +168,27 @@ export async function runQa(
 		}
 		run.metrics.llmCalls += 1;
 		trackLlmCost(run, ctx, qaPrompt, JSON.stringify(vision), frames.length);
-		const ttsOk = audioFiles.filter((f) => f !== null).length;
-		const audioSync = audioFiles.length > 0 ? Math.round((ttsOk / audioFiles.length) * 100) : 100;
+		// audioSync 由调用方按「全语音镜语音就绪率」确定性算好传入（export.ts）
 		const axes = foldQaAxes(vision, audioSync);
 		const score = Math.round(axes.reduce((sum, a) => sum + a.score, 0) / axes.length);
 
-		// 逐镜标注（宽容解析：字段缺失/未知 id 都容忍）
+		// 逐镜标注（宽容解析：字段缺失/未知 id 都容忍；category 缺失时从 reason 前缀回落——
+		// 旧产物/模型可能不带字段，前缀仍是有效信号）
 		const rawShots = Array.isArray(vision.shots) ? vision.shots : [];
 		const byId = new Map(rawShots.map((s) => [String(s?.id ?? ""), s]));
 		const shots: QaShotVerdict[] = keptShots.map((shot) => {
 			const s = byId.get(shot.id);
 			const v = s?.verdict === "ok" || s?.verdict === "warn" || s?.verdict === "fail" ? s.verdict : "ok";
-			return { id: shot.id, verdict: v, reason: String(s?.reason ?? "").slice(0, 120) || "通过" };
+			const reason = String(s?.reason ?? "").slice(0, 120) || "通过";
+			const category = asQaShotCategory(s?.category) ?? (/^(人物|物理|文字|字幕):/.test(reason) ? (reason.slice(0, 2) as QaShotVerdict["category"]) : v === "ok" ? "其他" : undefined);
+			return { id: shot.id, verdict: v, reason, ...(category ? { category } : {}) };
 		});
 		// 字幕结构性缺陷合入逐镜标注尾部（不带镜头定位的结构问题挂到标注首镜，不静默）
 		if (subtitleAudit && subtitleAudit.issues.length > 0 && shots.length > 0) {
 			const first = shots[0]!;
 			if (first.verdict === "ok") first.verdict = "warn";
 			first.reason = `字幕审核: ${subtitleAudit.issues[0]}${first.reason && first.reason !== "通过" ? `；${first.reason}` : ""}`.slice(0, 120);
+			first.category = "字幕";
 		}
 
 		// 三态多数决：LLM 的 0-100 分数是伪精确（同帧复评浮动 ±10 常见），分数只保留展示用途；

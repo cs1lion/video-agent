@@ -1,0 +1,22 @@
+{
+	"styleKeywords": [
+		"cinematic",
+		"realistic",
+		"gritty",
+		"sports documentary",
+		"warm nostalgic",
+		"high contrast",
+		"raw",
+		"intimate"
+	],
+	"palette": [
+		"#8B4513",
+		"#DC143C",
+		"#F5F5DC",
+		"#87CEEB",
+		"#2F4F4F",
+		"#FFD700"
+	],
+	"lighting": "Mixed lighting from overhead warm tungsten floodlights and cool first-morning light streaming through high windows, casting sharp contrast on worn wooden floor",
+	"grade": "High-contrast cinematic grade with desaturated cool shadows, warm highlights, and subtle film grain for gritty nostalgic texture"
+}

@@ -391,7 +391,25 @@ export async function stageExport(
 			qaLateTimes.push(shotStart[k]! + shotDur[k]! * 0.85);
 		}
 	}
-	run.verdict = await runQa(sc, keptShots, opts, finalPath, audios!, qaMidpoints, qaLateTimes, {
+	// audioSync 口径修正（2026-08-31）：旧口径「旁白 TTS 成功率」——台词镜对白走 dialogue-audio
+	// 链路，audioFiles 里恒为 null，只数旁白 → G1 0/5=0 假象（批次数据被系统性拉低）。
+	// 新口径 = 全语音镜语音就绪率：分母 = 应有语音的镜（narrationTexts 非空，含台词镜），
+	// 分子 = 语音文件已就绪（旁白 tts-SHxx.mp3 或台词 tts-dialogue-SHxx.mp3/-pad）；
+	// 无语音镜不进分母。仍是确定性计算，不编造分数。
+	let voiceExpected = 0;
+	let voiceReady = 0;
+	for (const [k, shot] of keptShots.entries()) {
+		if (!narrationTexts[k]) continue;
+		voiceExpected += 1;
+		const i = scriptDoc.shots.indexOf(shot);
+		const dialogueReady = [
+			`assets/tts-dialogue-${shot.id}.mp3`,
+			`assets/tts-dialogue-${shot.id}-pad.mp3`,
+		].some((rel) => fs.existsSync(path.join(run.dir, rel)));
+		if (audios![i] || dialogueReady) voiceReady += 1;
+	}
+	const audioSync = voiceExpected > 0 ? Math.round((voiceReady / voiceExpected) * 100) : 100;
+	run.verdict = await runQa(sc, keptShots, opts, finalPath, audioSync, qaMidpoints, qaLateTimes, {
 		assText,
 		expectedLines: narrationTexts.filter((t) => t.trim()).length,
 	});

@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide establishing shot of Jiang Jianjian (45-year-old former provincial team trainer, buzz cut with a few white strands, worn old sports jacket with frayed shiny cuffs) feeding a fierce ping pong shot to Jiang Ye (16-year-old male player, short wet messy hair sticking to forehead, red sweat-soaked tight jersey, kinesiology tape on wrist) in an old training gym with scuffed worn wooden floor, baskets of table tennis balls by the wall, faded championship banners on walls, cool dawn light seeping through high windows mixed with warm overhead tungsten floodlights, slow dolly push-in to medium shot, dynamic energetic movement matching training intensity, realistic gritty sports documentary style, high contrast grade with subtle film grain, 16:9 aspect ratio. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Medium shot of Jiang Jianjian (45-year-old former provincial team trainer, buzz cut with a few white strands, worn old sports jacket with frayed shiny cuffs, hard defined forearm muscles) standing expressionless, staring at Jiang Ye who fumbled the incoming shot, old training gym with scuffed wooden floor and baskets of ping pong balls in soft blurred background, mixed warm tungsten overhead light and cool dawn light from high windows rim-lighting his silhouette, slow handheld push-in to emphasize his stern expression, cold hard emotional tone, realistic gritty cinematic style, high contrast grade with subtle film grain, 16:9 aspect ratio. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Medium close-up of Jiang Ye (16-year-old male player, short wet messy hair sticking to forehead, red sweat-soaked tight jersey, kinesiology tape on wrist, eyes blazing with stubborn frustration) hurling his racket hard onto the scuffed wooden floor, old gym with baskets of ping pong balls and faded banners in blurred background, mixed warm tungsten and cool dawn light casting sharp shadows on his face, slight handheld shaky movement matching his agitated emotion, raw intense sports documentary tone, realistic gritty cinematic style, high contrast grade with subtle film grain, 16:9 aspect ratio. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Medium shot of Jiang Jianjian (45-year-old former provincial team trainer, buzz cut with a few white strands, worn old sports jacket with frayed shiny cuffs, expressionless stern face) pointing at the fallen racket on the scuffed wooden floor, old training gym with baskets of ping pong balls and high windows with dawn light in soft background, mixed warm tungsten and cool dawn light creating sharp contrast on his face, static locked-off composition to emphasize his unyielding tone, calm cold emotional tone, realistic gritty cinematic style, high contrast grade with subtle film grain, 16:9 aspect ratio. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Slow motion shot of the final ping pong ball skimming the net and dropping silently on the scuffed wooden floor, with Jiang Ye (short wet messy hair, red sweat-soaked jersey, kinesiology tape on wrist) and Jiang Jianjian (buzz cut with white strands, worn frayed shiny cuff sport jacket) standing frozen without speaking, then cut to extreme close-up of a professional ping pong racket with textured non-slip grip on the handle, old gym with baskets of balls and high windows with dawn light in soft background, mixed warm tungsten and cool dawn light casting soft shadows, slow motion then static close-up transition, quiet tense emotional tone, realistic gritty cinematic style, high contrast grade with subtle film grain, 16:9 aspect ratio. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}

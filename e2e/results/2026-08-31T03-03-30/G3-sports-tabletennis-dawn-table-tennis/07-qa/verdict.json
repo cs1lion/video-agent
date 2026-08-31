@@ -1,0 +1,71 @@
+{
+	"overall": "pass",
+	"score": 85,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 85
+		},
+		{
+			"id": "visualConsistency",
+			"score": 80
+		},
+		{
+			"id": "pacing",
+			"score": 85
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 95
+		},
+		{
+			"id": "characterConsistency",
+			"score": 80
+		},
+		{
+			"id": "audioSync",
+			"score": 100
+		},
+		{
+			"id": "textQuality",
+			"score": 70
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "通过。开场展现凌晨球馆父子对练，旧木地板、高窗天光、汗湿球衣等细节符合写实要求，字幕正常。",
+			"category": "其他"
+		},
+		{
+			"id": "SH02",
+			"verdict": "warn",
+			"reason": "背景墙文字\"東庫切蒜館\"为伪中文乱码，疑似AI生成错误。",
+			"category": "文字"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "通过。少年倒地姿态与情绪表达真实，散落的乒乓球及球拍位置符合物理场景，字幕正常。",
+			"category": "其他"
+		},
+		{
+			"id": "SH04",
+			"verdict": "ok",
+			"reason": "通过。父亲独坐训话镜头，球拍与乒乓球筐摆放合理，字幕\"捡回来\"符合关键剧情台词。",
+			"category": "其他"
+		},
+		{
+			"id": "SH05",
+			"verdict": "warn",
+			"reason": "背景招牌\"東庫切蒜館\"文字错误（应为老球馆相关字样），属明显乱码。",
+			"category": "文字"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 5,
+		"issues": []
+	}
+}

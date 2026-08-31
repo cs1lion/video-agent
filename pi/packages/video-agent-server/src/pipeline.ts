@@ -5,7 +5,7 @@
  * - 媒体阶段复用 studio 的 GenerationQueue（并发/限速/重试）；
  * - 导出阶段 ffmpeg 逐镜归一化 + concat + ASS 字幕烧录；
  * - 质检：每镜抽帧送视觉模型评分（briefFit/visualConsistency/pacing/textQuality），
- *   audioSync 由 TTS 成功率确定性计算 —— 不编造分数。
+ *   audioSync = 全语音镜语音就绪率（旁白+台词 TTS，确定性计算）—— 不编造分数。
  *
  * 团队事件流：管线在关键交接点产出 TeamEvent（制片人/编剧/美术指导/分镜师/
  * 技术导演/声音设计/剪辑师/审片员），供 UI「团队频道」可视化角色协作。
@@ -152,11 +152,24 @@ function migrateLegacyRunStages(runDir: string, stages: RunStage[]): RunStage[] 
 	return next;
 }
 
+/** 逐镜问题的类别（2026-08-31 结构化：从「reason 前缀约定」升级为显式枚举字段——前缀遵循是概率性的，schema 才是硬契约） */
+export type QaShotCategory = "人物" | "物理" | "文字" | "字幕" | "其他";
+
+const QA_SHOT_CATEGORIES: readonly QaShotCategory[] = ["人物", "物理", "文字", "字幕", "其他"];
+
+/** 宽容解析：任意值 → 合法类别（非法/缺失返回 null，由调用方决定回落） */
+export function asQaShotCategory(v: unknown): QaShotCategory | null {
+	const s = typeof v === "string" ? v.trim() : "";
+	return (QA_SHOT_CATEGORIES as readonly string[]).includes(s) ? (s as QaShotCategory) : null;
+}
+
 /** 审片员对单个镜头的标注（P1：逐镜三态裁决，镜头级重做的依据） */
 export interface QaShotVerdict {
 	id: string;
 	verdict: "ok" | "warn" | "fail";
 	reason: string;
+	/** 问题类别（模型显式返回；缺失时从 reason 前缀回落；ok 一律「其他」） */
+	category?: QaShotCategory;
 }
 
 export interface QaVerdict {
@@ -172,20 +185,23 @@ export interface QaVerdict {
 /**
  * 质检-修复自动闭环的目标选择（纯函数，契约测试锁定于 test/auto-repair.test.ts）。
  *
- * 选择规则：fail 一律入选；warn 仅当 reason 带显式类别前缀（人物:/物理:）。
- * 为什么 warn 要前缀门槛：无前缀的 warn 多为风格/观感问题（道具违和、光线跳跃、节奏拖沓），
- * 重做收益低且每次补拍 = 一次视频生成提交（免费期 RPM 是真瓶颈）——只修「客观可判」的问题。
- * 已知边界（G3 复跑实测）：QA 模型对前缀约定的遵循是概率性的（warn 可能不带前缀），
- * 会导致合格目标被漏选——宁可漏选不可滥选，前缀遵循问题记录在 HANDOFF 待办。
+ * 选择规则：fail 一律入选；warn 仅当类别可自动重做（人物/物理）。
+ * 类别判定：优先显式 category 字段（2026-08-31 起 QA 契约要求模型返回）；缺失时回落
+ * reason 前缀正则（兼容旧产物）。为什么 warn 要类别门槛：无类别的 warn 多为风格/观感问题
+ * （道具违和、光线跳跃、节奏拖沓），重做收益低且每次补拍 = 一次视频生成提交（免费期 RPM
+ * 是真瓶颈）——只修「客观可判」的问题。
+ * 已知边界（G3 复跑实测）：前缀遵循是概率性的（warn 可能不带前缀），合格目标会被漏选
+ * ——宁可漏选不可滥选；结构化 category 字段是提高命中率的根本解。
  * 每轮最多取 maxTargets 镜（控时长与配额），保持 verdict 原顺序。
  */
 export function selectAutoRepairTargets(shots: QaShotVerdict[], maxTargets = 2): QaShotVerdict[] {
+	const repairable = (s: QaShotVerdict): boolean =>
+		s.category === "人物" ||
+		s.category === "物理" ||
+		// 兼容回落：旧产物/旧模型无 category 时，reason 前缀仍是有效信号
+		(s.category === undefined && /^(人物|物理):/.test(s.reason || ""));
 	return shots
-		.filter(
-			(s) =>
-				s.verdict === "fail" ||
-				(s.verdict === "warn" && /^(人物|物理):/.test(s.reason || "")),
-		)
+		.filter((s) => s.verdict === "fail" || (s.verdict === "warn" && repairable(s)))
 		.slice(0, maxTargets);
 }
 

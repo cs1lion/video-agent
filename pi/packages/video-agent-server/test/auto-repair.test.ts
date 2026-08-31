@@ -43,6 +43,39 @@ describe("selectAutoRepairTargets（自动闭环目标选择）", () => {
 		assert.deepEqual(targets, [], "无前缀 warn = 风格/观感问题，不自动补拍");
 	});
 
+	it("warn 按显式 category 判定（2026-08-31 结构化契约：人物/物理入选，其他不入选）", () => {
+		const targets = selectAutoRepairTargets(
+			[
+				{ id: "SH01", verdict: "warn", reason: "少年球衣颜色红变蓝", category: "人物" },
+				{ id: "SH02", verdict: "warn", reason: "蒸汽特效虚假不自然", category: "其他" },
+				{ id: "SH03", verdict: "warn", reason: "光线跳跃与凌晨设定冲突", category: "其他" },
+			],
+			5,
+		);
+		assert.deepEqual(
+			targets.map((s) => s.id),
+			["SH01"],
+			"category=人物 的 warn 入选；category=其他（道具/光线类观感问题）不入选",
+		);
+	});
+
+	it("category 缺失时回落 reason 前缀（旧产物/旧模型兼容）", () => {
+		const targets = selectAutoRepairTargets(
+			[
+				// 旧产物形态：无 category 字段，仅前缀
+				{ id: "SH02", verdict: "warn", reason: "人物: 父亲服装夹克变为连帽衫" },
+				// 显式 category 与前缀冲突：schema 优先（模型被要求两者一致，显式字段更可信）
+				{ id: "SH03", verdict: "warn", reason: "人物: 发型突变", category: "其他" },
+			],
+			5,
+		);
+		assert.deepEqual(
+			targets.map((s) => s.id),
+			["SH02"],
+			"无 category + 带前缀 → 回落入选；显式 category=其他 压过前缀 → 不入选",
+		);
+	});
+
 	it("每轮最多 2 镜且保持原顺序（防失控：控时长与配额）", () => {
 		const targets = selectAutoRepairTargets([
 			shot("SH01", "fail", "人物: 形象漂移"),
