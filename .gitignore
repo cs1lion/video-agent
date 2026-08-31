@@ -9,8 +9,12 @@ dist/
 # pi 上游仓库的原始 git 历史（整库迁移备份，不入工作树版本）
 .vendored-git-history/
 
-# 媒体工具二进制
-tools/ffmpeg/
+# 媒体工具二进制（ffmpeg 解压目录 + 106MB 的 ffmpeg.zip，均不入版本库）
+tools/
+
+# e2e 实验产物：results/ 是每轮跑批的成片与中间态（1.4G，无版本价值）。
+# e2e/*.mjs、lib/、README.md、迭代日志是有价值的工具脚本，保留入库。
+e2e/results/
 
 # 日志与临时文件
 *.log
@@ -32,3 +36,6 @@ _tts_test/
 
 # 会话导出与设计/验证报告（一次性产物，不入代码库）
 pi-session-*.html
+
+# 部署密钥：构建前从 .pi-studio/models.json 拷入，严禁提交
+pi/deploy/models.json

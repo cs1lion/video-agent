@@ -1,0 +1,39 @@
+# 部署排除项（构建上下文 = pi/ 仓库根）
+# 原则：上线不需要的一律不进镜像——测试/文档/e2e 产物/密钥/本地运行数据
+
+**/node_modules
+**/dist
+**/build
+**/.git
+# 例外：workspace 依赖的 dist 是运行时必需（server 经 node_modules 解析 dist/index.js）；
+# 上游源码有既有类型错（pi-ai），镜像用本地已验证的历史产物，见 Dockerfile 注释。
+# ⚠️ 五包缺一不可：studio adapter 解析 agent/ai/coding-agent/tui，telemetry 是 agent+ai 的传递依赖。
+#    2026-08-31 只放行三包 → 容器启动 ERR_MODULE_NOT_FOUND(coding-agent/dist/index.js) → deploy_failed。
+!packages/telemetry/dist
+!packages/telemetry/dist/**
+!packages/ai/dist
+!packages/ai/dist/**
+!packages/agent/dist
+!packages/agent/dist/**
+!packages/coding-agent/dist
+!packages/coding-agent/dist/**
+!packages/tui/dist
+!packages/tui/dist/**
+
+# 测试与文档（运行时不需要）
+**/test
+**/tests
+**/*.test.ts
+**/docs
+
+# 密钥与本地配置：.pi-studio 全排除，仅放行 models.json（provider key，镜像私有勿推公共仓库）
+.pi-studio/*
+!.pi-studio/models.json
+**/.env*
+**/*.pem
+
+# 本地运行数据与工具产物
+**/video-agent-runs
+**/video-agent-uploads
+**/.workbuddy
+**/*.log
