@@ -551,7 +551,7 @@ export function HomePage() {
 				</section>
 
 				<footer className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-zinc-500">
-					{["pi-video-agent pipeline", "StepFun", "DAG 7 阶段", "LLM + 生成媒体", "多 Agent 协作", "台词驱动口型"].map((s) => (
+					{["pi-video-agent pipeline", "StepFun", "DAG 7 阶段", "LLM + 生成媒体", "台词驱动口型"].map((s) => (
 						<span key={s} className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1 font-mono text-[10px] tracking-wide">
 							{s}
 						</span>

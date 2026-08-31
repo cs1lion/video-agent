@@ -1,372 +1,129 @@
-# video-agent 项目长期笔记
+# video-agent（piagent-glm）项目长期笔记
 
-## 验证方式（必读，别踩坑）
+## 0. 项目构成（整理后，2026-08-31）
 
-- **三个包三套测试，别跑错**：
-  - `video-agent-server`：**node:test**（`npm test`）。2026-08-29 实测 **229/229**，52 suite，
-    约 **115s**（含真跑 ffmpeg 的混音链集成用例，环境无 ffmpeg 时自动 skip）。
-    挂死老根因：after 钩子裸 `fs.rm` 无 catch（Windows EBUSY 拖死进程）→
-    已加 `.catch` + `--test-concurrency=1`。**再挂死优先排查各 test 文件的 after 钩子**。
-  - `packages/video-agent`（共享包）：**vitest**（不是 node:test）。2026-08-29 实测
-    **39/39**，2 文件，约 1s。`ClipDurationSec` / `GenerationOptions` 的契约测试在这。
-  - `video-agent-ui`：无测试脚本，只跑 `npx tsc --noEmit -p tsconfig.json`。
-- **`npx tsc --noEmit` 要用包自身的 tsconfig**（`packages/video-agent-server/tsconfig.json`，
-  `include: ["src"]`），根目录 tsconfig 会混入 pi 上游包（ai/tui）的既有报错，噪声大。
+- **真正的项目**：`pi/packages/video-agent-server`（API）+ `video-agent-ui`（前端）+
+  `video-agent`（共享包）。`pi/` 其余（ai/agent/tui/…）是 vendored 上游，不动。
+- **文档**：全部收敛到 `doc/`（`reports/` 报告、`decisions/` 决策、`demo/` 演示动线、
+  `methodology/` 方法论、`deployment/` 施工报告）+ 根 `HANDOFF`→`doc/HANDOFF-*.md`。
+- **部署**：`pi/Dockerfile` + `pi/.dockerignore` + `pi/deploy/README.md`（Runbook）。
+  单容器同源：Express 同时服务 `/api/*` 与 UI 静态（SPA 回退）。
+- **不入版本库**（已 gitignore 或在整理中）：`e2e/`(1.4G 实验产物)、`tools/`(413M 含
+  ffmpeg.exe)、`_tts_test/`、`_pi-studio/`、根 `*.html` 报告、`pi/deploy/models.json`(含 key)。
 
-- **不要采信任何文档的"验证通过"（含 dev-log 与总文档）**。已多次发现声称与实际不符
-  （2026-08-28：声称 "tsc clean / 44/44 pass"，实际 typecheck 红 1 处、npm test 挂死、
-  reshot 主干功能自 commit `c26bb0e` 起就没跑通过；2026-08-29：总文档写共享包 13 用例，
-  实测 39）。
-  **规矩：任何写进文档的数字，必须有自己刚跑出的输出为依据。** 本轮审查时我自己就曾
-  把旧数字从文档抄进新写的命令块而未验证，属于同一错误的复现。
+## 1. 验证方式（必读，别踩坑）
 
-## 📌 当前业务事实（2026-08-29 郭煜确认，两条都改写了设计前提）
+- **三个包三套测试**：
+  - `video-agent-server`：**node:test**（`npm test`）。2026-08-29 实测 229/229 / 52 suite / ~115s。
+    挂死老根因：after 钩子裸 `fs.rm` 无 catch（Windows EBUSY）→ 已加 `.catch` + `--test-concurrency=1`。
+  - `packages/video-agent`：**vitest**（非 node:test）。实测 39/39 / ~1s。
+  - `video-agent-ui`：无测试，只跑 `npx tsc --noEmit -p tsconfig.json`。
+- `tsc --noEmit` 要用**包自身 tsconfig**，根 tsconfig 会混入上游包既有报错。
+- **绝不采信文档里的"验证通过"（含本文档与 dev-log）**。已多次发现声称与实际不符。
+  **规矩：写进文档的数字必须有自己刚跑出的输出为依据。**
 
-### ① 视频模型限时免费
+## 2. 业务事实（2026-08-29 郭煜确认，改写过设计前提）
 
-- **每日时长配额（500s/天）已解除**，但 **RPM 提交速率限制依然存在**
-  （Free 1 / Enterprise 2 / TokenPlan 5 每分钟）。**两者是正交的，别混为一谈**。
-- 因此 Part B 调度层**价值并未消失**：瓶颈从"配额总量稀缺"转为"提交速率受限 + 池间异构"，
-  ReAct 代理要权衡的从"值不值得花秒数"变成"让哪个片段先占用下一个令牌"。
-- **配置而非删代码**：设 `VIDEO_AGENT_QUOTA_DAILY_SEC=0` 即可（账本退化为"RPM 令牌桶 +
-  用量统计"）。限时免费是**临时状态**，结束后改回数值即可复用 → **绝不删配额代码**。
-- 踩过的坑：`config.ts` 原逻辑 `dailyQuotaSec === null ? "free" : "tokenplan"` 把
-  "有无时长配额"与"Key 层级"两个正交维度混为一谈，设 `=0` 后会把企业版池（RPM 2）
-  误标成 free（官方 RPM 1），让 ReAct 代理**低估该池能力**。已修：新增
-  `VIDEO_AGENT_QUOTA_KEY_TYPE` 可显式覆盖，推断默认改为 `enterprise`，并加测试 + 变异验证。
+- **视频模型限时免费**：每日时长配额（500s/天）已解除，但 **RPM 提交速率限制仍在**
+  （Free 1 / Enterprise 2 / TokenPlan 5）。两者正交。
+  `VIDEO_AGENT_QUOTA_DAILY_SEC=0` 即关闭配额（限时免费是临时状态，**绝不删配额代码**）。
+- **每个 key 的限流各自独立**（实测推翻官方 FAQ 的"按 key 类型共享"）：N key → N 池 →
+  总 RPM = 各池之和。**一个池 = 一个 key 的额度视图**。配置 `VIDEO_AGENT_QUOTA_POOLS`；
+  选池 `QuotaLedger.pickPool()`；**唯一决策点 `stages/clips.ts` 的 `reserveShotQuota`**
+  （clips/reshot/retts 三路径共用）。
+- **坑**：`config.ts` 曾把"有无时长配额"与"Key 层级"混为一谈（设 `=0` 会把企业版 RPM 2
+  误标 free 的 1，让 ReAct 代理低估能力）。已修：新增 `VIDEO_AGENT_QUOTA_KEY_TYPE` 显式覆盖，
+  推断默认 `enterprise`，配 5 条语义测试 + 变异验证。
 
-### ② 每个 key 的限流各自独立（**推翻了早期的官方 FAQ 记录**）
+## 3. 台词链路方法论（2026-08-30 血泪六条，改台词/音频/导出前必读）
 
-- 早期按官方 FAQ 记为「限流按 key 类型共享，不按单个 key，多 key 不扩容」
-  （"Limits are shared by API key type, not by each individual key"）——**已被实测证伪**。
-- 实测：**同类型多 key 也能线性叠加**。N 个 key → N 个池 → 总 RPM = 各池之和。
-  **这是并发优化的全部收益来源**：天花板从"固定 8 RPM"变成"随 key 数增长"。
-- 架构对应：**一个池 = 一个 key 的额度视图**（不再是"一个池 = 一种 key 类型"）。
-  - 配置：`VIDEO_AGENT_QUOTA_POOLS='[{"id":"k1","keyType":"enterprise","rpmCap":2}, ...]'`；
-    不设则回退单池（`_DAILY_SEC`/`_RPM`/`_KEY_TYPE`）；**任一项非法 → 整份丢弃回退单池**。
-  - 选池：`QuotaLedger.pickPool(sec)`（最早可用优先，平局取剩余令牌多）；
-    **唯一决策点在 `stages/clips.ts` 的 `reserveShotQuota`**，clips/reshot/retts 三路径共用。
-    （此前 reshot 有一份硬编码单池的副本，已删除改为复用——否则多池对它无效。）
-- 连带更正：总文档「额外发现⑧」原说"文本/图像多 key 无用功、隔离不存在"——
-  理由②已证伪（隔离**是存在的**）；正确结论应降级为"**收益低**"（它们不是瓶颈：40 vs 2 RPM）。
-- 面试叙事价值：这是一个**实测推翻官方文档**并据此重构架构的例子（详见总文档附录 D）。
-- 踩过的坑：`config.ts` 原逻辑 `dailyQuotaSec === null ? "free" : "tokenplan"` 把
-  "有无时长配额"与"Key 层级"两个正交维度混为一谈，设 `=0` 后会把企业版池（RPM 2）
-  误标成 free（官方 RPM 1），让 ReAct 代理**低估该池能力**。2026-08-29 已修：
-  新增 `VIDEO_AGENT_QUOTA_KEY_TYPE` 可显式覆盖，推断默认改为 `enterprise`，
-  并加 5 条语义测试 + 变异验证（改回旧逻辑 2 条变红）。
+1. **agnes reference 跟读在内容层不可信**：包络相关 0.78-0.91 但 ASR 字面重合仅
+   0.07-0.14——模型在**模仿节奏说乱语**。防线 = 双关卡（包络 ≥0.7 + ASR 重合 ≥0.5，
+   `qa/audio-follow.ts` + `qa/asr-check.ts`），未过 → **dubOver**（保留口型画面、音轨换 TTS 原声）。
+   **声音正确性 > 口型同步**，是定案不是遗留权衡。
+2. **reference 提交音频必须是原始 24kHz TTS**：重编码 44.1k mp3 会让供应商读参考音频失败
+   （对照 0.568 vs 0.072）。处理版只落盘不提交。
+3. **双网关**：key1/2 → `apihub.agnes-ai.com`，key3/4 → `api.agnes-ai.cn`（含 poll statusUrl）。
+   A 网关 401 ≠ 失效，先试另一网关；持续 401 → `quota.quarantineAdapter` 隔离 30 分钟。
+4. **一镜一主语音互斥**：`normalizeScript` 对 dialogue 镜清空 narrationZh/En。
+5. **字幕与人声时长锚定**：台词字幕 ≤ 人声时长 +0.8s（不是镜长）；节奏用 `rawDurationSec`
+   （垫尾静音不进镜长）——否则后半段死寂。
+6. **step-3.7-flash 可整片直审**：`video_url` 支持 base64 MP4（<128MB），带【设计预期 JSON +
+   七项审阅要求】出精确到秒的问题清单（`e2e/deep-review.mjs`）。推理模型，max_tokens 给足；
+   content 空时去 reasoning 尾部捞 JSON。
 
-## ⚠️ 安全：凭据泄漏（2026-08-28 发现，未完全闭环）
+## 4. 结构性认知（改动前必读）
 
-- 仓库根目录 **`工具模型.txt` 存有 StepFun / Agnes 的明文 API key**，且自基线提交
-  `232dcce` 起就被 git 跟踪 → **旧密钥已在提交历史中**。
-- 已做：加入 `.gitignore` + `git rm --cached`（磁盘文件保留，未丢失）。
-- **未做（需人工）**：① 去平台**轮换那批密钥**（历史里的应视为已泄露）；
-  ② 若要从历史中彻底清除，需 `git filter-repo` / BFG 重写历史 —— **破坏性操作，
-  涉及 force push，未经郭煜明确确认不要执行**。
-- 教训：任何"随手记录的 key 文本"都别放仓库里；`git add -A` 前先看 `git status`。
-  本项目 `.gitignore` 已覆盖 `*.key` / `.env*` / 音视频产物。
+- `pipeline.ts` 巨型文件（2234 行），横切 helper 靠 ESM 函数提升与 `stages/*` 循环依赖共存；
+  安全前提 = "stage 只在运行时函数体内访问它们"，别在模块顶层求值阶段引用。
+- `withVersionedAsset`（`asset-version.ts`）是所有重做路径的公共抽象：①先备份再生成；
+  ②失败只 pop 自己刚 push 的那项（并发安全）；③generate 返回 null **或抛异常**都要回滚。
+- **SSE 双通道**：状态级 `event: run`（`persistRun`→`emitRunUpdate`）；事件级 `event: ev`
+  （`pushEvent`→`emitEventAppend`）。**`pushEvent` 已不调 `persistRun`，团队消息只走 `ev`**——
+  前端（`client.ts` `streamRun` + `store.ts` `bind.onEvent`）不接就完全不显示。改一端须同步另一端。
+- **zustand v5**：`useShallow` 必须从 `zustand/react/shallow` 导入（主包不再导出）。
+  **它拦不住引用变化**：字段若是对象（`run`），每次 `set({run:{...}})` 都换引用 → 全量重渲染。
+  高频流（团队事件）必须**存成独立字段**，`onEvent` 只更新该字段、绝不重建父对象。
+- **闭包型 TDZ：TS 和 Biome 都拦不住（已实测）**。TS2448 对闭包内引用不生效；Biome 开
+  `correctness/noInvalidUseBeforeDeclaration: error` 仍零告警。⇒ **只有运行时行为测试能发现**。
+  此类重构必配行为测试，并做**变异验证**（人为塞回 bug 确认测试变红），否则可能是空测试。
+
+## 5. ⚠️ 安全：凭据泄漏（2026-08-28 发现，未完全闭环）
+
+- 根 **`工具模型.txt` 存 StepFun / Agnes 明文 key**，自基线提交 `232dcce` 起被 git 跟踪
+  → **旧密钥已在提交历史中**。
+- 已做：加入 `.gitignore` + `git rm --cached`（磁盘文件保留）。
+- **未做（需人工）**：① 去平台**轮换那批密钥**（历史里的应视为已泄露）；② 彻底清除需
+  `git filter-repo` / BFG 重写历史 —— **破坏性、需 force push，未经郭煜明确确认不执行**。
 - **本文件及所有记忆文件严禁写入密钥原文。**
 
-## 结构性认知
+## 6. 分批进度摘要（详见 doc/reports/）
 
-- 真正的项目是 `pi/packages/video-agent-server` + `video-agent-ui`；`pi/` 其余是 vendored 上游。
-- `pipeline.ts` 仍是巨型文件（2234 行），横切 helper（pushEvent/appendSpan/setStage/optionsOf/
-  readArtifact/ensureKeyframe/throwIfAborted）全靠 ESM 函数提升与 `stages/*` 循环依赖共存——
-  安全前提是"stage 只在运行时函数体内访问它们"，改动时注意别在模块顶层求值阶段引用。
-- `withVersionedAsset`（`asset-version.ts`）是所有重做路径的公共抽象，三条不变量：
-  ① 必须先备份再生成；② 失败只 pop 自己刚 push 的那一项（并发安全）；
-  ③ generate 返回 null **或抛异常**都要回滚（2026-08-28 修复，try/catch 兜底）。
-- **SSE 双通道（改动前必读）**：状态级 `event: run` 由 `persistRun`→`emitRunUpdate` 触发（阶段变更等）；
-  事件级 `event: ev` 由 `pushEvent`→`emitEventAppend` 触发。
-  **关键坑**：`pushEvent` 已不再调 `persistRun`，所以团队消息**只走 `ev`**——
-  前端（`client.ts` 的 `streamRun` + `store.ts` 的 `bind.onEvent`）若不接这条通道，
-  消息会完全不显示（只在下一次阶段快照里才补上）。改任一端都要同步另一端。
-- **zustand v5**：`useStore(selector, equalityFn)` 第二参数已移除，`useShallow` 必须
-  从 `zustand/react/shallow` 导入（主包 `zustand` 不再导出）。
-- **`useShallow` 拦不住引用变化（高频流必须拆独立字段）**：`useShallow` 浅比较的是
-  selector 返回对象各字段的**值**；若字段本身是对象（`run`），任何一次
-  `set({run: {...cur, x}})` 都会换引用 → 订阅它的组件全量重渲染。
-  所以高频变化的流（团队事件）要**独立于父对象存成单独字段**，
-  `onEvent` 只更新该字段、绝不重建父对象——这才是 selector 化真正生效的前提。
-- **闭包型 TDZ：TypeScript 和 Biome 都拦不住（已实测）**。2026-08-28 那个 P0
-  （闭包引用了后面才声明的 const）之所以能活三个提交，根因在此：
-  - TS 的 TS2448 对"闭包内引用"不生效——无法判断闭包何时被调用，只能放行；
-  - Biome 显式开启 `correctness/noInvalidUseBeforeDeclaration: "error"` 后，
-    用该模式探针验证**仍然零告警**（同样对闭包保守放行）。
-  ⇒ **只有真正执行这段代码的运行时行为测试能发现**。此类重构务必配行为测试；
-  写了回归测试后建议做**变异验证**（人为塞回 bug 确认测试真的变红），
-  否则可能是"过了但抓不住回归"的空测试。
+- A2–A7（台词链 + 前端）：全通。`prepareDialogueAudio`→COS 托管→2.5-flash reference→三级降级
+  (reference→i2v→t2v)；`ClipDurationSec` 白名单放开为 3–12 整数；音色绑定
+  CoCharacter.voiceId → `bindCharacterVoices` → script.json → TTS。
+- B2（只读制片主任）→ B3（L2 守卫 + 自动执行）→ B4（导演契约双向）→ B5（A/B 度量）：全通，
+  套件 229/229。
+- **reference prompt 定案**：「严格按 `<Audio 1>` 的内容与节奏说话…」**必须放 prompt 第一句**
+  （`withReferenceAudioInstruction`，redo-adapters.ts）。指令前置 +0.990 vs 后置 0.295。
+- **托管定案**：公开 URL 走 **COS 直连域** `{bucket}.cos.{region}.myqcloud.com`，**不走
+  tcb.qcloud.la**（前置层 418）。`@cloudbase/manager-node` 在 tsx 下 import 即炸，用
+  `@cloudbase/node-sdk`（`uploadFile({cloudPath, fileContent: Buffer})`，是 fileContent 不是 localPath）。
+- **仍未闭环**：reshot 成功路径端到端测试（需 ffmpeg + 真实 export）；`pricing.test.ts`
+  单独 43s 待排查。
+- **测试基建坑**：①FakeQueue 必须**同步写**产物（异步写在微任务竞态下让下游 mock
+  copyFile ENOENT 走错分支）；②给被 mock 模块（ffmpeg/queue/llm）新增静态导入消费者，
+  会让旧测试 `mock.module` 的 namedExports **链接断裂** —— 加导入前先
+  `grep -l "ffmpeg.ts" test/` 补齐所有 mock；③`queue.onJobUpdate?.()` 必须可选调用
+  （测试桩接口面不齐，曾致 5 文件 18 用例红）。
 
-## 已知未闭环项（2026-08-28 评审，两轮修复后更新）
+## 7. RLHF 资产（2026-08-29 盘点）
 
-- ~~`RunView` interface 缺 `gate` 字段~~（已补声明）
-- ~~`npm test` 挂死~~（根因：after 裸 rm 无 catch；已修）
-- ~~reshot/retts/reexport 无行为测试~~（公共抽象层已补 asset-version.test.ts；端到端集成测试优先级降一档）
-- ~~`lastActions` 前端零消费~~（指挥台加第三个标签「最近动作」，§10.4 验收项达成）
-- ~~UI 无 selector/useShallow~~（4 处整页订阅已改 selector + useShallow）
-- ~~`pushEvent` 每次全量 persistRun~~（已 ndjson 化，见下「SSE 双通道」）
-- ~~一致性预检每次 export 强制重算~~（已加关键帧指纹缓存，命中连 640px 压缩都跳过）
+- **已有**：15 维 `IntentKey`、`DirectorIntent`、`interviewLog`、执行轨迹 `TraceSpan`→traces.ndjson、
+  审议 `proposals[]` + 采纳回写、 `QaVerdict` 多轴分。
+- **核心诊断：有执行轨迹、无决策轨迹**。要做偏好学习必须补 L2 `DecisionSpan`
+  （**candidates[] 不能省**）+ L3 `PreferenceEvent`，episodeId 串联。
+- 最强信号：澄清答案被后续导演指令**推翻** = 精准负样本。
+- 冷启动不跳步：采集 → 补候选集 → 只读回放 → **离线分析报表（不训练就有收益）** → 训练。
+  门槛：报表 ≥50 episode、RM ≥300 样本、DPO ≥1000 偏好对。
 
-- ~~StudioPage 整页重渲染~~（events 拆为独立 store 字段 + DirectorChat 自订阅，已解耦）
-- ~~一致性预检缓存无失效测试~~（consistency-cache.test.ts，6 用例）
-- ~~reshot 端到端测试~~（reshot-redo.test.ts，3 用例，已做变异验证）
+## 8. CloudBase 部署事实（2026-08-31，已上线验证）
 
-**仍未闭环**：
-- reshot **成功路径**端到端测试仍缺（需 ffmpeg + 真实 export，mock 面大）。
-- `pricing.test.ts` 单独耗时 43s（套件 ~60s 的绝对大头），与近期改动无关，待单独排查。
-
-## 8-27 规划设计会话要点（来自 pi-session-2026-08-27T*.html 导出）
-
-该导出是 **No-tools 模式**的架构讲解+规划会话（3452 条消息，base64 编码，需解码才可读），
-非代码改动会话。里面 0 个 Write/Edit 动作；用户贴入的 git diff 来自别的会话。核心决策：
-
-- **多 agent 架构决策（郭煜拍板）**："多 agent 这块是否有必要，不要为了做而做" →
-  扩展单 agent 已足够，确认协调后沉淀现有能力，不要为架构而架构。
-- **审校/QA 设计**：用视觉模型（step-3.7-flash）检查成片（发色不一致等一致性问题），
-  应**先于用户**发现；关键帧单帧审核复用 design-review 模式（帧 vs 设计卡比对，fail 自动重绘）
-  使审核矩阵闭环。
-- **TTS 用途历史**：当时 TTS 只用于生成**旁白（narrator）**，非角色台词。
-  （注：2026-08-28 验证发现 2.5-flash `audios` 可驱动角色对口型 → "角色台词版本"是新方向，见验证报告）
-- **关键 bug 线索**：`createHash` 未导入 → `promptSigOf` 运行时必炸 →
-  "上游 refine 后关键帧标 stale"的过期级联**从未真正生效过（半个功能）**；
-  tsc 增量缓存掩盖了报错。建议 CI 用 `tsc -b --force` 或定期删 `.tsbuildinfo`。
-- **关键帧系统进度**：P0（关键帧多实体引用+依赖推导）已提交 `622e9a2`；
-  P1 把关键帧从 STAGE 03.5 升级为真正的独立后端阶段（keyframes StageId，7 阶段状态机）。
-- **orchestrator**：两步/三步协调角色；导演审议 = 懒人一键的质量兜底，需保证质量下限。
-- **共创实验室开放分镜数上限**：P2 之前做，支持转场更多的长片。
-- **跨 agent 可见性**：郭煜要求"把修改思路记在项目 md 文档，让不同 agent 都能主动看到" →
-  即本 `.workbuddy/memory/` 机制的出发点。
-
-## 📌 台词链路方法论（2026-08-30 血泪换来的六条，改台词/音频/导出前必读）
-
-1. **agnes reference 跟读在内容层不可信**：包络相关高达 0.78-0.91 的"跟读"，ASR 转写与
-   台词的字面重合仅 0.07-0.14——模型在**模仿节奏说乱语**（口型动、有吐字、不是人话）。
-   包络高≠可懂。防线 = 双关卡（包络≥0.7 + ASR 字面重合≥0.5，qa/audio-follow.ts + qa/asr-check.ts），
-   未过 → **dubOver**：口型视频保留、归一化时音轨替换为 TTS 原声（export normalizeShot audioPath）。
-   声音正确性 > 口型同步，这是定案不是权衡遗留。
-2. **reference 提交音频必须是原始 24kHz TTS**：垫尾/插停顿重编码出的 44.1k mp3 会让供应商
-   读取参考音频失败（对照实验：原始 0.568 vs 处理版 0.072）。处理版只落盘不提交。
-3. **双网关**：key1/2 属 `apihub.agnes-ai.com`，key3/4 属 `api.agnes-ai.cn`（含 poll statusUrl）。
-   key 在 A 网关 401 不代表失效——先试另一网关。401 持续 → quota.quarantineAdapter 自动隔离 30 分钟。
-4. **一镜一主语音互斥**：normalizeScript 对 dialogue 镜清空 narrationZh/En——LLM 会把收尾旁白
-   塞进台词镜，A3 语义丢弃后表现为"旁白消失"（step-3.7 整片深审抓到的设计冲突）。
-5. **字幕与人声时长锚定**：台词字幕 ≤台词人声时长+0.8s（不是镜长）；镜头节奏也用
-   rawDurationSec（垫尾静音不进镜长）——否则成片后半段大段死寂，听感="没声音/有嘶嘶声"。
-6. **step-3.7-flash 能整片直审**：`video_url` 支持 base64 MP4 直发（<128MB），带【设计预期 JSON+
-   七项审阅要求】产出精确到秒的问题清单（e2e/deep-review.mjs）。注意：它是推理模型，
-   max_tokens 要给足（reasoning 会吃掉配额），content 空时去 reasoning 尾部捞 JSON。
-
-## Agnes 限流事实（2026-08-28 查证官方 Token Plan FAQ，纠正旧报告）
-
-- **多 key 不叠加**：限流池按 **key type（访问类型）** 共享，**同类型多个 key 不增加 RPM 也不增加配额**
-  （官方原文："Creating multiple keys of the same type does not increase total RPM or quota"）。
-  旧验证报告里"多 key 分片线性扩容"对 Agnes **不成立**，已纠正。
-- **视频模型实际 RPM**：Free/默认 = 1、Enterprise = 2、Token Plan = 5。
-  实测 2 req/min → 当前 key 是 **Enterprise** 层级（非免费、非 Token Plan）。
-- **视频每日时长配额（硬约束）**：Token Plan = **500 秒/天**（所有套餐 Starter/Plus/Pro 同值），
-  ≈ 100 个 5s 片段/天。免费层只有公平使用配额（无明确时长配额）。
-- **同账号多类型 key 是官方支持的合法叠加**（原文："A user may hold multiple access types at
-  the same time... Each key type uses its own limit pool"）：一个账号同时持 free+enterprise+
-  TokenPlan 三类 key，三池独立，可部分叠加（例如 enterprise 2 + free 1 + TokenPlan 5 ≈ 8 RPM，
-  且仅 TokenPlan 池带 500 秒/天配额）。这是无需多账号就能小幅提吞吐的正路。
-- **多账号（跨账号）逻辑上可线性叠加**：限流绑在"账号的访问类型"上，不同账号=不同池，
-  N 个 TokenPlan 账号≈N×5 RPM + N×500 秒/天。但属滥用防御条款范围（官方："may adjust ...
-  based on ... abuse prevention"），且平台对免费层有"单 IP 默认 5 并发线程、大规模商用需单独
-  签约付费套餐"的隐式管控——批量注册多账号有 ToS/关联识别风险，是下策。
-- **最稳的大规模路径**：直接联系 Agnes 商务谈"单独签约付费套餐"（官方明确留此口子）。
-- **视频异步生成**：RPM 只卡"提交频率"，已提交任务在后台队列并行出片；长片生产必须靠异步
-  队列平滑提交 + 接受每日时长上限（500 秒/账号/天）。
-- **生产影响**：当前 2 RPM + 无明确时长配额（Enterprise 层），长片生产必须升 TokenPlan +
-  异步队列 + 接受每日时长天花板。
-
-## B4 导演契约 + B5 A/B 度量完成（2026-08-29）
-
-- **director-contract.ts（纯契约层）**：双向——方向 1 导演→制片主任
-  `PriorityInstruction{shotId,priority:P0/P1/P2,qualityBar:must_keep/...,
-  maxRetries}`（maxRetries 缺省 P0=2/P1=1/P2=0）；方向 2 制片主任→导演
-  `BudgetAlert{type,message,suggestion,shortfallSec,affectedShots,at}`。
-  `CONTRACT_SCHEMA` 快照锁定枚举不漂移（契约根基）。
-- **接线**：clips budgetAlert 加结构化告警持久化（budget-alerts.ndjson）；
-  queue.setPriority（仅 queued）；applyPriorityInstruction（shotId→
-  relativePath 匹配→改优先级→持久化→双事件推 D4）；三条路由。
-- **B5 metrics.ts（纯函数）**：computeRunMetrics 五项指标——配额利用率
-  （核心）、有效吞吐、P0延迟P95（线性插值百分位）、浪费率、被拒率（透传
-  kitchenSummary）。数据不全→null 降级。quota.consumedSec=daily-remaining。
-  GET /metrics 从账本/kitchen/assets/events 组装输入（秒数近似 5s/clip）。
-- 套件 **229/229**（director-contract 22 + metrics 14）+ A/B 对比语义测试。
-  **B4 验收=契约测试；B5 验收=对比静态队列基线（computeRunMetrics 纯函数
-  + 对比语义测试：代理利用率>基线、浪费率<基线）**。
-
-## B3 自动执行 + L2 守卫完成（2026-08-29）
-
-- **guard.ts（L2，纯函数）**：设计红线落地——绝不让 LLM 直接碰硬约束。
-  校验存在性/在途不可 defer/配额/RPM 令牌/冷却期（同任务同类 60s）；
-  安全默认 = 不动作。apply 用**实时快照**非观察时旧快照。
-- **执行原语**：GenerationQueue 增量加 `defer(jobId, ms)`（排队任务推迟 +
-  到点重泵）+ `amend(jobId, params)`（排队任务参数修订，降 seconds）；
-  running/done 拒绝。submit 单池 = 确认放行。
-- **applySuggestion**：实时守卫 → 执行 → executions 留痕 → 频道播报；
-  **被拒也是留痕**，rejectionRate 进 summary（偏高 = 校准信号非故障）。
-- **B1② 最小事件触发**：executeStages 注册 onJobUpdate，首次任务失败自动
-  producerObserve 一次（fire-and-forget，同 run 一次防费用失控）。
-  **onJobUpdate 必须可选调用**（`queue.onJobUpdate?.(...)`）——测试桩队列
-  接口面不齐，这曾致 5 文件 18 用例红。
-- **测试教训**：B3 用例独立 run（冷却期跨观察生效是产品语义）；独立 run 的
-  被拒率期望值不能抄共享 run 时代（1 次执行被拒 = 100%）。
-- 路由 POST /kitchen/apply；KitchenPanel 应用按钮 + 执行结果徽标 + 被拒率。
-  套件 **193/193**。
-
-## B2 只读制片主任完成（2026-08-29）
-
-- **kitchen.ts**：`buildKitchenSnapshot(pools, jobs, now)` 纯函数（烤炉/排队/
-  在途/失败/预算投影；Infinity→null = 无配额池；预算不带 totalSec——剩余/
-  预留/超支够用）；活跃队列注册表（GenerationQueue 是 run 级瞬态，executeStages
-  注册/finally 注销）。
-- **producer.ts**：observe → chat（系统提示钉死只建议不执行）→
-  sanitizeSuggestions（白名单清洗，守卫前置）→ kitchen.ndjson + pushEvent
-  producer→client（D4 走 ev 通道）→ LLM 挂了降级不抛错。反馈留痕 + 采纳率
-  （B2 验收）。**B2 的采纳只记录不执行，动作执行在 B3 接 L2 守卫**。
-- 路由：POST /kitchen/observe、GET /kitchen、POST /kitchen/feedback；
-  UI KitchenPanel（PipelineFlow 下方折叠条，观察按钮仅运行中可用）。
-- 套件 **180/180**。observe 是手动触发（B1② 事件驱动触发归 B3）——B2 的
-  目的就是用真实 run 校准提示词与观察信息充分性。
-
-## reference prompt 跟随度实验（2026-08-29，E2E 抓出的生产 bug）
-
-- **现象**：用户听首个 E2E 成片"说的不知道是什么"。包络相关：裸占位符
-  `-0.227`（模型自行配音）。
-- **定案（n=4 对照实验，`_tts_test/compare_all.py`）**：prompt 形态决定
-  2.5-flash 是否跟随参考音频——指令后置 0.295/0.781、生产 helper 首版
-  +0.701、**指令前置 +0.990**、08-28 基线 +0.665。
-- **修复**：`withReferenceAudioInstruction`（redo-adapters.ts）——「严格按
-  <Audio 1> 的内容与节奏说话，声音响起时口型开合、静音时闭嘴」**必须放
-  prompt 第一句**；clips.ts/retts.ts/e2e 脚本统一走它；测试锁 `严格按`。
-- 验收素材：`_tts_test/e2e-v1.mp4`（+0.990 最佳）、`e2e-a2-SH01.mp4`
-  （+0.701 生产直出）。**cn_ref.mp3 = 台词「我以为你走了」（08-28 录制，
-  用户 08-29 验收确认听感 OK → A2 验收② 通过，A2 全项关闭）。**
-
-## A7 前端全量完成（2026-08-29）+ A2 全链打通 + A5/A4b/A6
-
-- **A7 七处 ✅**：OptionsForm 开关 / CoCreatePage 角色音色下拉 + 预估缓冲行 /
-  ScriptStage 三态徽标+台词块 / PostStage 台词镜区块（dialogue.audioUrl 试听 +
-  重录台词按钮）/ RettsModal 台词分支（级联文案 + 配额预估）/ PipelineFlow
-  「audio → clips」反向依赖注记 / TimelineBar ♪ 角标。**余：用户起 dev server 手测七处**。
-- **音色绑定贯通（本轮关键发现）**：CoCharacter.voiceId（UI 下拉）→ coSpace →
-  服务端 `bindCharacterVoices`（audio-mode.ts 纯函数，characterId 匹配注入，
-  LLM 自带 voiceId 不覆盖）→ script.json → TTS。LLM 拿不到音色 id，此前
-  台词全员默认音色——此下拉是台词模式音色设计的最后一块拼图。
-- **pricing**：`estimateRunCost` +audioDrive → dialogue 且 redoBuffer>0 时加
-  「台词重录缓冲」行（每次 = TTS×2 + 口型视频×1）。
-- 套件 **171/171** + UI tsc/vite build ✅。
-- **A2 真镜 E2E ✅**：`scripts/e2e-dialogue-a2.ts`——COS 托管 → 2.5-flash
-  reference（`task_uxNq0tV6xA2uTD4lOrMFsDdrSm59EKEk`）→ ~100s completed →
-  `_tts_test/e2e-a2-SH01.mp4`（407 KB）。**待用户人眼确认口型**。
-- **托管定案**：公开 URL = **COS 直连域**（`{bucket}.cos.{region}.myqcloud.com`），
-  **不走 tcb.qcloud.la**（前置层 418）；桶 `6d79-myagent-d0glujkt6c30cbe8a-1253451683`
-  （ap-shanghai）ACL 已 public-read（CAM putBucketAcl，一次性脚本
-  `scripts/discover-and-open-bucket.ts`，cos-nodejs-sdk-v5 仅此脚本用 --no-save）。
-  `tcb.ts`：getUploadMetadata → PUT 直传 → 元数据 URL 解析桶/区域缓存。
-- **A5（服务端）**：`rettsRun` 台词镜级联——音频链复用 `prepareDialogueAudio`，
-  clip 用 `withVersionedAsset` 版本化 + `reserveShotQuota`（幂等键
-  `${shotId}-retts{n}:a{n}` 隔离）；reference 失败降旁白再 i2v/t2v（同 clips）；
-  脚本两处写盘（音频链后 + 重生成后，变异 G 锁）。旁白路径抽出为
-  `rettsNarration`（行为不变）+ 冒烟锁。
-- **A4b**：台词 ready 后 `dialogueDerivedSec(ceil(audioDur) 钳 4–12)` 回写
-  `shot.durationSec`；预留/提交/回写同一份。
-- **A6**：`ClipDurationSec` 白名单 → **3–12 整数区间**；UI 快捷档不变。
-- 套件 **168/168**。**余**：A2 人工验收② + A5 前端弹窗（归 A7）+ B1② + A7/B2 前端系。
-
-## A4a 台词镜对齐现状（2026-08-29 晚，`e2a5f81`）
-
-- **已完成**：超镜长 → LLM 精简重录一次（`dialogueCondenseMessages` + 同音色，
-  容差 +0.2s，不硬裁）；短于镜长 → `padTailToSec`（apad）补到镜长；
-  `audioDurationSec` 回写最终值。套件 158/158，2 次变异验证精确命中。
-- **仍开放**：「以音频反推镜长 ceil(audioDur)」必须与 A6 白名单放开同批。
-- **测试基建坑**：测试 FakeQueue 必须**同步写**产物文件——异步写在微任务竞态下
-  会让下游 mock 的 copyFile ENOENT 走错分支（生产代码无此问题）。
-
-## A2 台词链路现状（2026-08-29，接手必读）
-
-- **服务端核心已完成**（commit `f1c6eea`，套件 152/152）：`src/hosting/tcb.ts`
-  （CloudBase 云存储托管）+ `src/stages/dialogue-audio.ts`（TTS→实测→pausesSec
-  插停顿→托管，URL 复用）+ stageClips 台词分支（reference 提交 + 三级降级
-  reference→i2v→t2v）。真镜端到端验收**等 CloudBase 凭据**（`.env.cloudbase`：
-  TCB_ENV_ID/SECRET_ID/SECRET_KEY + 控制台存储权限「所有用户可读」）。
-- **2.5-flash 轮询端点纯配置即支持**（无需改 adapter 代码），但**双端点响应形状不同**：
-  `agnesapi?video_id=&model_name=agnes-video-2.5-flash` → 扁平、顶层 `url`；
-  `/v1/videos/{task_id}` → 嵌套 `metadata.url`。**statusUrl 与 resultPath 必须配对**。
-  models.json 定稿：agnesapi + `taskIdPath:"video_id"` + `resultPath:"url"`（官方推荐，
-  keyframe/reference 必须带 model_name；总文档 2.1 旧说法"agnesapi 会 404"已实测证伪；
-  2.5 创建响应 id=task_id=video_id 同值，task_ 前缀）。
-- **用户决策（08-29）**：agnes 视频**无特殊情况一律 2.5-flash**（v2.0 仅兜底）。
-- **CloudBase 凭据现状（08-29，含用户报告情报）**：用户给的是 **API Key JWT**
-  （aud=`myagent-d0glujkt6c330cbe8a`，service_role）。node-sdk 不认它；网关报
-  INVALID_ENV。`cloudbase_tts_upload_report.md`（另一 agent 的 MCP 方案）证实：
-  API Key 登录需 `apiKey` + **规范 EnvId** 两字段（aud 疑似项目 ID）；**桶 ACL
-  须 READONLY** 否则 publicUrl 403；`temporaryUrl` 是 1h 签名链接**不能**当持久
-  audioUrl。tcb.ts 已支持 apiKey/secret 双模式；`.env.cloudbase` 已配 apiKey 待解；
-  探针脚本 `scripts/probe-tcb.ts`。**待用户**：控制台 tcb 首页的真实环境 ID
-  → 先试 API Key + OpenAPI 网关，走不通再要 CAM SecretId/SecretKey。
-- **`@cloudbase/manager-node` 在 tsx 下 import 即炸**（依赖 `del` 的 CJS 互操作），
-  勿用；用 `@cloudbase/node-sdk`（`default.init(...).uploadFile({cloudPath, fileContent:Buffer})`
-  ——注意签名是 fileContent 不是 localPath）。
-- **新坑**：给被 mock 的模块（ffmpeg/queue/llm）新增静态导入消费者，会让所有旧
-  测试文件的 `mock.module` namedExports **链接断裂**（不是 undefined）——加导入前
-  先 `grep -l "ffmpeg.ts" test/` 补齐所有 mock。
-- **pausesSec v1 语义**：等分插入静音（近似均匀朗读）；升级路径（TTS 时间戳
-  精确落点）等真实听感反馈再定。
-
-## 音频链路代码事实（2026-08-28 源码实读，改造前必读）
-
-> **验证状态：单镜验证已通过，郭煜亲耳确认声音 + 口型 OK，方向已锁定。**
-> 后续会话直接进入工程化改造，不必再验证技术可行性（除非换模型或换音色）。
-
-现状是**旁白（画外音）**方案，链路 `script→visual→prompts→clips→audio→export`（audio 在 clips **之后**）：
-
-- 旁白文本 `narrationFor()` 取 `shot.narrationZh/En`（prompts.ts:190）；
-  LLM 表演指导 `ensureVoiceDirections()`（pipeline.ts:2252）存 `shot.ttsDirection`。
-  TTS 失败**不阻断**，该镜以无声画面进时间线（audio.ts:54）。
-- **视频自带音轨被完全丢弃**：ffmpeg.ts:475 只 `-i s.path`，视频链只用 `[i:v]`（:492）；
-  成片音轨 = DME 三层（旁白 amix + BGM sidechaincompress 闪避 + SFX，:342）；旁白 J-cut 提前入（export.ts:214）。
-- **retts 重录只重排导出，不重做视频**（retts.ts:139）——因为旁白与画面无关。
-- `clipDurationSec` 是白名单 `[3,5,8,10]`（options.ts:92），动态值会被 clamp 回默认。
-- `CoCreatePage.tsx` = 共创工作室，已有 **characters / scenes 实体** + 成本预估。
-
-**改「音频驱动视频」（先 TTS→托管 URL→2.5-flash 参考出片）必踩的三个冲突**：
-1. **export 会丢台词**：视频源音轨根本没进混音链 → 角色张嘴无声。须给 TimelineShot 增
-   `keepSourceAudio`，台词镜接 `[i:a]` 且 `narrationPath=null`。
-2. **重做级联**：改台词 → 音频变 → 口型对不上 → **视频必须重生成**。一次「重录」成本
-   从「1 次 TTS + 重混音」变成「TTS + 托管 + 一次视频生成（吃 RPM 与每日时长配额）」。
-3. **时长耦合**：台词模式镜长须由音频时长反推，但白名单会 clamp 掉动态值。
-
-**设计取向（与郭煜共识）**：旁白不删也不被取代——下沉为**每镜三态**
-`audioMode: narration | dialogue | silent`（ScriptShot 属性，非全局开关，同片可混用）。
-台词态「更严格」的实质：每角色绑定 voice、情绪/气口结构化、**静音段是表演的一部分**
-（2.5-flash 严格按音频包络对口型，停顿=闭嘴）、每镜只一条主语音、时长须 ≤ 镜长。
-台词模式放**共创工作室**限定开放的最强理由：那里已有 characters 实体 = 音色绑定载体；
-且服务端要有兜底校验（不能只靠 UI 藏开关，符合「闸门优先于派发」）。
-
-## 意图 / 轨迹 / RLHF 资产盘点（2026-08-29 实读，相关改造前必读）
-
-**已存在**（别重复造）：15 维 `IntentKey`（clarify/types.ts:25）｜`DirectorIntent`
-none|reshot|retts|reexport（`planDirectorReply` pipeline.ts:1900/1910）｜澄清 10 固定题
-+5 LLM 定制题 + `interviewLog`（clarify/）｜**执行轨迹 `TraceSpan` → traces.ndjson**
-（pipeline.ts:158/718/1840）｜**偏好信号：审议 `proposals[]` + 采纳回写 `adopted`**
-（deliberation.ts:141/890）｜`QaVerdict` 多轴分 + 逐镜裁决（pipeline.ts:149、qa/review.ts:77）。
-
-**核心诊断：有执行轨迹、无决策轨迹。** RLHF 要 `(state, action, reward)`，缺的是 action 的
-「候选集 + 选择」——只记 chosenAction 就只能做 SFT，做不了偏好学习。而审议每轮天然产出
-3-5 个 proposals，用户采纳其一 ⇒ **结构化后直接是偏好对，无需额外标注**。
-
-**增量设计**：三层轨迹 = L1 Execution（已有）+ L2 `DecisionSpan`（新增 decisions.ndjson，
-字段含 state 快照 / **candidates[] 不能省** / chosenId / rationale / confidence）
-+ L3 `PreferenceEvent`（新增 preferences.ndjson），episodeId 串联成 Episode。
-埋点最小侵入：新增 `appendDecision()` 对称 `appendSpan()`，只在 4 个决策点旁路写入，不改行为。
-
-**最强信号（额外发现）**：澄清答案被后续导演指令**推翻**（选了快节奏却说"太拖"）=
-精准负样本，比"采纳哪个提案"信息量更高（见 `ClarifyOverrideEvent` 设计）。
-
-**冷启动不跳步**：①采集 →②补齐候选集 →③只读回放 UI →④**离线分析报表（不训练就有收益，
-性价比最高）** →⑤训练。门槛：报表 ≥50 episode、RM ≥300 带分样本、DPO ≥1000 偏好对。
-数据不足是最大约束，别一上来就 DPO。
+- **环境** `myagent-d0glujkt6c30cbe8a`（ap-shanghai，体验版）；**服务** `video-agent`，域名
+  `https://video-agent-303977-11-1253451683.sh.run.tcloudbase.com`；单容器同源（API+UI 静态，8080）。
+- **两个必踩根因（已修，写入 `pi/Dockerfile` + `pi/.dockerignore`，详见
+  `doc/deployment/施工报告-部署-cloudbase-2026-08-31.md`）**：
+  1. **缺 5 个 workspace dist**：`config.ts` 直接 import studio adapter 源码，解析到
+     `agent/ai/coding-agent/tui` + 传递依赖 `telemetry` 共 5 个 dist，少一个即
+     `ERR_MODULE_NOT_FOUND` → 容器起不来 → 探针 8080 connection refused → `deploy_failed`。
+  2. **云托管不注入 PORT**：`config.ts` 读 `process.env.PORT ?? 8787`，容器实测监听 8787、
+     探针打 8080 → 失败。**必须 `ENV PORT=8080`**。
+- **CLI 两个坑**：① `--force` **不跳过**"是否灰度部署"交互项，需 `printf '\n' | tcb cloudrun
+  deploy ...`（喂换行选默认 No）；② `--wait` + 管道 stdin 不可靠，改用提交后轮询
+  `tcb cloudrun detail`（`OnlineVersionInfos` 从 `[]` 变有条目=成功）+ `tcb cloudrun logs
+  process --run-id <id>`（看启动日志/探针失败原因）。
+- **构建上下文**：robocopy `pi/` 排除 node_modules/dist(五包例外)/build/.git/test 等 →
+  补 5 个 dist + `deploy/models.json`，约 32M；本机 Docker 未启动，全程**云端构建**（~4.5 分钟）。
+- **已知限制（复述）**：① `MinNum=0` 缩零——首请求冷启动 503、生成中途可能回收中断，
+  **演示期控制台把实例下限设 1**；② run 产物容器盘易失；③ models.json key 在镜像内（私有）。
+- **线上验证口径**：`/api/health` → `{"ok":true,...}`；`/` → SPA `AD://FORGE`；`GET /api/` → 404（API 拦截正确）。

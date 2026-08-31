@@ -37,6 +37,7 @@
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import express, { type Request, type Response } from "express";
 import {
 	Clarifier,
@@ -1553,6 +1554,24 @@ function createApp(ctx: ServerContext) {
 			res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
 		}
 	});
+
+	// ---- 静态 UI 托管（部署形态：单容器同源服务 UI + API，2026-08-31）----
+	// 本地开发仍走 vite（5200 代理 /api），此处只在 UI 构建产物存在时启用；
+	// SPA 回退放在 API 路由之后、404 之前，/api/* 不被吞。
+	const uiDist = path.resolve(
+		path.dirname(fileURLToPath(import.meta.url)),
+		"..",
+		"..",
+		"video-agent-ui",
+		"dist",
+	);
+	if (fs.existsSync(path.join(uiDist, "index.html"))) {
+		app.use(express.static(uiDist));
+		app.use((req, res, next) => {
+			if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
+			res.sendFile(path.join(uiDist, "index.html"));
+		});
+	}
 
 	app.use((_req, res) => {
 		res.status(404).json({ error: "Not Found" });
