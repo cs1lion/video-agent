@@ -1,0 +1,74 @@
+{
+	"overall": "成片基本还原了凌晨四点老球馆父与子的对抗叙事，台词字幕匹配度高，但存在网球拍道具错误、多余人物穿帮、江建军发型突变、光线时间线跳变及镜头重复冗余等视觉问题，整体完成度尚可但细节瑕疵明显。",
+	"score": 75,
+	"secondPass": {
+		"overall": "成片基本还原了写实热血短片的基调与核心台词，但存在字幕时序错位、异常帧插入、人物外貌不一致及口型不匹配等问题，影响成片质量。",
+		"score": 65
+	},
+	"confirmedCount": 2,
+	"problems": [
+		{
+			"aspect": "人物",
+			"severity": "high",
+			"at": "8.90s (帧11-12)",
+			"description": "江建军手持网球拍（racquet）而非设计预期的乒乓球拍（ping pong paddle），道具严重错误。",
+			"confirmed": true
+		},
+		{
+			"aspect": "人物",
+			"severity": "high",
+			"at": "3.56s (帧5)",
+			"description": "画面中出现穿蓝黄色运动服的第三方人物手臂，与设计预期仅有的父子两人角色设定冲突。",
+			"confirmed": false
+		},
+		{
+			"aspect": "人物",
+			"severity": "medium",
+			"at": "8.90s (帧11-12) vs 0.00s (帧1)",
+			"description": "江建军发型从帧1的黑色短发突变为灰白短发，年龄感与外貌连续性不一致。",
+			"confirmed": true
+		},
+		{
+			"aspect": "物理与画面",
+			"severity": "medium",
+			"at": "6.23s (帧8)",
+			"description": "光线从昏暗的凌晨室内突然跳变为强烈的白昼自然光，与凌晨四点（SH01）及第一缕天光（SH05）的时间线设定冲突。",
+			"confirmed": false
+		},
+		{
+			"aspect": "剪辑节奏",
+			"severity": "low",
+			"at": "4.45s-5.34s (帧6-7); 8.90s-9.80s (帧11-12); 10.69s-12.47s (帧13-15)",
+			"description": "存在三组连续2-3帧画面几乎完全重复的冗余镜头（江野击球、江建军近景、双人过肩镜头），剪辑节奏拖沓。",
+			"confirmed": false
+		},
+		{
+			"aspect": "字幕",
+			"severity": "high",
+			"at": "0.89s-4.45s",
+			"description": "SH02台词「盯紧球，别走神。」未在父亲说话时段（约0.89s-2.67s）显示，反而延迟至4.45s（帧6）出现；同时SH01旁白字幕滞留至2.67s，导致台词与画面严重错位。",
+			"confirmed": false
+		},
+		{
+			"aspect": "物理",
+			"severity": "high",
+			"at": "3.56s; 8.90s",
+			"description": "帧5（3.56s）插入与设定无关的比赛场景（对手蓝色队服发球、明亮体育馆带窗帘背景），与父子练习的旧球馆场景不连贯；帧11父亲手持网球拍（或羽毛球拍）而非乒乓球拍，属于物体形变/穿模。",
+			"confirmed": false
+		},
+		{
+			"aspect": "口型",
+			"severity": "medium",
+			"at": "7.12s",
+			"description": "字幕「我练不动了！」出现时（帧9），人物处于击球发力瞬间，面部肌肉紧绷，口型为发力状而非喊叫状，与台词情绪不匹配。",
+			"confirmed": false
+		},
+		{
+			"aspect": "剪辑",
+			"severity": "medium",
+			"at": "3.56s",
+			"description": "帧5突兀切换至比赛场景，缺乏转场过渡，打断父子练习的连续叙事节奏，造成大段无意义静止。",
+			"confirmed": false
+		}
+	]
+}

@@ -1,0 +1,61 @@
+{"id":"ev-89889bc1","at":"2026-08-31T02:09:07.881Z","from":"producer","to":"all","kind":"status","text":"项目开机 🎬 需求「写实热血短片：凌晨四点的老球馆，少年江野和当过省队陪练的父亲江建军加练——父亲喂…」已确认，含共创空间设定，全组按 剧本 → 美术设计 → 分镜关键帧 → 片段生成 → 音频 → 导出 推进。美术设计与关键帧完成后会各暂停一次等你确认，避免未确认就消耗生成额度。（含共创音乐简报，已落盘 music-brief.json）"}
+{"id":"ev-9d9b57d4","at":"2026-08-31T02:09:07.889Z","from":"writer","to":"producer","kind":"status","text":"编剧开工：解析需求，搭建 5 镜叙事骨架。"}
+{"id":"ev-6d4b8055","at":"2026-08-31T02:09:35.522Z","from":"writer","to":"producer","kind":"status","text":"⚠️ 剧本对白密度不足（2 镜有对白，brief 要求 ≥3）——强化重写一次。"}
+{"id":"ev-9dbc8f72","at":"2026-08-31T02:10:01.573Z","from":"writer","to":"art","kind":"handoff","text":"剧本《捡回来》完成：5 镜，30s。Logline：16岁少年江野在父亲江建军的严苛陪练下，于凌晨老球馆磨砺不服输的球心。。请据此制定全片视觉规范。"}
+{"id":"ev-619ad56e","at":"2026-08-31T02:10:01.575Z","from":"art","to":"writer","kind":"status","text":"美术指导收到剧本，正在制定美术设计方案：风格基因、色板与光线。"}
+{"id":"ev-c4345b21","at":"2026-08-31T02:10:33.722Z","from":"art","to":"producer","kind":"status","text":"美术设计开工：5 张概念设计图（人物 2 · 道具 2 · 场景 1）逐张绘制中。"}
+{"id":"ev-2d4e027b","at":"2026-08-31T02:10:39.174Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「江野」（人物 CH01）"}
+{"id":"ev-dba0b807","at":"2026-08-31T02:10:44.492Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「江建军」（人物 CH02）"}
+{"id":"ev-2575da18","at":"2026-08-31T02:10:49.583Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「乒乓球拍」（道具 PR01）"}
+{"id":"ev-4381da50","at":"2026-08-31T02:10:54.705Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「旧木球台」（道具 PR02）"}
+{"id":"ev-518b8a1c","at":"2026-08-31T02:11:03.995Z","from":"art","to":"producer","kind":"status","text":"设计图完成 ✅「老球馆内」（场景 SC01）"}
+{"id":"ev-d8ec9722","at":"2026-08-31T02:11:04.004Z","from":"art","to":"producer","kind":"status","text":"美术设计完成 ✅ 5/5 张设计图就绪，可在「美术设计」面板查看并逐张调整；确认前不会进入关键帧与视频生成。"}
+{"id":"ev-e7334e3a","at":"2026-08-31T02:11:04.008Z","from":"reviewer","to":"art","kind":"status","text":"审校员核对设计图：逐张比对画面与设计要点…"}
+{"id":"ev-0edaf207","at":"2026-08-31T02:11:16.471Z","from":"reviewer","to":"art","kind":"status","text":"设计图自审通过 ✅ 5 张与设计要点相符。"}
+{"id":"ev-e834b03a","at":"2026-08-31T02:11:16.472Z","from":"art","to":"storyboard","kind":"handoff","text":"美术设计定稿：风格 [cinematic / gritty realism / sports documentary / authentic sports / character-driven / warm contrast / moody]，色板 #A0522D、#C41E3A、#FFE4B5、#B0C4DE。人物形象与场景设定图已产出，后续关键帧与视频将严格以此为原料。"}
+{"id":"ev-395589d7","at":"2026-08-31T02:11:16.473Z","from":"art","to":"client","kind":"status","text":"美术设计已就绪 🎨 风格、人物形象与场景概念图齐备。请在「美术设计」页确认，或对单张设计图提意见重绘；确认后才开始绘制关键帧。"}
+{"id":"ev-27ae630a","at":"2026-08-31T02:11:18.179Z","from":"producer","to":"all","kind":"status","text":"美术设计已确认 ✅ 开始绘制分镜关键帧。"}
+{"id":"ev-f42dd62c","at":"2026-08-31T02:11:18.180Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「分镜提示词」继续，直至成片。"}
+{"id":"ev-26d67fa0","at":"2026-08-31T02:11:18.181Z","from":"storyboard","to":"tech","kind":"status","text":"分镜师开工：逐镜拆解画面描述与运镜，生成视频模型提示词。"}
+{"id":"ev-11ef6a9b","at":"2026-08-31T02:12:08.686Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：江野(CH01)、老球馆内(SC01)。"}
+{"id":"ev-db7f0eea","at":"2026-08-31T02:12:08.687Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-d43555b5","at":"2026-08-31T02:12:16.328Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：江野(CH01)、老球馆内(SC01)。"}
+{"id":"ev-bd687862","at":"2026-08-31T02:12:16.329Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-889b13cd","at":"2026-08-31T02:12:22.668Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：江野(CH01)、老球馆内(SC01)。"}
+{"id":"ev-1fff2212","at":"2026-08-31T02:12:22.669Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-24061e9b","at":"2026-08-31T02:12:31.134Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：江野(CH01)、老球馆内(SC01)。"}
+{"id":"ev-25a78ced","at":"2026-08-31T02:12:31.135Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-ad8e4a55","at":"2026-08-31T02:12:37.579Z","from":"tech","to":"producer","kind":"status","text":"镜头画面将锚定 2 个设计定稿：江野(CH01)、老球馆内(SC01)。"}
+{"id":"ev-dbc1137b","at":"2026-08-31T02:12:37.581Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 先出关键帧（首帧锚定图 · 2 实体参考板）…"}
+{"id":"ev-ad55d93e","at":"2026-08-31T02:12:43.839Z","from":"storyboard","to":"tech","kind":"handoff","text":"分镜锁定 ✅ 5 镜提示词与关键帧全部就绪（含一致性锚点与负面词）。技术导演待命，等你确认关键帧后按队列提交生成。"}
+{"id":"ev-ecad6e1e","at":"2026-08-31T02:12:43.841Z","from":"storyboard","to":"client","kind":"status","text":"关键帧全部就绪 🖼️ 每镜首帧已锚定美术设计。请在「分镜关键帧」页确认或单镜重绘；确认后才开始视频生成（避免未确认就消耗生成额度）。"}
+{"id":"ev-1e2f534f","at":"2026-08-31T02:12:48.424Z","from":"producer","to":"all","kind":"status","text":"确认推进 ▶ 从「音频」继续，直至成片。"}
+{"id":"ev-d7fb6682","at":"2026-08-31T02:12:48.426Z","from":"sound","to":"editor","kind":"status","text":"声音设计开工：配音导演逐镜撰写表演指导，按 中文旁白录制有情绪起伏的 TTS。"}
+{"id":"ev-7b8da540","at":"2026-08-31T02:12:48.430Z","from":"sound","to":"editor","kind":"status","text":"配音选角：旁白＝播音男声；角色 江野→青年大学生、江建军→深沉男音；与角色声线全部错开。"}
+{"id":"ev-7bb992b4","at":"2026-08-31T02:13:09.882Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH01（指导：沉静带暖意，语速偏缓，「先」字重读，气息平稳带清晨清冽感，起…）"}
+{"id":"ev-1a7c2ddb","at":"2026-08-31T02:13:13.916Z","from":"sound","to":"editor","kind":"status","text":"旁白录制完成 ✅ 镜头 SH05（指导：沉劲带力量，语速偏缓，「不是球」「不服」重读，气息稳沉，尾音…）"}
+{"id":"ev-487834f0","at":"2026-08-31T02:13:13.917Z","from":"sound","to":"editor","kind":"handoff","text":"旁白轨交付：2/5 条 TTS 就绪（逐镜带表演指导），音量层级 旁白＞音效＞BGM。"}
+{"id":"ev-18695d67","at":"2026-08-31T02:13:13.926Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH01 提交生成（720p · 6s · 关键帧+提示词 图生视频）：Cinematic wide establishing shot of gritty old indoor traini…"}
+{"id":"ev-e4d9d89b","at":"2026-08-31T02:13:18.222Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH02 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-bd73a867","at":"2026-08-31T02:13:25.407Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH02 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-8d176777","at":"2026-08-31T02:13:25.409Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH02 提交生成（720p · 6s · 台词音频驱动口型）：Dynamic handheld tracking shot following sharp fast ping pon…"}
+{"id":"ev-7be7bbe4","at":"2026-08-31T02:13:30.494Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH03 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-d47dd7e2","at":"2026-08-31T02:13:35.029Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH03 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-4e01f6bc","at":"2026-08-31T02:13:35.032Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 提交生成（720p · 6s · 台词音频驱动口型）：Handheld shaky push-in shot focusing on Jiang Ye, 16-year-ol…"}
+{"id":"ev-1f3dd329","at":"2026-08-31T02:13:40.034Z","from":"sound","to":"producer","kind":"status","text":"镜头 SH04 台词 6.0s 短于镜长，尾部补静音到 6s。"}
+{"id":"ev-b50cda36","at":"2026-08-31T02:13:45.570Z","from":"sound","to":"editor","kind":"status","text":"镜头 SH04 台词音频就绪 ✅（6.0s，已托管，将驱动口型生成）。"}
+{"id":"ev-c0230f80","at":"2026-08-31T02:13:45.572Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 提交生成（720p · 6s · 台词音频驱动口型）：Static locked-off medium shot of Jiang Jianjun, 45-year-old …"}
+{"id":"ev-7b5cb692","at":"2026-08-31T02:13:45.576Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH05 提交生成（720p · 6s · 关键帧+提示词 图生视频）：Wide shot transitioning to dolly push-in close-up of final p…"}
+{"id":"ev-93bb3391","at":"2026-08-31T02:14:21.745Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH01 生成完成 ✅（1/5）"}
+{"id":"ev-6660f960","at":"2026-08-31T02:17:37.894Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH02 生成完成 ✅（2/5）"}
+{"id":"ev-b4e454fe","at":"2026-08-31T02:17:38.096Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH03 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-442bb7f3","at":"2026-08-31T02:17:38.258Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH03 生成完成 ✅（3/5）"}
+{"id":"ev-70dc309c","at":"2026-08-31T02:17:38.453Z","from":"tech","to":"producer","kind":"status","text":"镜头 SH04 台词跟读未过关——口型视频保留，音轨改用 TTS 原声配音（dubOver）。"}
+{"id":"ev-9edf66fe","at":"2026-08-31T02:17:38.603Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH04 生成完成 ✅（4/5）"}
+{"id":"ev-06bcc981","at":"2026-08-31T02:17:38.763Z","from":"tech","to":"editor","kind":"status","text":"镜头 SH05 生成完成 ✅（5/5）"}
+{"id":"ev-8d1e0e28","at":"2026-08-31T02:17:38.765Z","from":"tech","to":"editor","kind":"handoff","text":"镜头批次交付：5/5 镜成功，移交剪辑师归一化与合成。"}
+{"id":"ev-20cda494","at":"2026-08-31T02:17:38.767Z","from":"editor","to":"reviewer","kind":"status","text":"剪辑师开工：逐镜归一化 → 拼接 → 烧录字幕。"}
+{"id":"ev-10be88e1","at":"2026-08-31T02:17:59.549Z","from":"editor","to":"reviewer","kind":"handoff","text":"粗剪完成（5 镜 · 15.6s · 720p 16:9，转场：叠化 0.5s，音效：嗖声，响度 -14 LUFS），移交审片员质检。"}
+{"id":"ev-90f82fae","at":"2026-08-31T02:18:54.936Z","from":"reviewer","to":"client","kind":"qa","text":"跨镜一致性预检 ⚠️ 5 处异常：SH01（成年男性着深绿色针织开衫、金色短发；男孩着红色圆领T恤、短发）、SH02（男孩着红色运动T恤（带白色细节）、戴左手护腕）、SH03（男孩着红色T恤、戴左手护腕）、SH04（男孩着红色V领T恤、戴右手黄色护腕；成年男性着深灰色夹克）、SH05（男孩着红色Polo衫、戴护腕；老年男性着灰色夹克、灰发）。可在质量审读页查看详情并补拍。"}
+{"id":"ev-b6019137","at":"2026-08-31T02:18:54.937Z","from":"reviewer","to":"producer","kind":"qa","text":"质检结论：通过 ✅（综合 82）。最短板 audioSync 40 分。另有 5 处跨镜一致性异常请关注。"}
+{"id":"ev-acbeca57","at":"2026-08-31T02:18:54.939Z","from":"producer","to":"client","kind":"status","text":"全片交付 🎉 成片与七轴质检报告已就绪。"}

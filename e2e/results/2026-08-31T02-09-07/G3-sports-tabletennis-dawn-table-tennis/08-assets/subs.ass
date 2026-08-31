@@ -1,0 +1,17 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Microsoft YaHei,37,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,2,1,2,102,102,43,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:03.56,Sub,,0,0,0,,凌晨四点，老球馆的灯先亮了。
+Dialogue: 0,0:00:04.30,0:00:06.02,Sub,,0,0,0,,盯紧球，别走神。
+Dialogue: 0,0:00:06.93,0:00:08.24,Sub,,0,0,0,,我练不动了！
+Dialogue: 0,0:00:09.13,0:00:10.27,Sub,,0,0,0,,捡回来。
+Dialogue: 0,0:00:10.44,0:00:15.15,Sub,,0,0,0,,捡回来的，从来不是球，是不服。

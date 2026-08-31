@@ -1,0 +1,89 @@
+{
+	"characters": [
+		{
+			"id": "CH01",
+			"category": "character",
+			"name": "江野",
+			"design": "16-year-old male teen table tennis player, short messy damp hair, red sweat-soaked tight sports jersey, wrist wrapped with kinesio tape, stubborn determined gaze, toned lean arms, front full-body shot, natural skin texture, realistic sweat details, gritty sports aesthetic",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-31T02:11:16.470Z"
+			},
+			"url": "/api/runs/run-mtglnzmm-21/files/assets/design-character-CH01.png"
+		},
+		{
+			"id": "CH02",
+			"category": "character",
+			"name": "江建军",
+			"design": "45-year-old male ex-provincial team training partner, buzz cut with strands of white hair, worn sports jacket with frayed cuffs, defined hard forearm muscles, expressionless stoic face, front full-body shot, natural fabric wear details, authentic rugged sports look",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-character-CH02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-31T02:11:16.470Z"
+			},
+			"url": "/api/runs/run-mtglnzmm-21/files/assets/design-character-CH02.png"
+		}
+	],
+	"props": [
+		{
+			"id": "PR01",
+			"category": "prop",
+			"name": "乒乓球拍",
+			"design": "Well-worn standard table tennis racket, scuffed rubber surface, worn handle grip, realistic use marks from frequent practice, medium shot, natural texture details, fits gritty sports training setting",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-31T02:11:16.470Z"
+			},
+			"url": "/api/runs/run-mtglnzmm-21/files/assets/design-prop-PR01.png"
+		},
+		{
+			"id": "PR02",
+			"category": "prop",
+			"name": "旧木球台",
+			"design": "Worn vintage wooden table tennis table, scuffed surface covered with subtle ball impact marks, faded white edge lines, sturdy slightly rusted metal legs, medium shot, realistic wood grain and wear details, authentic old gym training feel",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-prop-PR02.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-31T02:11:16.470Z"
+			},
+			"url": "/api/runs/run-mtglnzmm-21/files/assets/design-prop-PR02.png"
+		}
+	],
+	"scenes": [
+		{
+			"id": "SC01",
+			"category": "scene",
+			"name": "老球馆内",
+			"design": "Gritty authentic old indoor training gym, worn dark wooden floors, stacks of ping pong balls in corner, high-hung warm tungsten lights, soft cool dawn light filtering through high windows, faded old championship flags on wall, wide establishing shot, high contrast warm-cool lighting, desaturated gritty realistic color grade matching sports documentary style",
+			"status": "done",
+			"attempts": 1,
+			"versions": [],
+			"file": "assets\\design-scene-SC01.png",
+			"review": {
+				"verdict": "ok",
+				"issues": [],
+				"checkedAt": "2026-08-31T02:11:16.470Z"
+			},
+			"url": "/api/runs/run-mtglnzmm-21/files/assets/design-scene-SC01.png"
+		}
+	],
+	"generatedAt": "2026-08-31T02:10:33.720Z"
+}

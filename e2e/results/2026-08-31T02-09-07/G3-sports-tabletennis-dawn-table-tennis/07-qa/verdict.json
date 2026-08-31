@@ -1,0 +1,66 @@
+{
+	"overall": "pass",
+	"score": 82,
+	"axes": [
+		{
+			"id": "briefFit",
+			"score": 85
+		},
+		{
+			"id": "visualConsistency",
+			"score": 90
+		},
+		{
+			"id": "pacing",
+			"score": 92
+		},
+		{
+			"id": "physicalAccuracy",
+			"score": 75
+		},
+		{
+			"id": "characterConsistency",
+			"score": 90
+		},
+		{
+			"id": "audioSync",
+			"score": 40
+		},
+		{
+			"id": "textQuality",
+			"score": 100
+		}
+	],
+	"shots": [
+		{
+			"id": "SH01",
+			"verdict": "ok",
+			"reason": "场景符合老球馆设定，旧木地板、彩色球筐、高窗及晨光氛围到位，人物造型与剧情匹配，字幕正常。"
+		},
+		{
+			"id": "SH02",
+			"verdict": "ok",
+			"reason": "训练动作流畅，光线从窗户透入符合晨训设定，多球桌背景增强球馆真实感，字幕无异常。"
+		},
+		{
+			"id": "SH03",
+			"verdict": "ok",
+			"reason": "少年疲惫表情与台词\"我练不动了\"情绪匹配，符合剧情冲突点，服装与人物一致。"
+		},
+		{
+			"id": "SH04",
+			"verdict": "warn",
+			"reason": "父亲手持疑似羽毛球拍（拍面过大）与乒乓球训练设定不符；但台词\"捡回来\"准确，人物形象连贯。"
+		},
+		{
+			"id": "SH05",
+			"verdict": "ok",
+			"reason": "结尾镜头球静止于桌面，旁白\"捡回来的，从来不是球，是不服\"点题，两人姿态收束，符合剧情收尾要求。"
+		}
+	],
+	"subtitles": {
+		"present": true,
+		"lines": 5,
+		"issues": []
+	}
+}

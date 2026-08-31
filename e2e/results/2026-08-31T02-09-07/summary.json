@@ -1,0 +1,252 @@
+{
+	"base": "http://127.0.0.1:8791",
+	"startedAt": 1788142147810,
+	"pass": 1,
+	"total": 1,
+	"results": [
+		{
+			"id": "G3-sports-tabletennis",
+			"title": "《凌晨四点的球馆》· 热血训练 · 台词驱动",
+			"audioForm": "dialogue",
+			"dir": "G3-sports-tabletennis-dawn-table-tennis",
+			"run": {
+				"id": "run-mtglnzmm-21",
+				"status": "done",
+				"verdict": {
+					"overall": "pass",
+					"score": 82,
+					"axes": [
+						{
+							"id": "briefFit",
+							"score": 85
+						},
+						{
+							"id": "visualConsistency",
+							"score": 90
+						},
+						{
+							"id": "pacing",
+							"score": 92
+						},
+						{
+							"id": "physicalAccuracy",
+							"score": 75
+						},
+						{
+							"id": "characterConsistency",
+							"score": 90
+						},
+						{
+							"id": "audioSync",
+							"score": 40
+						},
+						{
+							"id": "textQuality",
+							"score": 100
+						}
+					],
+					"shots": [
+						{
+							"id": "SH01",
+							"verdict": "ok",
+							"reason": "场景符合老球馆设定，旧木地板、彩色球筐、高窗及晨光氛围到位，人物造型与剧情匹配，字幕正常。"
+						},
+						{
+							"id": "SH02",
+							"verdict": "ok",
+							"reason": "训练动作流畅，光线从窗户透入符合晨训设定，多球桌背景增强球馆真实感，字幕无异常。"
+						},
+						{
+							"id": "SH03",
+							"verdict": "ok",
+							"reason": "少年疲惫表情与台词\"我练不动了\"情绪匹配，符合剧情冲突点，服装与人物一致。"
+						},
+						{
+							"id": "SH04",
+							"verdict": "warn",
+							"reason": "父亲手持疑似羽毛球拍（拍面过大）与乒乓球训练设定不符；但台词\"捡回来\"准确，人物形象连贯。"
+						},
+						{
+							"id": "SH05",
+							"verdict": "ok",
+							"reason": "结尾镜头球静止于桌面，旁白\"捡回来的，从来不是球，是不服\"点题，两人姿态收束，符合剧情收尾要求。"
+						}
+					],
+					"subtitles": {
+						"present": true,
+						"lines": 5,
+						"issues": []
+					}
+				},
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"progress": 100
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"progress": 100
+					}
+				],
+				"productionShots": 5,
+				"dialogueShotCount": 3
+			},
+			"assert": {
+				"passed": [
+					"管线状态 done（实际 done）",
+					"全部阶段 done（7/7）",
+					"成片已归档",
+					"成片体积达标（5229KB / 阈值 50KB）",
+					"镜头数达标（5 / 期望 ≥5）",
+					"片段产物存在（5 段）",
+					"关键帧数 ≥ 片段数（5 vs 5）",
+					"TTS 音轨存在（台词/旁白）（8 条）",
+					"台词镜存在（3 镜）",
+					"质检有分（综合 82（pass））",
+					"物理/人物/文字审核轴齐备（物理 75 / 人物 90 / 文字 100）",
+					"字幕结构审核通过（5 行）",
+					"旁白音色与角色错开（旁白 boyinnansheng vs 角色 [qingniandaxuesheng, shenchennanyin]）",
+					"角色音色互不相同（2/2（qingniandaxuesheng, shenchennanyin））"
+				],
+				"failed": [],
+				"verdict": "PASS"
+			},
+			"timings": {
+				"totalMs": 593636,
+				"stages": [
+					{
+						"id": "script",
+						"status": "done",
+						"ms": 55119
+					},
+					{
+						"id": "visual",
+						"status": "done",
+						"ms": 130290
+					},
+					{
+						"id": "prompts",
+						"status": "done",
+						"ms": 180442
+					},
+					{
+						"id": "keyframes",
+						"status": "done",
+						"ms": 220530
+					},
+					{
+						"id": "audio",
+						"status": "done",
+						"ms": 251252
+					},
+					{
+						"id": "clips",
+						"status": "done",
+						"ms": 511793
+					},
+					{
+						"id": "export",
+						"status": "done",
+						"ms": 591964
+					}
+				]
+			},
+			"collected": {
+				"files": {
+					"01-script": [
+						"script.json",
+						"voice-directions.json"
+					],
+					"05-audio": [
+						"voice-cast.json",
+						"tts-dialogue-SH02-pad.mp3",
+						"tts-dialogue-SH02.mp3",
+						"tts-dialogue-SH03-pad.mp3",
+						"tts-dialogue-SH03.mp3",
+						"tts-dialogue-SH04-pad.mp3",
+						"tts-dialogue-SH04.mp3",
+						"tts-SH01.mp3",
+						"tts-SH05.mp3"
+					],
+					"07-qa": [
+						"run-state.json",
+						"consistency.json",
+						"traces.ndjson"
+					],
+					"06-export": [
+						"transitions.json",
+						"final.mp4",
+						"qa-SH01-late.jpg",
+						"qa-SH01.jpg",
+						"qa-SH02-late.jpg",
+						"qa-SH02.jpg",
+						"qa-SH03-late.jpg",
+						"qa-SH03.jpg",
+						"qa-SH04-late.jpg",
+						"qa-SH04.jpg",
+						"qa-SH05-late.jpg",
+						"qa-SH05.jpg",
+						"shot-SH01.mp4",
+						"shot-SH02.mp4",
+						"shot-SH03.mp4",
+						"shot-SH04.mp4",
+						"shot-SH05.mp4",
+						"subs.ass"
+					],
+					"02-design": [
+						"visual-bible.json",
+						"design-bible.json",
+						"design-character-CH01.png",
+						"design-character-CH02.png",
+						"design-prop-PR01.png",
+						"design-prop-PR02.png",
+						"design-scene-SC01.png"
+					],
+					"03-keyframes": [
+						"keyframes.json",
+						"key-SH01.png",
+						"key-SH02.png",
+						"key-SH03.png",
+						"key-SH04.png",
+						"key-SH05.png"
+					],
+					"04-clips": [
+						"clip-SH01.mp4",
+						"clip-SH02.mp4",
+						"clip-SH03.mp4",
+						"clip-SH04.mp4",
+						"clip-SH05.mp4"
+					]
+				}
+			},
+			"finalBytes": 5354637
+		}
+	]
+}

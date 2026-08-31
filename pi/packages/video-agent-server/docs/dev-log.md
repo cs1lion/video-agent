@@ -1349,3 +1349,34 @@ step-3.7 整片深审 → 对质 → 修复 → 重跑。日志：`e2e/迭代优
 - **测试**：6 个测试文件补 detectSpeechSegments mock；全套 279/279。
 - **G 批次基线**：十套风格差异化 10/10 PASS（82-88 分，人物一致性最低 55=G3 热血），
   死寂/乱语/字幕错序 0。详见 `e2e/迭代优化日志-多轮对话压力轮.md` §Round 4。
+
+## 2026-08-31 上午：自动闭环收尾——目标选择抽纯函数 + 契约测试（G3 复跑实测的后续）
+
+**为什么抽**：G3 复跑（8791 端口，VIDEO_AGENT_AUTO_REPAIR=1，G 批次后首个新码服务）闭环
+**未触发**——新脚本唯一 warn（SH04 羽毛球拍乱入乒乓设定）reason **不带「人物:/物理:」前缀**，
+被规则正确排除（代码行为符合设计，无 bug）。结论：闭环真跑触发依赖 QA 模型的前缀遵循，
+而**前缀遵循是概率性的**（G 首轮 SH03 带、本轮 SH04 不带）。warn 路径需要一个不依赖
+LLM 方差的确定性验证 → 按 foldQaAxes 先例，把内联 filter/slice 抽为
+`selectAutoRepairTargets(shots, maxTargets=2)` 导出纯函数（行为零变化），
+新增 `test/auto-repair.test.ts` 4 条契约测试（fail 必选 / warn 前缀门槛 / ≤2 保序 /
+空列表与 reason 缺失边界），变异语义写在注释：拿掉前缀判断→用例2红、拿掉 slice→用例3红、
+拿掉 fail 分支→用例1红。全套 279→**283/283 绿**。
+
+**候选对策（未做，记录不修）**：QA prompt 强化「warn/fail reason 必须以 人物:/物理:/文字:
+开头」可提高闭环命中率，但属生产行为变更需整批重验；当前宁可漏选不可滥选
+（每次补拍烧一个 RPM 提交窗口）。
+
+**e2e 侧同批改动**（详见根目录 HANDOFF-2026-08-31.md §6.2）：
+- `deep-review.mjs` 双轮独立评审取交集（reviewOnce×2 并行 / aspect+2s 时间桶同键=confirmed /
+  confirmedCount / secondPass；宽容解析剥 ```json 围栏——首轮就撞上，已修）。
+  实战：P1 75 / P2 65，confirmed 2/9，P2 独有 high 被降为观察项 = 误修率下降实证；
+  confirmed 两项与 QA SH04 warn 互相印证（双测量系统交叉验证）。
+- `run-e2e.mjs` + `lib/report.mjs` 闭环留痕：events.jsonl 提取触发事件 → 与最终逐镜裁决
+  对齐 → `07-qa/auto-repair.json` + report.md 对照表 + 断言区信息性留痕
+  （硬断言刻意不做：LLM 方差下不保证每次有触发目标）。
+
+**新发现（与本次改动无关）**：gate-state-machine P1 用例在全套并行下偶发 ENOENT
+（临时 run 目录设计图未就绪），单跑稳定绿——遇全套 1 fail 先单跑此文件复判。
+
+**沙箱注**：本机跑测试套件/起服务需子进程 spawn 权限（node:test 按文件 spawn 子进程、
+esbuild 服务进程走 stdio 管道），沙箱默认拦 EPERM。

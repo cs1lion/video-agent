@@ -13,7 +13,7 @@ export const MIN_FINAL_BYTES = 50 * 1024;
  * 单用例断言。
  * @returns {{passed: string[], failed: string[], verdict: "PASS"|"FAIL"}}
  */
-export function assertCase({ expect, run, collected, finalBytes, audioForm, postFacts = {}, voiceCast = null }) {
+export function assertCase({ expect, run, collected, finalBytes, audioForm, postFacts = {}, voiceCast = null, autoRepair = [] }) {
 	const passed = [];
 	const failed = [];
 	const check = (ok, label, detail) => (ok ? passed : failed).push(detail ? `${label}（${detail}）` : label);
@@ -121,6 +121,17 @@ export function assertCase({ expect, run, collected, finalBytes, audioForm, post
 		}
 	}
 
+	// 7.5) 自动质检-修复闭环：信息性留痕（触发 + 复审对照）。
+	// 不做硬断言——reshot 改善受模型保真度上限约束（G3 类顽固项复审可能仍 fail），
+	// 且逐镜问题是 LLM 方差，不能保证每次跑片都有触发目标；闭环是否触发看留痕章节即可。
+	if ((autoRepair ?? []).length > 0) {
+		for (const r of autoRepair) {
+			passed.push(
+				`注意：自动质检-修复闭环触发 ${r.shotId}（补拍前 ${r.preVerdict}：${r.preReason}）→ 复审 ${r.postVerdict ?? "无记录"}${r.improved ? "（改善）" : "（未改善/持平）"}`,
+			);
+		}
+	}
+
 	// 7) 成片之后的动作（按用例要求逐项校验）
 	const assets = collected.assets ?? [];
 	if (expect.requireDesignReview)
@@ -167,7 +178,7 @@ function mdTable(rows, headers) {
 	return `| ${headers.join(" | ")} |\n| ${headers.map(() => "---").join(" | ")} |\n${body}`;
 }
 
-export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts, voiceCast }) {
+export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts, voiceCast, autoRepair = [] }) {
 	const lines = [];
 	lines.push(`# ${testCase.id} · ${testCase.title}`);
 	lines.push("");
@@ -266,6 +277,24 @@ export function writeCaseReport(caseDir, { testCase, run, assert, timings, gates
 					: `- 字幕结构审核：${subs.issues.length} 项问题 — ${subs.issues.join("；")}`,
 			);
 		}
+		lines.push("");
+	}
+
+	// 自动质检-修复闭环：触发留痕 + 复审对照（前=触发事件快照，后=最终逐镜裁决）
+	if ((autoRepair ?? []).length > 0) {
+		lines.push("## 自动质检-修复闭环");
+		lines.push("");
+		lines.push(
+			mdTable(
+				autoRepair.map((r) => [
+					r.shotId,
+					`${r.preVerdict}：${r.preReason}`,
+					`${r.postVerdict ?? "—"}${r.postReason ? `：${r.postReason}` : ""}`,
+					r.improved ? "改善" : "未改善/持平",
+				]),
+				["镜头", "补拍前（触发快照）", "复审后（最终裁决）", "对照"],
+			),
+		);
 		lines.push("");
 	}
 

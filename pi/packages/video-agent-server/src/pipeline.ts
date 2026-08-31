@@ -169,6 +169,26 @@ export interface QaVerdict {
 	subtitles?: SubtitleAudit;
 }
 
+/**
+ * 质检-修复自动闭环的目标选择（纯函数，契约测试锁定于 test/auto-repair.test.ts）。
+ *
+ * 选择规则：fail 一律入选；warn 仅当 reason 带显式类别前缀（人物:/物理:）。
+ * 为什么 warn 要前缀门槛：无前缀的 warn 多为风格/观感问题（道具违和、光线跳跃、节奏拖沓），
+ * 重做收益低且每次补拍 = 一次视频生成提交（免费期 RPM 是真瓶颈）——只修「客观可判」的问题。
+ * 已知边界（G3 复跑实测）：QA 模型对前缀约定的遵循是概率性的（warn 可能不带前缀），
+ * 会导致合格目标被漏选——宁可漏选不可滥选，前缀遵循问题记录在 HANDOFF 待办。
+ * 每轮最多取 maxTargets 镜（控时长与配额），保持 verdict 原顺序。
+ */
+export function selectAutoRepairTargets(shots: QaShotVerdict[], maxTargets = 2): QaShotVerdict[] {
+	return shots
+		.filter(
+			(s) =>
+				s.verdict === "fail" ||
+				(s.verdict === "warn" && /^(人物|物理):/.test(s.reason || "")),
+		)
+		.slice(0, maxTargets);
+}
+
 /** 运行追踪 span（P2：Run 即 Trace，落盘 traces.ndjson） */
 export interface TraceSpan {
 	spanId: string;
@@ -1638,13 +1658,8 @@ export async function executeStages(
 			// 改变管线时序——回归/验收批次显式开启，日常与单测保持确定性。
 			if (!run.autoRepaired && process.env.VIDEO_AGENT_AUTO_REPAIR === "1" && run.verdict?.shots?.length && ctx.quota) {
 				run.autoRepaired = true;
-				const targets = run.verdict.shots
-					.filter(
-						(s) =>
-							s.verdict === "fail" ||
-							(s.verdict === "warn" && /^(人物|物理):/.test(s.reason || "")),
-					)
-					.slice(0, 2);
+				// 目标选择抽为纯函数（契约测试锁定）：fail 一律修；warn 须带「人物:/物理:」前缀
+				const targets = selectAutoRepairTargets(run.verdict.shots);
 				for (const t of targets) {
 					if (run.abort.signal.aborted) break;
 					const shot = (script?.shots ?? clips?.script?.shots ?? []).find((x) => x.id === t.id);

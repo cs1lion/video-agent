@@ -398,6 +398,37 @@ async function runCase(testCase, args, batchDir) {
 	if (consistency) writeJson(path.join(caseDir, "07-qa", "consistency.json"), consistency);
 	if (run.verdict) writeJson(path.join(caseDir, "07-qa", "verdict.json"), run.verdict);
 
+	// 自动质检-修复闭环留痕：从事件流提取触发记录，与最终逐镜裁决对齐。
+	// 「补拍前」= 触发事件自带的问题快照（服务端派发事件含 fail/warn 与原因）；
+	// 「复审后」= 最终 verdict 的逐镜裁决。落盘 07-qa/auto-repair.json 供报告与人工核查。
+	const autoRepair = [];
+	try {
+		const evLines = fs.readFileSync(eventsFile, "utf-8").split("\n").filter(Boolean);
+		for (const line of evLines) {
+			let e;
+			try {
+				e = JSON.parse(line);
+			} catch {
+				continue;
+			}
+			const m = /自动质检-修复闭环：镜头 ([A-Za-z0-9_-]+)（(fail|warn)：([^）]*)）派发补拍重审/.exec(e.text ?? "");
+			if (m) autoRepair.push({ shotId: m[1], preVerdict: m[2], preReason: m[3].trim(), at: e.at });
+		}
+	} catch {
+		// 事件文件缺失（极早期失败）：留痕为空
+	}
+	if (autoRepair.length > 0) {
+		const finalShots = run.verdict?.shots ?? [];
+		for (const r of autoRepair) {
+			const post = finalShots.find((s) => s.id === r.shotId);
+			r.postVerdict = post?.verdict ?? null;
+			r.postReason = post?.reason ?? null;
+			// 改善判定：复审后 ok，或 fail 降为 warn（严重度下降）；同级换原因不算改善
+			r.improved = r.postVerdict === "ok" || (r.preVerdict === "fail" && r.postVerdict === "warn");
+		}
+		writeJson(path.join(caseDir, "07-qa", "auto-repair.json"), autoRepair);
+	}
+
 	// 制作集 / 台词镜统计
 	const script = arts?.script ?? null;
 	const productionShots = arts?.keyframes?.confirmedShotIds?.length ?? script?.shots?.length ?? 0;
@@ -429,6 +460,7 @@ async function runCase(testCase, args, batchDir) {
 		audioForm: testCase.audioForm,
 		postFacts,
 		voiceCast,
+		autoRepair,
 	});
 	const timings = {
 		totalMs: Date.now() - t0,
@@ -443,7 +475,7 @@ async function runCase(testCase, args, batchDir) {
 	writeJson(path.join(logsDir, "api.log.json"), apiLog);
 	writeJson(path.join(logsDir, "run-final.json"), run);
 
-	writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts, voiceCast });
+	writeCaseReport(caseDir, { testCase, run, assert, timings, gates, collected, finalBytes, postFacts, voiceCast, autoRepair });
 	log(`${testCase.id} 结论 ${assert.verdict}（失败项 ${assert.failed.length}）`);
 
 	return {

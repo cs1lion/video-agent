@@ -1,0 +1,25 @@
+{
+	"prompts": [
+		{
+			"shotId": "SH01",
+			"prompt": "Cinematic wide establishing shot of gritty old indoor training gym with worn dark wooden floors, stacks of ping pong balls in the corner, faded old championship flags on the wall, high windows showing faint cool dawn light mixed with warm high-hung tungsten lights. Jiang Jianjun, 45-year-old ex-provincial training partner with buzz cut with strands of white hair, wearing worn sports jacket with frayed cuffs, defined hard forearm muscles visible, walks to the table first. Dolly push-in slow movement, 16:9 aspect ratio, high contrast warm-cool lighting, gritty sports documentary style with desaturated realistic color grade, sharp texture details of wood grain and fabric wear. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH02",
+			"prompt": "Dynamic handheld tracking shot following sharp fast ping pong ball across worn wooden table, Jiang Jianjun with defined hard forearm muscles, expressionless stoic face, sends the ball from opposite side, Jiang Ye, 16-year-old male teen table tennis player with short messy damp hair, wearing red sweat-soaked tight sports jersey, wrist wrapped with kinesio tape, leans forward to receive with stubborn determined gaze. Low warm side light from tungsten lamps mixed with soft cool dawn light from high windows, 16:9 aspect ratio, energetic sports documentary tone, gritty realistic texture of sweat and fabric. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH03",
+			"prompt": "Handheld shaky push-in shot focusing on Jiang Ye, 16-year-old male teen table tennis player with short messy damp hair, wearing red sweat-soaked tight sports jersey, wrist wrapped with kinesio tape, misses the incoming ball, slams his racket hard on worn wooden table, shoulders heaving, sweat dripping from his hair, face twisted with frustration. Warm tungsten light rim-lighting his sweaty face, soft cool dawn light from high windows in background, 16:9 aspect ratio, gritty realistic sports documentary style, sharp details of sweat drops and wood grain. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH04",
+			"prompt": "Static locked-off medium shot of Jiang Jianjun, 45-year-old ex-provincial training partner with buzz cut with strands of white hair, wearing worn sports jacket with frayed cuffs, defined hard forearm muscles visible, standing expressionless with chin slightly raised, pointing at the fallen racket on the floor with his racket. Soft cool dawn light filtering through high windows mixed with low warm side tungsten light, 16:9 aspect ratio, gritty realistic sports documentary tone, sharp texture details of frayed jacket cuffs and his stoic facial expression. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		},
+		{
+			"shotId": "SH05",
+			"prompt": "Wide shot transitioning to dolly push-in close-up of final ping pong ball grazing net and dropping softly on worn wooden table, Jiang Ye, 16-year-old male teen table tennis player with short messy damp hair, wearing red sweat-soaked tight sports jersey, wrist wrapped with kinesio tape, and Jiang Jianjun, 45-year-old ex-provincial training partner with buzz cut with strands of white hair, wearing worn sports jacket with frayed cuffs, defined hard forearm muscles visible, stand silent staring at the ball, first beam of dawn light shining on their determined faces, sharp friction sound of sneakers on floor echoes, final cut to close-up of professional ping pong racket placed on the table. High contrast warm-cool lighting mixing soft dawn light and residual tungsten glow, 16:9 aspect ratio, gritty realistic sports documentary style, sharp texture details of wood grain and racket surface. Strictly avoid: anime, cartoon, illustration, 3d render, cgi plastic skin, painting, watermark, garbled text, on-screen captions, UI overlays, debug frames, low resolution, blur, distorted face, asymmetric eyes, distorted hands, extra fingers, morphing objects"
+		}
+	],
+	"promptVersion": 5
+}
