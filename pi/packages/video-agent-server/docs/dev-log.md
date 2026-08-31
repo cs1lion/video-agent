@@ -1366,7 +1366,8 @@ LLM 方差的确定性验证 → 按 foldQaAxes 先例，把内联 filter/slice 
 开头」可提高闭环命中率，但属生产行为变更需整批重验；当前宁可漏选不可滥选
 （每次补拍烧一个 RPM 提交窗口）。
 
-**e2e 侧同批改动**（详见根目录 HANDOFF-2026-08-31.md §6.2）：
+**e2e 侧同批改动**（完整实测数据见根目录《测试与优化报告-质检修复闭环收尾-2026-08-31.md》，
+分批记录约定自本批起生效）：
 - `deep-review.mjs` 双轮独立评审取交集（reviewOnce×2 并行 / aspect+2s 时间桶同键=confirmed /
   confirmedCount / secondPass；宽容解析剥 ```json 围栏——首轮就撞上，已修）。
   实战：P1 75 / P2 65，confirmed 2/9，P2 独有 high 被降为观察项 = 误修率下降实证；
