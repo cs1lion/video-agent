@@ -8,8 +8,9 @@
   `methodology/` 方法论、`deployment/` 施工报告）+ 根 `HANDOFF`→`doc/HANDOFF-*.md`。
 - **部署**：`pi/Dockerfile` + `pi/.dockerignore` + `pi/deploy/README.md`（Runbook）。
   单容器同源：Express 同时服务 `/api/*` 与 UI 静态（SPA 回退）。
-- **不入版本库**（已 gitignore 或在整理中）：`e2e/`(1.4G 实验产物)、`tools/`(413M 含
-  ffmpeg.exe)、`_tts_test/`、`_pi-studio/`、根 `*.html` 报告、`pi/deploy/models.json`(含 key)。
+- **不入版本库**（已 gitignore 或在整理中）：`e2e/`(1.4G 实验产物)、`tools/`(413M，含
+  `ffmpeg-9.0.1-essentials_build/bin/{ffmpeg,ffprobe,ffplay}.exe`，
+  **路径不是 `tools/ffmpeg/ffmpeg.exe`** —— 2026-09-01 踩过这个坑)、`_tts_test/`、`_pi-studio/`、根 `*.html` 报告、`pi/deploy/models.json`(含 key)。
 
 ## 1. 验证方式（必读，别踩坑）
 
@@ -124,6 +125,55 @@
   process --run-id <id>`（看启动日志/探针失败原因）。
 - **构建上下文**：robocopy `pi/` 排除 node_modules/dist(五包例外)/build/.git/test 等 →
   补 5 个 dist + `deploy/models.json`，约 32M；本机 Docker 未启动，全程**云端构建**（~4.5 分钟）。
-- **已知限制（复述）**：① `MinNum=0` 缩零——首请求冷启动 503、生成中途可能回收中断，
-  **演示期控制台把实例下限设 1**；② run 产物容器盘易失；③ models.json key 在镜像内（私有）。
-- **线上验证口径**：`/api/health` → `{"ok":true,...}`；`/` → SPA `AD://FORGE`；`GET /api/` → 404（API 拦截正确）。
+- **已知限制（复述）**：① ~~`MinNum=0` 缩零~~ → **2026-09-01 已改 `MinNum=1` 根治**
+  （见下方"改服务配置"）；② run 产物容器盘易失；③ models.json key 在镜像内（私有）；
+  ④ 常驻实例无请求也计费（1C2G），长期不演示可改回 0。
+- **线上验证口径**：`/api/health` → `{"ok":true,...}`；`/` → SPA（008 起标题 `Video Agent — 视频广告工作台`，
+  007 时为 `AD://FORGE`）；`GET /api/` → 404（API 拦截正确）。常驻后实测 0.15–0.19s 稳定 200。
+- **✅ 改服务配置不用去控制台（2026-09-01 验证）**：CLI 3.8.1 **没有** `update` 子命令，
+  但 CloudBase 连接器可以：`manageCloudRun(action="updateConfig", serverName, serverConfig={MinNum:1,...})`
+  → ~30s 生效，用 `queryCloudRun(action="detail")` 复核。
+  坑：`Cpu/Mem/Port` 属 `likelyRedeployFields`——**只要传了就触发重新部署，哪怕值与现配置完全相同**
+  （2026-09-01 实测产生 009 记录）。区别只是 `BuildId=0`、复用线上镜像、**不重新构建**（~30s vs
+  4.5min），服务不中断。**最干净做法：`serverConfig` 只传 `{MinNum: n}`，其余字段一个都别带。**
+- **预热协议（郭煜 2026-09-01 定，已写入 `pi/deploy/README.md`）**：MinNum=1 后已不需要，
+  仅作改回 0 时的兜底——① 发消息前几分钟自己先访问一次预热；② 消息里**必须写明**
+  「首次打开需等 10 秒左右」；③ 发完 10 分钟内再点一次保温。
+- **坑位集中索引**：`doc/known-issues/坑位速查-面试版.md`（A 部署 / B 台词链路 / C 架构状态 /
+  D 测试基建 / E 安全遗留 / F LLM-as-judge，每条带面试一句话 + 严重度）。改完坑记得同步过去。
+
+## 9. ESM / runner 跨 session 经验（2026-09-01 补）
+
+- **ESM `*.mjs` 顶层调 `main()` 会被 import 触发**——`run-scripts-v2.mjs` import 之后
+  main 也跑了，导致 `run-single.mjs` 一启动就触发全量跑批。**所有顶层调 `main()` 的
+  `.mjs` 都要加 ESM main guard**：
+  ```js
+  import { pathToFileURL } from "node:url";
+  const isMainModule = process.argv[1] !== undefined && 
+      import.meta.url === pathToFileURL(process.argv[1]).href;
+  if (isMainModule) main().catch(...);
+  ```
+  Windows 上手拼 `file://${process.argv[1]}` 会因反斜杠 + 中文路径 URL 编码不匹配，**必须用 pathToFileURL**。
+  当前 `e2e/run-e2e.mjs` / `e2e/deep-review.mjs` 也都没 main guard——现在没人 import 它们，
+  没事；但加 lint 脚本一次性跑多个 e2e 工具时会重蹈。**进入 §1 验证方式必读列表**。
+
+- **runner 解析脚本时如果有 "X 岁" 信号但 description 把它剥掉**，下游
+  voicePoolForDescription 纯函数就拿不到 ageNum → 不走 young 分支 → 22 岁女儿被派
+  femaleAdult 池。**任何 LLM-as-classifier 的输入端信号都要保留到下游入口**。
+
+- **`coSpace.ideas: string[]` 是 user 向 LLM 注入软约束的唯一通道**——prompt 里被标
+  "创意情节 / 卖点节拍（**优先采纳**）"。user 脚本 .md 的逐镜台词走这条路能让 director
+  看到 user 意图。**硬约束（user audioMode 不被重写）需要升格为 schema 字段**，
+  当前为软约束。详见 `doc/reports/历史踩坑补遗-第二轮-2026-09-01.md` §4/§9。
+
+## 10. LLM-as-judge 的假阳性（2026-09-01 发现）
+
+- **deep-review.mjs 的"设计预期"不是 user 脚本原文**——输入是 server 加工后的
+  `script.json`（可能被 LLM director 重写过），step-3.7-flash 在 `script.json` 信息
+  残缺时会**自己脑补"用户大概想要这种设计"**来对比，自然就报"设计预期 vs 成片不符"
+  假阳性。实证：B剧 SH06 "智能审讯系统平板画面"是 deep-review 编的——user 脚本里只有
+  "陈默低头阴影"。
+- **任何 deep-review 报的"整镜丢失""关键元素消失"都必须先 ffprobe 视频 + 看 user 脚本原文**，
+  确认不是模型幻觉。
+- **加固方向**：让 deep-review 拿 user 脚本 .md 原文（而非 server 加工后产物）做 ground truth。
+

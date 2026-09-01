@@ -72,8 +72,12 @@ queryCloudRun(action="detail", detailServerName="video-agent")   # 复核 MinNum
 ```
 
 - 提交后 `status: configUpdating`，约 30s 生效；`detail` 里 `MinNum` 变 1 即成功。
-- ⚠️ `Cpu/Mem/Port` 属于 `likelyRedeployFields`，改这几个值会触发**用线上镜像重新部署**；
-  只调 `MinNum` 不会。传值时与现配置保持一致即可避免意外重部署。
+- ⚠️ `Cpu/Mem/Port` 属于 `likelyRedeployFields`：**只要传了这几个字段就会触发一次重新部署**，
+  哪怕传的值与现配置完全相同。2026-09-01 实测：传了 `{MinNum:1,Cpu:1,Mem:2,Port:8080}`
+  后产生了 009 部署记录。
+  - 好消息：`BuildId=0`（直接复用 008 镜像，**不重新构建**，约 30s 而非 4.5 分钟），
+    状态 `normal`、流量 100%，服务**未中断**（health 200 / 0.2s）。
+  - **最干净的做法：`serverConfig` 里只传 `{MinNum: n}`，其余字段一个都别带。**
 - 生效后实测：连续 4 次请求全部 HTTP 200、耗时 0.15–0.19s，**无冷启动**。
 
 ## 冷启动预热协议（历史，MinNum=1 后已不需要；作兜底保留）
