@@ -49,8 +49,14 @@ node e2e/deep-review.mjs e2e/results/<批次目录>           # 整片双轮深�
 单容器形态（API + UI 静态同源）：见 `doc/deployment/` 与 `deploy/`（Dockerfile / .dockerignore /
 云托管配置）。CloudBase 凭据与模型 key 一律走环境变量/不入库文件，严禁提交。
 
-**线上（2026-08-31 已验证）**：`https://video-agent-303977-11-1253451683.sh.run.tcloudbase.com`
-`/api/health` → `{"ok":true}`、`/` → SPA `AD://FORGE`。
-部署共 7 次提交、前 6 次失败的根因与修复见 `doc/deployment/施工报告-部署-cloudbase-2026-08-31.md`
-（缺 5 个 workspace dist、云托管不注入 PORT）。
-⚠️ 演示期请把云托管实例数下限设为 **1**（控制台），否则 MinNum=0 缩零：首请求冷启动 503 + 生成中途可能被回收中断。
+**线上（2026-09-01 验证）**：`https://video-agent-303977-11-1253451683.sh.run.tcloudbase.com`
+`/api/health` → `{"ok":true}`、`/` → SPA `Video Agent — 视频广告工作台`。
+
+部署共 8 次提交、前 6 次失败的根因与修复见
+`doc/deployment/施工报告-部署-cloudbase-2026-08-31.md`
+（根因 A：缺 5 个 workspace dist；根因 B：云托管不注入 PORT，须 `ENV PORT=8080`）。
+
+**常驻实例（2026-09-01）**：`MinNum` 已设为 **1**，无冷启动（实测 0.15–0.19s 稳定 200），
+生成任务也不会被中途回收。改法见 `pi/deploy/README.md` §常驻实例配置——
+CLI 3.8.1 无 `update` 子命令，用 CloudBase 连接器 `manageCloudRun(action="updateConfig")`
+即可，无需控制台。⚠️ 常驻 1C2G 实例无请求也计费，长期不演示可改回 0。

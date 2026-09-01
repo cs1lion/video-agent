@@ -12,7 +12,11 @@
 - `/` → 返回 SPA `Video Agent — 视频广告工作台`（008 起标题由 `AD://FORGE` 改为 `Video Agent`），JS/CSS 同源加载
 - 前后端无 CORS、无跨域，单端口闭环
 
-⚠️ **遗留 1 项需人工（控制台）**：`MinNum=0`，实例会缩零，首请求冷启动返回 503（约 10–20s 后变 200），且生成任务进行中若被回收会中断。演示期建议把**最小实例数设为 1（常驻）**（云托管控制台 → 服务设置 → 实例数下限；CLI 3.8.1 无 update 命令，只能控制台改）。
+✅ **2026-09-01 后续修复**：原遗留的 `MinNum=0` 缩零问题已解决——最小实例数改为 **1**（常驻）。
+实��连续 4 次请求全部 HTTP 200、耗时 0.15–0.19s，无冷启动；生成任务也不会再被中途回收。
+改法：CLI 3.8.1 无 `update` 子命令，但可用 CloudBase 连接器 `manageCloudRun(action="updateConfig",
+serverConfig={MinNum:1, ...})`，约 30s 生效，用 `queryCloudRun(detail)` 复核。
+代价：常驻 1 个 1C2G 实例，无请求也计费，长期不演示可改回 0。
 
 ## 部署时间线（8 次提交，前 6 次全失败）
 
@@ -73,7 +77,7 @@ $stage = "$env:TEMP\va-deploy-stage"
 
 ## 已知限制（复述，详见 deploy/README.md §已知限制）
 
-1. 实例缩零（MinNum=0）：已确认，待控制台改 1。
+1. ~~实例缩零（MinNum=0）~~：✅ 2026-09-01 已改 MinNum=1 解决（CloudBase 连接器 updateConfig）。
 2. run 产物易失：容器盘 `/app/pi/.pi-studio/video-agent-runs`，重建即失（演示可接受）。
 3. models.json 在镜像内：provider key 打进私有镜像；生产级改 CFS 挂载/密钥管理拉取。
 4. 体验版套餐配额受限（CPU/内存/并发）。

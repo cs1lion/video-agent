@@ -54,21 +54,38 @@ CloudBase 云托管（service: video-agent, port 8080）
 
 1. **run 产物易失**：容器盘不持久，实例重建/扩缩后历史 run 丢失。演示可接受；
    常态化需 COS 归档或挂载 CFS（ROADMAP M3）。
-2. **实例缩零**：10 分钟生成途中若实例被回收，run 中断。演示期把实例数下限设 1（常驻）。
+2. **run 中途被回收**：生成任务约 10 分钟，实例若被回收则 run 中断。
+   2026-09-01 已把 `MinNum` 设为 1（常驻），此项风险已解除。
+3. **models.json 在镜像内**：provider key 打进了私有镜像（CloudBase 镜像仓库不公开）。
+4. **常驻实例计费**：`MinNum=1` 后即使无请求也常驻 1 个实例（1C2G），按运行时长计费。
+   长期不演示时改回 0 即可（见下方命令）。
 
-## ⚠️ 冷启动预热协议（把链接发给别人之前必做）
+## ✅ 常驻实例配置（MinNum=1，2026-09-01 已生效）
 
-`MinNum=0` → 缩零后**首请求返回 503，约 10–20s 后才 200**。对外发链接前按此流程走：
+**可直接用 CloudBase 连接器改，不用去控制台**（CLI 3.8.1 无 update 子命令）：
+
+```
+manageCloudRun(action="updateConfig", serverName="video-agent",
+               serverConfig={MinNum:1, MaxNum:5, Cpu:1, Mem:2, Port:8080,
+                             OpenAccessTypes:["OA","PUBLIC","MINIAPP"]}, force=true)
+queryCloudRun(action="detail", detailServerName="video-agent")   # 复核 MinNum
+```
+
+- 提交后 `status: configUpdating`，约 30s 生效；`detail` 里 `MinNum` 变 1 即成功。
+- ⚠️ `Cpu/Mem/Port` 属于 `likelyRedeployFields`，改这几个值会触发**用线上镜像重新部署**；
+  只调 `MinNum` 不会。传值时与现配置保持一致即可避免意外重部署。
+- 生效后实测：连续 4 次请求全部 HTTP 200、耗时 0.15–0.19s，**无冷启动**。
+
+## 冷启动预热协议（历史，MinNum=1 后已不需要；作兜底保留）
+
+`MinNum=0` 时缩零后**首请求返回 503，约 10–20s 后才 200**。若因成本改回 0，对外发链接前
+按此流程走：
 
 1. **发消息前几分钟先自己访问一次**预热（`/api/health` 与首页各打一次，确认 200）。
 2. 消息里**必须写明**「首次打开需等 10 秒左右」——别让人以为链接是坏的。
 3. 更好：发完 **10 分钟内再点一次**保温（在缩零窗口内续命）。
 
-**长期解法**：控制台 → 云托管 → 服务设置 → **实例数下限改为 1**（常驻）。
-CLI 3.8.1 无 update 子命令，只能控制台改。
-
 索引：`doc/known-issues/坑位速查-面试版.md` A5。
-3. **models.json 在镜像内**：provider key 打进了私有镜像（CloudBase 镜像仓库不公开）。
    生产级做法：CFS 挂载或启动时从密钥管理拉取 + 环境变量覆盖（config.ts 已支持
    `VIDEO_AGENT_LLM_*` 覆盖 LLM 三项）。
 4. **体验版套餐**：云托管可用但配额受限（CPU/内存/并发），生成长片前先确认套餐上限。
