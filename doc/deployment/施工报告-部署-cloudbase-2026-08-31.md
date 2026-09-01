@@ -9,12 +9,12 @@
 
 ✅ **部署成功，线上已验证可用**：
 - `/api/health` → `{"ok":true,"features":["kitchen","kitchen-snapshot","priority","budget-alerts","metrics"]}`
-- `/` → 返回 SPA `AD://FORGE — 视频广告工作台`，JS/CSS 同源加载
+- `/` → 返回 SPA `Video Agent — 视频广告工作台`（008 起标题由 `AD://FORGE` 改为 `Video Agent`），JS/CSS 同源加载
 - 前后端无 CORS、无跨域，单端口闭环
 
 ⚠️ **遗留 1 项需人工（控制台）**：`MinNum=0`，实例会缩零，首请求冷启动返回 503（约 10–20s 后变 200），且生成任务进行中若被回收会中断。演示期建议把**最小实例数设为 1（常驻）**（云托管控制台 → 服务设置 → 实例数下限；CLI 3.8.1 无 update 命令，只能控制台改）。
 
-## 部署时间线（7 次提交，前 6 次全失败）
+## 部署时间线（8 次提交，前 6 次全失败）
 
 | # | 时间 | 状态 | 根因 |
 |---|---|---|---|
@@ -25,6 +25,7 @@
 | 005 | 13:32 | deploy_failed | **缺 `coding-agent/dist`** → `ERR_MODULE_NOT_FOUND`，探针连不上 8080 |
 | 006 | 13:45 | deploy_failed | **缺 `tui/dist`**（同因）+ **PORT 未注入**（监听 8787，探针打 8080） |
 | **007** | **13:57** | **normal ✅（流量 100%）** | 补齐 5 个 dist + `ENV PORT=8080` 后成功 |
+| 008 | 15:06 | normal ✅（流量 100%） | 仅同步前端 `index.html` 标题（`AD://FORGE`→`Video Agent`），构建流程无变化 |
 
 ## 两个根因（已修复，写入 Dockerfile / .dockerignore）
 
@@ -81,6 +82,6 @@ $stage = "$env:TEMP\va-deploy-stage"
 
 - API：`curl -m 30 https://video-agent-303977-11-1253451683.sh.run.tcloudbase.com/api/health`
   → `{"ok":true,"features":["kitchen",...]}`
-- UI：`curl https://.../ ` → `<title>AD://FORGE — 视频广告工作台</title>` +
+- UI：`curl https://.../ ` → `<title>Video Agent — 视频广告工作台</title>`（008 后；007 时为 `AD://FORGE — …`）+
   `<script src="/assets/index-DQU9fZgg.js">`（同源 SPA 托管生效）
 - 同源：GET `/api/` 返回 404（API 路由正确拦截，未吞掉静态回退）
