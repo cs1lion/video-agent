@@ -89,8 +89,16 @@
 ## 6. 自建云服务器部署（2026-09-04）
 
 - 主机信息在根 `工具模型.txt`（**含明文密码，读取会被敏感审批拦截，需用户批准**）。
-- **机型硬约束：2核 / 1GB 内存 / 50G 盘 / Ubuntu 24.04 / 有 docker、git、curl，无 node、无 ffmpeg。**
-  ⇒ **1GB 内存跑不动 vite build 与全量 npm ci 峰值**。
+- **生产入口：`http://49.233.207.18/`（Nginx 80→8080 反代，SSE 已实测公网实时）。**
+  **云托管因额度停摆已非主部署**，演示/验收走 CVM。运维：`sudo systemctl restart video-agent`、
+  `sudo journalctl -u video-agent -f`、nginx 配置 `pi/deploy/nginx-video-agent.conf`。
+- **机型硬约束：2核 / 1.7Gi 内存（实测 MemTotal）/ 50G 盘 / Ubuntu 24.04 / 有 docker、git、curl，无 node、无 ffmpeg。**
+  ⇒ **1.7Gi 内存跑不动 vite build 与全量 npm ci 峰值**（靠 2G swap 才撑过 npm ci）。
+- **常驻限制（与云托管对比的关键差异）**：
+  ① **实例持续计费**——不关机就一直烧钱，演示空窗期应在控制台关机（云托管是空闲缩容到 0、不跑不花钱）；
+  ② **无默认 TLS**（仅 80 明文），放登录前需 certbot 加 HTTPS；
+  ③ **单 2 核、无横向扩展、VM 级宕机=全断**（systemd 只防进程崩，无 HA）；
+  ④ API 的 RPM 限速是 StepFun/Agnes 按 key 的限制，**与部署形态无关**；CVM 的收益是甩掉云托管 3000 点额度天花板。
 - **定案部署形态（本地构建 + 服务器只装依赖）**：
   1. 本地 `npm run build -w @earendil-works/pi-video-agent-ui`（1.4s，13 个文件）；
   2. 打包 `pi/` 排除 node_modules/dist，再**单独补 5 个 workspace dist + UI dist**
