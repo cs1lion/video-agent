@@ -269,7 +269,7 @@ export function buildAssSubtitles(entries: SubtitleEntry[], width: number, heigh
 		"",
 		"[V4+ Styles]",
 		"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-		`Style: Sub,Microsoft YaHei,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,${Math.max(2, Math.round(fontSize / 16))},1,2,${Math.round(width * 0.08)},${Math.round(width * 0.08)},${marginV},1`,
+		`Style: Sub,Noto Sans CJK SC,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,0,0,0,0,100,100,0,0,1,${Math.max(2, Math.round(fontSize / 16))},1,2,${Math.round(width * 0.08)},${Math.round(width * 0.08)},${marginV},1`,
 		"",
 		"[Events]",
 		"Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",

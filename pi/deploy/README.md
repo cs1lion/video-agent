@@ -153,26 +153,20 @@ queryCloudRun(action="detail", detailServerName="video-agent") # 复核 MinNum
 
 ## CVM 中文字体（视频字幕烧录，必修）
 
-导出把字幕烧进成片时，`ffmpeg.ts` 的 ASS `FontName` 硬编码为 `Microsoft YaHei`
-（Windows 字体名）。Ubuntu 默认**没有任何中文字体** → ffmpeg 找不到字形 → 中文字幕烧成方块。
-**每次重装/新建 CVM 都必须执行以下两步**，否则字幕复发：
+导出把字幕烧进成片时，`ffmpeg.ts` 的 ASS `FontName` 直接写 **`Noto Sans CJK SC`**
+（已于 2026-09-04 从写死的 `Microsoft YaHei` 改为与代码解耦，不再依赖 fontconfig 别名）。
+Ubuntu 默认**没有任何中文字体** → ffmpeg 找不到字形 → 中文字幕烧成方块。
+**每次重装/新建 CVM 只需装字体即可**，无需再配别名：
 
 ```bash
 sudo apt-get install -y fonts-noto-cjk
-# fontconfig 别名：把代码里写死的 Microsoft YaHei 解析到已安装的 Noto
-sudo tee /etc/fonts/conf.d/99-msyh-alias.conf >/dev/null <<'EOF'
-<?xml version="1.0"?>
-<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-<fontconfig>
-  <match target="pattern">
-    <test name="family"><string>Microsoft YaHei</string></test>
-    <edit name="family" mode="assign" binding="strong"><string>Noto Sans CJK SC</string></edit>
-  </match>
-</fontconfig>
-EOF
 sudo fc-cache -f
-# 验证：fc-match 'Microsoft YaHei' 应返回 Noto Sans CJK SC
+# 验证：fc-match 'Noto Sans CJK SC' 应直接命中 Noto（无别名兜底）
+fc-match 'Noto Sans CJK SC'
 ```
+
+> 历史说明：`deploy-to-cvm.sh` 的 2b 节已去掉 fontconfig 别名段，仅保留
+> `fonts-noto-cjk` 安装 + `fc-match 'Noto Sans CJK SC'` 校验。
 
 网页侧中文方块是另一处独立问题（UI 字体栈缺中文 fallback），修复在
 `video-agent-ui/src/index.css` 的 `--font-sans/--font-mono/--font-display`，已随
