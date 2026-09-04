@@ -30,13 +30,29 @@ function parseScript(text) {
 	const title = (text.match(/^#\s+(.+)$/m) ?? [, ""])[1].trim();
 	const logline = (text.match(/## 一句话需求\s*\n([^\n]+)/) ?? [, ""])[1].trim();
 
-	// 人物段（- **姓名**：描述）一直到下一个 ## 标题
+	// 人物段（- **姓名**（男/女，X 岁）：描述；也支持老格式 - **姓名**：描述）一直到下一个 ## 标题
 	const charBlock = text.match(/## 人物\s*\n([\s\S]*?)(?=\n## )/);
 	const characters = [];
 	if (charBlock) {
 		for (const line of charBlock[1].split(/\r?\n/)) {
-			const m = line.match(/-\s*\*\*(.+?)\*\*[：:]\s*(.+)/);
-			if (m) characters.push({ name: m[1].trim(), description: m[2].trim() });
+			// 新格式：**姓名**（男，35 岁）：描述 或 **姓名**（Lin，男，35 岁）：描述（带可选英文名）
+			const newFmt = line.match(
+				/-\s*\*\*(.+?)\*\*[（(](?:([A-Za-z][A-Za-z\s]+?)[，,]\s*)?(男|女)[，,]\s*(\d+)\s*岁[）)]\s*[：:]\s*(.+)/,
+			);
+			if (newFmt) {
+				characters.push({
+					name: newFmt[1].trim(),
+					englishName: newFmt[2]?.trim() || undefined,
+					gender: newFmt[3] === "男" ? "male" : "female",
+					// 年龄并回描述里（不靠额外字段）—— voicePoolForDescription 纯函数按文本 regex 抽年龄。
+					// 格式：**姓名**（男，35 岁）：描述 → coSpace.description = "35 岁，描述..."
+					description: `${newFmt[4].trim()} 岁，${newFmt[5].trim()}`,
+				});
+				continue;
+			}
+			// 老格式：**姓名**：描述（gender 留空，落回 regex；这是 2026-08-31 五剧跑批的根因场景）
+			const oldFmt = line.match(/-\s*\*\*(.+?)\*\*[：:]\s*(.+)/);
+			if (oldFmt) characters.push({ name: oldFmt[1].trim(), description: oldFmt[2].trim() });
 		}
 	}
 	// 场景段（- **xxx**：描述）
@@ -83,6 +99,20 @@ function parseScript(text) {
 	// 旁白
 	const narrationZh = (text.match(/narrationZh[：:]\s*[「"'](.+?)[」"']/) ?? [, ""])[1].trim();
 
+	// 逐镜台词意图（注入 coSpace.ideas 让 director “优先采纳”）
+	// 解决 2026-08-31 B剧 SH06 整镜被改写为旁白的 bug —— LLM director 默认会重写台词，
+	// 加上 user 意图后会被作为创意点保留进剧本阶段 prompt。
+	const ideas = [];
+	for (const s of shots) {
+		if (s.dialogue_z) {
+			ideas.push(`${s.id}（${s.characterId || "?"}，dialogue）：“${s.dialogue_z}”`);
+		}
+		if (s.visual) {
+			// vision 提示也一并入 ideas（让 director 看到画面设计意图）
+			ideas.push(`${s.id} 画面设计：${s.visual}`);
+		}
+	}
+
 	// keyMessage 用一句话 + 一句主题
 	const keyMessage = (() => {
 		const m = text.match(/## 美术风格\s*\n([^\n]+)/);
@@ -90,7 +120,7 @@ function parseScript(text) {
 		return "密集对话剧情短片";
 	})();
 
-	return { title, logline, keyMessage, characters, scenes, shotCount, shots, narrationZh };
+	return { title, logline, keyMessage, characters, scenes, shotCount, shots, narrationZh, ideas };
 }
 
 async function api(method, urlPath, body) {
@@ -137,7 +167,7 @@ function buildScriptDoc(parsed) {
 	};
 }
 
-async function runScript(filePath, batchDir) {
+export async function runScript(filePath, batchDir) {
 	const text = fs.readFileSync(filePath, "utf-8");
 	const parsed = parseScript(text);
 	if (!parsed.logline) {
@@ -166,9 +196,36 @@ async function runScript(filePath, batchDir) {
 		audioDrive: "dialogue",
 	};
 	const coSpace = {
-		characters: parsed.characters.map((c) => ({ name: c.name, description: c.description })),
+		characters: parsed.characters.map((c) => {
+			const out = { name: c.name, description: c.description };
+			if (c.gender) out.gender = c.gender;
+			if (c.englishName) out.englishName = c.englishName;
+			return out;
+		}),
 		scenes: parsed.scenes.map((s) => ({ name: s.name, description: s.description })),
+		ideas: parsed.ideas,  // ← 逐镜台词 + 画面设计意图（让 director 优先采纳）
 		musicBrief: parsed.scenes[0]?.description?.slice(0, 80) ?? "",
+		// 2026-09-01 补遗 §4 根治点：user 提供逐镜剧本意图时 server 跳过 LLM 编剧，直接采用。
+		// 每个 shot 都带 audioMode / dialogue / characterId / visual，让 director 不能重写。
+		scriptIntent: {
+			title: parsed.title,
+			logline: parsed.logline,
+			shots: parsed.shots.map((s) => ({
+				id: s.id,
+				audioMode: s.dialogue_z ? "dialogue" : (parsed.narrationZh && s.id === parsed.shots.at(-1)?.id ? "narration" : undefined),
+				visual: s.visual || s.title || "",
+				durationSec: 5,
+				...(s.dialogue_z
+					? {
+							dialogue: {
+								characterId: s.characterId,
+								lines: { zh: s.dialogue_z },
+								emotion: s.emotion,
+							},
+						}
+					: {}),
+			})),
+		},
 	};
 	writeJson(path.join(caseDir, "00-input", "brief.json"), brief);
 	writeJson(path.join(caseDir, "00-input", "options.json"), options);
@@ -377,7 +434,19 @@ async function main() {
 	log(`本次成功：${okRuns}/${results.length}`);
 }
 
-main().catch((error) => {
-	console.error("批量运行失败:", error);
-	process.exit(1);
-});
+// ESM main guard：只在直接执行本文件时跑 main()，避免被 run-single.mjs / 其它消费者误触发。
+// Windows 路径分隔符与 URL encoding 要走 pathToFileURL，不能手拼 file://${process.argv[1]}。
+import { pathToFileURL } from "node:url";
+const isMainModule = (() => {
+	try {
+		return process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+	} catch {
+		return false;
+	}
+})();
+if (isMainModule) {
+	main().catch((error) => {
+		console.error("批量运行失败:", error);
+		process.exit(1);
+	});
+}

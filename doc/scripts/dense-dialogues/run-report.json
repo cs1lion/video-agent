@@ -1,7 +1,7 @@
 {
-	"generatedAt": "2026-08-31T13:10:22.373Z",
-	"batchDir": "e2e/results/2026-08-31T12-14-22",
-	"runner": "run-scripts-v2.mjs",
+	"generatedAt": "2026-08-31T17:30:00Z",
+	"batchDir": "e2e/results/2026-08-31T13-50-00-fix1 (5 部) + 2026-08-31T16-05-03 (F 部)",
+	"runner": "run-scripts-v2.mjs + run-single.mjs",
 	"results": [
 		{
 			"file": "script-01-cafe-debate.md",
@@ -47,6 +47,16 @@
 			"runId": "run-mth8vxyw-27",
 			"status": "done",
 			"finalFile": "final.mp4"
+		},
+		{
+			"file": "script-06-family-dinner.md",
+			"title": "剧本 F · 跨代际家宴（voice-cast 压力测试）",
+			"logline": "中秋家宴，6 个角色跨 3 代际，爷爷要卖祖宅、父亲想接来同住、女儿要创业资金、儿子要考大学，奶奶最后调停。",
+			"shotCount": 8,
+			"runId": "run-mthhx90g-46",
+			"status": "done",
+			"finalFile": "final.mp4",
+			"note": "stress test（6 角色跨 3 代际，全部命中 6 个分龄分性音色池）"
 		}
 	]
 }
