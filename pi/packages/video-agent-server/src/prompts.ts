@@ -105,7 +105,7 @@ export function coSpaceBlock(coSpace: CoCreationSpace | undefined): string {
 	if (coSpace.characters.length > 0) {
 		parts.push(
 			`人物形象设定（必须沿用，不得擅自改动外貌/人设）:\n${coSpace.characters
-				.map((c) => `- ${c.name}：${c.description}`)
+				.map((c) => `- ${c.name}${c.gender ? `（${c.gender === "male" ? "男" : "女"}）` : ""}：${c.description}`)
 				.join("\n")}`,
 		);
 	}
@@ -220,9 +220,8 @@ export function shotPromptMessages(
 					: {}),
 			})),
 		)}`,
-		brief.generationDirectives.clips.promptFragment
-			? `镜头方向约束: ${brief.generationDirectives.clips.promptFragment}`
-			: "",
+		"补遗 §6：台词镜的镜头主体必须是 speaking character。lineEn 里有 speaking=Zhao 的镜，Zhao 是画面中心主体；不要生成听话者（Lin）的反应镜头作为主镜头——除非画面明确是 over-shoulder 或两人同框。仅 wide/establishing 镜例外。",
+		"补遗 §6：声音同步约束。speaking character 说话时嘴必须张合且与台词节奏匹配；mute 时闭嘴；不要生成“对着另一人说台词但镜中未出现该人”的错位。",
 		brief.coSpace?.characters.length || brief.coSpace?.scenes.length ? coSpaceBlock(brief.coSpace) : "",
 		"",
 		"要求:",
@@ -230,6 +229,7 @@ export function shotPromptMessages(
 		`2. 目标画幅 ${opts.aspectRatio}，提示词里写明构图取向（不要写像素值）;`,
 		opts.detailBoost ? "3. 强调高细节、材质质感;" : "3. 保持画面简洁;",
 		"4. 每段提示词 60-110 个英文单词，一段连贯文字，必含五要素：主体及其外观锚点短语 / 环境与空间深度 / 光线（方向+性质，如 low warm side light） / 镜头运动 / 风格与调性；",
+		"4b. 提到其他镜出场角色时，必须使用其在美术设计锚点里的专属英文名或中文名，避免泛指（如\"the young man\"），以保持跨镜人物一致性。",
 		"5. 画面内不得出现任何文字、字幕、logo、UI、二维码（这些由后期烧录，模型画字必乱码）；同时画面叙事不得依赖模型无法精确生成的元素——钟表指针位置、报纸标题、屏幕内容等一律模糊化处理，禁止让台词/剧情依赖其精确显示；",
 		`6. 在提示词末尾追加一句: "Strictly avoid: ${avoid}"`,
 		"",
@@ -413,10 +413,48 @@ export function edlPrompt(shots: { id: string; durationSec: number; narration: s
 		"2. durationSec 取 0.3-0.8（cut 恒为 0）；",
 		"3. 音效克制使用：全片最多 2 处，宁缺毋滥——好的商业片声音层次是干净的；",
 		`4. transitions 必须恰好覆盖镜头之间的全部切点（共 ${shots.length - 1} 个），after 用 1-based 切点编号；`,
+		"5. **拼接安全（补遗 §5）**：邻镜 visual 含 zoom / dolly / push-in / pull-back / tracking / pan / tilt / handheld / crane / steadicam / follow 等运镜词时，**必须用 cut**——xfade 与镜头拉伸同存会让运镜在画面上叠加，产生明显拼接缝；",
+		"6. 镜头运动的镜头之间不要用 fade / dip / wipe / slide（任何叠化/擦除/滑动都会与运动叠加）；",
 		"",
 		"只输出如下 JSON（不要围栏）:",
 		'{"transitions": [{"after": 1, "type": "cut", "durationSec": 0, "sfx": "none"}, {"after": 2, "type": "fade", "durationSec": 0.5, "sfx": "whoosh"}]}',
 	].join("\n");
+}
+
+// ============================================================================
+// 拼接安全：运镜词检测（2026-09-01 补遗 §5）
+// ============================================================================
+
+/**
+ * 镜头运动关键词——装在过渡 LLM 决策之后、xffade 与运镜同存会被服务端兑底为 cut。
+ * 词表与 EDL prompt 中规则 5/6 一致。改这里要同步改 edlPrompt。
+ */
+const CAMERA_MOTION_WORDS = [
+	"zoom",
+	"dolly",
+	"push-in",
+	"push in",
+	"push-out",
+	"push out",
+	"pull-back",
+	"pull back",
+	"tracking",
+	"pan",
+	"tilt",
+	"handheld",
+	"crane",
+	"steadicam",
+	"follow",
+] as const;
+
+const CAMERA_MOTION_REGEX = new RegExp(
+	`\\b(${CAMERA_MOTION_WORDS.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, "[\\s-]")).join("|")})\\b`,
+	"i",
+);
+
+/** 检测文本（一般是 clip prompt）是否含镜头运动词。是 = 该镜带运镜，与 xfade 同存会产生拼接缝。 */
+export function hasCameraMotion(text: string): boolean {
+	return CAMERA_MOTION_REGEX.test(text);
 }
 
 // ============================================================================
@@ -482,6 +520,13 @@ export interface DesignEntity {
 	name: string;
 	/** 英文设计要点（概念图 prompt 的主体描述） */
 	design: string;
+	/**
+	 * 英文名（可选）——视觉 LLM 写 prompt 时常把中文名转写成英文（如"小赵" → "Zhao"），
+	 * 如果 design 不带 englishName，injectCharacterLooks 只能匹配中文名/id，错过英文转写
+	 * → 视频模型自由发挥（补遗 §5 跨镜人物错配的根因）。
+	 * 补传后 visual prompt 提到英文转写也能注入外貌短语。
+	 */
+	englishName?: string;
 	/** assets 下相对路径（生成成功后回填） */
 	file?: string;
 	/** HTTP 预览地址（server 组装 artifacts 视图时回填） */

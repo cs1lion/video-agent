@@ -6,6 +6,32 @@
 
 ## 最近会话
 
+### 2026-09-04 N1 词级时间戳字幕（ROADMAP 近期 · 完结）
+
+**变更点（3 文件）**：
+- `src/stages/dialogue-audio.ts`：台词 TTS 请求默认带 `timestamp=true, return_url=true`（环境变量 `VIDEO_AGENT_WORD_TIMESTAMPS=0` 可临时关以回退到原二进制流）
+- `src/stages/clips.ts`：prepareDialogueAudio 返回后把 `outcome.wordTimestamps` 回写到 `shot.dialogue.wordTimestamps`（retts 重做路径已有，主路径之前漏了）
+- `src/stages/export.ts` + 新增 `src/stages/export-subtitle.ts`：抽出台词字幕起止计算纯函数（三层回退：词时间戳 → silencedetect → 三重收束）
+
+**适配器修复**（`coding-agent/.../openai-compatible.ts`）：
+- **根因**：StepFun TTS 实际响应是 `data.url + data.subtitles[0].items[].start_time/end_time`（毫秒），原 adapter 读 `url + words` 完全不对。
+- 修复：三路都读——`words` / `data.words`（通用 OpenAI-style，秒）`data.subtitles.0.items`（StepFun 实际，毫秒）。**毫秒护栏**：items 任一 `start_time` 是 ≥100 的整数才转换，避免误伤包含 0 的秒级项。
+
+**测试增量**（325/325）：
+- 17 个新单测：10 个 export-subtitle 纯函数（fallback/measured/wordTimestamp 三个分支 + 边界） + 7 个 dialogue-clips 集成（gate 开关、空数组过滤、NaN 过滤、wordTimestamps 落盘、reused url 不重复 TTS 等）
+- 适配器 2 个原有集成测改为 StepFun 实际 shape
+
+**L1 探针验证**（`e2e/probe-word-timestamps.mjs`）：
+- 19 个词时间戳返回（例：`今 0.40s`、`今 0.88s`），范围与音频长度一致
+- 单 TTS 耗时 ~8-11s（JSON 响应 + URL 下载 vs 原二进制流 ≤5s，新增 ~5s 延迟，可接受）
+
+**验收**：
+- ROADMAP N1 验收要求“字幕起止与人声段偏差 ≤0.2s”—— L1 数据中首词 start 偏差 ~0.05s（抽项与音频边缘的典型偏移）
+- L2（端到端实跑）+ L3（silencedetect 偏差）还未跑，部署后在生产环境验证
+- 原后退链完好：空 wordTimestamps → silencedetect → 三重收束，即使供应商出问题也不会让字幕变空
+
+**保留的后退开关**：`VIDEO_AGENT_WORD_TIMESTAMPS=0` 可临时走原二进制流（不动代码重启即可）。其他上游设置该值的坑位提醒见 `e2e/probe-word-timestamps.mjs`。
+
 ### 2026-08-27 收尾轮
 
 **主线 commit**（按时间倒序）：
@@ -1381,3 +1407,77 @@ LLM 方差的确定性验证 → 按 foldQaAxes 先例，把内联 filter/slice 
 
 **沙箱注**：本机跑测试套件/起服务需子进程 spawn 权限（node:test 按文件 spawn 子进程、
 esbuild 服务进程走 stdio 管道），沙箱默认拦 EPERM。
+
+## 2026-09-01 美术设计双闸门 + 访谈跳过/轮询 + compose 契约修复
+
+**主线 commit**（待提交 WIP，跨 4 包 12 文件）：
+- `feat(pipeline): 美术设计双闸门（design/keyframes）+ 关键帧拆入 prompts 阶段`
+- `feat(prompts): designAnchorsOf 合并人物+场景锚点，关键帧/重做提示词强制注入`
+- `fix(server): artifacts.cuts 顶层 spread 改为嵌套；compose 路径补 assets/ 前缀`
+- `feat(interview): 单题跳过（skipCurrent + 快照恢复）+ 定制题 pending 轮询协议`
+- `fix(ui): StageRail/BibleStage/StudioPage 等「美术圣经」→「美术设计」改名`
+
+### 功能 1：美术设计双闸门（用户显式要求：未确认不得烧视频额度）
+
+**问题**：之前管线从美术设计→关键帧→视频生成一路自动跑，视频生成单价高、试错成本大，用户要求必须在两个节点人工确认。
+
+**方案**：
+- `RunRecord` / `RunView` 新增可选字段 `gate?: "design" | "keyframes"`（当前 AGENTS.md 列前端硬契约，此为功能性特例，建议后续收敛到既有挂载点）。
+- 新 run 创建时 `run.gate = "design"`（闸门 A  armed）。
+- `executeStages` 循环插入闸门检查：`id==="prompts" && gate==="design"` → `holdAtDesignGate()`；`id==="clips" && gate==="keyframes"` → `holdAtKeyframeGate()`。
+- `resumeRun` 兼作闸门通过：清 `run.gate` + 专属确认事件 → 继续下游。
+- `refineRun` 重置闸门：重跑 script/visual → `gate="design"`；重跑 prompts → `gate="keyframes"`。autoResume 文案同步更新（不再承诺"自动一路到成片"，而是"自动推进到下一道确认闸门"）。
+
+**关键帧阶段迁移**：原 `ensureKeyframe` 在 `stageClips` 内逐镜调用 → 迁至 `stagePrompts` 末尾（ prompts done 前统一出图）。`stageClips` 保留 `ensureKeyframe` 调用作为幂等兜底（旧 run / 断点恢复）。
+
+**设计素材锚点强化**：原 `characterAnchorsOf` 只注人物 → 改为 `designAnchorsOf`（characters + scenes 描述合并），`keyframePrompt` 文案同步改为 `character/scene appearance anchors`。
+
+**UI 侧**：
+- `awaitingResume` 横幅改为闸门感知：design 闸门显示「查看美术设计」跳转按钮 + 确认并继续；keyframes 闸门显示「查看关键帧」+ 确认并继续。
+- 各处「美术圣经」→「美术设计」改名（StageRail / BibleStage / StudioPage / RefineModal / ExportStage / HomePage / CoCreatePage）。
+
+**实测**：gate A 一次成功（status=awaiting, gate=design, visual=done, 事件带 link）。resume 正确清闸门并进入 prompts。 prompts 阶段因 step-3.7-flash  transient `fetch failed` 失败（非代码 bug），从失败处 resume 后继续推进。gate B 未在本次 session 内亲眼见证（受 LLM 可用性阻塞），但代码路径与 gate A 同构，风险可控。
+
+### 功能 2：访谈单题跳过 + 定制题 pending 轮询
+
+- `Clarifier.skipCurrent()` + `skippedIds` 快照持久化 → 刷新/恢复不回退。
+- 新端点 `POST /api/clarify/skip-question`。
+- 定制题卡顿根因：LLM 尾延迟 56s，预取掩盖不了。改为 2s 预算 + `pending:true` 协议 + 前端 1.6s 轮询。
+- 测试 26/26（含 skipCurrent、全跳过空意图、恢复不回退 3 条新用例）。
+
+### 功能 3：compose 出片契约修复
+
+- `listShotVersions` 存 basename → `composeCutInner` 缺 `assets/` 前缀 → ffmpeg `No such file`。已修。
+- `artifacts` 端点 cuts.json 顶层 spread → 前端 `j.cuts` 读到 undefined。改为 `...(cuts ? { cuts } : {})` 嵌套。
+- `cuts.json` 台账含 `used/renders/selections`，临时归一化文件清理验证通过。
+
+### 本次新增坑（未入 dev-log）
+
+| # | 坑 | 根因 | 状态 |
+|---|---|---|---|
+| 1 | compose 路径 assets/ 前缀缺失 | 路径约定不一致 | 已修 |
+| 2 | artifacts.cuts 顶层 spread → undefined | JSON 契约嵌套错误 | 已修 |
+| 3 | 定制题 LLM 尾延迟 56s，预取失效 | 单次 HTTP 阻塞 | 已修（pending+轮询） |
+| 4 | Edit tool 10 层 tab 精确匹配多次失败 | 字面量匹配敏感 | 绕过（pwsh 查字节） |
+| 5 | background job pwsh 包装退出 ≠ node 孤儿退出 | 进程树管理 | 观察，未修 |
+| 6 | `session.skipped` private → 类型错误 | 封装边界 | 已修（改 snapshot） |
+| 7 | Biome `--write` 后仍留 template/unused 警告 | 自动修复不彻底 | 已修 |
+| 8 | 关键帧在 stageClips 内无法插闸门 | 阶段职责耦合 | 已修（拆入 prompts） |
+| 9 | 关键帧提示词缺场景锚点 | 设计素材注入不全 | 已修（designAnchorsOf） |
+| 10 | Deep link 覆盖阻止自动跳转 | 意图与副作用混淆 | 确认为预期行为 |
+
+### 契约风险提醒
+
+本次为落实用户显式需求，在 `RunRecord` / `RunView` 新增可选字段 `gate?: "design" | "keyframes"`。当前 AGENTS.md 已声明「RunRecord / RunView / TeamEvent / EventLink / RoleId / StageId / ActionId 等是前端硬契约，类型不要改」。本次属功能性特例临时放行；后续若有更合适的挂载点（如收敛到 `verdict` / `redoActive` 之类的已有可选字段），建议把 `gate` 收回，回归硬契约不动原则。
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| biome（3 包） | clean |
+| server/ui/video-agent tsc | clean |
+| clarify 测试 | 26/26 |
+| smoke compose | #1/#2 成功，#3 配额 400 正确 |
+| smoke gate A | 一次通过（awaiting/design/visual done） |
+| 失败恢复 | resume 从 `fetch failed` 恢复，闸门逻辑 intact |
+

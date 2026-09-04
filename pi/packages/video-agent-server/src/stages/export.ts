@@ -6,7 +6,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { dialogueFor, edlPrompt, narrationFor, type EdlDoc, type ScriptDoc } from "../prompts.ts";
+import { dialogueFor, edlPrompt, hasCameraMotion, narrationFor, type EdlDoc, type ScriptDoc } from "../prompts.ts";
 import {
 	appendSpan,
 	optionsOf,
@@ -16,6 +16,11 @@ import {
 	throwIfAborted,
 	type StageCtx,
 } from "../pipeline.ts";
+import {
+	fallbackSubtitleTiming,
+	measuredSubtitleTiming,
+	wordTimestampSubtitleTiming,
+} from "./export-subtitle.ts";
 import {
 	assembleTimeline,
 	buildAssSubtitles,
@@ -209,6 +214,41 @@ export async function stageExport(
 				: null;
 		transitions.push({ afterShotIndex: i, type, durationSec: dur, sfxType });
 	}
+	// 2026-09-01 拼接感兜底：邻镜 clip prompt 含运镜词且转场 ≠ cut → 强制 cut（避免 xfade + zoom 出现可见拼接缝）
+	// 查的是 prompts.json（实际发给视频模型的 prompt），不是 script.json 的 visual（后者可能是 user 原稿）。
+	// 这是 EDL prompt 规则 5/6 的服务端二次保险——LLM 可能漏判。
+	let clipPromptsByShotId: Map<string, string> = new Map();
+	try {
+		const promptsDoc = await readArtifact<{ prompts?: { shotId: string; prompt: string }[] }>(run, "prompts.json");
+		for (const p of promptsDoc?.prompts ?? []) clipPromptsByShotId.set(p.shotId, p.prompt);
+	} catch {
+		// prompts.json 不存在（理论上不会）——降级查 scriptDoc.shots[].visual
+	}
+	const motionDowngrades: number[] = [];
+	for (let i = 0; i < keptShots.length - 1; i += 1) {
+		const sourceText = clipPromptsByShotId.get(keptShots[i]?.id ?? "") ?? keptShots[i]?.visual ?? "";
+		const targetText = clipPromptsByShotId.get(keptShots[i + 1]?.id ?? "") ?? keptShots[i + 1]?.visual ?? "";
+		const sourceMoves = hasCameraMotion(sourceText);
+		const targetMoves = hasCameraMotion(targetText);
+		if ((sourceMoves || targetMoves) && transitions[i]!.type !== "cut") {
+			transitions[i]!.type = "cut";
+			transitions[i]!.durationSec = 0;
+			transitions[i]!.sfxType = null;
+			motionDowngrades.push(i);
+		} else if (transitions[i]!.type === "cut" && transitions[i]!.sfxType) {
+			// cut 不应该残留 sfx：残留一般来自 LLM 错误输出，这里顺手清干净
+			transitions[i]!.sfxType = null;
+		}
+	}
+	if (motionDowngrades.length > 0) {
+		pushEvent(
+			run,
+			"editor",
+			"sound",
+			"status",
+			`⚠️ 拼接安全：${motionDowngrades.length} 个切点邻镜含运镜词，已强制硬切（防 xfade + 镜头拉伸可见拼接），切点序号 ${motionDowngrades.map((n) => n + 1).join("、")}。`,
+		);
+	}
 	await fs.promises
 		.writeFile(
 			path.join(run.dir, "transitions.json"),
@@ -248,18 +288,21 @@ export async function stageExport(
 	for (let i = 0; i < keptShots.length; i += 1) {
 		if (!narrationTexts[i]) continue;
 		if (keptShots[i]!.audioMode === "dialogue") {
-			// 台词镜：字幕=台词，起点=本镜切点、覆盖约整镜（与口型/铺入的 TTS 同步；
-			// 2026-08-30 反馈"台词几乎看不到"——此前只有旁白上字幕）。
-			// 优先使用词级时间戳（wordTimestamps）；实测失败回落 silencedetect；再失败回落到三重收束。
+			// 台词镜：字幕起止锚到实测人声（与口型/铺入的 TTS 同步）；
+			// 2026-08-30 反馈"台词几乎看不到"——此前只有旁白上字幕。
+			// 三层回退：①词级时间戳 → ②silencedetect 实测 → ③三重收束（见 export-subtitle.ts）。
 			const nextShotStart = i + 1 < keptShots.length ? shotStart[i + 1]! : Number.POSITIVE_INFINITY;
 			const speechSec = keptShots[i]!.dialogue?.rawDurationSec ?? keptShots[i]!.dialogue?.audioDurationSec ?? shotDur[i]!;
 			const wordTs = keptShots[i]!.dialogue?.wordTimestamps;
-			let subStart = shotStart[i]!;
-			let subDur = Math.max(0.8, Math.min(shotDur[i]! - 0.3, nextShotStart - shotStart[i]! - 0.1, speechSec + 0.8));
-			if (wordTs && wordTs.length > 0) {
-				subStart = shotStart[i]! + wordTs[0]!.start;
-				subDur = Math.max(0.8, Math.min(wordTs[wordTs.length - 1]!.end - wordTs[0]!.start + 0.5, nextShotStart - subStart - 0.1));
-			} else {
+			const args = {
+				shotStart: shotStart[i]!,
+				shotDur: shotDur[i]!,
+				nextShotStart,
+				speechSec,
+				wordTimestamps: wordTs,
+			};
+			let resolved = wordTimestampSubtitleTiming(args);
+			if (!resolved) {
 				const ttsRel =
 					[`assets/tts-dialogue-${keptShots[i]!.id}-pad.mp3`, `assets/tts-dialogue-${keptShots[i]!.id}.mp3`].find((rel) =>
 						fs.existsSync(path.join(run.dir, rel)),
@@ -267,20 +310,23 @@ export async function stageExport(
 				if (ttsRel) {
 					try {
 						const segs = await detectSpeechSegments(run.dir, ttsRel, signal);
-						if (segs.length > 0) {
-							subStart = shotStart[i]! + segs[0]!.start;
-							subDur = Math.max(0.8, Math.min(segs[segs.length - 1]!.end - segs[0]!.start + 0.5, nextShotStart - subStart - 0.1));
-						}
+						resolved = measuredSubtitleTiming(args, segs);
 					} catch {
 						// 实测失败用回落值
 					}
 				}
 			}
-			subtitles.push({ start: subStart, duration: subDur, text: narrationTexts[i]! });
+			const finalTiming = resolved ?? fallbackSubtitleTiming(args);
+			subtitles.push({ start: finalTiming.subStart, duration: finalTiming.subDur, text: narrationTexts[i]! });
 			continue;
 		}
 		const nextStart = i + 1 < keptShots.length ? narrStart[i + 1] : cursor;
-		const dur = Math.max(0.8, Math.min((narrDur[i] ?? 1.5) + 0.3, nextStart - narrStart[i]));
+		// 补遗 §7：旁白字幕同样不能超过当前镜视频边界。
+		const dur = Math.max(0.8, Math.min(
+			(narrDur[i] ?? 1.5) + 0.3,
+			nextStart - narrStart[i],
+			shotStart[i]! + shotDur[i]! - narrStart[i]!,
+		));
 		subtitles.push({ start: narrStart[i]!, duration: dur, text: narrationTexts[i]! });
 	}
 

@@ -145,16 +145,35 @@ export function createOpenAICompatibleAdapter(config: MediaAdapterConfig): Media
 			// timings instead of a binary audio stream.
 			if (request.kind === "tts" && typeof payload === "object" && payload !== null) {
 				const jsonPayload = payload as Record<string, unknown>;
-				const audioUrl = typeof jsonPayload.url === "string" ? jsonPayload.url : undefined;
-				const rawWords = resolveDotPath(payload, "words") ?? resolveDotPath(payload, "data.words");
+				// audioUrl: 通用 (顶册 url) · StepFun 实际 (data.url) 两者都读
+				const audioUrl =
+					typeof jsonPayload.url === "string"
+						? jsonPayload.url
+						: typeof (jsonPayload.data as Record<string, unknown> | undefined)?.url === "string"
+							? (jsonPayload.data as Record<string, unknown>).url as string
+							: undefined;
+				// rawItems: 三个路径都试
+				//  · 通用 TTS：words / data.words
+				//  · StepFun：data.subtitles[0].items（items[].start_time/end_time 是毫秒）
+				const rawItems =
+					resolveDotPath(payload, "words") ??
+					resolveDotPath(payload, "data.words") ??
+					resolveDotPath(payload, "data.subtitles.0.items");
+				// 是否毫秒单位：StepFun 实践中 start_time/end_time 是整数且数量级为 10^2~10^4（毫秒），
+				// OpenAI 通用 TTS 词时间量级为 0.x（秒，浮点）。只要 items 里任一 start_time 是
+				// ≥100 的整数，就判为毫秒，转换；0 与小整数不转换（避免误伤包含 start_time=0 的合法秒）。
+				const looksLikeMillis = Array.isArray(rawItems) && (rawItems as Array<Record<string, unknown>>).some(
+					(item) => typeof item?.start_time === "number" && Number.isInteger(item.start_time) && (item.start_time as number) >= 100,
+				);
 				const words: WordTimestamp[] = [];
-				if (Array.isArray(rawWords)) {
-					for (const w of rawWords) {
+				if (Array.isArray(rawItems)) {
+					for (const w of rawItems) {
 						if (typeof w !== "object" || w === null) continue;
 						const rec = w as Record<string, unknown>;
 						const text = typeof rec.text === "string" ? rec.text : typeof rec.word === "string" ? rec.word : "";
-						const start = typeof rec.start === "number" ? rec.start : typeof rec.start_time === "number" ? rec.start_time : NaN;
-						const end = typeof rec.end === "number" ? rec.end : typeof rec.end_time === "number" ? rec.end_time : NaN;
+						let start = typeof rec.start === "number" ? rec.start : typeof rec.start_time === "number" ? rec.start_time : NaN;
+						let end = typeof rec.end === "number" ? rec.end : typeof rec.end_time === "number" ? rec.end_time : NaN;
+						if (looksLikeMillis) { start = start / 1000; end = end / 1000; }
 						if (text && Number.isFinite(start) && Number.isFinite(end)) {
 							words.push({ text, start, end });
 						}

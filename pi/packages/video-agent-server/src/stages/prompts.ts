@@ -50,6 +50,7 @@ export async function stagePrompts(
 		),
 		scriptDoc,
 		bibleDoc,
+		designDoc,
 	);
 	shotPrompts.promptVersion = PROMPT_VERSION;
 	await writeJson(run, "prompts.json", shotPrompts);

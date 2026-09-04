@@ -5,6 +5,9 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { buildPauseFilters } from "../src/ffmpeg.ts";
 import { cloudPathFor, parseCosUploadUrl, parseEnvFile, publicUrlFor } from "../src/hosting/tcb.ts";
 import { dialogueCondenseMessages } from "../src/prompts.ts";
@@ -123,8 +126,8 @@ describe("dialogueDerivedSec（A4b 以音频反推镜长）", () => {
 	});
 });
 
-describe("词级时间戳字幕（TTS timestamp=true 返回 JSON）", () => {
-	it("adapter 应在 TTS JSON 响应里提取 wordTimestamps 并下载音频", async () => {
+describe("词级时间戳字幕（TTS timestamp=true 返回 JSON · StepFun 实际 shape）", () => {
+	it("adapter 应在 TTS JSON 响应（data.url + data.subtitles[0].items，毫秒）里提取 wordTimestamps 并下载音频", async () => {
 		const { createOpenAICompatibleAdapter } = await import("../../coding-agent/examples/extensions/studio/media/openai-compatible.ts");
 		const adapter = createOpenAICompatibleAdapter({
 			id: "step-tts",
@@ -136,42 +139,58 @@ describe("词级时间戳字幕（TTS timestamp=true 返回 JSON）", () => {
 			apiKey: "test",
 		});
 		const payload = {
-			url: "https://cdn.example.com/tts.mp3",
-			words: [
-				{ text: "你好", start: 0.1, end: 0.4 },
-				{ text: "世界", start: 0.5, end: 0.9 },
-			],
+			data: {
+				url: "https://cdn.example.com/tts.mp3",
+				subtitles: [{
+					text: "你好世界",
+					items: [
+						{ text: "你", start_time: 100, end_time: 300 },
+						{ text: "好", start_time: 350, end_time: 500 },
+						{ text: "世", start_time: 600, end_time: 800 },
+						{ text: "界", start_time: 850, end_time: 1100 },
+					],
+				}],
+			},
 		};
 		const originalFetch = globalThis.fetch;
 		let downloadedUrl = "";
 		globalThis.fetch = async (url: string) => {
-			if (typeof url === "string" && url.startsWith("https://cdn.example.com/tts.mp3")) {
-				downloadedUrl = url;
+			const u = typeof url === "string" ? url : (url as URL).toString();
+			if (u.startsWith("https://cdn.example.com/tts.mp3")) {
+				downloadedUrl = u;
 				return new Response(new ArrayBuffer(8), { status: 200, headers: { "content-type": "audio/mpeg" } }) as unknown as Response;
+			}
+			if (u.startsWith("https://api.stepfun.com/step_plan/v1/audio/speech")) {
+				return new Response(JSON.stringify(payload), { status: 200, headers: { "content-type": "application/json" } }) as unknown as Response;
 			}
 			return originalFetch(url);
 		};
 		try {
+			const tmpDir = mkdtempSync(path.join(tmpdir(), "tts-out-"));
 			const result = await adapter.generate({
 				kind: "tts",
 				prompt: "你好世界",
 				params: { timestamp: true, return_url: true },
-				outputBase: "/tmp/tts-out/tts-test",
+				outputBase: path.join(tmpDir, "tts-test"),
 				signal: new AbortController().signal,
 			});
 			assert.ok(result.filePath.endsWith(".mp3"));
 			assert.equal(result.meta?.url, "https://cdn.example.com/tts.mp3");
+			// 毫秒 → 秒转换（StepFun 实际行为）
 			assert.deepEqual(result.meta?.wordTimestamps, [
-				{ text: "你好", start: 0.1, end: 0.4 },
-				{ text: "世界", start: 0.5, end: 0.9 },
+				{ text: "你", start: 0.1, end: 0.3 },
+				{ text: "好", start: 0.35, end: 0.5 },
+				{ text: "世", start: 0.6, end: 0.8 },
+				{ text: "界", start: 0.85, end: 1.1 },
 			]);
 			assert.equal(downloadedUrl, "https://cdn.example.com/tts.mp3");
+			rmSync(tmpDir, { recursive: true, force: true });
 		} finally {
 			globalThis.fetch = originalFetch;
 		}
 	});
 
-	it("adapter 应在无 audioUrl 但含 words 时仍保留词级时间戳", async () => {
+	it("adapter 应在无 audioUrl 但含 subtitles.items 时仍保留词级时间戳", async () => {
 		const { createOpenAICompatibleAdapter } = await import("../../coding-agent/examples/extensions/studio/media/openai-compatible.ts");
 		const adapter = createOpenAICompatibleAdapter({
 			id: "step-tts",
@@ -183,22 +202,42 @@ describe("词级时间戳字幕（TTS timestamp=true 返回 JSON）", () => {
 			apiKey: "test",
 		});
 		const payload = {
-			words: [
-				{ word: "hello", start_time: 0.0, end_time: 0.3 },
-				{ word: "world", start_time: 0.4, end_time: 0.8 },
-			],
+			data: {
+				subtitles: [{
+					text: "hello world",
+					items: [
+						{ text: "hello", start_time: 0, end_time: 300 },
+						{ text: "world", start_time: 400, end_time: 800 },
+					],
+				}],
+			},
 		};
-		const result = await adapter.generate({
-			kind: "tts",
-			prompt: "hello world",
-			params: { timestamp: true, stream_format: "sse" },
-			outputBase: "/tmp/tts-out/tts-test2",
-			signal: new AbortController().signal,
-		});
-		assert.ok(result.filePath.endsWith(".mp3"));
-		assert.deepEqual(result.meta?.wordTimestamps, [
-			{ text: "hello", start: 0.0, end: 0.3 },
-			{ text: "world", start: 0.4, end: 0.8 },
-		]);
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = async (url: string) => {
+			const u = typeof url === "string" ? url : (url as URL).toString();
+			if (u.startsWith("https://api.stepfun.com/step_plan/v1/audio/speech")) {
+				return new Response(JSON.stringify(payload), { status: 200, headers: { "content-type": "application/json" } }) as unknown as Response;
+			}
+			return originalFetch(url);
+		};
+		try {
+			const tmpDir = mkdtempSync(path.join(tmpdir(), "tts-out-"));
+			const result = await adapter.generate({
+				kind: "tts",
+				prompt: "hello world",
+				params: { timestamp: true, return_url: true },
+				outputBase: path.join(tmpDir, "tts-test2"),
+				signal: new AbortController().signal,
+			});
+			assert.ok(result.filePath.endsWith(".mp3"));
+			// 毫秒护栏：items[1].start_time=400 ≥ 100 → 整批按毫秒处理；items[0].start_time=0 也被转换
+			assert.deepEqual(result.meta?.wordTimestamps, [
+				{ text: "hello", start: 0, end: 0.3 },
+				{ text: "world", start: 0.4, end: 0.8 },
+			]);
+			rmSync(tmpDir, { recursive: true, force: true });
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
 	});
 });

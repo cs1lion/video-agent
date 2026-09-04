@@ -31,7 +31,12 @@ export async function stageAudio(
 	// 角色音色在剧本阶段已按人物设计注入 dialogue.voiceId——这里读现成绑定算旁白位。
 	const catalog = availableVoices(sc.ctx);
 	const assignment = assignCastVoices(
-		(run.brief.coSpace?.characters ?? []).map((c) => ({ name: c.name, description: c.description, voiceId: c.voiceId })),
+		(run.brief.coSpace?.characters ?? []).map((c) => ({
+			name: c.name,
+			description: c.description,
+			voiceId: c.voiceId,
+			gender: c.gender,
+		})),
 		catalog,
 	);
 	const narratorVoiceId =

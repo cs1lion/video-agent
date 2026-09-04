@@ -42,6 +42,8 @@ let failReferenceOnly = false;
 let failVideoAll = false;
 /** 队列提交记录（kind/prompt/params 按序追加） */
 let submits: { kind: string; prompt: string; params: Record<string, unknown> }[] = [];
+/** TTS 词级时间戳（N1）：用例可设置 null（关闭）/ 自定义数组（模拟供应商返回）。 */
+let ttsWordTimestamps: { text: string; start: number; end: number }[] | null = null;
 
 class FakeQueue {
 	private seq = 0;
@@ -63,7 +65,19 @@ class FakeQueue {
 			if (failVideoAll || (failReferenceOnly && this.videoSeq === 1)) status = "failed";
 		}
 		const absolute = path.join(projectDir, relative);
-		const job = { id, status, filePath: status === "done" ? absolute : undefined, relativePath: relative, attemptLog: [] };
+		const meta: Record<string, unknown> = {};
+		if (input.kind === "tts" && ttsWordTimestamps && ttsWordTimestamps.length > 0) {
+			meta.wordTimestamps = ttsWordTimestamps;
+		}
+		const job: {
+			id: string;
+			status: "done" | "failed";
+			filePath: string | undefined;
+			relativePath: string;
+			attemptLog: unknown[];
+			meta?: Record<string, unknown>;
+		} = { id, status, filePath: status === "done" ? absolute : undefined, relativePath: relative, attemptLog: [] };
+		if (Object.keys(meta).length > 0) job.meta = meta;
 		this.jobs.set(id, job);
 		if (status === "done") {
 			// 同步写：下游 mock 的 copyFile/probe 依赖文件存在（异步写有微任务竞态）
@@ -200,6 +214,7 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		failReferenceOnly = false;
 		failVideoAll = false;
 		submits = [];
+		ttsWordTimestamps = null;
 	}
 
 	function makeCtx(quota?: QuotaLedger): ServerContext {
@@ -247,7 +262,7 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 	async function freshRun(shotOverrides: Record<string, unknown> = {}): Promise<{ run: RunRecord; script: ScriptDoc; dir: string }> {
 		const dir = await mkdtemp(path.join(tmpdir(), "pi-dialogue-clips-"));
 		await mkdir(path.join(dir, "assets"), { recursive: true });
-		const shot = { ...DIALOGUE_SHOT, ...shotOverrides };
+		const shot = { ...DIALOGUE_SHOT, ...shotOverrides, dialogue: { ...DIALOGUE_SHOT.dialogue, ...(shotOverrides.dialogue ?? {}) } };
 		const script: ScriptDoc = { title: "测试片", logline: "测试用", shots: [shot] as ScriptDoc["shots"] };
 		await writeFile(path.join(dir, "script.json"), JSON.stringify(script), "utf-8");
 		await writeFile(
@@ -312,7 +327,12 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal(submits.length, 2, `应恰好 1 TTS + 1 video，实际 ${JSON.stringify(submits.map((s) => s.kind))}`);
 		assert.equal(submits[0]!.kind, "tts");
 		assert.equal(submits[0]!.prompt, "你好，世界。");
-		assert.deepEqual(submits[0]!.params, { instruction: "情绪：兴奋。", voice: "v_test" });
+		assert.deepEqual(submits[0]!.params, {
+			instruction: "情绪：兴奋。",
+			voice: "v_test",
+			timestamp: true,
+			return_url: true,
+		}, "N1 默认开启：台词 TTS 请求带 timestamp+return_url");
 		assert.equal(submits[1]!.kind, "video");
 		assert.deepEqual(submits[1]!.params, { seconds: "5", mode: "reference", audios: ["https://test-env.tcb.qcloud.la/video-agent/run-dialogue-test/tts-SH01.mp3"] });
 		assert.ok(submits[1]!.prompt.includes("<Audio 1>"), "reference 模式 prompt 必须含 <Audio 1> 占位符");
@@ -451,7 +471,12 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal(ttsSubmits.length, 2, "首版 + 精简重录各一次 TTS");
 		assert.equal(ttsSubmits[0]!.prompt, "你好，世界。");
 		assert.equal(ttsSubmits[1]!.prompt, "短句", "第二次 TTS 必须用精简后的文本");
-		assert.deepEqual(ttsSubmits[1]!.params, { instruction: "情绪：兴奋。", voice: "v_test" }, "重录保持同一音色与指导（跨镜一致性）");
+		assert.deepEqual(ttsSubmits[1]!.params, {
+			instruction: "情绪：兴奋。",
+			voice: "v_test",
+			timestamp: true,
+			return_url: true,
+		}, "重录保持同一音色与指导（跨镜一致性），继续请求词级时间戳");
 		const video = submits.find((s) => s.kind === "video")!;
 		assert.deepEqual((video.params as { audios: string[] }).audios.length, 1, "精简重录后仍走 reference");
 		assert.equal(result.script.shots[0]!.audioMode, "dialogue");
@@ -526,5 +551,68 @@ describe("A2 台词链路（stageClips 台词分支）", () => {
 		assert.equal((video.params as { mode: string }).mode, "reference");
 		assert.ok(Math.abs(result.script.shots[0]!.dialogue!.audioDurationSec! - 7) < 1e-6, "回退后用首版实测时长");
 		assert.ok(run.events.some((e) => e.text.includes("精简重录失败，使用首版")));
+	});
+
+	it("N1 词级时间戳：TTS 返回 wordTimestamps → 回填 dialogue.wordTimestamps 并落盘（供 export 精准字幕）", async () => {
+		reset();
+		ttsWordTimestamps = [
+			{ text: "你好", start: 0.12, end: 0.4 },
+			{ text: "世界", start: 0.5, end: 0.95 },
+		];
+		const ctx = makeCtx();
+		const { run, script, dir } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		const ts = result.script.shots[0]!.dialogue!.wordTimestamps;
+		assert.ok(ts, "dialogue.wordTimestamps 必须被回填");
+		assert.equal(ts!.length, 2);
+		assert.equal(ts![0]!.text, "你好");
+		assert.ok(Math.abs(ts![0]!.start - 0.12) < 1e-6);
+		assert.ok(Math.abs(ts![1]!.end - 0.95) < 1e-6);
+		// 落盘校验：export 阶段读 script.json 的 wordTimestamps 字段
+		const onDisk = JSON.parse(await readFile(path.join(dir, "script.json"), "utf-8")) as ScriptDoc;
+		assert.deepEqual(onDisk.shots[0]!.dialogue!.wordTimestamps, ts);
+	});
+
+	it("N1 词级时间戳：供应商返回空 words → 不写入 wordTimestamps 字段（export 回落到 silencedetect）", async () => {
+		reset();
+		ttsWordTimestamps = []; // 模拟供应商返回空数组
+		const ctx = makeCtx();
+		const { run, script, dir } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		assert.equal(result.script.shots[0]!.dialogue!.wordTimestamps, undefined, "空数组不应被回填");
+		const onDisk = JSON.parse(await readFile(path.join(dir, "script.json"), "utf-8")) as ScriptDoc;
+		assert.equal(onDisk.shots[0]!.dialogue!.wordTimestamps, undefined);
+	});
+
+	it("N1 词级时间戳：非法项（含 NaN 时间戳）被过滤，保留合法项", async () => {
+		reset();
+		ttsWordTimestamps = [
+			{ text: "OK", start: 0.0, end: 0.3 },
+			{ text: "BAD", start: Number.NaN, end: 0.6 }, // 非法
+			{ text: "ALSO_OK", start: 0.7, end: 1.0 },
+		];
+		const ctx = makeCtx();
+		const { run, script } = await freshRun();
+		const result = await runClips(ctx, run, script);
+		const ts = result.script.shots[0]!.dialogue!.wordTimestamps;
+		assert.ok(ts);
+		assert.equal(ts!.length, 2, "非法项被过滤");
+		assert.equal(ts![0]!.text, "OK");
+		assert.equal(ts![1]!.text, "ALSO_OK");
+	});
+
+	it("N1 env gate：VIDEO_AGENT_WORD_TIMESTAMPS=0 → TTS 不带 timestamp+return_url（回退开关）", async () => {
+		reset();
+		const prev = process.env.VIDEO_AGENT_WORD_TIMESTAMPS;
+		process.env.VIDEO_AGENT_WORD_TIMESTAMPS = "0";
+		try {
+			const ctx = makeCtx();
+			const { run, script } = await freshRun();
+			await runClips(ctx, run, script);
+			assert.deepEqual(submits[0]!.params, { instruction: "情绪：兴奋。", voice: "v_test" }, "gate 关：TTS 不下发 timestamp/return_url");
+		} finally {
+			if (prev === undefined) delete process.env.VIDEO_AGENT_WORD_TIMESTAMPS;
+			else process.env.VIDEO_AGENT_WORD_TIMESTAMPS = prev;
+		}
 	});
 });

@@ -26,6 +26,76 @@ export async function stageScript(sc: StageCtx): Promise<ScriptDoc> {
 	setStage(run, "script", "running", 10);
 	pushEvent(run, "writer", "producer", "status", `编剧开工：解析需求，搭建 ${opts.shotCount} 镜叙事骨架。`);
 	throwIfAborted(signal);
+
+	// 2026-09-01 补遗 §4 根治点：user 提供 scriptIntent 时跳过 LLM 编剧，直接采用。
+	// 避免 LLM director 自由重写 audioMode（如 B剧 SH06 从 dialogue 被改为 narration）
+	// 或替换台词。仍走 normalizeScript + 台词守卫，保证下游阶段拿到合法 ScriptDoc。
+	const userIntent = run.brief.coSpace?.scriptIntent;
+	if (userIntent && userIntent.shots.length > 0) {
+		const title = userIntent.title ?? run.brief.creative.logline.slice(0, 40);
+		const logline = userIntent.logline ?? run.brief.creative.logline;
+		const shots = userIntent.shots.map((s) => ({
+			id: s.id,
+			visual: s.visual,
+			durationSec: s.durationSec ?? opts.clipDurationSec,
+			narrationZh: s.narrationZh ?? "",
+			narrationEn: s.narrationEn ?? "",
+			audioMode: (s.audioMode ?? "narration") as "dialogue" | "narration" | "silent",
+			...(s.dialogue
+				? {
+						dialogue: {
+							characterId: s.dialogue.characterId,
+							lines: { zh: s.dialogue.lines.zh, en: s.dialogue.lines.en ?? "" },
+							...(s.dialogue.emotion ? { emotion: s.dialogue.emotion } : {}),
+						},
+					}
+				: {}),
+		}));
+		let script: ScriptDoc = { title, logline, shots };
+		script = normalizeScript(script, opts);
+		pushEvent(
+			run,
+			"writer",
+			"producer",
+			"status",
+			`用户提供了 scriptIntent，跳过 LLM 编剧，采用 ${script.shots.length} 镜用户剧本（补遗 §4 根治点）。`,
+		);
+		// 台词模式守卫同样适用（dialogueCount 计数）
+		if (opts.audioDrive === "dialogue") {
+			const dialogueCount = script.shots.filter((s) => s.audioMode === "dialogue").length;
+			const required = Math.max(2, Math.ceil(opts.shotCount / 2));
+			if (dialogueCount < required) {
+				pushEvent(
+					run,
+					"writer",
+					"producer",
+					"status",
+					`用户剧本对白密度不足（${dialogueCount} 镜有对白，要求 ≥${required}）——以用户为准，不重写。`,
+				);
+			}
+		}
+		// D1 闸门同样跑（多角色对白拆镜）
+		if (opts.audioDrive === "dialogue") {
+			const enforced = enforceSingleSpeaker(script);
+			script = enforced.script;
+			for (const warning of enforced.warnings) {
+				pushEvent(run, "writer", "producer", "status", `⚠️ ${warning}`);
+			}
+		}
+		// A7 音色绑定 —— 同样以 user 剧本的 characterId 为准
+		script = bindCharacterVoices(script, run.brief.coSpace, availableVoices(sc.ctx));
+		await writeJson(run, "script.json", script);
+		setStage(run, "script", "done", 100);
+		pushEvent(
+			run,
+			"writer",
+			"art",
+			"handoff",
+			`剧本《${script.title}》完成：${script.shots.length} 镜，${script.shots.reduce((a, s) => a + s.durationSec, 0)}s。Logline：${script.logline}。请据此制定全片视觉规范。`,
+		);
+		return script;
+	}
+
 	let script = await generateDoc<ScriptDoc>(sc, scriptMessages(run.brief, opts), refImageNote(run), "script");
 	script = normalizeScript(script, opts);
 	if (script.shots.length !== opts.shotCount) {

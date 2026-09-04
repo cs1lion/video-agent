@@ -352,18 +352,28 @@ function notFoundRun(res: Response, id: string): void {
 function coSpaceFromBody(raw: unknown): CoCreationSpace | undefined {
 	if (!raw || typeof raw !== "object") return undefined;
 	const src = raw as {
-		characters?: { name?: unknown; description?: unknown }[];
+		characters?: { name?: unknown; description?: unknown; gender?: unknown }[];
 		scenes?: { name?: unknown; description?: unknown }[];
 		ideas?: unknown[];
 		musicBrief?: unknown;
+		scriptIntent?: unknown;
 	};
 	const text = (v: unknown, cap: number): string => (typeof v === "string" ? v.trim().slice(0, cap) : "");
-	const pair = (list: unknown): { name: string; description: string }[] =>
+	const pair = (list: unknown): { name: string; description: string; gender?: "male" | "female"; englishName?: string }[] =>
 		(Array.isArray(list) ? list : [])
-			.map((item) => ({
-				name: text((item as { name?: unknown })?.name, 40),
-				description: text((item as { description?: unknown })?.description, 600),
-			}))
+			.map((item) => {
+				const rawGender = (item as { gender?: unknown })?.gender;
+				const gender: "male" | "female" | undefined =
+					rawGender === "male" || rawGender === "female" ? rawGender : undefined;
+				const englishName = text((item as { englishName?: unknown })?.englishName, 40) || undefined;
+				const out: { name: string; description: string; gender?: "male" | "female"; englishName?: string } = {
+					name: text((item as { name?: unknown })?.name, 40),
+					description: text((item as { description?: unknown })?.description, 600),
+				};
+				if (gender) out.gender = gender;
+				if (englishName) out.englishName = englishName;
+				return out;
+			})
 			.filter((p) => p.name.length > 0)
 			.slice(0, 8);
 	const characters = pair(src.characters);
@@ -373,12 +383,74 @@ function coSpaceFromBody(raw: unknown): CoCreationSpace | undefined {
 		.map((i) => i.trim().slice(0, 240))
 		.slice(0, 12);
 	const musicBrief = text(src.musicBrief, 300);
-	if (characters.length === 0 && scenes.length === 0 && ideas.length === 0 && !musicBrief) return undefined;
+	// scriptIntent: 逐镜剧本意图（2026-09-01 补遗 §4 根治 LLM director 重写 audioMode / 台词问题）
+	const scriptIntent = (() => {
+		const si = src.scriptIntent;
+		if (!si || typeof si !== "object") return undefined;
+		const s = si as { title?: unknown; logline?: unknown; shots?: unknown };
+		const rawShots = Array.isArray(s.shots) ? s.shots : [];
+		const shots = rawShots
+			.map((item): NonNullable<CoCreationSpace["scriptIntent"]>["shots"][number] | null => {
+				if (!item || typeof item !== "object") return null;
+				const it = item as Record<string, unknown>;
+				const id = text(it.id, 20);
+				if (!id) return null;
+				const audioMode =
+					it.audioMode === "dialogue" || it.audioMode === "narration" || it.audioMode === "silent"
+						? it.audioMode
+						: undefined;
+				const visual = text(it.visual, 800);
+				if (!visual) return null;
+				const dialogue = (() => {
+					const d = it.dialogue;
+					if (!d || typeof d !== "object") return undefined;
+					const dl = d as { characterId?: unknown; lines?: unknown; emotion?: unknown };
+					const lines = dl.lines as { zh?: unknown; en?: unknown } | undefined;
+					const zh = text(lines?.zh, 200);
+					if (!zh) return undefined;
+					return {
+						characterId: text(dl.characterId, 40),
+						lines: { zh, en: text(lines?.en, 200) || undefined } as { zh: string; en?: string },
+						emotion: text(dl.emotion, 40) || undefined,
+					};
+				})();
+				const narrationZh = text(it.narrationZh, 200) || undefined;
+				const narrationEn = text(it.narrationEn, 200) || undefined;
+				const durationRaw = Number(it.durationSec);
+				return {
+					id,
+					...(audioMode ? { audioMode } : {}),
+					visual,
+					...(dialogue ? { dialogue } : {}),
+					...(narrationZh ? { narrationZh } : {}),
+					...(narrationEn ? { narrationEn } : {}),
+					...(Number.isFinite(durationRaw) && durationRaw > 0 ? { durationSec: durationRaw } : {}),
+				};
+			})
+			.filter((x): x is NonNullable<CoCreationSpace["scriptIntent"]>["shots"][number] => x !== null)
+			.slice(0, 12);
+		if (shots.length === 0) return undefined;
+		return {
+			...(text(s.title, 80) ? { title: text(s.title, 80) } : {}),
+			...(text(s.logline, 400) ? { logline: text(s.logline, 400) } : {}),
+			shots,
+		};
+	})();
+	if (
+		characters.length === 0 &&
+		scenes.length === 0 &&
+		ideas.length === 0 &&
+		!musicBrief &&
+		!scriptIntent
+	) {
+		return undefined;
+	}
 	return {
 		characters,
 		scenes,
 		ideas,
 		...(musicBrief ? { musicBrief } : {}),
+		...(scriptIntent ? { scriptIntent } : {}),
 	};
 }
 

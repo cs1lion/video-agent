@@ -108,7 +108,17 @@ export async function prepareDialogueAudio(sc: StageCtx, shot: ScriptShot): Prom
 				roleName: "video-agent",
 				kind: "tts",
 				prompt: speechText,
-				params: { instruction, ...(ttsSpeed ? { speed: ttsSpeed } : {}), ...voiceParams },
+				// 词级时间戳字幕（N1 · ROADMAP 近期 · 已默认开启）：StepFun TTS `timestamp=true` +
+				// `return_url=true` 返回 JSON { data.url, data.subtitles[0].items }，
+				// 适配器自动按毫秒→秒转换（start_time≥100 整数才转的护栏）。export.ts 优先用
+				// 首/末项 time 算字幕起止（变品 ≤0.2s），空数组回落 silencedetect → 三重收束。
+				// 环境变量 VIDEO_AGENT_WORD_TIMESTAMPS=0 可临时关用（走原二进制流）。
+				params: {
+					instruction,
+					...(ttsSpeed ? { speed: ttsSpeed } : {}),
+					...voiceParams,
+					...(process.env.VIDEO_AGENT_WORD_TIMESTAMPS === "0" ? {} : { timestamp: true, return_url: true }),
+				},
 				outputName: `tts-dialogue-${shot.id}${tag}`,
 			},
 			run.dir,

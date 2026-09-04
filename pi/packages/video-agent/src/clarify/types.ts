@@ -133,6 +133,17 @@ export interface CoCharacter {
 	description: string;
 	/** 台词模式音色绑定（如 StepFun voice id）：角色音色跨镜头稳定的载体，重录后不漂移 */
 	voiceId?: string;
+	/**
+	 * 性别（脚本侧声明，voice-cast 派发音色时优先于文本 regex 推导）：
+	 *   - 'male'   强制走男声池（maleElder / maleAdult / maleYoung）
+	 *   - 'female' 强制走女声池（femaleElder / femaleAdult / femaleYoung / femaleChild）
+	 *   - 缺省    走原 regex 推导（保持向后兼容）
+	 *
+	 * 不传时落回 regex：MALE_HINTS / FEMALE_HINTS 在直呼姓名（"李明""王队""陈律师"等）
+	 * 都不命中，会兜底到 femaleAdult 池——这就是 2026-08-31 五剧跑批里 8/11 男角色
+	 * 被派女声的根因。补传 gender 是根治；regex 兜底逻辑保留以兼容旧数据。
+	 */
+	gender?: "male" | "female";
 }
 
 /** 共创空间沉淀的场景设定 */
@@ -149,6 +160,27 @@ export interface CoCreationSpace {
 	ideas: string[];
 	/** 背景音乐简报（风格/乐器/节奏意图；暂无音乐生成模型，先作为交付说明落盘） */
 	musicBrief?: string;
+	/**
+	 * 用户的逐镜剧本意图（可选，提供时剧本阶段会跳过 LLM 编剧，直接采用）。
+	 * 填法：用户从脚本 .md 里提取的每镜 audioMode/dialogue/characterId/visual/narrationZh。
+	 * 这是 2026-09-01 补遗 §4 的根治点 —— 避免 LLM director 重写 user audioMode（如把 SH06
+	 * 从 dialogue 改为 narration）或换台词；下游阶段仍走 LLM，但以 user 提供的字段为准。
+	 *
+	 * 部分字段允许 LLM 补齐（visual 细节、emotion 微调）；完整填法会让 server 完全跳过 LLM 编剧。
+	 */
+	scriptIntent?: {
+		title?: string;
+		logline?: string;
+		shots: Array<{
+			id: string;
+			audioMode?: "dialogue" | "narration" | "silent";
+			dialogue?: { characterId: string; lines: { zh: string; en?: string }; emotion?: string };
+			narrationZh?: string;
+			narrationEn?: string;
+			visual: string;
+			durationSec?: number;
+		}>;
+	};
 }
 
 /** 访谈完成后的富化简报：交给管线的最终文档 */

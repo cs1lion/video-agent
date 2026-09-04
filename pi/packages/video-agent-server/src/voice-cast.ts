@@ -45,6 +45,11 @@ export interface VoiceCastMember {
 	description?: string;
 	/** 显式绑定（UI 共创角色卡）；优先于一切推导 */
 	voiceId?: string;
+	/**
+	 * 脚本侧声明的性别（可选；优先于文本 regex 推导）。
+	 * voicePoolForDescription 第二参数；age 仍按 description 里的关键词/数字推导。
+	 */
+	gender?: "male" | "female";
 }
 
 export interface VoiceCastAssignment {
@@ -61,10 +66,17 @@ const FEMALE_HINTS = /女|奶|婆|母|娘|姨|姐|妹|婶|嫂|妻|媳妇|姑娘|
 const ELDER_HINTS = /爷爷|老爷|奶奶|老太太|老先生|老人|老翁|老爸|老妈|翁|婆|花白|白发|退休|暮年/;
 const CHILD_HINTS = /儿童|孩子|小孩|孙女|孙子|童|幼|小女|小男|小姑|小娃/;
 
-/** 从「角色名 + 人物设计」推测年龄段与性别 → 音色池 */
-export function voicePoolForDescription(text: string): VoicePool {
-	const isMale = MALE_HINTS.test(text);
-	const isFemale = !isMale && FEMALE_HINTS.test(text);
+/** 从「角色名 + 人物设计」推测年龄段与性别 → 音色池
+ *
+ * @param text    角色名 + 描述拼接（含年龄关键词、性别称呼等线索）
+ * @param gender  脚本侧显式声明的性别（'male' | 'female'）；如提供则**完全绕过** regex 性别判断
+ *                —— 这是 2026-08-31 五剧跑批里 8/11 男角色被派女声的根因修复点。
+ *                regex 对「李明」「王队」「陈律师」这种直呼姓名 + 描述里无"男/女"的角色
+ *                全部不命中，会兜底到 femaleAdult——补传 gender 是根治。
+ */
+export function voicePoolForDescription(text: string, gender?: "male" | "female"): VoicePool {
+	const isMale = gender === "male" || (gender === undefined && MALE_HINTS.test(text));
+	const isFemale = gender === "female" || (gender === undefined && !isMale && FEMALE_HINTS.test(text));
 	const isElder = ELDER_HINTS.test(text);
 	const isChild = CHILD_HINTS.test(text);
 	// 数字年龄：≤12 儿童、≥55 老年，其余按关键词
@@ -118,7 +130,7 @@ export function assignCastVoices(
 			continue;
 		}
 		// 启发式读「角色名 + 人物设计」：性别/年龄线索常只在名字里（爷爷/孙女/叔叔…）
-		const pool = voicePoolForDescription(`${member.name}；${member.description ?? ""}`);
+		const pool = voicePoolForDescription(`${member.name}；${member.description ?? ""}`, member.gender);
 		let picked = firstFree(pool, catalogValues, used);
 		if (!picked) {
 			// 池内耗尽 → 同性别相邻年龄段补位 → 异性别兜底，如实留痕

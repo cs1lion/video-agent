@@ -2347,15 +2347,58 @@ export function normalizeBible(bible: VisualBible): VisualBible {
 	};
 }
 
-export function normalizeShotPrompts(doc: ShotPromptDoc, script: ScriptDoc, bible: VisualBible): ShotPromptDoc {
+export function normalizeShotPrompts(doc: ShotPromptDoc, script: ScriptDoc, bible: VisualBible, designBible?: DesignBibleDoc | null): ShotPromptDoc {
 	const fallback = (visual: string) =>
 		[bible.styleKeywords.join(", "), visual, bible.lighting, bible.grade].filter(Boolean).join(", ");
 	const prompts = script.shots.map((shot, i) => {
 		const found = Array.isArray(doc.prompts) ? doc.prompts.find((p) => p && p.shotId === shot.id) : undefined;
 		const prompt = typeof found?.prompt === "string" && found.prompt ? found.prompt : fallback(shot.visual);
-		return { shotId: shot.id ?? `SH${String(i + 1).padStart(2, "0")}`, prompt };
+		return { shotId: shot.id ?? `SH${String(i + 1).padStart(2, "0")}`, prompt: injectCharacterLooks(prompt, designBible?.characters ?? []) };
 	});
 	return { prompts };
+}
+
+/**
+ * 给视觉 prompt 注入角色外貌描述（补遗 §5 解决跨镜人物一致性的最强抓手）。
+ *
+ * 背景：LLM 在写 prompt 时常只提角色名（"Zhao"）不携带外貌短语，导致视频模型
+ * 自由发挥（另一个剧里就出现过"老夫人对着一个中年短发女性说小伙子"的跨镜错配）。
+ * 美术设计 bible 里每个角色都有完整外貌描述（design 字段），这里把 prompt 中提到
+ * 角色名的地方替换为「名字 (外貌短语)」。已含外貌短语的不会重复注入。
+ */
+function extractLookSnippet(design: string): string {
+	// design 格式: "A 58-year-old retired female teacher with neat short silver-gray hair, wearing ..."
+	// 取前 ~100 字符作为外貌短语（足以区分人物）
+	const cleaned = design.replace(/\s+/g, " ").trim();
+	return cleaned.slice(0, 100);
+}
+
+function injectCharacterLooks(prompt: string, characters: { name: string; id: string; design: string; englishName?: string }[]): string {
+	let result = prompt;
+	for (const c of characters) {
+		if (!c.design || c.design.trim().length === 0) continue;
+		const look = extractLookSnippet(c.design);
+		// 跳过名字上已在 prompt 里带着外貌描述的情况（避免重复添加）
+		const lookFingerprint = look.split(" ").slice(0, 4).join(" ");
+		if (lookFingerprint && result.includes(lookFingerprint)) continue;
+		// 四种名称变体：中文名、英文 ID、英文名转写、可能的中文姓氏
+		const variants: string[] = [];
+		if (c.name) variants.push(c.name);
+		if (c.id) variants.push(c.id);
+		if (c.englishName) variants.push(c.englishName);
+		// 只在 prompt 里明确出现过的名字才追加外观（避免干扰不属于该镜的角色）
+		for (const v of variants) {
+			if (!v || v.length < 2) continue;
+			const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			// 词边界匹配：避免匹配到 "Zhao" 里的 "Zhao"
+			const regex = new RegExp(`(?<![A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])(?!\\s*\\()`, "g");
+			if (regex.test(result)) {
+				result = result.replace(regex, `${v} (${look})`);
+				break; // 一个名字替换一次避免重复
+			}
+		}
+	}
+	return result;
 }
 
 export async function writeJson(run: RunRecord, name: string, data: unknown): Promise<void> {

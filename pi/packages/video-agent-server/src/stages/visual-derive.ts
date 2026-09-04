@@ -37,6 +37,29 @@ import * as path from "node:path";
 import type { StageCtx } from "../pipeline.js";
 
 /**
+ * 把 coSpace.characters 的 englishName 字段回填到 design-bible 的对应 character 上。
+ * 补遗 §5：LLM 生成 design-bible 时不会保留 englishName，需按 name/id 匹配后复制。
+ */
+function backfillEnglishNames(
+	doc: DesignBibleDoc,
+	coSpace?: { characters?: { name: string; id?: string; englishName?: string }[] },
+): void {
+	if (!coSpace?.characters) return;
+	const byName = new Map<string, { name: string; id?: string; englishName?: string }>();
+	const byId = new Map<string, { name: string; id?: string; englishName?: string }>();
+	for (const c of coSpace.characters) {
+		if (c.name) byName.set(c.name, c);
+		if (c.id) byId.set(c.id, c);
+	}
+	for (const entity of doc.characters) {
+		const src = byName.get(entity.name) ?? byId.get(entity.id ?? "");
+		if (src?.englishName && !entity.englishName) {
+			entity.englishName = src.englishName;
+		}
+	}
+}
+
+/**
  * 美术设计核心素材：人物/道具/场景概念设计图（失败容忍，不阻断管线）。
  * LLM 推导实体矩阵 → 逐张出图。
  */
@@ -58,6 +81,9 @@ export async function deriveDesignBible(
 		run.metrics.llmCalls += 1;
 		trackLlmCost(run, sc.ctx, designBiblePrompt, JSON.stringify(raw));
 		doc = normalizeDesignDoc(raw);
+		// 2026-09-01 补遗 §5 跨镜人物一致性：把 coSpace.characters 的 englishName 回填到 design-bible，
+		// 这样下游 injectCharacterLooks 能匹配 LLM 转写的英文名（"小赵" → "Zhao"）。
+		backfillEnglishNames(doc, run.brief.coSpace);
 		appendSpan(
 			run,
 			{

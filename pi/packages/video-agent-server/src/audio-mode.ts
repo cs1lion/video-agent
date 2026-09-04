@@ -83,7 +83,7 @@ export function enforceSingleSpeaker(script: ScriptDoc): { script: ScriptDoc; wa
  */
 export function bindCharacterVoices(
 	script: ScriptDoc,
-	coSpace?: { characters?: { name: string; description?: string; voiceId?: string }[] },
+	coSpace?: { characters?: { name: string; description?: string; voiceId?: string; gender?: "male" | "female" }[] },
 	catalog: Record<string, string> = {},
 ): ScriptDoc {
 	const cast = coSpace?.characters ?? [];
@@ -95,7 +95,7 @@ export function bindCharacterVoices(
 	// 自动分配（显式绑定优先，推导补位，同片去重）；catalog 为空（无音色库配置）时跳过推导
 	const assignment = cast.length > 0 && Object.keys(catalog).length > 0
 		? assignCastVoices(
-				cast.map((c) => ({ name: c.name, description: c.description, voiceId: c.voiceId })),
+				cast.map((c) => ({ name: c.name, description: c.description, voiceId: c.voiceId, gender: c.gender })),
 				catalog,
 			)
 		: null;

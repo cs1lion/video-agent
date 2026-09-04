@@ -161,6 +161,11 @@ export async function stageClips(
 				dialogueReadyUrl = outcome.audioUrl;
 				referenceAudioPathForShot = outcome.localAudioRelPath ?? null;
 				dialogueLineForShot = shot.dialogue?.lines.zh ?? null;
+				// 词级时间戳字幕（N1 · ROADMAP 近期）：落回 dialogue，export 阶段读这一字段
+				// 精准字幕起止，与 retts 重做路径同一份写法（retts.ts 那边已落）。
+				if (outcome.wordTimestamps && outcome.wordTimestamps.length > 0 && shot.dialogue) {
+					shot.dialogue.wordTimestamps = outcome.wordTimestamps;
+				}
 				if (typeof outcome.audioDurationSec === "number" && outcome.audioDurationSec > 0) {
 					const derived = dialogueDerivedSec(outcome.audioDurationSec);
 					if (derived !== shot.durationSec) {

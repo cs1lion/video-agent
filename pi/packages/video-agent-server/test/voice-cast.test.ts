@@ -112,6 +112,80 @@ describe("assignCastVoices（配音选角）", () => {
 		const solo = assignCastVoices([], CATALOG);
 		assert.equal(solo.narratorVoiceId, "boyinnansheng");
 	});
+
+	// 2026-08-31 五剧跑批反馈：gender 字段加入。详踩坑补遗 §2.1。
+	describe("gender 字段（2026-08-31 五剧跑批反馈）", () => {
+		it("直呼姓名+无性别描述：显式 male 强制走男声池（不再兜底 femaleAdult）", () => {
+			const r = assignCastVoices(
+				[{ name: "李明", description: "35 岁，科技公司产品经理", gender: "male" }],
+				CATALOG,
+			);
+			assert.equal(
+				r.byCharacter["李明"],
+				"zixinnansheng",
+				"male adult 池首选 + 描述无性别词 + 不再兜底 femaleAdult",
+			);
+		});
+
+		it("直呼姓名+无性别描述：显式 female 走女声池", () => {
+			const r = assignCastVoices(
+				[{ name: "张薇", description: "35 岁，非营利组织项目主管" }],
+				CATALOG,
+			);
+			assert.equal(r.byCharacter["张薇"], "jingdiannvsheng", "female adult 池首选");
+		});
+
+		it("同片男+女+显式 gender，音色不撞、同片去重", () => {
+			const r = assignCastVoices(
+				[
+					{ name: "陈律师", description: "32 岁新手律师", gender: "male" },
+					{ name: "张律师", description: "45 岁资深律师", gender: "male" },
+					{ name: "林佳", description: "28 岁编辑", gender: "female" },
+				],
+				CATALOG,
+			);
+			assert.equal(r.byCharacter["陈律师"], "zixinnansheng");
+			assert.equal(r.byCharacter["张律师"], "cixingnansheng", "同池顺延不撞声");
+			assert.equal(r.byCharacter["林佳"], "jingdiannvsheng");
+			// 旁白必须避开 3 个角色音色
+			assert.ok(r.narratorVoiceId);
+			assert.ok(!Object.values(r.byCharacter).includes(r.narratorVoiceId!));
+			const all = [...Object.values(r.byCharacter), r.narratorVoiceId];
+			assert.equal(new Set(all).size, all.length, "旁白+全员音色不得重复");
+		});
+
+		it("gender: male + regex 也命中 female 词（'女士'在描述）→ gender 优先，不被 female 词覆盖", () => {
+			const r = assignCastVoices(
+				[
+					// 描述里出现「女同事」描述同片同事，但角色本人是男：gender 字段优先
+					{ name: "王队", description: "48 岁男刑警，旁边坐着女书记员", gender: "male" },
+				],
+				CATALOG,
+			);
+			assert.equal(r.byCharacter["王队"], "zixinnansheng", "gender=male 优先于描述里的 '女' 关键词");
+		});
+
+		it("gender 缺省时：原 regex 行为完全保留（向后兼容）", () => {
+			// '老板' 在 MALE_HINTS 里 → 老周无 gender 字段时仍然走男声池
+			const r = assignCastVoices(
+				[{ name: "老周", description: "46 岁男性外卖骑手" }], // 描述里 '男' 触发 regex
+				CATALOG,
+			);
+			assert.equal(r.byCharacter["老周"], "zixinnansheng", "regex 命中 male 词 → 男声池不变");
+		});
+
+		it("gender 缺省 + regex 不命中：保留原 femaleAdult 兜底（不破坏旧调用）", () => {
+			const r = assignCastVoices(
+				[{ name: "陈默", description: "32 岁前数据分析师，冷静克制" }],
+				CATALOG,
+			);
+			assert.equal(
+				r.byCharacter["陈默"],
+				"jingdiannvsheng",
+				"回归报告 §2.1 的现象：不传 gender + regex 失配 → 仍兜底 femaleAdult（向后兼容）",
+			);
+		});
+	});
 });
 
 describe("narratorVoiceFor（重录路径速查）", () => {
