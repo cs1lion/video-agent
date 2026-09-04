@@ -3,10 +3,15 @@
 
 @theme {
   --font-sans: "Inter", "HarmonyOS Sans SC", "MiSans", "PingFang SC",
-    "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  /* 等宽栈必须带中文字体 fallback：JetBrains Mono/Cascadia Code/Consolas 全是纯拉丁，
+     缺中文 fallback 时中文在 HUD 里渲染成豆腐块（Windows 的 monospace 映射到 Consolas）。
+     Microsoft YaHei=Windows 必有，PingFang SC=macOS，Noto Sans CJK SC=Linux。 */
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas,
+    "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", monospace;
   /* 展示字体：大标题/片场标语（中文衬线黑，加载失败静默回退） */
-  --font-display: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-display: "Noto Serif SC", "Songti SC", "STSong",
+    "Microsoft YaHei", "PingFang SC", serif;
 
   /* 冷灰工业：锌灰底 + 单一琥珀 accent；状态色仅 emerald/amber/rose */
   --color-void: #0a0a0b;
