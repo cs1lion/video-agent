@@ -39,3 +39,8 @@ pi-session-*.html
 
 # 部署密钥：构建前从 .pi-studio/models.json 拷入，严禁提交
 pi/deploy/models.json
+
+# 部署打包产物：tar.gz 内已包含 deploy/models.json（明文 provider key），
+# 一旦 add 就等于把密钥再次写进提交历史。2026-09-04 部署 CVM 时引入，务必保留此规则。
+# 需要重新部署时用 pi/deploy/deploy-to-cvm.sh 现打现传，不要把包留在仓库。
+*.tar.gz

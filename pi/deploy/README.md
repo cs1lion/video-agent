@@ -4,6 +4,21 @@
 > 形态：**单容器同源**——Express 同时服务 API（/api/*）与 UI 静态构建（SPA 回退），
 > 无 CORS、无跨域配置。镜像基于 node:22-bookworm-slim + ffmpeg。
 
+> ## ⚠️ 部署目标怎么选（2026-09-04 更新）
+>
+> 现在有**两条并行**的部署路径：
+>
+> | | CloudBase 云托管（本文件） | 自建云服务器（**推荐**） |
+> |---|---|---|
+> | 入口 | `video-agent-303977-11-1253451683.sh.run.tcloudbase.com` | `http://49.233.207.18/`（Nginx 80 → 8080） |
+> | 脚本 | `tcb cloudrun deploy` / CloudBase 连接器 | **`deploy-to-cvm.sh`** + `nginx-video-agent.conf` |
+> | 瓶颈 | **体验版月额度 3000 点，`EnableOverrun=false`，耗尽即停服** | 无配额限制，按月付机器费 |
+> | 冷启动 | MinNum=0 时约 30s，需预热协议 | 常驻，无冷启动 |
+> | 报告 | `doc/deployment/施工报告-部署-cloudbase-2026-08-31.md` | **`doc/deployment/施工报告-部署-CVM-2026-09-04.md`** |
+>
+> **2026-09-04 实测：云托管本周期（08-27~09-27）已耗 2908.6 / 3000 点，仅剩 91.4 点。**
+> 对外演示一律走自建 CVM。本文件保留作为云托管形态的运维参考。
+
 ## 架构
 
 ```
