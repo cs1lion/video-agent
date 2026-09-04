@@ -44,3 +44,6 @@ pi/deploy/models.json
 # 一旦 add 就等于把密钥再次写进提交历史。2026-09-04 部署 CVM 时引入，务必保留此规则。
 # 需要重新部署时用 pi/deploy/deploy-to-cvm.sh 现打现传，不要把包留在仓库。
 *.tar.gz
+
+# 一次性实验产物目录（runs/deliverables/成片，9.7M，无版本价值）
+e2e/winter-portrait/
