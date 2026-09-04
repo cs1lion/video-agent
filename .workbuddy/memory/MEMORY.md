@@ -99,6 +99,10 @@
   ② **无默认 TLS**（仅 80 明文），放登录前需 certbot 加 HTTPS；
   ③ **单 2 核、无横向扩展、VM 级宕机=全断**（systemd 只防进程崩，无 HA）；
   ④ API 的 RPM 限速是 StepFun/Agnes 按 key 的限制，**与部署形态无关**；CVM 的收益是甩掉云托管 3000 点额度天花板。
+- **中文字体已沉进 deploy-to-cvm.sh**：fonts-noto-cjk + fontconfig 别名 `Microsoft YaHei→Noto Sans CJK SC`
+  自动装（幂等 + fc-match 验证）。不依赖人记 Runbook。**根因**：导出 ASS FontName 硬编码 Microsoft YaHei。
+- **⚠️ SFTP 从 Windows 写 Linux 配置会带 CRLF 污染 XML**（实测 fontconfig XML 被 xmllint 拒绝 EXIT=1）：
+  写 Linux 配置文件（fontconfig/nginx/systemd drop-in 等）一律用 paramiko exec 的 shell heredoc (`tee <<EOF`)，**不要用 sftp.open(path,"w")**。
 - **定案部署形态（本地构建 + 服务器只装依赖）**：
   1. 本地 `npm run build -w @earendil-works/pi-video-agent-ui`（1.4s，13 个文件）；
   2. 打包 `pi/` 排除 node_modules/dist，再**单独补 5 个 workspace dist + UI dist**
