@@ -64,6 +64,30 @@ else
 fi
 command -v ffmpeg >/dev/null || die "ffmpeg 安装失败（合成层 execFile 直接走 PATH，必须有）"
 
+# -------------------------------------------------------------- 2b. 中文字体
+# 字幕烧录硬依赖：导出 ASS FontName=Microsoft YaHei（Windows 字体名），服务器必须
+# 装 fonts-noto-cjk 并用 fontconfig 别名把它映射到 Noto，否则中文字幕烧成方块。
+# 幂等：已装则跳过 apt；alias 文件每次覆盖（内容稳定，无副作用）。
+if ! fc-list :lang=zh 2>/dev/null | grep -q .; then
+  log "安装中文字体 fonts-noto-cjk（首次部署必需，约 30s）..."
+  $SUDO apt-get install -y -qq fonts-noto-cjk
+fi
+$SUDO tee /etc/fonts/conf.d/99-msyh-alias.conf >/dev/null <<'EOF'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <match target="pattern">
+    <test name="family"><string>Microsoft YaHei</string></test>
+    <edit name="family" mode="assign" binding="strong"><string>Noto Sans CJK SC</string></edit>
+  </match>
+</fontconfig>
+EOF
+$SUDO fc-cache -f >/dev/null 2>&1 || true
+# 验证：fc-match Microsoft YaHei 应返回 Noto Sans CJK SC
+fc-match 'Microsoft YaHei' 2>/dev/null | grep -q 'Noto Sans CJK' \
+  || die "中文字体安装或 fontconfig 别名失败（fc-match 未命中 Noto）"
+log "中文字体就绪：fc-match Microsoft YaHei → $(fc-match 'Microsoft YaHei' | cut -d: -f2)"
+
 # ----------------------------------------------------------------- 3. Node
 if command -v node >/dev/null 2>&1 \
    && [[ "$(node -v | sed 's/^v//' | cut -d. -f1)" -ge "$NODE_MAJOR" ]]; then
