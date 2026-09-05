@@ -302,6 +302,45 @@ export interface KeyframesDoc {
 	generatedAt?: string;
 }
 
+// ---- 故事板 schema（P0 定稿 2026-09-05；镜像 prompts.ts，两处须同步修改）----
+
+/** 镜头间世界状态；字段缺省 = 继承上一镜 endState（默认保持）；unobservable = 未观察保持 */
+export interface StoryboardState {
+	position?: string;
+	facing?: string;
+	/** entityId 必须是 design-bible 道具实体 id（如 PR01） */
+	holding?: { entityId: string; hand: "left" | "right" | "both" }[];
+	posture?: string;
+	mood?: string;
+	appearanceOverrides?: Record<string, string>;
+	unobservable?: boolean;
+}
+
+export interface ShotRelation {
+	time: "continuous" | "overlap" | "ellipsis" | "flashback";
+	space: "same-location" | "follow" | "new-location";
+	actionLink?: string;
+	/** 声桥（P6b 消费） */
+	sound: "carry-over" | "pre-lap" | "none";
+}
+
+export interface StoryboardShotCard {
+	shotId: string;
+	action: string;
+	relation?: ShotRelation;
+	/** t 为镜内相对秒（P6a 消费） */
+	soundCues?: { t: number; kind: "dialogue" | "object" | "ambient" | "sfx"; desc: string }[];
+	dialogueTurn?: { speakerId: string; order: number };
+	plan: { start: StoryboardState; end: StoryboardState };
+	/** P4 双轨校验后回写；缺省 = 未校验 */
+	actualState?: { start: StoryboardState; end: StoryboardState };
+}
+
+export interface StoryboardDoc {
+	version: number;
+	shots: StoryboardShotCard[];
+}
+
 export interface AssetFile {
 	name: string;
 	url: string;

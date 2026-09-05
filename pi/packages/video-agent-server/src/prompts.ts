@@ -73,6 +73,66 @@ export interface ScriptDoc {
 	shots: ScriptShot[];
 }
 
+// ============================================================================
+// 故事板 schema（P0 定稿，2026-09-05；施工计划：doc/research/施工计划-故事板P0P1确定性底座-2026-09-05.md）
+// P2 起由 script 阶段生成，P3 起被 prompts/QA/reshot 消费。本阶段（P0+P1）仅类型 + 纯函数校验器，
+// 无任何管线消费方，零行为变化。
+//
+// 两条语义规则（校验器 storyboard-state.ts 依此实现）：
+// 1. 默认保持：StoryboardState 字段缺省 = 继承上一镜 endState 对应字段，不重置——
+//    没有被事件改变的状态默认保持（设计思路 §三铁律）；
+// 2. 未观察保持：unobservable: true 的状态（遮挡/出画），校验不与上一镜比对、
+//    也不因画面观察不一致计冲突——被挡住≠消失，但也不能断言它变了（设计思路 §五）。
+// ============================================================================
+
+/** 镜头间世界状态（可变状态层）。字段缺省 = 继承（默认保持）。 */
+export interface StoryboardState {
+	/** 动态状态：位置 / 朝向 / 持有关系 / 姿势 / 情绪 */
+	position?: string;
+	facing?: string;
+	/** 持有关系：entityId 必须是 design-bible 的道具实体 id（如 PR01），hand 枚举保证"换手"可判定 */
+	holding?: { entityId: string; hand: "left" | "right" | "both" }[];
+	posture?: string;
+	mood?: string;
+	/** 固定属性在本镜的变化（如换装）；缺省 = 沿用资产设定，不重述外观 */
+	appearanceOverrides?: Record<string, string>;
+	/** 本镜该状态不可观察（遮挡/出画）：true = 校验按「未观察=保持」处理，不计冲突 */
+	unobservable?: boolean;
+}
+
+/** 镜头间衔接关系（设计思路 §四四轴；screenDirection/eyeline 为 P0-S4 待定项，暂留 actionLink 承载） */
+export interface ShotRelation {
+	time: "continuous" | "overlap" | "ellipsis" | "flashback";
+	space: "same-location" | "follow" | "new-location";
+	/** 动作衔接（接拿杯动作/接转身/接视线）自由文本 */
+	actionLink?: string;
+	/** 声桥：上一镜声音延续 / 本镜声音预进（P6b 消费，schema 先行） */
+	sound: "carry-over" | "pre-lap" | "none";
+}
+
+/** 故事板镜头卡：前置条件—动作—结果 + 双轨（计划态 vs 实际态） */
+export interface StoryboardShotCard {
+	shotId: string;
+	/** 动作：本镜发生的改变 */
+	action: string;
+	/** 镜头关系：与上一镜怎么接；缺省 = { time: "continuous", space: "same-location", sound: "none" } */
+	relation?: ShotRelation;
+	/** 声音事件（P6a 消费）：t 为镜内相对秒（0 ≤ t ≤ durationSec）；绝对时间轴由镜长累加推导（OTIO 兼容思维） */
+	soundCues?: { t: number; kind: "dialogue" | "object" | "ambient" | "sfx"; desc: string }[];
+	/** 对白轮次（P2 turn-taking 拆镜依据；一镜一说话人约束不变，此字段管"谁何时说"统筹层） */
+	dialogueTurn?: { speakerId: string; order: number };
+	/** 双轨-计划态：生成前写定。precondition 必须等于上一镜 endState（或 relation.time = ellipsis/flashback 显式豁免） */
+	plan: { start: StoryboardState; end: StoryboardState };
+	/** 双轨-实际态：P4 双轨校验后回写；缺省 = 未校验。不收敛时可"接受现实"更新 plan 让后续镜头继承 */
+	actualState?: { start: StoryboardState; end: StoryboardState };
+}
+
+/** 故事板产物（P2 落盘 storyboard.json）；实体引用一律指向 design-bible 实体 id（CH01/PR01/SC01），禁止重述外观 */
+export interface StoryboardDoc {
+	version: number;
+	shots: StoryboardShotCard[];
+}
+
 export interface VisualBible {
 	styleKeywords: string[];
 	palette: string[];
