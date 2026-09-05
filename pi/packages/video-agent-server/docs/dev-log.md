@@ -6,6 +6,27 @@
 
 ## 最近会话
 
+### 2026-09-05 故事板 P0+P1 确定性底座（研究报告落地 · 完结待 P0-S4 闸门）
+
+**背景**：研究报告（`doc/research/故事板功能研究报告-2026-09-05.md`）结论——管线缺"可变状态层"，本阶段补确定性底座：schema 类型 + 纯函数校验器，**零行为变化**（不接管线，P2 起才有消费方）。施工细化见 `doc/research/施工计划-故事板P0P1确定性底座-2026-09-05.md`。
+
+**变更点（2 改 + 2 新增）**：
+- `src/prompts.ts`（追加）：故事板 schema——`StoryboardDoc` / `StoryboardShotCard`（前置条件—动作—结果 + plan/actualState 双轨）/ `StoryboardState`（position/facing/holding/posture/mood + unobservable）/ `ShotRelation`（时间/空间/动作/声音四轴）/ soundCues / dialogueTurn。两条语义规则写入注释区：**默认保持**（字段缺省=继承上一镜 endState）与**未观察保持**（遮挡≠消失，也不断言变了）
+- `video-agent-ui/src/api/client.ts`（追加）：镜像类型（与 server 须同步修改）
+- 新增 `src/storyboard-state.ts`：`validateStoryboard` 纯函数（无 IO/LLM/全局状态），六条规则 R1-R6：继承折叠 / 未观察豁免 / 持有关系（实体存在性+重复+跨镜换手）/ 位置朝向连续性（ellipsis/flashback 豁免）/ 关系合法性（重复 shotId、首镜 relation、闪回后须交代）/ soundCues 边界。`durations` 由调用方传入（与 script 解耦，P2 接线时组装）
+- 新增 `test/storyboard-state.test.ts`：10 用例契约测试，每条规则注明"拿掉哪条 → 此用例红"的变异语义；fixture 用设计思路的咖啡杯四镜序列
+
+**关键取舍**：
+- 校验器只比对**显式声明**：start 未声明的字段走 R1 折叠继承，不与上一镜比对——"默认保持"语义意味着**缺省永远安全**，冲突只来自显式矛盾，避免 LLM 输出缺省被误报
+- `holding.hand` 枚举化（left/right/both）让"换手"可判定；`unobservable` 放在 start 状态上做比对豁免（R2），不参与折叠
+- 豁免口径：`relation.time ∈ {ellipsis, flashback}` 跳过 R3/R4 跨镜比对——显式时间跳变即合法状态跳变，与 prompt 措辞 "Moments later (time ellipsis)" 是同一事实的两种形态
+
+**验收**：
+- 双包 `tsc --noEmit` clean；server 全量测试 335/335（325 基线 + 10 新增）零回归
+- 注：本机跑全量需 `--experimental-test-module-mocks`（quota-wiring/reshot-quota-wiring/reshot-redo 依赖 module mocks，缺标志会整文件 cancelled）；pricing.test.ts 单文件 >30s，其余分批跑均通过
+
+**待办（下一阶段闸门）**：P0-S4 用户逐字段评审 schema → 通过后研究报告计划表勾回「第一阶段完成」，再进 P2（script 扩展字段 + turn-taking 自动拆镜）。§9 已预填 P3 提示词消费规格（四段式示例），schema 评审时可作具象参照。
+
 ### 2026-09-04 N1 词级时间戳字幕（ROADMAP 近期 · 完结）
 
 **变更点（3 文件）**：
