@@ -127,10 +127,11 @@ export interface StoryboardShotCard {
 	actualState?: { start: StoryboardState; end: StoryboardState };
 }
 
-/** 故事板产物（P2 落盘 storyboard.json）；实体引用一律指向 design-bible 实体 id（CH01/PR01/SC01），禁止重述外观 */
 export interface StoryboardDoc {
 	version: number;
 	shots: StoryboardShotCard[];
+	/** 计划态自检结果（生成时由 validateStoryboard 计算后内嵌；UI 直接展示） */
+	conflicts?: StateConflict[];
 }
 
 export interface VisualBible {
@@ -243,6 +244,9 @@ export function visualBibleMessages(brief: EnrichedBrief, opts: GenerationOption
 	return [{ role: "user", content: user }];
 }
 
+import type { StateConflict } from "./storyboard-state.ts";
+import { foldStoryboardStates, type FoldedShot } from "./storyboard-state.ts";
+
 /** 阶段三：逐镜生成视频模型提示词（英文，含风格/运镜/排除项 + 角色一致性锚点） */
 export function shotPromptMessages(
 	brief: EnrichedBrief,
@@ -250,8 +254,44 @@ export function shotPromptMessages(
 	bible: VisualBible,
 	opts: GenerationOptions,
 	designBible?: DesignBibleDoc | null,
+	storyboard?: StoryboardDoc | null,
 ): ChatMessage[] {
 	const avoid = opts.negativePrompt.trim() || "on-screen text, watermark";
+	// ---- 故事板状态块（P3 消费侧，按镜裁剪；P0+P1 阶段 storyboard 恒为缺省 = 全部跳过，零行为变化）----
+	// 默认保持在提示词层的体现：只写衔接锚点 + 变化量，没被事件改变的状态一个字不写（写了反而给模型自由发挥的口子）。
+	// 双轨取材：实际态（P4 回写）优先，计划态兜底——重拍场景下"接受现实"的 endState 才是下游真实起点。
+	const states = storyboard?.shots?.length ? foldStoryboardStates(storyboard) : new Map<string, FoldedShot>();
+	const stateBlockOf = (shotId: string): string => {
+		const folded = states.get(shotId);
+		if (!folded) return "";
+		const rel = storyboard?.shots.find((s) => s.shotId === shotId)?.relation;
+		const lines: string[] = [];
+		if (folded.start.holding?.length) {
+			lines.push(`Continuation from previous shot: ${folded.start.holding.map((h) => `${h.entityId} in ${h.hand} hand`).join("; ")}`);
+		}
+		if (folded.start.position) lines.push(`Location at start: ${folded.start.position}`);
+		if (folded.start.facing) lines.push(`Facing at start: ${folded.start.facing}`);
+		if (folded.end.holding?.length) {
+			lines.push(`By the end of this shot: ${folded.end.holding.map((h) => `${h.entityId} in ${h.hand} hand`).join("; ")}`);
+		}
+		if (rel?.time === "ellipsis") {
+			lines.push("Time note: this shot begins after a time ellipsis — state may have changed off-screen, carry over only what the script states");
+		}
+		if (rel?.time === "flashback") {
+			lines.push("Time note: flashback — state belongs to an earlier timeline, do not treat as current continuity");
+		}
+		if (rel?.sound === "carry-over") {
+			lines.push("Sound note: sound from the previous shot continues over this shot's opening");
+		}
+		if (rel?.sound === "pre-lap") {
+			lines.push("Sound note: next shot's audio pre-laps into this shot's tail");
+		}
+		return lines.length > 0 ? `状态衔接（必须遵守的跨镜连续性约束）: ${lines.join("; ")}` : "";
+	};
+	const storyboardStateBlock = states.size > 0
+		? "跨镜状态连续性（storyboard 状态机推导，按镜注入；未提到的状态默认与上一镜保持一致）:\n" +
+			script.shots.map((s) => stateBlockOf(s.id)).filter(Boolean).map((b) => `- ${b}`).join("\n")
+		: "";
 	const characters = (designBible?.characters ?? []).filter((c) => c.design.trim().length > 0);
 	const scenes = (designBible?.scenes ?? []).filter((s) => s.design.trim().length > 0);
 	const anchorLines = [
@@ -270,6 +310,7 @@ export function shotPromptMessages(
 		"",
 		`美术设计: ${JSON.stringify(bible)}`,
 		characterBlock,
+		storyboardStateBlock,
 		`镜头画面描述: ${JSON.stringify(
 			script.shots.map((s) => ({
 				id: s.id,
@@ -290,6 +331,7 @@ export function shotPromptMessages(
 		opts.detailBoost ? "3. 强调高细节、材质质感;" : "3. 保持画面简洁;",
 		"4. 每段提示词 60-110 个英文单词，一段连贯文字，必含五要素：主体及其外观锚点短语 / 环境与空间深度 / 光线（方向+性质，如 low warm side light） / 镜头运动 / 风格与调性；",
 		"4b. 提到其他镜出场角色时，必须使用其在美术设计锚点里的专属英文名或中文名，避免泛指（如\"the young man\"），以保持跨镜人物一致性。",
+		"4c. 跨镜状态连续性（若有状态块注入则最高优先级遵守）：状态块写明的持有关系（哪只手拿什么）、位置、朝向必须在提示词中显式体现为连续性短语（如 continuing to hold… in the right hand）；时间省略镜允许状态跳变但只沿用剧本明确声明的变化；禁止让道具在无动作交代的情况下换手、新增画面外道具、或人物无故转向。",
 		"5. 画面内不得出现任何文字、字幕、logo、UI、二维码（这些由后期烧录，模型画字必乱码）；同时画面叙事不得依赖模型无法精确生成的元素——钟表指针位置、报纸标题、屏幕内容等一律模糊化处理，禁止让台词/剧情依赖其精确显示；",
 		`6. 在提示词末尾追加一句: "Strictly avoid: ${avoid}"`,
 		"",
@@ -827,4 +869,41 @@ export function fallbackVoiceDirection(brief: EnrichedBrief): string {
 		default:
 			return "语气自然亲和，抑扬顿挫，关键词适当重读";
 	}
+}
+
+/**
+ * 阶段 2.5（P2）：故事板镜头卡生成——在前置条件-动作-结果三层上写"可变状态层"。
+ * 输入 script + design-bible 实体清单，输出 StoryboardDoc（plan 双轨的计划态）。
+ * 落盘前由 stageStoryboard 调 validateStoryboard 做确定性自检（fail 级带反馈重写一次）。
+ */
+export function storyboardMessages(script: ScriptDoc, designBible: DesignBibleDoc | null): ChatMessage[] {
+	const entities = [
+		...(designBible?.characters ?? []).map((c) => `${c.id}(${c.name})`),
+		...(designBible?.props ?? []).map((p) => `${p.id}(${p.name})`),
+		...(designBible?.scenes ?? []).map((s) => `${s.id}(${s.name})`),
+	];
+	const user = [
+		"为下面广告的每个镜头写故事板镜头卡（前置条件—动作—结果的世界状态账本）。",
+		`广告「${script.title}」：${script.logline}`,
+		"",
+		entities.length > 0
+			? `实体注册表（holding 等字段只能引用这些实体 id，禁止编造）:\n${entities.map((e) => `- ${e}`).join("\n")}`
+			: "实体注册表: 暂无美术设计实体——holding 留空即可，不要编造实体 id。",
+		`镜头清单: ${JSON.stringify(script.shots.map((s) => ({ id: s.id, visual: s.visual, narration: s.narrationZh })))}`,
+		"",
+		"要求:",
+		"1. 每镜输出 { shotId, action, relation, plan: { start, end } }；start/end 只写动态状态（position/facing/holding/posture/mood），禁止重述外观（外观由美术设计资产保证）；",
+		"2. 默认保持：start 相对上一镜 end 没有变化的状态字段**必须省略**（缺省 = 继承）；只有动作改变了状态才写 end 的对应字段；",
+		"3. 未观察保持：本镜看不到的状态（遮挡/出画）不要断言，start 置 unobservable: true 并省略其他字段；",
+		"4. holding 的 entityId 必须来自实体注册表的道具 id；hand 只能是 left/right/both；换手必须有动作交代；",
+		"5. relation 描述与上一镜怎么接：time（continuous/overlap/ellipsis/flashback）、space（same-location/follow/new-location）、sound（carry-over/pre-lap/none）；首镜不写 relation；",
+		"6. 台词镜（audioMode=dialogue）输出 dialogueTurn: { speakerId, order }——多角色对白必须拆镜，一镜只允许一个说话人；",
+		"7. 有道具/环境音效的镜输出 soundCues: [{ t, kind, desc }]（t 为镜内相对秒）。",
+		"",
+		"只输出如下 JSON（不要围栏）:",
+		'{"version": 1, "shots": [{"shotId": "SH01", "action": "…", "plan": {"start": {}, "end": {}}, "relation": {"time": "continuous", "space": "same-location", "sound": "none"}}]}（覆盖全部 ' + script.shots.length + ' 个镜头，按顺序）',
+	]
+		.filter(Boolean)
+		.join("\n");
+	return [{ role: "user", content: user }];
 }

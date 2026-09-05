@@ -10,6 +10,7 @@ import {
 	type DesignBibleDoc,
 	type ScriptDoc,
 	type ShotPromptDoc,
+	type StoryboardDoc,
 	type VisualBible,
 } from "../prompts.js";
 import {
@@ -41,10 +42,12 @@ export async function stagePrompts(
 	const bibleDoc = bible ?? (await readArtifact<VisualBible>(run, "visual-bible.json"));
 	// 角色外观锚点：美术设计若已产出，注入逐镜 prompt（跨镜服装/发型一致性）
 	const designDoc = await readArtifact<DesignBibleDoc>(run, "design-bible.json").catch(() => null);
+	// 故事板（P3 消费）：script 阶段产出的 storyboard.json；旧 run 缺文件兜底 null（状态锚点静默跳过）
+	const storyboardDoc = await readArtifact<StoryboardDoc>(run, "storyboard.json").catch(() => null);
 	const shotPrompts = normalizeShotPrompts(
 		await generateDoc<ShotPromptDoc>(
 			sc,
-			shotPromptMessages(run.brief, scriptDoc, bibleDoc, opts, designDoc),
+			shotPromptMessages(run.brief, scriptDoc, bibleDoc, opts, designDoc, storyboardDoc),
 			"",
 			"prompts",
 		),

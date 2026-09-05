@@ -93,6 +93,7 @@ import {
 	type KeyframesDoc,
 	type ScriptDoc,
 	type ShotPromptDoc,
+	type StoryboardDoc,
 	tailoredQuestionsMessages,
 	type VisualBible,
 } from "./prompts.ts";
@@ -758,6 +759,7 @@ function createApp(ctx: ServerContext) {
 			}
 		}
 		const cuts = readJson<CutsDoc>("cuts.json");
+		const storyboard = readJson<StoryboardDoc>("storyboard.json"); // 故事板（旧 run 缺省 = undefined，前端兜底）
 		res.json({
 			script: readJson<ScriptDoc>("script.json"),
 			bible: readJson<VisualBible>("visual-bible.json"),
@@ -765,6 +767,7 @@ function createApp(ctx: ServerContext) {
 			...(design ? { design } : {}),
 			...(keyframes ? { keyframes } : {}),
 			...(cuts ? { cuts } : {}),
+			...(storyboard ? { storyboard } : {}),
 			assets,
 		});
 	});

@@ -192,3 +192,103 @@ export function validateStoryboard(
 
 	return conflicts;
 }
+
+// ---------------------------------------------------------------------------
+// P2：故事板归一化 + 状态折叠（纯函数，test/storyboard-normalize.test.ts 锁定）
+// ---------------------------------------------------------------------------
+
+import type { ScriptDoc } from "./prompts.ts";
+
+/** 折叠后的单镜有效状态（R1 继承折叠结果，供 prompt 注入与 UI diff） */
+export interface FoldedShot {
+	shotId: string;
+	start: StoryboardState;
+	end: StoryboardState;
+}
+
+/** 逐镜折叠 plan（缺省字段继承上一镜 end），返回 shotId → 有效状态映射。 */
+export function foldStoryboardStates(doc: StoryboardDoc): Map<string, FoldedShot> {
+	const result = new Map<string, FoldedShot>();
+	let prevEnd: StoryboardState = {};
+	for (const card of doc?.shots ?? []) {
+		const start = foldState(prevEnd, card.plan?.start ?? {});
+		const end = foldState(start, card.plan?.end ?? {});
+		result.set(card.shotId, { shotId: card.shotId, start, end });
+		prevEnd = end;
+	}
+	return result;
+}
+
+const VALID_RELATION_TIME = new Set(["continuous", "overlap", "ellipsis", "flashback"]);
+const VALID_RELATION_SPACE = new Set(["same-location", "follow", "new-location"]);
+const VALID_RELATION_SOUND = new Set(["carry-over", "pre-lap", "none"]);
+
+function sanitizeState(raw: unknown, knownProps: Set<string>): StoryboardState {
+	const s = (raw ?? {}) as StoryboardState;
+	const holding = Array.isArray(s.holding)
+		? s.holding
+				.filter((h) => h && typeof h.entityId === "string" && knownProps.has(h.entityId) && ["left", "right", "both"].includes(h.hand))
+				.map((h) => ({ entityId: h.entityId, hand: h.hand }))
+		: undefined;
+	return {
+		...(typeof s.position === "string" && s.position.trim() ? { position: s.position.trim().slice(0, 40) } : {}),
+		...(typeof s.facing === "string" && s.facing.trim() ? { facing: s.facing.trim().slice(0, 40) } : {}),
+		...(holding && holding.length > 0 ? { holding } : {}),
+		...(typeof s.posture === "string" && s.posture.trim() ? { posture: s.posture.trim().slice(0, 40) } : {}),
+		...(typeof s.mood === "string" && s.mood.trim() ? { mood: s.mood.trim().slice(0, 40) } : {}),
+		...(s.unobservable === true ? { unobservable: true } : {}),
+	};
+}
+
+/**
+ * P2 归一化：LLM 原始输出 → 可落盘的 StoryboardDoc。
+ * - shotId 对齐 script 镜头集合与顺序（缺失镜补空卡，多余镜丢弃）；
+ * - dialogueTurn 不信任模型输出，从 script 的 dialogue.characterId 确定性推导（D1 已保证一镜一说话人）；
+ * - holding/关系枚举逐字段净化：未知道具实体、非法枚举一律丢弃（宁可信息少也不留脏数据）。
+ */
+export function normalizeStoryboardDoc(
+	raw: Partial<StoryboardDoc> | null | undefined,
+	script: ScriptDoc,
+	knownProps: string[] = [],
+): StoryboardDoc {
+	const props = new Set(knownProps);
+	const byId = new Map<string, Partial<StoryboardShotCard>>(
+		(Array.isArray(raw?.shots) ? raw.shots : []).map((c) => [String((c as { shotId?: unknown })?.shotId ?? ""), c as Partial<StoryboardShotCard>]),
+	);
+	let turnOrder = 0;
+	const shots: StoryboardShotCard[] = script.shots.map((shot) => {
+		const rawCard = byId.get(shot.id);
+		const relation = rawCard?.relation;
+		const safeRelation =
+			relation && VALID_RELATION_TIME.has(relation.time) && VALID_RELATION_SPACE.has(relation.space) && VALID_RELATION_SOUND.has(relation.sound)
+				? {
+						time: relation.time,
+						space: relation.space,
+						sound: relation.sound,
+						...(typeof relation.actionLink === "string" && relation.actionLink.trim() ? { actionLink: relation.actionLink.trim().slice(0, 80) } : {}),
+					}
+				: undefined;
+		const soundCues = Array.isArray(rawCard?.soundCues)
+			? rawCard.soundCues
+					.filter((c) => c && typeof c.t === "number" && Number.isFinite(c.t) && c.t >= 0 && typeof c.desc === "string")
+					.slice(0, 6)
+					.map((c) => ({
+						t: Math.round(c.t * 10) / 10,
+						kind: (["dialogue", "object", "ambient", "sfx"] as const).includes(c.kind) ? c.kind : "sfx",
+						desc: c.desc.slice(0, 60),
+					}))
+			: undefined;
+		return {
+			shotId: shot.id,
+			action: String(rawCard?.action ?? "").trim().slice(0, 80) || shot.visual.slice(0, 80),
+			...(safeRelation ? { relation: safeRelation } : {}),
+			...(soundCues && soundCues.length > 0 ? { soundCues } : {}),
+			...(shot.audioMode === "dialogue" && shot.dialogue ? { dialogueTurn: { speakerId: shot.dialogue.characterId, order: (turnOrder += 1) } } : {}),
+			plan: {
+				start: sanitizeState(rawCard?.plan?.start, props),
+				end: sanitizeState(rawCard?.plan?.end, props),
+			},
+		};
+	});
+	return { version: 1, shots };
+}

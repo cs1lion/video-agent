@@ -1595,6 +1595,7 @@ async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
 
 // stageExport 已迁到 ./stages/export.ts（视频合成 + 一致性预检 + QA + 旁白回灌）
 import { stageExport } from "./stages/export.ts";
+import { stageStoryboard } from "./stages/storyboard.ts";
 export { stageExport };
 
 /** 阶段调度：按顺序执行给定阶段；上游产物优先用调用方传入（避免重复生成/读盘不一致） */
@@ -1643,6 +1644,12 @@ export async function executeStages(
 			} else if (id === "visual") {
 				bible = await stageVisual(stageCtx, script);
 			} else if (id === "prompts") {
+				// 故事板（阶段 2.5，P2）：script 定稿后生成世界状态账本；缺失/失败不阻断 prompts
+				try {
+					await stageStoryboard(stageCtx, script);
+				} catch (error) {
+					pushEvent(run, "storyboard", "tech", "status", `故事板生成跳过（${error instanceof Error ? error.message : String(error)}），下游按无故事板降级。`);
+				}
 				await stagePrompts(stageCtx, script, bible);
 			} else if (id === "keyframes") {
 				await stageKeyframes(stageCtx, script, bible);
