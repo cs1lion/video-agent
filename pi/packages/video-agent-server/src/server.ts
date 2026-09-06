@@ -585,7 +585,7 @@ function createApp(ctx: ServerContext) {
 			res.status(400).json({ error: "缺少 brief.logline" });
 			return;
 		}
-		const options = resolveGenerationOptions(req.body?.options ?? undefined);
+		const options = resolveGenerationOptions(req.body?.options ?? req.body?.generationOptions ?? undefined);
 		const session = sessionOf(req);
 		const enriched = session?.compose(options);
 		const coSpace = coSpaceFromBody(req.body?.coSpace);
@@ -610,7 +610,7 @@ function createApp(ctx: ServerContext) {
 	// ---- P2：预估成本（启动前）
 	//  给 Home / CoCreate 页面在「启动制作」」前拿到预计花费，用户可以拍/不拍。
 	app.post("/api/pricing/estimate", (req, res) => {
-		const options = resolveGenerationOptions(req.body?.options ?? undefined);
+		const options = resolveGenerationOptions(req.body?.options ?? req.body?.generationOptions ?? undefined);
 		const coSpace = coSpaceFromBody(req.body?.coSpace);
 		const estimate = pricingEstimateRun({
 			catalog: ctx.priceCatalog,
