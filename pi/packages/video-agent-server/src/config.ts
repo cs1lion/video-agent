@@ -189,13 +189,18 @@ export function loadLlmConfig(media: MediaModelsFile): LlmConfig {
 	const url = process.env.VIDEO_AGENT_LLM_URL ?? media.vision?.url;
 	const model = process.env.VIDEO_AGENT_LLM_MODEL ?? media.vision?.model;
 	const apiKey = process.env.VIDEO_AGENT_LLM_API_KEY ?? media.vision?.apiKey;
+	const timeoutMs = (() => {
+		const envMs = process.env.VIDEO_AGENT_LLM_TIMEOUT_MS;
+		if (envMs && Number.isFinite(Number(envMs))) return Number(envMs);
+		return media.vision?.timeoutMs ?? 120_000;
+	})();
 	if (!url || !model) {
 		throw new Error(
 			"文本 LLM 配置缺失：在 .pi-studio/models.json 增加 vision 节（url/model/apiKey），" +
 				"或设置环境变量 VIDEO_AGENT_LLM_URL / VIDEO_AGENT_LLM_MODEL / VIDEO_AGENT_LLM_API_KEY",
 		);
 	}
-	return { url, model, apiKey, timeoutMs: media.vision?.timeoutMs ?? 120_000 };
+	return { url, model, apiKey, timeoutMs };
 }
 
 export interface ServerContext {
