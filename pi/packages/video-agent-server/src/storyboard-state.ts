@@ -258,8 +258,49 @@ const VALID_RELATION_TIME = new Set(["continuous", "overlap", "ellipsis", "flash
 const VALID_RELATION_SPACE = new Set(["same-location", "follow", "new-location"]);
 const VALID_RELATION_SOUND = new Set(["carry-over", "pre-lap", "none"]);
 
+/**
+ * 加测 5·修复：LLM 偶尔输出嵌套 by-character 结构（{CH01: {...}, CH02: {...}}），
+ * 偏离 prompt 期望的 flat 结构 + StoryboardState 类型。prompt 在加测中被发现
+ * 随机被违反，audit 读 plan.end.position 时遇到 undefined 静默跳过 → 0 状态: 抓出。
+ *
+ * 护栏：检测到 top-level 含 CHxx 键 → 拍扁为 flat。多个角色的字段第一个非空胜出，
+ * holding 数组合并（持握是全局状态——同一实体不会同时被两人持握，合并后仍是合理状态）。
+ * 原 flat 字段保留（多胜出的优先权给原 flat，防御 LLM 混合输出）。
+ */
+function maybeFlattenNestedState(raw: unknown): unknown {
+	if (!raw || typeof raw !== "object") return raw;
+	const obj = raw as Record<string, unknown>;
+	const entityKeys = Object.keys(obj).filter((k) => /^CH\d+$/.test(k));
+	if (entityKeys.length === 0) return raw;
+
+	// 优先级：flat 字段胜出 → nested 兑底（prompt 要求 flat，LLM 偶生 nested 时被
+	// 静默“升级”为更细结构但仍保留为兑底）。holding 数组两边都合并。
+	const flat: Record<string, unknown> = {};
+	let allUnobservable = true;
+	for (const f of ["position", "facing", "posture", "mood"]) {
+		if (typeof obj[f] === "string") flat[f] = obj[f];
+	}
+	if (Array.isArray(obj.holding)) flat.holding = [...obj.holding];
+
+	for (const k of entityKeys) {
+		const s = obj[k] as Record<string, unknown> | null;
+		if (!s || typeof s !== "object") continue;
+		if (s.unobservable !== true) allUnobservable = false;
+		for (const f of ["position", "facing", "posture", "mood"]) {
+			if (typeof s[f] === "string" && flat[f] === undefined) flat[f] = s[f];
+		}
+		if (Array.isArray(s.holding)) {
+			const existing = Array.isArray(flat.holding) ? flat.holding : [];
+			flat.holding = [...existing, ...s.holding];
+		}
+	}
+	if (allUnobservable && entityKeys.length > 0) flat.unobservable = true;
+	return flat;
+}
+
 function sanitizeState(raw: unknown, knownProps: Set<string>): StoryboardState {
-	const s = (raw ?? {}) as StoryboardState;
+	const flat = maybeFlattenNestedState(raw) as StoryboardState | null | undefined;
+	const s = (flat ?? {}) as StoryboardState;
 	const holding = Array.isArray(s.holding)
 		? s.holding
 				.filter((h) => h && typeof h.entityId === "string" && knownProps.has(h.entityId) && ["left", "right", "both"].includes(h.hand))

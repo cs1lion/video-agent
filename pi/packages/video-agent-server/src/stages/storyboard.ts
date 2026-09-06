@@ -13,7 +13,7 @@ import {
 	type ScriptDoc,
 	type StoryboardDoc,
 } from "../prompts.ts";
-import { validateStoryboard, type EntityIds } from "../storyboard-state.ts";
+import { normalizeStoryboardDoc, validateStoryboard, type EntityIds } from "../storyboard-state.ts";
 import { generateDoc, optionsOf, pushEvent, readArtifact, setStage, throwIfAborted, writeJson } from "../pipeline.ts";
 import type { StageCtx } from "../pipeline.ts";
 
@@ -37,14 +37,19 @@ export async function stageStoryboard(sc: StageCtx, script?: ScriptDoc): Promise
 	const build = (extraNote: string) =>
 		generateDoc<StoryboardDoc>(sc, storyboardMessages(scriptDoc, designDoc), extraNote, "prompts");
 
-	let doc = await build("");
+	let raw = await build("");
+	// P2 归一化：LLM 输出可能在 shotId/dialogueTurn/holding/嵌套 schema 上偏离设计（加测 5 发现
+	// LLM 会输出 nested-by-character 结构）→ 全部被 normalizeStoryboardDoc 拍齐、shotId 对齐、
+	// 未知实体过滤。**必须在 validateStoryboard 之前**——否则 R1-R6 读不到拍齐后的字段。
+	let doc = normalizeStoryboardDoc(raw, scriptDoc, entityIds.props);
 	let conflicts = validateStoryboard(doc, entityIds);
 	if (conflicts.length > 0) {
 		// 带强化反馈重写一次（对白密度守卫同款模式）；仍失败则落盘带 conflict 标记的版本，
 		// 不阻断管线——故事板是增强层，消费侧对缺失/低质字段全部兜底。
 		pushEvent(run, "storyboard", "tech", "status", `故事板自检发现 ${conflicts.length} 处冲突，带反馈重写一次。`);
 		const feedback = `上一次输出未通过状态机自检，必须修正：\n${conflicts.map((c) => `- [${c.rule}] ${c.shotId}: ${c.message}`).join("\n")}\n重新输出完整 JSON。`;
-		doc = await build(feedback);
+		raw = await build(feedback);
+		doc = normalizeStoryboardDoc(raw, scriptDoc, entityIds.props);
 		conflicts = validateStoryboard(doc, entityIds);
 	}
 	if (conflicts.length > 0) {
