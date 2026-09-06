@@ -899,9 +899,10 @@ export function storyboardMessages(script: ScriptDoc, designBible: DesignBibleDo
 		"5. relation 描述与上一镜怎么接：time（continuous/overlap/ellipsis/flashback）、space（same-location/follow/new-location）、sound（carry-over/pre-lap/none）；首镜不写 relation；",
 		"6. 台词镜（audioMode=dialogue）输出 dialogueTurn: { speakerId, order }——多角色对白必须拆镜，一镜只允许一个说话人；",
 		"7. 有道具/环境音效的镜输出 soundCues: [{ t, kind, desc }]（t 为镜内相对秒）。",
+		"8. plan 字段下 start / end 直接写动态状态字段（position / facing / holding 等），不要用角色键嵌套。",
 		"",
 		"只输出如下 JSON（不要围栏）:",
-		'{"version": 1, "shots": [{"shotId": "SH01", "action": "…", "plan": {"start": {}, "end": {}}, "relation": {"time": "continuous", "space": "same-location", "sound": "none"}}]}（覆盖全部 ' + script.shots.length + ' 个镜头，按顺序）',
+		'{"version": 1, "shots": [{"shotId": "SH01", "action": "…", "plan": {"start": {"position": "SC01入口", "facing": "东"}, "end": {"position": "PR01旁侧", "holding": [{"entityId": "PR01", "hand": "right"}]}}, "relation": {"time": "continuous", "space": "same-location", "sound": "none"}, "dialogueTurn": {"speakerId": "王队", "order": 1}}]}（覆盖全部 ' + script.shots.length + ' 个镜头，按顺序）',
 	]
 		.filter(Boolean)
 		.join("\n");
