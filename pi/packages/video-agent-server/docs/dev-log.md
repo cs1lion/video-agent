@@ -27,6 +27,28 @@
 
 **待办（下一阶段闸门）**：P0-S4 用户逐字段评审 schema → 通过后研究报告计划表勾回「第一阶段完成」，再进 P2（script 扩展字段 + turn-taking 自动拆镜）。§9 已预填 P3 提示词消费规格（四段式示例），schema 评审时可作具象参照。
 
+### 2026-09-06 加测 8 · 对话跑批全部误判（server API 字段名不一致）
+
+**坑来源**：用户反馈“台词还是经常对不上，或者有字幕没声音”，查 audioDrive 流转时发现。
+
+**根因**：
+- server.ts:588/613 读 `req.body?.options` 但所有 probe 都发 `req.body?.generationOptions` → server 端读到 undefined → audioDrive 走默认 = “off”。
+- 所有对话跑批 (run 98/99/100/101/102) 都是**旁白模式**，但我误以为是 dialogue 模式并据此判断“故事板修复带来了对话质量改善”。
+
+**修正**：
+- server.ts 同时接受 `options` 和 `generationOptions` 两个字段名（`??` 兑底）
+- 加 `test/api-audio-drive.test.ts` 锁定 audioDrive 传递语义
+- 更正报告：`doc/reports/更正-对话跑批全部误判-2026-09-06.md`
+- dev-log 上故事板 P0–P5 阶段描述里所有“对话跑批”需重新校准
+
+**真实 dialogue 模式 (run 108) 首跑结果**：
+- audioDrive=dialogue ✓，6/6 台词镜，无降级
+- 6/6 agnes reference 跟读未过 → 6/6 dubOver（口型视频保留 + TTS 音轨替换）
+- storyboard.json 未落盘（LLM 120s 超时，仅事件降级）
+- QA 98 分（pass），audioSync 100
+
+**结论**：dubOver 路径下 TTS 字幕与 TTS 音频同源 → 应对得齐。“经常对不上” 可能原因：参考成功路径下 agnes 音频时长与 TTS 不一致，或 storyboard 缺失后 silencedetect 偏离 TTS。
+
 ### 2026-09-06 故事板 schema 双形态修复（加测 5 完结）
 
 **坑来源**：run 98 审讯室跑批揭示——LLM 在 prompts 中给出的 plan/state 偶尔采用 nested-by-character 结构（`{CH01: {...}, CH02: {...}}`）偏离 prompt 要求的 flat 结构与 `StoryboardState` 类型。同时发现 stageStoryboard 从未调用 normalizeStoryboardDoc（归一化函数定义后未被接线），导致 validateStoryboard 与 planActualConflicts 静默跳过该镜 → 0 状态: 抓出。
