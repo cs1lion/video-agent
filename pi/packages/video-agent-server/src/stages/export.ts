@@ -6,7 +6,8 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { dialogueFor, edlPrompt, hasCameraMotion, narrationFor, type EdlDoc, type ScriptDoc } from "../prompts.ts";
+import { dialogueFor, edlPrompt, hasCameraMotion, narrationFor, type EdlDoc, type ScriptDoc, type StoryboardDoc } from "../prompts.ts";
+import { storyboardStateNotes } from "../storyboard-state.ts";
 import {
 	appendSpan,
 	optionsOf,
@@ -460,10 +461,19 @@ export async function stageExport(
 		if (audios![i] || dialogueReady) voiceReady += 1;
 	}
 	const audioSync = voiceExpected > 0 ? Math.round((voiceReady / voiceExpected) * 100) : 100;
+	// P3-S6：故事板计划状态注入 QA 核对（旧 run 无 storyboard.json = 不传，prompt 零变化）
+	let stateNotes: Record<string, string> | undefined;
+	try {
+		const sb = await readArtifact<StoryboardDoc>(run, "storyboard.json");
+		const notes = storyboardStateNotes(sb);
+		if (Object.keys(notes).length > 0) stateNotes = notes;
+	} catch {
+		// 无故事板：跳过注入
+	}
 	run.verdict = await runQa(sc, keptShots, opts, finalPath, audioSync, qaMidpoints, qaLateTimes, {
 		assText,
 		expectedLines: narrationTexts.filter((t) => t.trim()).length,
-	});
+	}, stateNotes);
 	doneSteps += 1;
 	setStage(run, "export", "running", Math.round((doneSteps / totalExportSteps) * 100));
 

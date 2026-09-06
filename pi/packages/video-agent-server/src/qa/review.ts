@@ -76,6 +76,8 @@ export async function runQa(
 	midpoints: number[],
 	lateTimes: number[] = [],
 	subtitleInput?: QaSubtitleInput,
+	/** P3-S6：shotId → 预期结束状态（来自 storyboard.json 计划态）；缺省 = QA prompt 零变化 */
+	stateNotes?: Record<string, string>,
 ): Promise<QaVerdict> {
 	const { run, ctx, signal } = sc;
 	// 字幕结构审核（确定性层）：与视觉审核并行不悖——重叠/覆盖率/编码错乱它看帧看不准
@@ -112,6 +114,15 @@ export async function runQa(
 			run.brief.creative.keyMessage ? `关键信息: ${run.brief.creative.keyMessage}` : "",
 			`镜头编号依次为：${shotList}（即 ${keptShots[0]?.id ?? "SH01"} 两帧、${keptShots[1]?.id ?? "SH02"} 两帧……）。`,
 			"",
+			// P3-S6：计划状态核对（storyboard 存在时注入；注意是「结束状态」——后段帧比中段帧更接近核对点）
+			stateNotes && Object.keys(stateNotes).length > 0
+				? [
+						"跨镜状态核对（storyboard 计划态，各镜结束时的预期状态）:",
+						...Object.entries(stateNotes).map(([id, note]) => `- ${id}: ${note}`),
+						"若画面与预期明显不符（道具无故换手、人物位移或转向），在该镜 reason 加「状态:」前缀说明（category 取「人物」，道具形变类可取「物理」）。",
+						"",
+					].join("\n")
+				: "",
 			"请基于帧内容打分（0-100 整数）：",
 			"briefFit: 画面内容与剧情需求的贴合度；",
 			"visualConsistency: 各帧风格/色调/光线的一致性；",

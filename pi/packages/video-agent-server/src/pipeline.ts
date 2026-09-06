@@ -1596,6 +1596,7 @@ async function autoReviewKeyframes(sc: StageCtx): Promise<void> {
 // stageExport 已迁到 ./stages/export.ts（视频合成 + 一致性预检 + QA + 旁白回灌）
 import { stageExport } from "./stages/export.ts";
 import { stageStoryboard } from "./stages/storyboard.ts";
+import { foldStoryboardStates, plannedEndNote } from "./storyboard-state.ts";
 export { stageExport };
 
 /** 阶段调度：按顺序执行给定阶段；上游产物优先用调用方传入（避免重复生成/读盘不一致） */
@@ -1681,13 +1682,17 @@ export async function executeStages(
 			// 改变管线时序——回归/验收批次显式开启，日常与单测保持确定性。
 			if (!run.autoRepaired && process.env.VIDEO_AGENT_AUTO_REPAIR === "1" && run.verdict?.shots?.length && ctx.quota) {
 				run.autoRepaired = true;
+				// P3-S6：计划结束状态锚点注入（无 storyboard.json = 空串，instruction 与现状一致）
+				const sbDoc = await readArtifact<import("./prompts.ts").StoryboardDoc>(run, "storyboard.json").catch(() => null);
+				const foldedByShot = sbDoc ? foldStoryboardStates(sbDoc) : null;
 				// 目标选择抽为纯函数（契约测试锁定）：fail 一律修；warn 须带「人物:/物理:」前缀
 				const targets = selectAutoRepairTargets(run.verdict.shots);
 				for (const t of targets) {
 					if (run.abort.signal.aborted) break;
 					const shot = (script?.shots ?? clips?.script?.shots ?? []).find((x) => x.id === t.id);
 					const design = shot?.visual?.slice(0, 120) ?? "";
-					const instruction = `${design}。${t.reason ? `修复审核问题：${t.reason}。` : ""}保持人物性别、年龄、服装与发型与设计完全一致。`.slice(0, 220);
+					const stateNote = plannedEndNote(foldedByShot?.get(t.id));
+					const instruction = `${design}。${t.reason ? `修复审核问题：${t.reason}。` : ""}${stateNote ? `${stateNote}。` : ""}保持人物性别、年龄、服装与发型与设计完全一致。`.slice(0, 220);
 					pushEvent(
 						run,
 						"reviewer",

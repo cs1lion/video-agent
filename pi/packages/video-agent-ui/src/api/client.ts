@@ -339,6 +339,15 @@ export interface StoryboardShotCard {
 export interface StoryboardDoc {
 	version: number;
 	shots: StoryboardShotCard[];
+	/** 计划态自检结果（服务端生成时内嵌） */
+	conflicts?: StoryboardConflict[];
+}
+
+/** 镜像服务端 StateConflict（结构与 video-agent-server/src/storyboard-state.ts 对齐） */
+export interface StoryboardConflict {
+	rule: "holding" | "position" | "facing" | "precondition-link" | "relation-validity" | "soundcue-bounds";
+	shotId: string;
+	message: string;
 }
 
 export interface AssetFile {
@@ -351,6 +360,8 @@ export interface ArtifactsView {
 	script: ScriptDoc | null;
 	bible: VisualBible | null;
 	prompts: ShotPromptDoc | null;
+	/** 故事板（P2 起随 script 阶段落盘；旧 run 缺省） */
+	storyboard?: StoryboardDoc | null;
 	design?: DesignBibleDoc;
 	keyframes?: KeyframesDoc;
 	cuts?: CutsView;

@@ -65,6 +65,6 @@ export async function stageStoryboard(sc: StageCtx, script?: ScriptDoc): Promise
 		}
 	}
 
-	await writeJson(run, "storyboard.json", doc);
+	await writeJson(run, "storyboard.json", conflicts.length > 0 ? { ...doc, conflicts } : doc);
 	return doc;
 }

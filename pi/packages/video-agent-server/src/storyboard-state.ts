@@ -119,6 +119,41 @@ function continuityConflicts(shotId: string, field: "position" | "facing", prevE
 	];
 }
 
+/**
+ * P3-S6 · 计划结束状态锚点（reshot instruction 用）。
+ * 「恢复计划状态 + 指明偏差」形态的前身：重拍时告诉模型该镜演到什么状态为止。
+ * folded 缺省 / 无有效字段 → 空串（调用方跳过注入，行为与现状一致）。
+ */
+export function plannedEndNote(folded: FoldedShot | undefined): string {
+	const parts: string[] = [];
+	for (const h of folded?.end.holding ?? []) {
+		parts.push(`${h.entityId} 在${h.hand === "left" ? "左手" : h.hand === "right" ? "右手" : "双手"}`);
+	}
+	if (folded?.end.position) parts.push(`位置在 ${folded.end.position}`);
+	if (folded?.end.facing) parts.push(`朝向 ${folded.end.facing}`);
+	return parts.length > 0 ? `该镜结束状态必须保持：${parts.join("；")}` : "";
+}
+
+/**
+ * P3-S6 · QA 状态核对注记（shotId → 预期结束状态中文描述）。
+ * 仅对计划了可核对状态（holding/position/facing 至少一项）的镜生成；unobservable 镜跳过
+ * （画面观察不可判定，注入反而诱导误报）。无任何注记时调用方不传，QA prompt 零变化。
+ */
+export function storyboardStateNotes(doc: StoryboardDoc): Record<string, string> {
+	const notes: Record<string, string> = {};
+	for (const folded of foldStoryboardStates(doc).values()) {
+		if (folded.end.unobservable) continue;
+		const parts: string[] = [];
+		for (const h of folded.end.holding ?? []) {
+			parts.push(`${h.entityId} 应在${h.hand === "left" ? "左手" : h.hand === "right" ? "右手" : "双手"}`);
+		}
+		if (folded.end.position) parts.push(`位置应在 ${folded.end.position}`);
+		if (folded.end.facing) parts.push(`朝向应为 ${folded.end.facing}`);
+		if (parts.length > 0) notes[folded.shotId] = parts.join("；");
+	}
+	return notes;
+}
+
 /** 主入口：对 plan 序列做 R1-R6 全量校验，返回冲突列表（空 shots 返回 []）。 */
 export function validateStoryboard(
 	doc: StoryboardDoc,
