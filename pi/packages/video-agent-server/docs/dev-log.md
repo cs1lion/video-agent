@@ -27,6 +27,35 @@
 
 **待办（下一阶段闸门）**：P0-S4 用户逐字段评审 schema → 通过后研究报告计划表勾回「第一阶段完成」，再进 P2（script 扩展字段 + turn-taking 自动拆镜）。§9 已预填 P3 提示词消费规格（四段式示例），schema 评审时可作具象参照。
 
+### 2026-09-06 故事板 schema 双形态修复（加测 5 完结）
+
+**坑来源**：run 98 审讯室跑批揭示——LLM 在 prompts 中给出的 plan/state 偶尔采用 nested-by-character 结构（`{CH01: {...}, CH02: {...}}`）偏离 prompt 要求的 flat 结构与 `StoryboardState` 类型。同时发现 stageStoryboard 从未调用 normalizeStoryboardDoc（归一化函数定义后未被接线），导致 validateStoryboard 与 planActualConflicts 静默跳过该镜 → 0 状态: 抓出。
+
+**修复（3 处）**：
+- `src/storyboard-state.ts`: 加 `maybeFlattenNestedState`——检测到顶层 CHxx 键 → 拍扁为 flat。优先级：flat 字段胜出 → nested 兑底（保护 prompt 原意）；holding 数组两边合并；unobservable 在全员不可观察时才设 true。
+- `src/stages/storyboard.ts`: stageStoryboard 接线 `normalizeStoryboardDoc`——在 validateStoryboard **之前**调用，归一化后才能正确读取字段。
+- `test/storyboard-normalize.test.ts`: 8 个新单测锁定拍扁语义 + 与 audit/validate 的集成。
+
+**验证**（同 brief run 99）：修复后跑同一份审讯室 brief，plan schema 从 nested 转为 flat，**状态: 抓出从 0 → 3（SH01×2、SH02×1、SH06×3）**。QA score 从 95 降至 78（**这是真的质量分数**——之前 95 是假象 PASS）。
+
+**P4 reshot 链路验证**：run 99 中 SH03 (holding mismatch, severe=true) 触发补拍。clip-SH03_v1.mp4 (709KB，首版) → clip-SH03.mp4 (762KB，补拍后)，事件"镜头裁决 fail→ok"。SH06 (severe=false 观感级) **故意不补拍**——符合设计意图（人工确认）。
+
+**关于 "storyboard 对生成的影响"**：
+三条路径全部验证，故事板不是事后验收：
+
+1. **prompts 阶段**：plan 状态块注入 LLM input → 影响单镜 prompt 撰写。
+2. **export 阶段**：planActualConflicts 读 qa-SHxx.jpg 与 plan 对比 → 不一致则合入 verdict.shots.reason，按 category 决定是否进 reshot。
+3. **reshot 阶段**：`plannedEndNote` (pipeline.ts:1694) 注入 reshot instruction——补拍 prompt 含 "该镜结束状态必须保持：位置在 SC01长桌尽头；朝向 朝向桌侧投资人方向"，让补拍的 LLM 知道要演到什么状态。
+
+boardroom (run 100) 实例：SH04/SH05 reshot 指令都含了这个状态锚点。这证明 storyboard **直接驱动补拍结果**，不仅仅是事后识别问题。
+
+**限制**：状态块只影响 prompts 阶段的 LLM 与 reshot 阶段的 LLM，**不在生成的 prompts.json 单镜 prompt 中明文出现**。要做“A/B 验证状态块提升生产质量”需同一 brief 跑两次（一次默认、一次删除 storyboard.json 跳过状态块），本次未做。
+
+**待验证/记录限制**：
+- 加测 6 ✅：boardroom（run 100）验证拍扁在不同 brief 下都生效（6 镜全部抓到状态: 朝向不符，QA 81 分）。
+- 状态块质量提升：拍扁仅修复了 "LLM 能看见" 语义，不保证 LLM 会遵循 prompt 中的状态块写提示词。需加 prompt 复用调试 / LLM prompt 模板探查。
+- 状态块与实际态联调：actualState 写入 storyboard.json 后，UI 端（StoryboardStage.tsx）是否显示？下一轮验证。
+
 ### 2026-09-04 N1 词级时间戳字幕（ROADMAP 近期 · 完结）
 
 **变更点（3 文件）**：
