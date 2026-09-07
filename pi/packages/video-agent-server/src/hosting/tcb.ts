@@ -80,6 +80,12 @@ export function cloudPathFor(runId: string, shotId: string): string {
 	return `video-agent/${runId}/tts-${shotId}.mp3`;
 }
 
+/** 上传落点（图片）：独立路径，按实体类型分目录避免被同名 shot 覆盖。
+ * 生成与设计图在同一 run 下不会重名，但 shotId 可能与 design 同名，所以按 caller 传 filename 避免冲突。 */
+export function imageCloudPathFor(runId: string, filename: string): string {
+	return `video-agent/${runId}/design/${filename}`;
+}
+
 function readEnvFileCandidates(studioRoot: string): Record<string, string> {
 	const candidates = [
 		path.join(studioRoot, ".pi-studio", ".env.cloudbase"),
@@ -225,6 +231,61 @@ export async function hostAudioFile(
 			cosEndpointCache.set(config.envId, endpoint);
 		}
 		// 与 node-sdk uploadFile 同一套头（签名覆盖本 key 的本次直传）
+		const res = await fetch(inner.url, {
+			method: "PUT",
+			headers: {
+				Authorization: inner.authorization,
+				Signature: inner.authorization,
+				"x-cos-security-token": inner.token,
+				"x-cos-meta-fileid": inner.cosFileId ?? "",
+				key: encodeURIComponent(cloudPath),
+			},
+			body: new Uint8Array(fileContent),
+		});
+		if (!res.ok) {
+			throw new HostingError(`COS PUT ${res.status}: ${(await res.text()).slice(0, 200)}`);
+		}
+	} catch (error) {
+		if (error instanceof HostingError) throw error;
+		throw new HostingError(`CloudBase 上传失败（${cloudPath}）: ${String(error)}`);
+	}
+	if (!endpoint) throw new HostingError("COS 桶/区域未知（不应发生）");
+	return publicUrlFor(endpoint.bucket, endpoint.region, cloudPath);
+}
+
+/**
+ * 通用文件托管（用于图片等非音频资源）。返回公开 URL。
+ * 与 hostAudioFile 共享同一 COS 桶/上传元数据流程，仅 cloudPath 不同。
+ * 不传 CloudBase 配置时抛 HostingError（与 hostAudioFile 行为一致）。
+ */
+export async function hostFile(
+	studioRoot: string,
+	runId: string,
+	cloudPath: string,
+	localAbsPath: string,
+): Promise<string> {
+	const config = loadHostingConfig(studioRoot);
+	if (!config) {
+		throw new HostingError(
+			"未配置 CloudBase 托管（TCB_ENV_ID / TCB_SECRET_ID / TCB_SECRET_KEY 或 .env.cloudbase）——设计图/资产无法获得公开 URL",
+		);
+	}
+	const app = await appOf(config);
+	let endpoint: { bucket: string; region: string } | undefined =
+		config.cosBucket && config.cosRegion ? { bucket: config.cosBucket, region: config.cosRegion } : cosEndpointCache.get(config.envId);
+	try {
+		const fileContent = await fs.promises.readFile(localAbsPath);
+		const meta = await app.getUploadMetadata({ cloudPath });
+		const inner = (meta.data ?? {}) as { url?: string; authorization?: string; token?: string; cosFileId?: string };
+		if (!inner.url || !inner.authorization || !inner.token) {
+			throw new HostingError(`上传元数据缺失（url/authorization/token）：${JSON.stringify(Object.keys(meta))}`);
+		}
+		if (!endpoint) {
+			const parsed = parseCosUploadUrl(inner.url);
+			if (!parsed) throw new HostingError(`无法从上传 URL 解析 COS 桶/区域：${inner.url.slice(0, 120)}`);
+			endpoint = parsed;
+			cosEndpointCache.set(config.envId, endpoint);
+		}
 		const res = await fetch(inner.url, {
 			method: "PUT",
 			headers: {

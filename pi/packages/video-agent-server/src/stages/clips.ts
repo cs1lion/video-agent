@@ -20,6 +20,8 @@ import {
 	type StageCtx,
 } from "../pipeline.ts";
 import { fileDataUrl } from "../asset-version.ts";
+import { hostFile, imageCloudPathFor } from "../hosting/tcb.ts";
+import type { DesignBibleDoc } from "../prompts.ts";
 import { trackMediaCost } from "../pricing.ts";
 import { probeDuration } from "../ffmpeg.ts";
 	import { dialogueDerivedSec, estimateClipSeconds, videoAdapterOf, videoSubmitParams, videoSubmitParamsForDialogue, withReferenceAudioInstruction } from "../redo-adapters.ts";
@@ -42,6 +44,9 @@ export async function stageClips(
 	const shotPrompts = await readArtifact<ShotPromptDoc>(run, "prompts.json");
 	const bible = await readArtifact<VisualBible>(run, "visual-bible.json").catch(
 		() => ({ styleKeywords: [], palette: [], lighting: "", grade: "" }) as VisualBible,
+	);
+	const designBible = await readArtifact<DesignBibleDoc>(run, "design-bible.json").catch(
+		() => null,
 	);
 	const keyframes = await readKeyframes(run);
 	setStage(run, "clips", "running", 0);
@@ -181,7 +186,12 @@ export async function stageClips(
 			if (!shot.narrationEn) shot.narrationEn = shot.dialogue.lines.en;
 			pushEvent(run, "sound", "producer", "status", `镜头 ${shot.id} 声明台词模式但本次运行未开启音频驱动，已降级为旁白（台词文本保留）。`, { stage: "generate", focus: shot.id });
 		}
-		const referenceParams = dialogueReadyUrl ? videoSubmitParamsForDialogue(sc.ctx, dialogueReadyUrl, shot.durationSec) : null;
+		// 人物设计图 URL 上传（加测 12 · 2026-09-07）：对话镜 reference 模式下传 first_frame=设计图 URL，
+		// 锁定人物外貌跨镜一致性。未配置 CloudBase 或查到不到设计图→兑底走纯 reference（旧行为）。
+		const imageUrl = await characterImageUrl(sc, shot.dialogue?.characterId ?? null, run.dir, run.id, designBible);
+		const referenceParams = dialogueReadyUrl
+			? videoSubmitParamsForDialogue(sc.ctx, dialogueReadyUrl, shot.durationSec, imageUrl)
+			: null;
 		if (dialogueReadyUrl && !referenceParams) {
 			shot.audioMode = "narration";
 			if (!shot.narrationZh) shot.narrationZh = shot.dialogue!.lines.zh;
@@ -431,4 +441,62 @@ function sleepAbortable(ms: number, signal: AbortSignal): Promise<void> {
 		}, ms);
 		signal.addEventListener("abort", onAbort, { once: true });
 	});
+}
+
+// --------------------------------------------------------------------------------
+// 人物设计图上传缓存（加测 12 · 2026-09-07）
+//
+// 同一 run 内，同一角色设计图只上传一次。返回公开 URL（嵌在 video 提交参数 first_frame 里）。
+// 设计图（CH01/CH02.png）是 LLM 生成的角色概念图，在美术设计阶段落盘。视频模型如能把人物设计图
+// 当首帧锚定（reference + first_frame），就能锁定人物外貌跨镜一致性（9-7 之前 6/6 镜面孔漂移）。
+//
+// 回退：未配 CloudBase / design-bible 找不到角色 / 上传失败 → 返回 null。调用方降级为纯 reference。
+const characterImageUrlCache = new Map<string, string>(); // key: `${runId}:${characterId}`
+
+async function characterImageUrl(
+	sc: StageCtx,
+	characterId: string | null,
+	runDir: string,
+	runId: string,
+	bible: DesignBibleDoc | null,
+): Promise<string | null> {
+	process.stderr.write(`[characterImageUrl] called runId=${runId} characterId=${characterId} bible=${bible ? `${bible.characters.length} chars` : "null"}\n`);
+	if (!characterId) return null;
+	const cacheKey = `${runId}:${characterId}`;
+	const cached = characterImageUrlCache.get(cacheKey);
+	if (cached !== undefined) return cached;
+	// 设计 bible 按 name 匹配（shot.dialogue.characterId 是角色名如"王队"）。
+	// bible.characters[].name 可能含前缀（如"刑警王队"），characterId 可能只填名（如"王队"），
+	// 纯严格等比 会漏匹配——兑底用 endsWith（中文名字 "王队" 不会被 "陈默" 误中，足够兑底；
+	// 后续可考虑手入 CoCharacter.id 映到 shot.characterId）。
+	if (!bible) {
+		characterImageUrlCache.set(cacheKey, "");
+		return null;
+	}
+	const char = bible.characters.find((c) => c.name === characterId || c.englishName === characterId
+		|| c.name.endsWith(characterId) || characterId.endsWith(c.name));
+	if (!char?.file) {
+		characterImageUrlCache.set(cacheKey, "");
+		return null;
+	}
+	const localPath = char.file.replace(/\\/g, "/");
+	const localAbs = path.isAbsolute(localPath) ? localPath : path.join(runDir, localPath);
+	if (!fs.existsSync(localAbs)) {
+		characterImageUrlCache.set(cacheKey, "");
+		return null;
+	}
+	const cloudPath = imageCloudPathFor(runId, path.basename(localAbs));
+	try {
+		const url = await hostFile(sc.ctx.studioRoot, runId, cloudPath, localAbs);
+		characterImageUrlCache.set(cacheKey, url);
+		return url;
+	} catch {
+		// CloudBase 未配置 / 上传失败 → 降级为纯 reference（旧行为）
+		characterImageUrlCache.set(cacheKey, "");
+		return null;
+	}
+}
+
+function logImageUrl(runId: string, characterId: string, url: string): void {
+	// 走 pipeline.ts 的 pushEvent 不方便（这里在 StageCtx 之外），改 stdout 轻提示即可
 }

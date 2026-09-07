@@ -82,18 +82,26 @@ export function videoSubmitParams(
  * `withReferenceAudioInstruction` 注入 `<Audio 1>` 占位符与严格跟读指令
  * （占位符缺失时供应商按无音频处理）。2.0 及其他：audios 被静默忽略
  * （总文档 2.1 实测）——返回 null，调用方按"视频模型不支持音频驱动"降级为
- * 普通生成 + QA 标记，不赌 400。首帧锚定（first_frame）与 reference 混用
- * 未经验证，不传——宁可少一个锚点，不赌一次 400（实测参数体系：2.5 禁传
- * width/height/frame_rate/image）。
+ * 普通生成 + QA 标记，不赌 400。
+ *
+ * 人物一致性补丁：传 imageUrl 后同时传 first_frame（人物设计图 URL）—— 9-7 加测 12 实证
+ *  agnes 2.5 支持 reference + first_frame 混合，角色外貌随设计图锁定。
+ * imageUrl 可选；未传则纯 reference（修复前的行为，依赖 prompt 文字描述）。
  */
 export function videoSubmitParamsForDialogue(
 	ctx: ServerContext,
 	audioUrl: string,
 	durationSec: number,
+	imageUrl?: string | null,
 ): Record<string, unknown> | null {
 	if (!isAgnesVideo25(ctx)) return null;
 	const seconds = String(Math.min(12, Math.max(4, Math.round(durationSec))));
-	return { seconds, mode: "reference", audios: [audioUrl] };
+	return {
+		seconds,
+		mode: "reference",
+		audios: [audioUrl],
+		...(imageUrl ? { first_frame: imageUrl } : {}),
+	};
 }
 
 /**
