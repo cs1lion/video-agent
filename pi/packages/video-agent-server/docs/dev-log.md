@@ -6,6 +6,26 @@
 
 ## 最近会话
 
+### 2026-09-07 加测 12 · 人物面孔跨镜一致性（first_frame 设计图锁定）
+
+**坑来源**：用户反馈 run 111 成片“面孔一直在变，故事板包括设计图都没起作用”。查代码发现对话镜走 `videoSubmitParamsForDialogue` 只传 `audios + prompt 文字`，**完全没把 design-character.png 作为 first_frame 传给视频模型**——agnes 纯靠文本提示自由发挥 → 6 镜面孔全漂移。
+
+**用户提示**：“可以传图片音频和首尾帧的，但需要 URL 且有数量限制，url 可以用服务器”→ 验证了 agnes 2.5 接受 `first_frame: URL` 作为首帧锁定人物外貌（`videoSubmitParamsForDialogue` 源码原注 “未经验证，不传” 是错误保守）。
+
+**修复**：
+- `src/hosting/tcb.ts`: 加通用 `hostFile()` 与 `imageCloudPathFor()`——同一套 COS 上传/公开 URL 流程应用于图片（项目本就有 .env.cloudbase 配置 + CloudBase 资源）
+- `src/redo-adapters.ts`: `videoSubmitParamsForDialogue` 接受 `imageUrl?: string | null`，加 `first_frame` 到返回 params
+- `src/stages/clips.ts`: 加 `characterImageUrl()` helper——对白镜提交前查 design-bible 找角色设计图 → 上传 COS → 注入 URL。每 run 缓存避免重复上传
+
+**调试题**：bible.characters[].name = "刑警王队"，script.characterId = "王队"，严格 `===` 匹配失败。换成 `endsWith` 兑底匹配。
+
+**验证**（run 116 真 dialogue + first_frame）：
+- 上传成功：`https://6d79-myagent-.../design-character-CH01.png` · `CH02.png`
+- 6 镜画面：5/5 王队一致（无眼镜、灰白头、警服）；2/2 陈默一致（年轻、戴眼镜、浅色衬衫）
+- run 111 SH06 “老年男子戴眼镜” 错位彻底解决
+
+**限制**：陈默在 5.0s 双人镜中依然偏老 5-10 岁（32岁→40岁）。可加 negative prompt 锁年龄，未做。
+
 ### 2026-09-05 故事板 P0+P1 确定性底座（研究报告落地 · 完结待 P0-S4 闸门）
 
 **背景**：研究报告（`doc/research/故事板功能研究报告-2026-09-05.md`）结论——管线缺"可变状态层"，本阶段补确定性底座：schema 类型 + 纯函数校验器，**零行为变化**（不接管线，P2 起才有消费方）。施工细化见 `doc/research/施工计划-故事板P0P1确定性底座-2026-09-05.md`。
