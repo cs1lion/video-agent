@@ -1,5 +1,5 @@
 # video-agent
-
+![TypeScript Node 22+](//img.shields.io/badge/TypeScript-Node%2022%2B-blue) ![Media FFmpeg](//img.shields.io/badge/Media-FFmpeg-green) ![Gates 4 Cost Gates](//img.shields.io/badge/Gates-4%20Cost%20Gates-orange)
 > 台词驱动的 AI 短片生成管线：从一句 brief 自动产出带配音选角、口型对齐、字幕烧录与质检的影视短片。
 
 ## 核心架构 (Architecture & Pipeline)
